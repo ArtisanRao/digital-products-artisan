@@ -2,7 +2,23 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://digitalproductsartisan.com/</loc>
-    <lastmod>2025-07-21</lastmod>
-    <priority>1.00</priority>
+  </url>
+  <url>
+    <loc>https://digitalproductsartisan.com/about</loc>
+  </url>
+  <url>
+    <loc>https://digitalproductsartisan.com/products</loc>
+  </url>
+  <url>
+    <loc>https://digitalproductsartisan.com/contact</loc>
+  </url>
+  <url>
+    <loc>https://digitalproductsartisan.com/faq</loc>
+  </url>
+  <url>
+    <loc>https://digitalproductsartisan.com/privacy-policy</loc>
+  </url>
+  <url>
+    <loc>https://digitalproductsartisan.com/terms-of-service</loc>
   </url>
 </urlset>
