@@ -2,3 +2,11 @@ User-agent: *
 Allow: /
 
 Sitemap: https://digitalproductsartisan.com/api/sitemap
+User-agent: *
+Allow: /
+
+# Allow favicon to be indexed
+Allow: /favicon-multi.ico
+
+# (Optional) If you have a sitemap later:
+# Sitemap: https://digitalproductsartisan.com/sitemap.xml
