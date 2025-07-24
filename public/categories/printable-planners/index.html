@@ -3,10 +3,84 @@
 <head>
   <meta charset="UTF-8" />
   <title>Printable Planners | Digital Products Artisan</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f8f8f8;
+      margin: 0;
+      padding: 2rem;
+    }
+
+    h1 {
+      text-align: center;
+      color: #222;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+
+    .card {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.08);
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .card img {
+      width: 100%;
+      max-width: 180px;
+      height: auto;
+      margin-bottom: 1rem;
+      border-radius: 5px;
+    }
+
+    .card h2 {
+      font-size: 1.2rem;
+      margin: 0.5rem 0;
+    }
+
+    .card p {
+      font-size: 0.95rem;
+      color: #555;
+    }
+
+    .btn {
+      padding: 0.6rem 1.2rem;
+      background: #222;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      margin-top: 0.5rem;
+    }
+
+    .btn:hover {
+      background: #444;
+    }
+  </style>
 </head>
 <body>
   <h1>Printable Planners</h1>
-  <p>Organize your day with our premium planners.</p>
-  <a href="/categories/">← Back to Categories</a>
+  <div class="grid">
+    <div class="card">
+      <img src="/images/daily-planner.jpg" alt="Daily Planner" />
+      <h2>Daily Planner</h2>
+      <p>Plan your day efficiently with our sleek printable design.</p>
+      <a href="/categories/printable-planners/daily-planner.html" class="btn">View Details</a>
+    </div>
+    <div class="card">
+      <img src="/images/monthly-planner.jpg" alt="Monthly Planner" />
+      <h2>Monthly Planner</h2>
+      <p>Stay on top of your goals each month with this printable template.</p>
+      <a href="/categories/printable-planners/monthly-planner.html" class="btn">View Details</a>
+    </div>
+  </div>
 </body>
 </html>
