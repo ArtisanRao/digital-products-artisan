@@ -1,213 +1,287 @@
-<div class="grid" id="product-grid">
+<!-- Replace entire contents of /categories/ebooks/index.html with this -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>eBooks | Digital Products Artisan</title>
+  <meta name="description" content="Browse our collection of digital eBooks—fiction, non-fiction, prompts, and more to fuel your imagination and growth.">
+  <meta name="keywords" content="ebooks, digital books, pdf downloads, fiction, non-fiction, prompt packs, self-help, romance, thrillers">
+  <meta name="robots" content="index, follow" />
+  <link rel="icon" href="/favicon.png" type="image/png" />
 
-  <div class="card">
-    <img src="/images/ebook1.jpg" alt="Productivity Planner" />
-    <h2>Productivity Planner</h2>
-    <p>Boost your daily output with this easy-to-use planner.</p>
-    <div class="price">$9.99</div>
-    <button class="btn snipcart-add-item"
-      data-item-id="productivity-planner"
-      data-item-name="Productivity Planner"
-      data-item-price="9.99"
-      data-item-url="/ebooks"
-      data-item-description="Boost your daily output with this planner.">
-      Add to Cart
-    </button>
+  <!-- Snipcart Integration -->
+  <script>
+    window.SnipcartSettings = {
+      publicApiKey: 'Y2I3ZDU2N2UtYjA4MC00Yjc2LTg4NzQtZDg0MzI0OTQ0NzI2MTM4NzMxNzEwNDYzNDk2MDk0',
+      loadStrategy: 'on-user-interaction'
+    };
+  </script>
+  <script async src="https://cdn.snipcart.com/themes/v3.0.31/default/snipcart.js"></script>
+  <link rel="stylesheet" href="https://cdn.snipcart.com/themes/v3.0.31/default/snipcart.css"/>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      background: #fafafa;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+    }
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      padding: 1rem;
+      text-align: center;
+    }
+    .card img {
+      width: 100%;
+      border-radius: 4px;
+    }
+    .card h2 {
+      font-size: 1rem;
+      margin: 0.75rem 0 0.5rem;
+    }
+    .card p {
+      font-size: 0.9rem;
+      color: #555;
+    }
+    .card button {
+      margin-top: 1rem;
+      background: #000;
+      color: #fff;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Digital eBooks Collection</h1>
+  <div class="grid">
+
+    <!-- Your 13 Image-based Cards Start Here -->
+
+    <div class="card">
+      <img src="/images/50-powerful-prompts.jpg" alt="50 Powerful Prompts">
+      <h2>50 Powerful Prompts</h2>
+      <p>Boost creativity and clarity with 50 expert-crafted writing prompts.</p>
+      <button class="snipcart-add-item"
+        data-item-id="ebook-1"
+        data-item-name="50 Powerful Prompts"
+        data-item-price="4.99"
+        data-item-url="/categories/ebooks/"
+        data-item-description="Creative writing prompt eBook"
+        data-item-image="/images/50-powerful-prompts.jpg"
+        data-item-file-guid="/downloads/50-powerful-prompts.pdf">
+        Add to Cart
+      </button>
+    </div>
+
+    <div class="card">
+      <img src="/images/50-powerful-prompts-notion-format.jpg" alt="Prompts (Notion)">
+      <h2>50 Prompts - Notion Format</h2>
+      <p>Same prompts, packaged beautifully in a Notion template.</p>
+      <button class="snipcart-add-item"
+        data-item-id="ebook-2"
+        data-item-name="50 Prompts - Notion"
+        data-item-price="5.99"
+        data-item-url="/categories/ebooks/"
+        data-item-description="Prompts for Notion"
+        data-item-image="/images/50-powerful-prompts-notion-format.jpg"
+        data-item-file-guid="/downloads/50-prompts-notion.zip">
+        Add to Cart
+      </button>
+    </div>
+
+    <div class="card">
+      <img src="/images/fantasy-novel.jpg" alt="Fantasy Novel">
+      <h2>Epic Fantasy Novel</h2>
+      <p>An unforgettable journey through kingdoms, dragons, and destiny.</p>
+      <button class="snipcart-add-item"
+        data-item-id="ebook-3"
+        data-item-name="Epic Fantasy Novel"
+        data-item-price="6.99"
+        data-item-url="/categories/ebooks/"
+        data-item-description="Digital fantasy novel download"
+        data-item-image="/images/fantasy-novel.jpg"
+        data-item-file-guid="/downloads/fantasy-novel.pdf">
+        Add to Cart
+      </button>
+    </div>
+
+    <div class="card">
+      <img src="/images/health-and-fitness-book.jpg" alt="Health and Fitness Guide">
+      <h2>Health & Fitness Guide</h2>
+      <p>Daily routines and science-backed strategies to stay fit.</p>
+      <button class="snipcart-add-item"
+        data-item-id="ebook-4"
+        data-item-name="Health & Fitness Guide"
+        data-item-price="8.99"
+        data-item-url="/categories/ebooks/"
+        data-item-description="Health eBook PDF"
+        data-item-image="/images/health-and-fitness-book.jpg"
+        data-item-file-guid="/downloads/health-and-fitness-book.pdf">
+        Add to Cart
+      </button>
+    </div>
+
+    <div class="card">
+      <img src="/images/historical-fiction-novel.jpg" alt="Historical Fiction Novel">
+      <h2>Historical Fiction</h2>
+      <p>A rich tale set in the turbulent 18th-century world.</p>
+      <button class="snipcart-add-item"
+        data-item-id="ebook-5"
+        data-item-name="Historical Fiction Novel"
+        data-item-price="7.49"
+        data-item-url="/categories/ebooks/"
+        data-item-description="Historical fiction eBook"
+        data-item-image="/images/historical-fiction-novel.jpg"
+        data-item-file-guid="/downloads/historical-fiction.pdf">
+        Add to Cart
+      </button>
+    </div>
+
+    <div class="card">
+      <img src="/images/Memoir-Autobiography.jpg" alt="Memoir & Autobiography">
+      <h2>Memoir & Autobiography</h2>
+      <p>An inspiring life story about overcoming adversity.</p>
+      <button class="snipcart-add-item"
+        data-item-id="ebook-6"
+        data-item-name="Memoir & Autobiography"
+        data-item-price="9.99"
+        data-item-url="/categories/ebooks/"
+        data-item-description="Memoir eBook"
+        data-item-image="/images/Memoir-Autobiography.jpg"
+        data-item-file-guid="/downloads/memoir-autobiography.pdf">
+        Add to Cart
+      </button>
+    </div>
+
+    <div class="card">
+      <img src="/images/motivational-prompt-pack.jpg" alt="Motivational Prompt Pack">
+      <h2>Motivational Prompt Pack</h2>
+      <p>Recharge your mindset with actionable daily prompts.</p>
+      <button class="snipcart-add-item"
+        data-item-id="ebook-7"
+        data-item-name="Motivational Prompt Pack"
+        data-item-price="4.49"
+        data-item-url="/categories/ebooks/"
+        data-item-description="PDF prompt journal"
+        data-item-image="/images/motivational-prompt-pack.jpg"
+        data-item-file-guid="/downloads/motivational-prompts.pdf">
+        Add to Cart
+      </button>
+    </div>
+
+    <div class="card">
+      <img src="/images/mystery-thriller-novel.jpg" alt="Mystery Thriller Novel">
+      <h2>Mystery Thriller</h2>
+      <p>Get lost in a web of twists, secrets, and suspense.</p>
+      <button class="snipcart-add-item"
+        data-item-id="ebook-8"
+        data-item-name="Mystery Thriller Novel"
+        data-item-price="7.99"
+        data-item-url="/categories/ebooks/"
+        data-item-description="Suspense thriller eBook"
+        data-item-image="/images/mystery-thriller-novel.jpg"
+        data-item-file-guid="/downloads/mystery-thriller.pdf">
+        Add to Cart
+      </button>
+    </div>
+
+    <div class="card">
+      <img src="/images/romance-novel.jpg" alt="Romance Novel">
+      <h2>Romance Novel</h2>
+      <p>A heartfelt tale of love, loss, and redemption.</p>
+      <button class="snipcart-add-item"
+        data-item-id="ebook-9"
+        data-item-name="Romance Novel"
+        data-item-price="6.49"
+        data-item-url="/categories/ebooks/"
+        data-item-description="Romance eBook PDF"
+        data-item-image="/images/romance-novel.jpg"
+        data-item-file-guid="/downloads/romance-novel.pdf">
+        Add to Cart
+      </button>
+    </div>
+
+    <div class="card">
+      <img src="/images/romance-novel1.jpg" alt="Romance Novel 2">
+      <h2>Romantic Escapades</h2>
+      <p>Fall in love again with this modern romantic story.</p>
+      <button class="snipcart-add-item"
+        data-item-id="ebook-10"
+        data-item-name="Romantic Escapades"
+        data-item-price="6.99"
+        data-item-url="/categories/ebooks/"
+        data-item-description="Contemporary romance eBook"
+        data-item-image="/images/romance-novel1.jpg"
+        data-item-file-guid="/downloads/romantic-escapades.pdf">
+        Add to Cart
+      </button>
+    </div>
+
+    <div class="card">
+      <img src="/images/science-fiction-novel.jpg" alt="Sci-Fi Novel">
+      <h2>Sci-Fi Adventure</h2>
+      <p>Explore distant galaxies and alien civilizations.</p>
+      <button class="snipcart-add-item"
+        data-item-id="ebook-11"
+        data-item-name="Sci-Fi Adventure"
+        data-item-price="8.99"
+        data-item-url="/categories/ebooks/"
+        data-item-description="Science fiction eBook"
+        data-item-image="/images/science-fiction-novel.jpg"
+        data-item-file-guid="/downloads/sci-fi-adventure.pdf">
+        Add to Cart
+      </button>
+    </div>
+
+    <div class="card">
+      <img src="/images/self-help-personal-development-book.jpg" alt="Self-Help Book">
+      <h2>Self-Help Guide</h2>
+      <p>Unlock your best self with proven personal growth strategies.</p>
+      <button class="snipcart-add-item"
+        data-item-id="ebook-12"
+        data-item-name="Self-Help Guide"
+        data-item-price="5.49"
+        data-item-url="/categories/ebooks/"
+        data-item-description="Personal development eBook"
+        data-item-image="/images/self-help-personal-development-book.jpg"
+        data-item-file-guid="/downloads/self-help-guide.pdf">
+        Add to Cart
+      </button>
+    </div>
+
+    <div class="card">
+      <img src="/images/true-crime-novel.jpg" alt="True Crime Book">
+      <h2>True Crime Chronicles</h2>
+      <p>Based on shocking real-life stories and unsolved mysteries.</p>
+      <button class="snipcart-add-item"
+        data-item-id="ebook-13"
+        data-item-name="True Crime Chronicles"
+        data-item-price="6.75"
+        data-item-url="/categories/ebooks/"
+        data-item-description="True crime digital book"
+        data-item-image="/images/true-crime-novel.jpg"
+        data-item-file-guid="/downloads/true-crime.pdf">
+        Add to Cart
+      </button>
+    </div>
+
   </div>
 
-  <div class="card">
-    <img src="/images/ebook2.jpg" alt="Digital Journal" />
-    <h2>Digital Journal</h2>
-    <p>Capture thoughts, dreams, and progress daily.</p>
-    <div class="price">$7.99</div>
-    <button class="btn snipcart-add-item"
-      data-item-id="digital-journal"
-      data-item-name="Digital Journal"
-      data-item-price="7.99"
-      data-item-url="/ebooks"
-      data-item-description="Capture thoughts and track your growth.">
-      Add to Cart
-    </button>
-  </div>
-
-  <div class="card">
-    <img src="/images/ebook3.jpg" alt="Habit Tracker" />
-    <h2>Habit Tracker</h2>
-    <p>Build consistency and crush your goals.</p>
-    <div class="price">$4.99</div>
-    <button class="btn snipcart-add-item"
-      data-item-id="habit-tracker"
-      data-item-name="Habit Tracker"
-      data-item-price="4.99"
-      data-item-url="/ebooks"
-      data-item-description="Track habits and build discipline.">
-      Add to Cart
-    </button>
-  </div>
-
-  <div class="card">
-    <img src="/images/ebook4.jpg" alt="Notion Budget Template" />
-    <h2>Notion Budget Template</h2>
-    <p>Stay on top of your finances with ease.</p>
-    <div class="price">$5.99</div>
-    <button class="btn snipcart-add-item"
-      data-item-id="notion-budget"
-      data-item-name="Notion Budget Template"
-      data-item-price="5.99"
-      data-item-url="/ebooks"
-      data-item-description="Organize and track monthly spending.">
-      Add to Cart
-    </button>
-  </div>
-
-  <div class="card">
-    <img src="/images/ebook5.jpg" alt="Goal Setting Guide" />
-    <h2>Goal Setting Guide</h2>
-    <p>Define your future with actionable steps.</p>
-    <div class="price">$6.99</div>
-    <button class="btn snipcart-add-item"
-      data-item-id="goal-setting"
-      data-item-name="Goal Setting Guide"
-      data-item-price="6.99"
-      data-item-url="/ebooks"
-      data-item-description="Set clear goals with effective strategies.">
-      Add to Cart
-    </button>
-  </div>
-
-  <div class="card">
-    <img src="/images/ebook6.jpg" alt="Social Media Kit" />
-    <h2>Social Media Kit</h2>
-    <p>Templates for boosting your social content.</p>
-    <div class="price">$11.99</div>
-    <button class="btn snipcart-add-item"
-      data-item-id="social-kit"
-      data-item-name="Social Media Kit"
-      data-item-price="11.99"
-      data-item-url="/ebooks"
-      data-item-description="Engage better with curated post templates.">
-      Add to Cart
-    </button>
-  </div>
-
-  <div class="card">
-    <img src="/images/ebook7.jpg" alt="Gratitude Journal" />
-    <h2>Gratitude Journal</h2>
-    <p>Daily reflections for mental wellness.</p>
-    <div class="price">$4.49</div>
-    <button class="btn snipcart-add-item"
-      data-item-id="gratitude-journal"
-      data-item-name="Gratitude Journal"
-      data-item-price="4.49"
-      data-item-url="/ebooks"
-      data-item-description="Practice gratitude daily with this printable.">
-      Add to Cart
-    </button>
-  </div>
-
-  <div class="card">
-    <img src="/images/ebook8.jpg" alt="Freelancer Invoice Template" />
-    <h2>Freelancer Invoice Template</h2>
-    <p>Simple invoicing for your freelance work.</p>
-    <div class="price">$3.99</div>
-    <button class="btn snipcart-add-item"
-      data-item-id="invoice-template"
-      data-item-name="Freelancer Invoice Template"
-      data-item-price="3.99"
-      data-item-url="/ebooks"
-      data-item-description="Easily bill clients with this editable file.">
-      Add to Cart
-    </button>
-  </div>
-
-  <div class="card">
-    <img src="/images/ebook9.jpg" alt="Fitness Tracker" />
-    <h2>Fitness Tracker</h2>
-    <p>Track workouts, nutrition, and progress.</p>
-    <div class="price">$5.49</div>
-    <button class="btn snipcart-add-item"
-      data-item-id="fitness-tracker"
-      data-item-name="Fitness Tracker"
-      data-item-price="5.49"
-      data-item-url="/ebooks"
-      data-item-description="Monitor fitness goals daily or weekly.">
-      Add to Cart
-    </button>
-  </div>
-
-  <div class="card">
-    <img src="/images/ebook10.jpg" alt="Meal Planner" />
-    <h2>Meal Planner</h2>
-    <p>Organize meals and shopping lists.</p>
-    <div class="price">$4.75</div>
-    <button class="btn snipcart-add-item"
-      data-item-id="meal-planner"
-      data-item-name="Meal Planner"
-      data-item-price="4.75"
-      data-item-url="/ebooks"
-      data-item-description="Save time and eat better with planning.">
-      Add to Cart
-    </button>
-  </div>
-
-  <div class="card">
-    <img src="/images/ebook11.jpg" alt="Startup Checklist" />
-    <h2>Startup Checklist</h2>
-    <p>Everything you need to start your business.</p>
-    <div class="price">$6.49</div>
-    <button class="btn snipcart-add-item"
-      data-item-id="startup-checklist"
-      data-item-name="Startup Checklist"
-      data-item-price="6.49"
-      data-item-url="/ebooks"
-      data-item-description="Cover all essentials before launching.">
-      Add to Cart
-    </button>
-  </div>
-
-  <div class="card">
-    <img src="/images/ebook12.jpg" alt="Self-Care Tracker" />
-    <h2>Self-Care Tracker</h2>
-    <p>Track wellness routines for a balanced life.</p>
-    <div class="price">$3.75</div>
-    <button class="btn snipcart-add-item"
-      data-item-id="selfcare-tracker"
-      data-item-name="Self-Care Tracker"
-      data-item-price="3.75"
-      data-item-url="/ebooks"
-      data-item-description="Daily log for sleep, stress, hydration & more.">
-      Add to Cart
-    </button>
-  </div>
-
-  <div class="card">
-    <img src="/images/ebook13.jpg" alt="Content Calendar" />
-    <h2>Content Calendar</h2>
-    <p>Plan, create, and schedule with ease.</p>
-    <div class="price">$5.25</div>
-    <button class="btn snipcart-add-item"
-      data-item-id="content-calendar"
-      data-item-name="Content Calendar"
-      data-item-price="5.25"
-      data-item-url="/ebooks"
-      data-item-description="Stay consistent with organized content plans.">
-      Add to Cart
-    </button>
-  </div>
-
-  <div class="card">
-    <img src="/images/ebook14.jpg" alt="Mind Map Template" />
-    <h2>Mind Map Template</h2>
-    <p>Visualize ideas and projects creatively.</p>
-    <div class="price">$4.25</div>
-    <button class="btn snipcart-add-item"
-      data-item-id="mind-map"
-      data-item-name="Mind Map Template"
-      data-item-price="4.25"
-      data-item-url="/ebooks"
-      data-item-description="Great for brainstorming and visual planning.">
-      Add to Cart
-    </button>
-  </div>
-
-</div>
+  <div hidden id="snipcart"></div>
+</body>
+</html>
