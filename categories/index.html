@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Product Categories | Digital Products Artisan</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f8f8f8;
+      padding: 2rem;
+      max-width: 900px;
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.5rem;
+    }
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      transition: transform 0.2s ease;
+    }
+    .card:hover {
+      transform: scale(1.02);
+    }
+    .card img {
+      width: 100%;
+      max-height: 160px;
+      object-fit: cover;
+      border-radius: 5px;
+      margin-bottom: 0.5rem;
+    }
+    .card h2 {
+      font-size: 1.1rem;
+      margin: 0.5rem 0;
+    }
+    .card a {
+      display: inline-block;
+      margin-top: 0.5rem;
+      color: #007acc;
+      text-decoration: none;
+    }
+    .card a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h1>Product Categories</h1>
+  <div class="grid">
+    <div class="card">
+      <img src="/images/daily-planner.jpg" alt="Printable Planners" />
+      <h2>Printable Planners</h2>
+      <a href="/categories/printable-planners/">Explore</a>
+    </div>
+    <div class="card">
+      <img src="/images/invoice-template.jpg" alt="Business Templates" />
+      <h2>Business Templates</h2>
+      <a href="/categories/business-templates/">Explore</a>
+    </div>
+    <div class="card">
+      <img src="/images/email-templates.jpg" alt="Marketing Tools" />
+      <h2>Marketing Tools</h2>
+      <a href="/categories/marketing-tools/">Explore</a>
+    </div>
+    <div class="card">
+      <img src="/images/abstract-art.jpg" alt="Digital Art" />
+      <h2>Digital Art</h2>
+      <a href="/categories/digital-art/">Explore</a>
+    </div>
+    <div class="card">
+      <img src="/images/ebooks.jpg" alt="Ebooks" />
+      <h2>Ebooks</h2>
+      <a href="/categories/ebooks/">Explore</a>
+    </div>
+  </div>
+</body>
+</html>
