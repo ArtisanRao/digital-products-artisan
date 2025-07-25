@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "redirects": [
+    {
+      "source": "/categories/ebooks",
+      "destination": "/categories",
+      "permanent": true
+    }
+  ]
+}
