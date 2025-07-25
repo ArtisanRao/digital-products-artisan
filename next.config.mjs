@@ -12,3 +12,17 @@ const nextConfig = {
 }
 
 export default nextConfig
+export default {
+  async rewrites() {
+    return [
+      {
+        source: '/help',
+        destination: '/help-center/index.html',
+      },
+      {
+        source: '/best-sellers',
+        destination: '/best-sellers/index.html',
+      }
+    ]
+  },
+}
