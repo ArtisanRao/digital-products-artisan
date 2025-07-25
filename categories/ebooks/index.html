@@ -1,144 +1,198 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>eBooks | Digital Products Artisan</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f9f9f9;
-      margin: 0;
-      padding: 0;
-    }
+<div class="grid" id="product-grid">
 
-    .search-container {
-      text-align: center;
-      padding: 1.5rem 1rem 0;
-    }
-
-    #search {
-      padding: 0.8rem;
-      width: 90%;
-      max-width: 400px;
-      font-size: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 2rem;
-      padding: 2rem;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .card {
-      background: #fff;
-      border-radius: 10px;
-      padding: 1rem;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-      text-align: center;
-      transition: transform 0.3s ease;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-
-    .card:hover {
-      transform: translateY(-5px);
-    }
-
-    .card img {
-      max-width: 100%;
-      height: auto;
-      max-height: 250px;
-      object-fit: contain;
-      margin-bottom: 1rem;
-      border-radius: 5px;
-    }
-
-    .card h2 {
-      font-size: 1.25rem;
-      margin: 0.5rem 0;
-    }
-
-    .card p {
-      font-size: 1rem;
-      color: #555;
-      margin-bottom: 0.75rem;
-    }
-
-    .price {
-      font-weight: bold;
-      color: #1a73e8;
-      margin-bottom: 0.75rem;
-    }
-
-    .btn {
-      display: inline-block;
-      background: #1a73e8;
-      color: white;
-      padding: 0.5rem 1rem;
-      text-decoration: none;
-      border-radius: 4px;
-      transition: background 0.3s ease;
-    }
-
-    .btn:hover {
-      background: #0f5bcf;
-    }
-
-    @media (max-width: 480px) {
-      .card img {
-        max-height: 180px;
-      }
-
-      .card h2 {
-        font-size: 1.1rem;
-      }
-
-      .card p {
-        font-size: 0.95rem;
-      }
-
-      .btn {
-        padding: 0.4rem 0.8rem;
-        font-size: 0.95rem;
-      }
-    }
-  </style>
-</head>
-<body>
-  <!-- Search Bar -->
-  <div class="search-container">
-    <input type="text" id="search" placeholder="Search ebooks..." />
+  <div class="card">
+    <img src="/images/ebook1.png" alt="Productivity Planner" />
+    <h2>Productivity Planner</h2>
+    <p>Boost your daily output with this easy-to-use planner.</p>
+    <div class="price">$9.99</div>
+    <button class="btn snipcart-add-item"
+      data-item-id="productivity-planner"
+      data-item-name="Productivity Planner"
+      data-item-price="9.99"
+      data-item-url="/ebooks"
+      data-item-description="Boost your daily output with this planner.">
+      Add to Cart
+    </button>
   </div>
 
-  <!-- Products Grid -->
-  <div class="grid" id="product-grid">
-    <!-- All your .card items here -->
-    <!-- START cards -->
-    <!-- [Keep your 14 cards here without change — already optimized] -->
-
-    <!-- (Paste all your 14 product cards as-is here — omitted for brevity) -->
-
-    <!-- END cards -->
+  <div class="card">
+    <img src="/images/ebook2.png" alt="Digital Journal" />
+    <h2>Digital Journal</h2>
+    <p>Capture thoughts, dreams, and progress daily.</p>
+    <div class="price">$7.99</div>
+    <button class="btn snipcart-add-item"
+      data-item-id="digital-journal"
+      data-item-name="Digital Journal"
+      data-item-price="7.99"
+      data-item-url="/ebooks"
+      data-item-description="Capture thoughts and track your growth.">
+      Add to Cart
+    </button>
   </div>
 
-  <!-- Live Search Script -->
-  <script>
-    const searchInput = document.getElementById('search');
-    searchInput.addEventListener('input', () => {
-      const query = searchInput.value.toLowerCase();
-      document.querySelectorAll('.card').forEach(card => {
-        const title = card.querySelector('h2').innerText.toLowerCase();
-        const desc = card.querySelector('p').innerText.toLowerCase();
-        card.style.display = title.includes(query) || desc.includes(query) ? 'flex' : 'none';
-      });
-    });
-  </script>
-</body>
-</html>
+  <div class="card">
+    <img src="/images/ebook3.png" alt="Habit Tracker" />
+    <h2>Habit Tracker</h2>
+    <p>Build consistency and crush your goals.</p>
+    <div class="price">$4.99</div>
+    <button class="btn snipcart-add-item"
+      data-item-id="habit-tracker"
+      data-item-name="Habit Tracker"
+      data-item-price="4.99"
+      data-item-url="/ebooks"
+      data-item-description="Track habits and build discipline.">
+      Add to Cart
+    </button>
+  </div>
+
+  <div class="card">
+    <img src="/images/ebook4.png" alt="Notion Budget Template" />
+    <h2>Notion Budget Template</h2>
+    <p>Stay on top of your finances with ease.</p>
+    <div class="price">$5.99</div>
+    <button class="btn snipcart-add-item"
+      data-item-id="notion-budget"
+      data-item-name="Notion Budget Template"
+      data-item-price="5.99"
+      data-item-url="/ebooks"
+      data-item-description="Organize and track monthly spending.">
+      Add to Cart
+    </button>
+  </div>
+
+  <div class="card">
+    <img src="/images/ebook5.png" alt="Goal Setting Guide" />
+    <h2>Goal Setting Guide</h2>
+    <p>Define your future with actionable steps.</p>
+    <div class="price">$6.99</div>
+    <button class="btn snipcart-add-item"
+      data-item-id="goal-setting"
+      data-item-name="Goal Setting Guide"
+      data-item-price="6.99"
+      data-item-url="/ebooks"
+      data-item-description="Set clear goals with effective strategies.">
+      Add to Cart
+    </button>
+  </div>
+
+  <div class="card">
+    <img src="/images/ebook6.png" alt="Social Media Kit" />
+    <h2>Social Media Kit</h2>
+    <p>Templates for boosting your social content.</p>
+    <div class="price">$11.99</div>
+    <button class="btn snipcart-add-item"
+      data-item-id="social-kit"
+      data-item-name="Social Media Kit"
+      data-item-price="11.99"
+      data-item-url="/ebooks"
+      data-item-description="Engage better with curated post templates.">
+      Add to Cart
+    </button>
+  </div>
+
+  <div class="card">
+    <img src="/images/ebook7.png" alt="Gratitude Journal" />
+    <h2>Gratitude Journal</h2>
+    <p>Daily reflections for mental wellness.</p>
+    <div class="price">$4.49</div>
+    <button class="btn snipcart-add-item"
+      data-item-id="gratitude-journal"
+      data-item-name="Gratitude Journal"
+      data-item-price="4.49"
+      data-item-url="/ebooks"
+      data-item-description="Practice gratitude daily with this printable.">
+      Add to Cart
+    </button>
+  </div>
+
+  <div class="card">
+    <img src="/images/ebook8.png" alt="Freelancer Invoice Template" />
+    <h2>Freelancer Invoice Template</h2>
+    <p>Simple invoicing for your freelance work.</p>
+    <div class="price">$3.99</div>
+    <button class="btn snipcart-add-item"
+      data-item-id="invoice-template"
+      data-item-name="Freelancer Invoice Template"
+      data-item-price="3.99"
+      data-item-url="/ebooks"
+      data-item-description="Easily bill clients with this editable file.">
+      Add to Cart
+    </button>
+  </div>
+
+  <div class="card">
+    <img src="/images/ebook9.png" alt="Fitness Tracker" />
+    <h2>Fitness Tracker</h2>
+    <p>Track workouts, nutrition, and progress.</p>
+    <div class="price">$5.49</div>
+    <button class="btn snipcart-add-item"
+      data-item-id="fitness-tracker"
+      data-item-name="Fitness Tracker"
+      data-item-price="5.49"
+      data-item-url="/ebooks"
+      data-item-description="Monitor fitness goals daily or weekly.">
+      Add to Cart
+    </button>
+  </div>
+
+  <div class="card">
+    <img src="/images/ebook10.png" alt="Meal Planner" />
+    <h2>Meal Planner</h2>
+    <p>Organize meals and shopping lists.</p>
+    <div class="price">$4.75</div>
+    <button class="btn snipcart-add-item"
+      data-item-id="meal-planner"
+      data-item-name="Meal Planner"
+      data-item-price="4.75"
+      data-item-url="/ebooks"
+      data-item-description="Save time and eat better with planning.">
+      Add to Cart
+    </button>
+  </div>
+
+  <div class="card">
+    <img src="/images/ebook11.png" alt="Startup Checklist" />
+    <h2>Startup Checklist</h2>
+    <p>Everything you need to start your business.</p>
+    <div class="price">$6.49</div>
+    <button class="btn snipcart-add-item"
+      data-item-id="startup-checklist"
+      data-item-name="Startup Checklist"
+      data-item-price="6.49"
+      data-item-url="/ebooks"
+      data-item-description="Cover all essentials before launching.">
+      Add to Cart
+    </button>
+  </div>
+
+  <div class="card">
+    <img src="/images/ebook12.png" alt="Self-Care Tracker" />
+    <h2>Self-Care Tracker</h2>
+    <p>Track wellness routines for a balanced life.</p>
+    <div class="price">$3.75</div>
+    <button class="btn snipcart-add-item"
+      data-item-id="selfcare-tracker"
+      data-item-name="Self-Care Tracker"
+      data-item-price="3.75"
+      data-item-url="/ebooks"
+      data-item-description="Daily log for sleep, stress, hydration & more.">
+      Add to Cart
+    </button>
+  </div>
+
+  <div class="card">
+    <img src="/images/ebook13.png" alt="Content Calendar" />
+    <h2>Content Calendar</h2>
+    <p>Plan, create, and schedule with ease.</p>
+    <div class="price">$5.25</div>
+    <button class="btn snipcart-add-item"
+      data-item-id="content-calendar"
+      data-item-name="Content Calendar"
+      data-item-price="5.25"
+      data-item-url="/ebooks"
+      data-item-description="Stay consistent with organized content plans.">
+      Add to Cart
+    </button>
+  </div>
+
+</div>
