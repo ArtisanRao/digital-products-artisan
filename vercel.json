@@ -1,3 +1,6 @@
 {
-  "version": 2
+  "version": 2,
+  "rewrites": [
+    { "source": "/best-sellers", "destination": "/best-sellers/index.html" }
+  ]
 }
