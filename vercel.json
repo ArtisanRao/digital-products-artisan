@@ -6,5 +6,12 @@
       "source": "/best-sellers",
       "destination": "/best-sellers/index.html"
     }
+  ],
+  "redirects": [
+    {
+      "source": "/bestsellers",
+      "destination": "/best-sellers",
+      "permanent": true
+    }
   ]
 }
