@@ -2,85 +2,100 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Product Categories | Digital Products Artisan</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      background: #f8f8f8;
-      padding: 2rem;
-      max-width: 900px;
-      margin: auto;
-    }
-    h1 {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 1.5rem;
-    }
-    .card {
-      background: #fff;
-      border-radius: 8px;
-      padding: 1rem;
-      text-align: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-      transition: transform 0.2s ease;
-    }
-    .card:hover {
-      transform: scale(1.02);
-    }
-    .card img {
-      width: 100%;
-      max-height: 160px;
-      object-fit: cover;
-      border-radius: 5px;
-      margin-bottom: 0.5rem;
-    }
-    .card h2 {
-      font-size: 1.1rem;
-      margin: 0.5rem 0;
-    }
-    .card a {
-      display: inline-block;
-      margin-top: 0.5rem;
-      color: #007acc;
-      text-decoration: none;
-    }
-    .card a:hover {
-      text-decoration: underline;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Product Categories - Digital Products Artisan</title>
+  <meta name="description" content="Explore our wide range of digital product categories, including eBooks, templates, digital art, and more." />
+  <meta property="og:title" content="Product Categories - Digital Products Artisan" />
+  <meta property="og:description" content="Explore our wide range of digital product categories, including eBooks, templates, digital art, and more." />
+  <meta property="og:type" content="website" />
+  <link rel="stylesheet" href="/styles/globals.css" />
 </head>
-<body>
-  <h1>Product Categories</h1>
-  <div class="grid">
-    <div class="card">
-      <img src="/images/daily-planner.jpg" alt="Printable Planners" />
-      <h2>Printable Planners</h2>
-      <a href="/categories/printable-planners/">Explore</a>
-    </div>
-    <div class="card">
-      <img src="/images/invoice-template.jpg" alt="Business Templates" />
-      <h2>Business Templates</h2>
-      <a href="/categories/business-templates/">Explore</a>
-    </div>
-    <div class="card">
-      <img src="/images/email-templates.jpg" alt="Marketing Tools" />
-      <h2>Marketing Tools</h2>
-      <a href="/categories/marketing-tools/">Explore</a>
-    </div>
-    <div class="card">
-      <img src="/images/abstract-art.jpg" alt="Digital Art" />
-      <h2>Digital Art</h2>
-      <a href="/categories/digital-art/">Explore</a>
-    </div>
-    <div class="card">
-      <img src="/images/ebooks.jpg" alt="Ebooks" />
-      <h2>Ebooks</h2>
-      <a href="/categories/ebooks/">Explore</a>
-    </div>
-  </div>
+<body class="bg-background text-foreground font-sans min-h-screen p-6">
+  <main class="max-w-7xl mx-auto">
+    <h1 class="text-4xl font-bold mb-4">Product Categories</h1>
+    <p class="mb-8 text-lg max-w-3xl">Explore our wide range of digital product categories, including eBooks, templates, and more.</p>
+
+    <section class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+      <!-- Category Cards Start -->
+      
+      <a href="/categories/ebooks/index.html" class="card hover:shadow-lg transition-shadow duration-200 rounded-lg overflow-hidden">
+        <img src="/images/ebooks-cover.jpg" alt="Ebooks" class="w-full h-48 object-cover" />
+        <h2 class="text-xl font-semibold p-4">Ebooks</h2>
+      </a>
+
+      <a href="/categories/digital-art/index.html" class="card hover:shadow-lg transition-shadow duration-200 rounded-lg overflow-hidden">
+        <img src="/images/digital-art-cover.jpg" alt="Digital Art" class="w-full h-48 object-cover" />
+        <h2 class="text-xl font-semibold p-4">Digital Art</h2>
+      </a>
+
+      <a href="/categories/business-templates/index.html" class="card hover:shadow-lg transition-shadow duration-200 rounded-lg overflow-hidden">
+        <img src="/images/business-templates-cover.jpg" alt="Business Templates" class="w-full h-48 object-cover" />
+        <h2 class="text-xl font-semibold p-4">Business Templates</h2>
+      </a>
+
+      <a href="/categories/marketing-tools/index.html" class="card hover:shadow-lg transition-shadow duration-200 rounded-lg overflow-hidden">
+        <img src="/images/marketing-tools-cover.jpg" alt="Marketing Tools" class="w-full h-48 object-cover" />
+        <h2 class="text-xl font-semibold p-4">Marketing Tools</h2>
+      </a>
+
+      <a href="/categories/printable-planners/index.html" class="card hover:shadow-lg transition-shadow duration-200 rounded-lg overflow-hidden">
+        <img src="/images/printable-planners-cover.jpg" alt="Printable Planners" class="w-full h-48 object-cover" />
+        <h2 class="text-xl font-semibold p-4">Printable Planners</h2>
+      </a>
+
+      <a href="/categories/photography-prints/index.html" class="card hover:shadow-lg transition-shadow duration-200 rounded-lg overflow-hidden">
+        <img src="/images/photography-prints-cover.jpg" alt="Photography Prints" class="w-full h-48 object-cover" />
+        <h2 class="text-xl font-semibold p-4">Photography Prints</h2>
+      </a>
+
+      <a href="/categories/fonts/index.html" class="card hover:shadow-lg transition-shadow duration-200 rounded-lg overflow-hidden">
+        <img src="/images/fonts-cover.jpg" alt="Fonts" class="w-full h-48 object-cover" />
+        <h2 class="text-xl font-semibold p-4">Fonts</h2>
+      </a>
+
+      <a href="/categories/software-plugins/index.html" class="card hover:shadow-lg transition-shadow duration-200 rounded-lg overflow-hidden">
+        <img src="/images/software-plugins-cover.jpg" alt="Software Plugins" class="w-full h-48 object-cover" />
+        <h2 class="text-xl font-semibold p-4">Software Plugins</h2>
+      </a>
+
+      <a href="/categories/video-resources/index.html" class="card hover:shadow-lg transition-shadow duration-200 rounded-lg overflow-hidden">
+        <img src="/images/video-resources-cover.jpg" alt="Video Resources" class="w-full h-48 object-cover" />
+        <h2 class="text-xl font-semibold p-4">Video Resources</h2>
+      </a>
+
+      <a href="/categories/audio-samples/index.html" class="card hover:shadow-lg transition-shadow duration-200 rounded-lg overflow-hidden">
+        <img src="/images/audio-samples-cover.jpg" alt="Audio Samples" class="w-full h-48 object-cover" />
+        <h2 class="text-xl font-semibold p-4">Audio Samples</h2>
+      </a>
+
+      <a href="/categories/web-templates/index.html" class="card hover:shadow-lg transition-shadow duration-200 rounded-lg overflow-hidden">
+        <img src="/images/web-templates-cover.jpg" alt="Web Templates" class="w-full h-48 object-cover" />
+        <h2 class="text-xl font-semibold p-4">Web Templates</h2>
+      </a>
+
+      <a href="/categories/social-media-kits/index.html" class="card hover:shadow-lg transition-shadow duration-200 rounded-lg overflow-hidden">
+        <img src="/images/social-media-kits-cover.jpg" alt="Social Media Kits" class="w-full h-48 object-cover" />
+        <h2 class="text-xl font-semibold p-4">Social Media Kits</h2>
+      </a>
+
+      <a href="/categories/resume-templates/index.html" class="card hover:shadow-lg transition-shadow duration-200 rounded-lg overflow-hidden">
+        <img src="/images/resume-templates-cover.jpg" alt="Resume Templates" class="w-full h-48 object-cover" />
+        <h2 class="text-xl font-semibold p-4">Resume Templates</h2>
+      </a>
+
+      <a href="/categories/icons/index.html" class="card hover:shadow-lg transition-shadow duration-200 rounded-lg overflow-hidden">
+        <img src="/images/icons-cover.jpg" alt="Icons" class="w-full h-48 object-cover" />
+        <h2 class="text-xl font-semibold p-4">Icons</h2>
+      </a>
+
+      <a href="/categories/print-designs/index.html" class="card hover:shadow-lg transition-shadow duration-200 rounded-lg overflow-hidden">
+        <img src="/images/print-designs-cover.jpg" alt="Print Designs" class="w-full h-48 object-cover" />
+        <h2 class="text-xl font-semibold p-4">Print Designs</h2>
+      </a>
+
+      <!-- Category Cards End -->
+    </section>
+  </main>
 </body>
 </html>
+
