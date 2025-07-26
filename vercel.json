@@ -1,6 +1,10 @@
 {
   "version": 2,
+  "cleanUrls": true,
   "rewrites": [
-    { "source": "/best-sellers", "destination": "/best-sellers/index.html" }
+    {
+      "source": "/best-sellers",
+      "destination": "/best-sellers/index.html"
+    }
   ]
 }
