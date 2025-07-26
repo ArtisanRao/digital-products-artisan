@@ -3,20 +3,99 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Best Sellers - Digital Products Artisan</title>
+  <title>Best Sellers | Digital Products Artisan</title>
+  <meta name="description" content="Explore our top 3 best-selling digital products designed for personal growth and productivity." />
+  <meta property="og:title" content="Best Sellers | Digital Products Artisan" />
+  <meta property="og:description" content="Discover the most popular downloads from Digital Products Artisan." />
+  <meta property="og:image" content="/images/best-sellers-cover.jpg" />
+  <meta property="og:url" content="https://digitalproductsartisan.com/best-sellers" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <link rel="stylesheet" href="https://cdn.snipcart.com/themes/v3.3.0/default/snipcart.css" />
 </head>
-<body>
-  <h1>Best Sellers</h1>
-  <p>Discover our most popular and high-performing digital products.</p>
+<body class="bg-gray-50 text-gray-900 p-6">
+  <main class="max-w-6xl mx-auto">
+    <h1 class="text-4xl font-bold mb-4">Best Sellers</h1>
+    <p class="text-lg mb-8 text-gray-700">Our most popular and high-performing digital products.</p>
 
-  <section class="product-card">
-    <h2>Bestseller Ebook</h2>
-    <h3>Self-Help Success Guide</h3>
-    <p>Unlock your potential with this empowering guide.</p>
-    <p>€7.99</p>
-    <a href="product-details.html">View Details</a>
-  </section>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Product 1 -->
+      <div class="bg-white rounded-2xl shadow p-6 flex flex-col justify-between">
+        <div>
+          <h2 class="text-xl font-bold mb-2">Self-Help Success Guide</h2>
+          <p class="text-sm text-gray-600 mb-4">Unlock your potential with this empowering ebook.</p>
+        </div>
+        <div>
+          <p class="text-lg font-semibold mb-3">€7.99</p>
+          <a href="/products/self-help-success-guide.html" class="block bg-black text-white text-center px-4 py-2 rounded hover:bg-gray-800 mb-2">View Details</a>
+          <button 
+            class="snipcart-add-item w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            data-item-id="self-help-success-guide"
+            data-item-name="Self-Help Success Guide"
+            data-item-price="7.99"
+            data-item-url="/best-sellers"
+            data-item-description="Empowering ebook for personal growth."
+            data-item-file="/products/ebook-self-help-success-guide.pdf"
+          >
+            Add to Cart
+          </button>
+        </div>
+      </div>
 
-  <a href="/categories/">← Back to Categories</a>
+      <!-- Product 2 -->
+      <div class="bg-white rounded-2xl shadow p-6 flex flex-col justify-between">
+        <div>
+          <h2 class="text-xl font-bold mb-2">Freelancer Startup Kit</h2>
+          <p class="text-sm text-gray-600 mb-4">Everything you need to kickstart your freelance career.</p>
+        </div>
+        <div>
+          <p class="text-lg font-semibold mb-3">€12.99</p>
+          <a href="/products/freelancer-startup-kit.html" class="block bg-black text-white text-center px-4 py-2 rounded hover:bg-gray-800 mb-2">View Details</a>
+          <button 
+            class="snipcart-add-item w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            data-item-id="freelancer-startup-kit"
+            data-item-name="Freelancer Startup Kit"
+            data-item-price="12.99"
+            data-item-url="/best-sellers"
+            data-item-description="Starter kit for new freelancers."
+            data-item-file="/products/freelancer-startup-kit.pdf"
+          >
+            Add to Cart
+          </button>
+        </div>
+      </div>
+
+      <!-- Product 3 -->
+      <div class="bg-white rounded-2xl shadow p-6 flex flex-col justify-between">
+        <div>
+          <h2 class="text-xl font-bold mb-2">30-Day Productivity Planner</h2>
+          <p class="text-sm text-gray-600 mb-4">Plan and track your goals with this printable planner.</p>
+        </div>
+        <div>
+          <p class="text-lg font-semibold mb-3">€4.99</p>
+          <a href="/products/productivity-planner.html" class="block bg-black text-white text-center px-4 py-2 rounded hover:bg-gray-800 mb-2">View Details</a>
+          <button 
+            class="snipcart-add-item w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            data-item-id="productivity-planner"
+            data-item-name="30-Day Productivity Planner"
+            data-item-price="4.99"
+            data-item-url="/best-sellers"
+            data-item-description="Daily productivity printable planner."
+            data-item-file="/products/30-day-productivity-planner.pdf"
+          >
+            Add to Cart
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-10">
+      <a href="/categories/" class="text-blue-600 hover:underline text-sm">← Back to Categories</a>
+    </div>
+  </main>
+
+  <!-- Snipcart -->
+  <div hidden id="snipcart" data-api-key="YOUR_SNIPCART_API_KEY"></div>
+  <script async src="https://cdn.snipcart.com/themes/v3.3.0/default/snipcart.js"></script>
 </body>
 </html>
