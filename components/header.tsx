@@ -26,38 +26,23 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <Link
-              href="/products"
-              className="text-gray-700 hover:text-blue-700 font-medium transition-colors relative group"
-            >
+            <Link href="/products" className="text-gray-700 hover:text-blue-700 font-medium transition-colors relative group">
               Products
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"></span>
             </Link>
-            <Link
-              href="/bundles"
-              className="text-gray-700 hover:text-blue-700 font-medium transition-colors relative group"
-            >
+            <Link href="/bundles" className="text-gray-700 hover:text-blue-700 font-medium transition-colors relative group">
               Bundles
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"></span>
             </Link>
-            <Link
-              href="/categories"
-              className="text-gray-700 hover:text-blue-700 font-medium transition-colors relative group"
-            >
+            <Link href="/categories" className="text-gray-700 hover:text-blue-700 font-medium transition-colors relative group">
               Categories
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"></span>
             </Link>
-            <Link
-              href="/affiliate"
-              className="text-gray-700 hover:text-blue-700 font-medium transition-colors relative group"
-            >
+            <Link href="/affiliate" className="text-gray-700 hover:text-blue-700 font-medium transition-colors relative group">
               Affiliate
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"></span>
             </Link>
-            <Link
-              href="/support"
-              className="text-gray-700 hover:text-blue-700 font-medium transition-colors relative group"
-            >
+            <Link href="/support" className="text-gray-700 hover:text-blue-700 font-medium transition-colors relative group">
               Support
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"></span>
             </Link>
@@ -149,34 +134,19 @@ export default function Header() {
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-blue-100 bg-blue-50/50">
             <nav className="flex flex-col space-y-4">
-              <Link
-                href="/products"
-                className="text-gray-700 hover:text-blue-700 font-medium px-2 py-1 rounded hover:bg-blue-100 transition-colors"
-              >
+              <Link href="/products" className="text-gray-700 hover:text-blue-700 font-medium px-2 py-1 rounded hover:bg-blue-100 transition-colors">
                 Products
               </Link>
-              <Link
-                href="/bundles"
-                className="text-gray-700 hover:text-blue-700 font-medium px-2 py-1 rounded hover:bg-blue-100 transition-colors"
-              >
+              <Link href="/bundles" className="text-gray-700 hover:text-blue-700 font-medium px-2 py-1 rounded hover:bg-blue-100 transition-colors">
                 Bundles
               </Link>
-              <Link
-                href="/categories"
-                className="text-gray-700 hover:text-blue-700 font-medium px-2 py-1 rounded hover:bg-blue-100 transition-colors"
-              >
+              <Link href="/categories" className="text-gray-700 hover:text-blue-700 font-medium px-2 py-1 rounded hover:bg-blue-100 transition-colors">
                 Categories
               </Link>
-              <Link
-                href="/affiliate"
-                className="text-gray-700 hover:text-blue-700 font-medium px-2 py-1 rounded hover:bg-blue-100 transition-colors"
-              >
+              <Link href="/affiliate" className="text-gray-700 hover:text-blue-700 font-medium px-2 py-1 rounded hover:bg-blue-100 transition-colors">
                 Affiliate
               </Link>
-              <Link
-                href="/support"
-                className="text-gray-700 hover:text-blue-700 font-medium px-2 py-1 rounded hover:bg-blue-100 transition-colors"
-              >
+              <Link href="/support" className="text-gray-700 hover:text-blue-700 font-medium px-2 py-1 rounded hover:bg-blue-100 transition-colors">
                 Support
               </Link>
               {!user && (
