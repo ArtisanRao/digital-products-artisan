@@ -26,8 +26,8 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-blue-100">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Logo size="md" />
+          {/* Logo with added right margin for spacing */}
+          <Logo size="md" className="mr-8" />
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
