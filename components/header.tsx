@@ -42,7 +42,7 @@ export default function Header() {
               Affiliate
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"></span>
             </Link>
-            <Link href="/support" className="text-gray-700 hover:text-blue-700 font-medium transition-colors relative group">
+            <Link href="/support" className="text-gray-700 hover:text-blue-700 font-medium transition-colors relative group ml-4">
               Support
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"></span>
             </Link>
