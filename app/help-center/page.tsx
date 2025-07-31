@@ -1,8 +1,13 @@
 export default function HelpCenterPage() {
   return (
-    <main className="container mx-auto p-6">
-      <h1 className="text-4xl font-bold mb-6">Help Center</h1>
-      <p>Find answers and assistance here.</p>
-    </main>
+    <div className="max-w-3xl mx-auto px-4 py-16">
+      <h1 className="text-3xl font-bold mb-6">Help Center</h1>
+      <p className="mb-4">Welcome to our Help Center. Browse FAQs, policies, and guides to get the support you need.</p>
+      <ul className="list-disc pl-5 space-y-2">
+        <li><a href="/faq" className="text-blue-600 underline">Frequently Asked Questions</a></li>
+        <li><a href="/returns" className="text-blue-600 underline">Returns & Refund Policy</a></li>
+        <li><a href="/contact-us" className="text-blue-600 underline">Contact Our Team</a></li>
+      </ul>
+    </div>
   );
 }
