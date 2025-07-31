@@ -1,4 +1,6 @@
 "use client"
+
+import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
@@ -12,18 +14,22 @@ export default function CheckoutPage() {
   const { items, total } = useCart()
   const { user } = useAuth()
 
+  // Handle redirects in useEffect so they only run on the client
+  useEffect(() => {
+    if (!user) {
+      router.push("/login?redirect=/checkout")
+    } else if (items.length === 0) {
+      router.push("/cart")
+    }
+  }, [user, items, router])
+
+  // While the redirect happens, don't render the page
+  if (!user || items.length === 0) {
+    return null
+  }
+
   const handlePaymentSuccess = (orderId: string) => {
     router.push(`/order-confirmation/${orderId}`)
-  }
-
-  if (!user) {
-    router.push("/login?redirect=/checkout")
-    return null
-  }
-
-  if (items.length === 0) {
-    router.push("/cart")
-    return null
   }
 
   return (
