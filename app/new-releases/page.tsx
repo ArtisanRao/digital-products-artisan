@@ -1,8 +1,13 @@
-export default function NewReleases() {
+export const metadata = {
+  title: "New Releases | Digital Products Artisan",
+  description: "Check out the latest additions to our digital product lineup.",
+}
+
+export default function NewReleasesPage() {
   return (
-    <main className="p-6">
-      <h1 className="text-3xl font-bold">New Releases</h1>
-      <p className="mt-4">Check out our latest additions.</p>
+    <main className="container py-12">
+      <h1 className="text-3xl font-bold mb-4">New Releases</h1>
+      <p>Discover our newest digital downloads and fresh content.</p>
     </main>
-  );
+  )
 }
