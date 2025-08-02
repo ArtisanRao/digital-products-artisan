@@ -1,4 +1,8 @@
-/** @type {import('next').NextConfig} */
+﻿ /** @type {import('next').NextConfig} */
+
+// Added redirects config for hyphenated URLs
+// Harmless comment to force Git to detect a change
+
 const nextConfig = {
   reactStrictMode: true,
   experimental: {
@@ -12,6 +16,21 @@ const nextConfig = {
   },
   eslint: {
     ignoreDuringBuilds: true,
+  },
+
+  async redirects() {
+    return [
+      {
+        source: '/contact',
+        destination: '/contact-us',
+        permanent: true,
+      },
+      {
+        source: '/bestsellers',
+        destination: '/best-sellers',
+        permanent: true,
+      },
+    ];
   },
 };
 
