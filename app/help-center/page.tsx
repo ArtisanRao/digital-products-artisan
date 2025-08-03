@@ -1,63 +1,13 @@
-﻿// app/help-center/page.tsx
-
-import { Metadata } from "next";
-
-export const metadata: Metadata = {
-  title: "Help Center – Digital Products Artisan",
-  description: "Find answers to common questions, get support, and explore our resources to make the most of your digital product purchases.",
-};
-
-export default function HelpCenterPage() {
+﻿export default function HelpPage() {
   return (
-    <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-      <h1 className="text-4xl font-bold mb-6">Help Center</h1>
-      <p className="text-lg text-gray-600 mb-8">
-        Welcome to the Digital Products Artisan Help Center. Browse FAQs, get
-        support, or contact us directly if you need assistance.
-      </p>
-
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-semibold">📦 Orders & Downloads</h2>
-          <p className="text-gray-700">
-            After purchasing, you’ll receive an email with a secure download
-            link. If you haven’t received it, check your spam folder or{" "}
-            <a href="/contact" className="text-blue-600 underline">
-              contact support
-            </a>
-            .
-          </p>
-        </div>
-
-        <div>
-          <h2 className="text-2xl font-semibold">🔐 Licensing</h2>
-          <p className="text-gray-700">
-            Each product comes with a license for personal or commercial use
-            depending on the product description. Redistribution or resale is
-            prohibited unless explicitly allowed.
-          </p>
-        </div>
-
-        <div>
-          <h2 className="text-2xl font-semibold">💳 Payment & Refunds</h2>
-          <p className="text-gray-700">
-            We accept all major credit cards via Stripe. Due to the nature of
-            digital goods, all sales are final. However, if you experience an
-            issue, we’ll do our best to make it right.
-          </p>
-        </div>
-
-        <div>
-          <h2 className="text-2xl font-semibold">💬 Contact Support</h2>
-          <p className="text-gray-700">
-            Need help? Visit our{" "}
-            <a href="/contact" className="text-blue-600 underline">
-              contact page
-            </a>{" "}
-            and we’ll respond within 24–48 hours.
-          </p>
-        </div>
-      </div>
-    </div>
+    <main className="p-8">
+      <h1 className="text-3xl font-bold mb-4">Help Center</h1>
+      <p className="mb-2">Welcome to our Help Center. Below are common topics:</p>
+      <ul className="list-disc pl-5">
+        <li>How to download your purchased product</li>
+        <li>How to contact support</li>
+        <li>Refund and cancellation policies</li>
+      </ul>
+    </main>
   );
 }
