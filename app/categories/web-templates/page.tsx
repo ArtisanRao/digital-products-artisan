@@ -1,38 +1,30 @@
 'use client';
 
 export default function WebTemplatesPage() {
-  const templates = [
+  const webTemplates = [
     {
-      id: "landing-pages",
-      title: "Landing Page Template Kit",
+      id: "portfolio-starter-kit",
+      title: "Portfolio Starter Kit",
       image: "/images/web-templates-cover.jpg",
-      price: 6.75,
-      description: "Modern and responsive landing pages in HTML, Figma & Canva.",
-      fileUrl: "/downloads/landing-pages.zip",
+      price: 6.95,
+      description: "Modern personal portfolio template (HTML, CSS, JS).",
+      fileUrl: "/downloads/portfolio-starter-kit.zip",
     },
     {
-      id: "portfolio-template",
-      title: "Portfolio Website Template",
-      image: "/images/memoir-autobiography.jpg",
-      price: 5.25,
-      description: "Showcase your skills and work with this elegant portfolio design.",
-      fileUrl: "/downloads/portfolio-template.zip",
+      id: "business-landing-page",
+      title: "Business Landing Page",
+      image: "/images/business-templates-cover.jpg",
+      price: 5.50,
+      description: "Clean and responsive landing page for startups.",
+      fileUrl: "/downloads/business-landing-page.zip",
     },
     {
-      id: "business-ui-kit",
-      title: "Business Website UI Kit",
-      image: "/images/mystery-thriller-novel.jpg",
-      price: 7.49,
-      description: "Complete UI elements and layouts for business websites.",
-      fileUrl: "/downloads/ui-kit.zip",
-    },
-    {
-      id: "blog-starter",
-      title: "Personal Blog Starter Pack",
-      image: "/images/ebooks-cover.jpg",
-      price: 4.95,
-      description: "Quick-start blog setup with styles, layouts, and assets.",
-      fileUrl: "/downloads/blog-template.zip",
+      id: "ui-components-pack",
+      title: "UI Components Pack",
+      image: "/images/icons-cover.jpg",
+      price: 4.75,
+      description: "Reusable components for rapid web development.",
+      fileUrl: "/downloads/ui-components-pack.zip",
     },
   ];
 
@@ -40,7 +32,7 @@ export default function WebTemplatesPage() {
     <main className="max-w-7xl mx-auto px-4 py-12">
       <h1 className="text-4xl font-bold text-center mb-10">🌐 Web Templates</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        {templates.map((item) => (
+        {webTemplates.map((item) => (
           <div
             key={item.id}
             className="border rounded-xl p-4 shadow hover:shadow-lg transition"
@@ -61,7 +53,9 @@ export default function WebTemplatesPage() {
               data-item-url="/categories/web-templates"
               data-item-description={item.description}
               data-item-image={item.image}
-              data-item-file-guid={item.fileUrl}
+              data-item-custom1-name="download_url"
+              data-item-custom1-value={item.fileUrl}
+              data-item-custom1-type="hidden"
             >
               Add to Cart
             </button>
