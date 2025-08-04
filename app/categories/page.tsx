@@ -1,96 +1,90 @@
-import Link from "next/link";
+'use client';
+
+import Link from 'next/link';
 
 const categories = [
   {
-    title: "📚 eBooks",
-    image: "/images/ebooks-cover.jpg",
-    slug: "ebooks",
+    name: '📚 eBooks',
+    slug: 'ebooks',
+    image: '/images/ebooks-cover.jpg',
   },
   {
-    title: "🎨 Digital Art",
-    image: "/images/digital-art-cover.jpg",
-    slug: "digital-art",
+    name: '🎨 Digital Art',
+    slug: 'digital-art',
+    image: '/images/digital-art-cover.jpg',
   },
   {
-    title: "🧾 Templates",
-    image: "/images/business-templates-cover.jpg",
-    slug: "templates",
+    name: '🧾 Templates',
+    slug: 'business-templates',
+    image: '/images/business-templates-cover.jpg',
   },
   {
-    title: "📥 Marketing Tools",
-    image: "/images/marketing-tools-cover.jpg",
-    slug: "marketing-tools",
+    name: '📥 Marketing Tools',
+    slug: 'marketing-tools',
+    image: '/images/marketing-tools-cover.jpg',
   },
   {
-    title: "🗓️ Printable Planners",
-    image: "/images/printable-planners-cover.jpg",
-    slug: "printable-planners",
+    name: '🗓️ Printable Planners',
+    slug: 'printable-planners',
+    image: '/images/printable-planners-cover.jpg',
   },
   {
-    title: "📸 Photography Prints",
-    image: "/images/photography-prints-cover.jpg",
-    slug: "photography-prints",
+    name: '📸 Photography Prints',
+    slug: 'photography-prints',
+    image: '/images/photography-prints-cover.jpg',
   },
   {
-    title: "🔤 Fonts",
-    image: "/images/fonts-cover.jpg",
-    slug: "fonts",
+    name: '🔤 Fonts',
+    slug: 'fonts',
+    image: '/images/fonts-cover.jpg',
   },
   {
-    title: "🔌 Software Plugins",
-    image: "/images/software-plugins-cover.jpg",
-    slug: "software-plugins",
+    name: '🔘 Icons',
+    slug: 'icons',
+    image: '/images/icons-cover.jpg',
   },
   {
-    title: "🎥 Video Resources",
-    image: "/images/video-resources-cover.jpg",
-    slug: "video-resources",
+    name: '🌐 Web Templates',
+    slug: 'web-templates',
+    image: '/images/web-templates-cover.jpg',
   },
   {
-    title: "🎵 Audio Samples",
-    image: "/images/audio-samples-cover.jpg",
-    slug: "audio-samples",
+    name: '🎥 Video Resources',
+    slug: 'video-resources',
+    image: '/images/video-resources-cover.jpg',
   },
   {
-    title: "🌐 Web Templates",
-    image: "/images/web-templates-cover.jpg",
-    slug: "web-templates",
+    name: '🎵 Audio Samples',
+    slug: 'audio-samples',
+    image: '/images/audio-samples-cover.jpg',
   },
   {
-    title: "📱 Social Media Kits",
-    image: "/images/social-media-kits-cover.jpg",
-    slug: "social-media-kits",
-  },
-  {
-    title: "📄 Resume Templates",
-    image: "/images/resume-templates-cover.jpg",
-    slug: "resume-templates",
-  },
-  {
-    title: "🔘 Icons",
-    image: "/images/icons-cover.jpg",
-    slug: "icons",
+    name: '📱 Social Media Kits',
+    slug: 'social-media-kits',
+    image: '/images/social-media-kits-cover.jpg',
   },
 ];
 
 export default function CategoriesPage() {
   return (
     <main className="max-w-7xl mx-auto px-4 py-12">
-      <h1 className="text-4xl font-bold text-center mb-10">Browse by Category</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      <h1 className="text-4xl font-bold text-center mb-12">🗂️ All Categories</h1>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {categories.map((category) => (
           <Link
-            href={`/categories/${category.slug}`}
             key={category.slug}
-            className="block overflow-hidden border rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300"
+            href={`/categories/${category.slug}`}
+            className="block group border rounded-xl overflow-hidden shadow hover:shadow-lg transition"
           >
             <img
               src={category.image}
-              alt={category.title}
-              className="w-full h-48 object-cover"
+              alt={category.name}
+              className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
             />
-            <div className="p-4">
-              <h2 className="text-xl font-semibold">{category.title}</h2>
+            <div className="p-4 bg-white">
+              <h2 className="text-xl font-semibold group-hover:text-blue-600">
+                {category.name}
+              </h2>
             </div>
           </Link>
         ))}
