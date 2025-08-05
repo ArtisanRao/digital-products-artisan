@@ -1,43 +1,31 @@
-// app/returns/page.tsx
-
-export const metadata = {
-  title: "Returns & Refund Policy | Digital Products Artisan",
-  description: "Read our refund and return policy for digital downloads.",
-}
+import React from "react"
 
 export default function ReturnsPage() {
   return (
-    <main className="max-w-3xl mx-auto py-12 px-6">
-      <h1 className="text-4xl font-bold mb-8 text-center">Returns & Refund Policy</h1>
+    <div className="max-w-3xl mx-auto p-6">
+      <h1 className="text-3xl font-bold mb-6">Returns & Refund Policy</h1>
 
-      <div className="space-y-6 text-base leading-relaxed">
+      <div className="space-y-6 text-gray-700">
         <p>
-          At Digital Products Artisan, your satisfaction is our priority. Since our products are digital and delivered
-          instantly, we do not offer traditional returns.
+          Since all our products are digital and delivered instantly after purchase, we generally do not offer refunds once a file has been downloaded.
         </p>
 
-        <h2 className="text-xl font-semibold mt-8">Refunds</h2>
         <p>
-          All sales are final. We do not offer refunds for change of mind or accidental purchases. However, if you are
-          experiencing a technical issue with your download, please contact us and we will do our best to resolve the
-          problem quickly.
+          However, if you encounter an issue with a file—such as corruption, download problems, or incorrect content—please contact us within 7 days of purchase. We will investigate and, if necessary, offer a replacement or refund at our discretion.
         </p>
 
-        <h2 className="text-xl font-semibold mt-8">Incorrect or Corrupted Files</h2>
         <p>
-          If you receive the wrong file or your download is corrupted, contact us within 7 days of purchase and we’ll
-          replace it free of charge.
+          To request assistance, please email our support team with your order number, a description of the issue, and any relevant screenshots or details.
         </p>
 
-        <h2 className="text-xl font-semibold mt-8">Need Help?</h2>
         <p>
-          Reach out to us at{" "}
-          <a href="mailto:support@digitalproductsartisan.com" className="text-blue-600 underline">
-            support@digitalproductsartisan.com
-          </a>{" "}
-          and include your order number and a description of the issue. We’re here to help!
+          We want you to be satisfied with your purchase, and we stand by the quality of our digital goods. In rare cases where a product does not meet expectations, we will work with you to find a fair solution.
+        </p>
+
+        <p>
+          Note: Refunds will not be granted for change-of-mind, accidental purchases, or failure to check product compatibility before buying.
         </p>
       </div>
-    </main>
+    </div>
   )
 }

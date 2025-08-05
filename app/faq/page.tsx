@@ -1,64 +1,74 @@
-// app/faq/page.tsx
-
-export const metadata = {
-  title: "FAQs | Digital Products Artisan",
-  description: "Find answers to frequently asked questions about our digital products, downloads, and support.",
-}
+import React from "react"
 
 export default function FAQPage() {
   return (
-    <main className="max-w-3xl mx-auto py-12 px-6">
-      <h1 className="text-4xl font-bold mb-8 text-center">Frequently Asked Questions</h1>
+    <div className="max-w-3xl mx-auto p-6">
+      <h1 className="text-3xl font-bold mb-6">Frequently Asked Questions</h1>
+
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold mb-2">What is Digital Products Artisan?</h2>
+        <p className="text-gray-700">
+          Digital Products Artisan is a curated marketplace for premium digital goods—ebooks, AI prompts & packs, templates, graphics, planners, and productivity assets. Whether you're a creator, entrepreneur, building a brand, managing a project, boosting creativity or a lifelong learner, we offer the tools you need to bring your vision to life—all delivered instantly and effortlessly, with no fluff.
+        </p>
+      </div>
 
       <div className="space-y-6">
-        <section>
-          <h2 className="text-xl font-semibold">What is Digital Products Artisan?</h2>
-          <p>
-            Digital Products Artisan is your one-stop shop for high-quality digital downloads including ebooks,
-            templates, graphics, and productivity tools.
+        <div>
+          <h3 className="text-lg font-medium">Are your digital products compatible with my software?</h3>
+          <p className="text-gray-700">
+            Most of our products come in widely supported formats like PDF, PSD, PNG, DOCX, and more. Product pages include compatibility details — always check there first.
           </p>
-        </section>
+        </div>
 
-        <section>
-          <h2 className="text-xl font-semibold">How will I receive my purchase?</h2>
-          <p>
-            Immediately after completing your payment, you’ll receive a secure download link via email. You can also
-            download your files directly from the checkout confirmation page.
+        <div>
+          <h3 className="text-lg font-medium">Can I customize the templates I purchase?</h3>
+          <p className="text-gray-700">
+            Yes! Many of our templates are fully editable using common software like Microsoft Office, Google Docs, Adobe tools, or Canva (if stated). Customization instructions are usually included.
           </p>
-        </section>
+        </div>
 
-        <section>
-          <h2 className="text-xl font-semibold">Can I use the products for commercial projects?</h2>
-          <p>
-            Yes! Unless otherwise stated, our products come with a license that allows both personal and limited
-            commercial use. Please refer to the specific product page for exact licensing terms.
+        <div>
+          <h3 className="text-lg font-medium">Is there a limit to how many times I can download my purchase?</h3>
+          <p className="text-gray-700">
+            No, once you've purchased a product, the download link is yours to use at any time. If the link expires or is lost, just contact us.
           </p>
-        </section>
+        </div>
 
-        <section>
-          <h2 className="text-xl font-semibold">I didn’t receive my download. What should I do?</h2>
-          <p>
-            Please check your spam or junk folder first. If you still don’t see the email, contact us at
-            <a href="mailto:support@digitalproductsartisan.com" className="text-blue-600 underline">
-              {" "}
-              support@digitalproductsartisan.com
-            </a>{" "}
-            and we’ll resend your files.
+        <div>
+          <h3 className="text-lg font-medium">How long will my download link be active?</h3>
+          <p className="text-gray-700">
+            Download links are typically active for at least 7 days after purchase. However, we’re happy to reactivate or resend it if needed.
           </p>
-        </section>
+        </div>
 
-        <section>
-          <h2 className="text-xl font-semibold">Do you offer refunds?</h2>
-          <p>
-            Because our products are digital and instantly delivered, we generally do not offer refunds. However, if you
-            experience issues, please contact us and we’ll do our best to help. See our{" "}
-            <a href="/returns" className="text-blue-600 underline">
-              Returns Policy
-            </a>{" "}
-            for more details.
+        <div>
+          <h3 className="text-lg font-medium">Do I need an account to purchase or download?</h3>
+          <p className="text-gray-700">
+            No account is required to make a purchase, but creating one allows you to track orders and easily access your downloads anytime.
           </p>
-        </section>
+        </div>
+
+        <div>
+          <h3 className="text-lg font-medium">Can I get an invoice or receipt?</h3>
+          <p className="text-gray-700">
+            Yes, a receipt is automatically emailed to you after purchase. If you need a business invoice, contact support with your billing details.
+          </p>
+        </div>
+
+        <div>
+          <h3 className="text-lg font-medium">Do you offer bulk or business licensing?</h3>
+          <p className="text-gray-700">
+            We offer commercial licenses for most products and can arrange bulk or extended licensing for teams. Contact us with your request.
+          </p>
+        </div>
+
+        <div>
+          <h3 className="text-lg font-medium">I found a bug or issue with a file. What should I do?</h3>
+          <p className="text-gray-700">
+            Please contact us immediately with details and a screenshot if possible. We’ll replace, update, or assist you as quickly as possible.
+          </p>
+        </div>
       </div>
-    </main>
+    </div>
   )
 }
