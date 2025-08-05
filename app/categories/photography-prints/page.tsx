@@ -5,7 +5,7 @@ export default function PhotographyPrintsPage() {
     {
       id: "nature-landscapes",
       title: "Nature Landscapes Pack",
-      image: "/images/photography-prints-cover.jpg",
+      image: "/images/photography-prints-cover.jpg", // ✅ should exist
       price: 6.75,
       description: "A stunning collection of printable scenic landscape shots.",
       fileUrl: "/downloads/nature-landscapes.zip",
@@ -13,7 +13,7 @@ export default function PhotographyPrintsPage() {
     {
       id: "urban-aesthetic",
       title: "Urban Aesthetic Print Set",
-      image: "/images/digital-art-cover.jpg",
+      image: "/images/digital-art-cover.jpg", // ✅ reused cover (OK if intentional)
       price: 5.25,
       description: "Explore city life through a modern, artistic lens.",
       fileUrl: "/downloads/urban-aesthetic.zip",
@@ -21,7 +21,7 @@ export default function PhotographyPrintsPage() {
     {
       id: "monochrome-moods",
       title: "Monochrome Mood Collection",
-      image: "/images/true-crime-novel.jpg",
+      image: "/images/true-crime-novel.jpg", // ❓ consider renaming to match subject
       price: 4.95,
       description: "Black & white photo art prints for minimalist lovers.",
       fileUrl: "/downloads/monochrome-moods.zip",
@@ -29,7 +29,7 @@ export default function PhotographyPrintsPage() {
     {
       id: "bokeh-pack",
       title: "Abstract Bokeh Photography Pack",
-      image: "/images/print-designs-cover.jpg",
+      image: "/images/print-designs-cover.jpg", // ✅ should exist
       price: 5.99,
       description: "Colorful light-blur textures for background art or decor.",
       fileUrl: "/downloads/bokeh-pack.zip",
