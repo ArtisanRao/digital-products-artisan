@@ -21,7 +21,7 @@ export default function IconsPage() {
     {
       id: "finance-icons",
       title: "Business & Finance Icons",
-      image: "/images/the-code-of-success.jpg",
+      image: "/images/business-&-finance-icons-cover.jpg", // ✅ updated image path
       price: 3.99,
       description: "Icons representing analytics, currency, and finance tools.",
       fileUrl: "/downloads/finance-icons.zip",
@@ -71,4 +71,3 @@ export default function IconsPage() {
     </main>
   );
 }
- 
