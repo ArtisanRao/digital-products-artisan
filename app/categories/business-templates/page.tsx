@@ -13,7 +13,7 @@ export default function TemplatesPage() {
     {
       id: "excel-tracker-pro",
       title: "Excel Tracker Pro",
-      image: "/images/the-code-of-success.jpg",
+      image: "/images/the-code-of-success-cover.jpg", // ✅ updated with -cover
       price: 4.99,
       description: "Advanced Excel template for project & habit tracking.",
       fileUrl: "/downloads/excel-tracker-pro.xlsx",

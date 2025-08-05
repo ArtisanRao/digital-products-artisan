@@ -13,7 +13,7 @@ export default function AudioSamplesPage() {
     {
       id: "motivational-intros",
       title: "Motivational Podcast Intros",
-      image: "/images/the-code-of-success.jpg",
+      image: "/images/the-code-of-success-cover.jpg", // ✅ updated with -cover
       price: 3.75,
       description: "Uplifting intros and transitions for audio creators.",
       fileUrl: "/downloads/motivational-intros.zip",
@@ -21,7 +21,7 @@ export default function AudioSamplesPage() {
     {
       id: "calm-ambient-kit",
       title: "Calm Ambient Background Kit",
-      image: "/images/mystery-thriller-novel.jpg",
+      image: "/images/mystery-thriller-novel-cover.jpg", // ✅ updated with -cover
       price: 4.25,
       description: "Peaceful audio beds for mindfulness and meditation.",
       fileUrl: "/downloads/calm-ambient-kit.zip",

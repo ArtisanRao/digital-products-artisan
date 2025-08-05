@@ -5,7 +5,7 @@ export default function EbooksPage() {
     {
       id: "50-powerful-prompts",
       title: "50 Powerful Prompts",
-      image: "/images/50-powerful-prompts.jpg",
+      image: "/images/50-powerful-prompts-cover.jpg", // updated
       price: 5.99,
       description: "Supercharge your creativity with 50 AI-ready prompts.",
       fileUrl: "/downloads/50-powerful-prompts.pdf",
@@ -13,7 +13,7 @@ export default function EbooksPage() {
     {
       id: "50-prompts-notion",
       title: "50 Prompts (Notion Format)",
-      image: "/images/50-powerful-prompts-notion-format.jpg",
+      image: "/images/50-powerful-prompts-notion-format-cover.jpg", // updated
       price: 5.99,
       description: "Same prompts, fully organized in Notion.",
       fileUrl: "/downloads/50-powerful-prompts-notion.pdf",
@@ -21,7 +21,7 @@ export default function EbooksPage() {
     {
       id: "fantasy-novel",
       title: "The Lost Realm – A Fantasy Novel",
-      image: "/images/fantasy-novel.jpg",
+      image: "/images/fantasy-novel-cover.jpg", // updated
       price: 6.49,
       description: "An epic journey through a magical world of dragons and destiny.",
       fileUrl: "/downloads/fantasy-novel.pdf",
@@ -29,7 +29,7 @@ export default function EbooksPage() {
     {
       id: "science-fiction-novel",
       title: "Galactic Echoes – Sci-Fi Thriller",
-      image: "/images/science-fiction-novel.jpg",
+      image: "/images/science-fiction-novel-cover.jpg", // updated
       price: 6.99,
       description: "A suspenseful journey through space and time.",
       fileUrl: "/downloads/science-fiction-novel.pdf",
@@ -37,7 +37,7 @@ export default function EbooksPage() {
     {
       id: "romance-novel",
       title: "Love Letters – Romance Novel",
-      image: "/images/romance-novel.jpg",
+      image: "/images/romance-novel-cover.jpg", // updated
       price: 5.49,
       description: "A heartwarming love story to escape into.",
       fileUrl: "/downloads/romance-novel.pdf",
@@ -45,7 +45,7 @@ export default function EbooksPage() {
     {
       id: "self-help-book",
       title: "Unlock You – Self-Help Book",
-      image: "/images/self-help-personal-development-book.jpg",
+      image: "/images/self-help-personal-development-book-cover.jpg", // updated
       price: 7.25,
       description: "Practical wisdom to improve your life and mindset.",
       fileUrl: "/downloads/self-help-book.pdf",
@@ -53,7 +53,7 @@ export default function EbooksPage() {
     {
       id: "the-code-of-success",
       title: "The Code of Success",
-      image: "/images/the-code-of-success.jpg",
+      image: "/images/the-code-of-success-cover.jpg", // updated
       price: 8.49,
       description: "A strategic guide for achieving success in any field.",
       fileUrl: "/downloads/the-code-of-success.pdf",
@@ -61,7 +61,7 @@ export default function EbooksPage() {
     {
       id: "true-crime-novel",
       title: "Whispers of Guilt – True Crime",
-      image: "/images/true-crime-novel.jpg",
+      image: "/images/true-crime-novel-cover.jpg", // updated
       price: 5.95,
       description: "A chilling exploration of real-life mystery and justice.",
       fileUrl: "/downloads/true-crime.pdf",
@@ -93,7 +93,7 @@ export default function EbooksPage() {
               data-item-url="/categories/ebooks"
               data-item-description={ebook.description}
               data-item-image={ebook.image}
-              data-item-file-guid={ebook.fileUrl} // for Snipcart digital delivery
+              data-item-file-guid={ebook.fileUrl}
             >
               Add to Cart
             </button>
