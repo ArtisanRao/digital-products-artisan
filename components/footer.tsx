@@ -148,14 +148,14 @@ export default function Footer() {
         <div className="border-t border-blue-800/50 mt-8 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="text-gray-400 text-sm mb-4 md:mb-0">
-              © 2024 Digital Products Artisan. All rights reserved.
+              © {new Date().getFullYear()} Digital Products Artisan. All rights reserved.
             </div>
             <div className="flex space-x-6 text-sm">
               <Link href="/privacy" className="text-gray-400 hover:text-blue-300 transition-colors">
                 Privacy Policy
               </Link>
               <Link href="/terms" className="text-gray-400 hover:text-blue-300 transition-colors">
-                Terms of Service
+                Terms & Conditions
               </Link>
               <Link href="/cookies" className="text-gray-400 hover:text-blue-300 transition-colors">
                 Cookie Policy
