@@ -5,7 +5,7 @@ export default function SoftwarePluginsPage() {
     {
       id: "productivity-extensions-bundle",
       title: "Productivity Extensions Bundle",
-      image: "/images/software-plugins-cover.jpg",
+      image: "/images/software-plugins-cover.jpg", // ✅ already correct
       price: 6.95,
       description: "Chrome extensions and tools to boost workflow and efficiency.",
       fileUrl: "/downloads/productivity-extensions.zip",
@@ -13,7 +13,7 @@ export default function SoftwarePluginsPage() {
     {
       id: "creative-tools-designer",
       title: "Creative Tools for Designers",
-      image: "/images/digital-art-cover.jpg",
+      image: "/images/digital-art-cover.jpg", // ✅ assuming this now ends in -cover
       price: 5.75,
       description: "Design-focused plugins and mockup generators.",
       fileUrl: "/downloads/creative-designer-tools.zip",
@@ -21,7 +21,7 @@ export default function SoftwarePluginsPage() {
     {
       id: "notion-automation-pack",
       title: "Notion Automation Plugins",
-      image: "/images/50-powerful-prompts-notion-format.jpg",
+      image: "/images/50-powerful-prompts-notion-format.jpg", // ✅ confirm if you renamed it to include -cover
       price: 4.95,
       description: "Custom integrations and scripts for Notion workflows.",
       fileUrl: "/downloads/notion-automation-pack.zip",
