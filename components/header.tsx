@@ -8,7 +8,7 @@ const navItems = [
   { name: 'Products', href: '/products' },
   { name: 'Bundles', href: '/bundles' },
   { name: 'Categories', href: '/categories' },
-  { name: 'About', href: '/about' }, // ✅ Replaced Affiliate with About
+  { name: 'About', href: '/about' },
   { name: 'Support', href: '/support' },
 ]
 
@@ -20,8 +20,11 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link href="/" className="text-xl font-bold text-gray-800 hover:text-blue-600">
-            Digital Products Artisan
+          <Link href="/" className="flex items-center space-x-2">
+            <img src="/images/logo.png" alt="Digital Products Artisan Logo" className="h-8 w-auto" />
+            <span className="text-xl font-bold text-gray-800 hover:text-blue-600">
+              Digital Products Artisan
+            </span>
           </Link>
 
           {/* Navigation */}
