@@ -5,7 +5,7 @@ export default function VideoResourcesPage() {
     {
       id: "broll-pack",
       title: "B-Roll Video Backgrounds Pack",
-      image: "/images/video-resources-cover.jpg",
+      image: "/images/video-resources-cover.jpg", // ✅ already correct
       price: 6.99,
       description: "High-quality loopable clips for transitions and visual fillers.",
       fileUrl: "/downloads/broll-pack.zip",
@@ -13,7 +13,7 @@ export default function VideoResourcesPage() {
     {
       id: "youtube-templates",
       title: "YouTube Intro/Outro Templates",
-      image: "/images/marketing-tools-cover.jpg",
+      image: "/images/marketing-tools-cover.jpg", // ✅ ensure it ends in -cover
       price: 5.49,
       description: "Customizable intro/outro clips to boost your brand identity.",
       fileUrl: "/downloads/youtube-templates.zip",
@@ -21,7 +21,7 @@ export default function VideoResourcesPage() {
     {
       id: "animated-titles",
       title: "Animated Titles & Transitions",
-      image: "/images/fantasy-novel.jpg",
+      image: "/images/fantasy-novel.jpg", // ⛔️ update if changed to fantasy-novel-cover.jpg
       price: 5.95,
       description: "Smooth text animations and video transitions for editing pros.",
       fileUrl: "/downloads/animated-titles.zip",
@@ -29,7 +29,7 @@ export default function VideoResourcesPage() {
     {
       id: "stock-footage",
       title: "Stock Footage Mega Bundle",
-      image: "/images/science-fiction-novel.jpg",
+      image: "/images/science-fiction-novel.jpg", // ⛔️ update if changed to science-fiction-novel-cover.jpg
       price: 7.25,
       description: "A complete bundle of stock clips across categories & moods.",
       fileUrl: "/downloads/stock-footage.zip",
