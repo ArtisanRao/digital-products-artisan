@@ -7,6 +7,7 @@ import TestimonialsSection from "@/components/testimonials-section"
 import NewsletterSection from "@/components/newsletter-section"
 import FAQSection from "@/components/faq-section"
 import LoadingSpinner from "@/components/loading-spinner"
+import BackToTopButton from "@/components/BackToTopButton" // ✅ Import this
 
 export const metadata = {
   title: "Digital Products Artisan | Premium Digital Downloads",
@@ -47,9 +48,18 @@ export default function HomePage() {
       <FAQSection />
       <NewsletterSection />
 
-      <footer className="text-center text-sm text-gray-400 py-6">
-        &copy; {new Date().getFullYear()} Digital Products Artisan. All rights reserved.
+      <footer className="text-center text-sm text-gray-500 py-6 space-y-2">
+        <div>
+          &copy; {new Date().getFullYear()} Digital Products Artisan. All rights reserved.
+        </div>
+        <div className="space-x-4">
+          <a href="/contact" className="hover:underline text-blue-600">Contact</a>
+          <a href="/privacy" className="hover:underline text-blue-600">Privacy</a>
+          <a href="/help" className="hover:underline text-blue-600">Support</a>
+        </div>
       </footer>
+
+      <BackToTopButton />
     </main>
   )
 }
