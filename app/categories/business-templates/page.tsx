@@ -13,7 +13,7 @@ export default function TemplatesPage() {
     {
       id: "excel-tracker-pro",
       title: "Excel Tracker Pro",
-      image: "/images/the-code-of-success-cover.jpg", // ✅ updated with -cover
+      image: "/images/the-code-of-success-cover.jpg",
       price: 4.99,
       description: "Advanced Excel template for project & habit tracking.",
       fileUrl: "/downloads/excel-tracker-pro.xlsx",
@@ -21,7 +21,7 @@ export default function TemplatesPage() {
     {
       id: "notion-planner-bundle",
       title: "Notion Productivity Planner",
-      image: "/images/50-powerful-prompts-notion-format.jpg",
+      image: "/images/notion-productivity-planner-cover.jpg", // ✅ Corrected here
       price: 6.49,
       description: "Organize tasks, goals, and routines inside Notion.",
       fileUrl: "/downloads/notion-planner.zip",
@@ -58,7 +58,7 @@ export default function TemplatesPage() {
               data-item-id={template.id}
               data-item-name={template.title}
               data-item-price={template.price}
-              data-item-url="/categories/templates"
+              data-item-url="/categories/business-templates"
               data-item-description={template.description}
               data-item-image={template.image}
               data-item-custom1-name="download_url"
