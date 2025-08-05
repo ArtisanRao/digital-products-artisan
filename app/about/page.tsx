@@ -13,10 +13,11 @@ export default function AboutPage() {
         managing a project, boosting creativity or a lifelong learner, we offer the tools you need to bring your vision to life — all delivered instantly and effortlessly, with no fluff.
       </p>
       <p className="text-lg text-gray-700 leading-relaxed mb-4">
-        Our mission is to simplify your creative journey and provide reliable, well-crafted digital products that save you time, elevate your ideas, and help you build something meaningful.
+        Our mission is to empower your creative journey by delivering thoughtfully designed, dependable digital products that streamline your workflow, enhance your ideas, and support meaningful outcomes.
+
       </p>
       <p className="text-lg text-gray-700 leading-relaxed">
-        Whether you're launching a business, planning your life, or fueling a passion project, we've got a toolkit ready for you — no subscriptions, no friction, just results.
+        Whether you're building a business, organizing your personal life, or pursuing a passion project, we offer a curated toolkit — free from subscriptions and complications, focused entirely on results.
       </p>
     </main>
   )
