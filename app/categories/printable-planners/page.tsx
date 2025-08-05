@@ -5,7 +5,7 @@ export default function PrintablePlannersPage() {
     {
       id: "daily-productivity-planner",
       title: "Daily Productivity Planner",
-      image: "/images/daily-productivity-planner-cover.jpg", // ✅ updated
+      image: "/images/daily-productivity-planner-cover.jpg", // ✅ Corrected
       price: 3.95,
       description: "Plan your day with clarity — printable PDF format.",
       fileUrl: "/downloads/daily-productivity-planner.pdf",
@@ -13,7 +13,7 @@ export default function PrintablePlannersPage() {
     {
       id: "health-goal-tracker",
       title: "Health & Wellness Tracker",
-      image: "/images/health-&-wellness-tracker-cover.jpg", // ✅ already correct
+      image: "/images/health-&-wellness-tracker-cover.jpg", // ✅ Correct
       price: 4.75,
       description: "Printable pages for workouts, meals, and habit tracking.",
       fileUrl: "/downloads/health-goal-tracker.zip",
@@ -21,7 +21,7 @@ export default function PrintablePlannersPage() {
     {
       id: "weekly-family-planner",
       title: "Weekly Family Organizer",
-      image: "/images/weekly-family-organizer-cover.jpg", // ✅ updated
+      image: "/images/weekly-family-organizer-cover.jpg", // ✅ Corrected
       price: 4.25,
       description: "Keep your home life organized with stylish templates.",
       fileUrl: "/downloads/weekly-family-planner.pdf",
@@ -65,4 +65,3 @@ export default function PrintablePlannersPage() {
     </main>
   );
 }
- 
