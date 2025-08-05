@@ -5,7 +5,7 @@ export default function FontsPage() {
     {
       id: "modern-display-fonts",
       title: "Modern Display Fonts",
-      image: "/images/fonts-cover.jpg", // ✅ Already correct
+      image: "/images/fonts-cover.jpg", // already correct
       price: 5.25,
       description: "Bold, attention-grabbing fonts perfect for headings and branding.",
       fileUrl: "/downloads/modern-display-fonts.zip",
@@ -13,7 +13,7 @@ export default function FontsPage() {
     {
       id: "handwritten-script-pack",
       title: "Handwritten Script Pack",
-      image: "/images/memoir-autobiography-cover.jpg", // ✅ Updated filename
+      image: "/images/handwritten-script-pack-cover.jpg", // ✅ updated to correct image
       price: 4.75,
       description: "Elegant, flowing fonts for invitations and logos.",
       fileUrl: "/downloads/handwritten-script-pack.zip",
@@ -21,7 +21,7 @@ export default function FontsPage() {
     {
       id: "minimal-sans-fonts",
       title: "Minimal Sans Collection",
-      image: "/images/self-help-personal-development-book-cover.jpg", // ✅ Updated filename
+      image: "/images/self-help-personal-development-book-cover.jpg", // ✅ updated to correct image
       price: 3.99,
       description: "Clean sans-serif fonts ideal for web and app design.",
       fileUrl: "/downloads/minimal-sans-fonts.zip",
