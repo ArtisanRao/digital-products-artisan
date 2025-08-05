@@ -47,7 +47,7 @@ export default function HomePage() {
       <FAQSection />
       <NewsletterSection />
 
-      <footer className="text-center text-sm text-gray-400 py-6"> 
+      <footer className="text-center text-sm text-gray-400 py-6">
         &copy; {new Date().getFullYear()} Digital Products Artisan. All rights reserved.
       </footer>
     </main>
