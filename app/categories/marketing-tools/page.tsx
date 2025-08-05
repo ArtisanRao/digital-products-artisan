@@ -5,7 +5,7 @@ export default function MarketingToolsPage() {
     {
       id: "social-media-kit",
       title: "Social Media Kit Pro",
-      image: "/images/social-media-kits-cover.jpg",
+      image: "/images/social-media-kits-cover.jpg", // ✅ should exist
       price: 6.99,
       description: "Editable Canva and PSD assets for Instagram, LinkedIn & more.",
       fileUrl: "/downloads/social-media-kit-pro.zip",
@@ -13,7 +13,7 @@ export default function MarketingToolsPage() {
     {
       id: "email-templates-pack",
       title: "Email Templates Pack",
-      image: "/images/marketing-tools-cover.jpg",
+      image: "/images/marketing-tools-cover.jpg", // ✅ should exist
       price: 4.50,
       description: "High-converting email layouts and swipe files.",
       fileUrl: "/downloads/email-templates-pack.zip",
@@ -21,7 +21,7 @@ export default function MarketingToolsPage() {
     {
       id: "sales-funnel-builder",
       title: "Sales Funnel Builder Toolkit",
-      image: "/images/business-templates-cover.jpg",
+      image: "/images/business-templates-cover.jpg", // ✅ confirm this one too
       price: 7.25,
       description: "Wireframes and templates to build landing pages and funnels.",
       fileUrl: "/downloads/sales-funnel-builder.zip",
