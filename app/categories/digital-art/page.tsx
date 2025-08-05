@@ -13,7 +13,7 @@ export default function DigitalArtPage() {
     {
       id: "fantasy-concept-art",
       title: "Fantasy Concept Art Collection",
-      image: "/images/fantasy-novel-cover.jpg", // ✅ updated with -cover
+      image: "/images/fantasy-novel.jpg",
       price: 6.49,
       description: "Epic fantasy artworks for creatives and storytellers.",
       fileUrl: "/downloads/fantasy-art.zip",
@@ -21,7 +21,7 @@ export default function DigitalArtPage() {
     {
       id: "motivational-prompts",
       title: "Motivational Prompt Posters",
-      image: "/images/motivational-prompt-pack.jpg", // already okay
+      image: "/images/motivational-prompt-posters-cover.jpg", // ✅ updated filename
       price: 3.99,
       description: "Printable affirmations and quotes for your wall or feed.",
       fileUrl: "/downloads/motivational-prompts.pdf",
