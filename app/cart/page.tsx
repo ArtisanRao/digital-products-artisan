@@ -2,15 +2,34 @@
 
 import { useState, useEffect } from 'react'
 
+// ✅ Extend global window to include Snipcart
+declare global {
+  interface Window {
+    Snipcart?: {
+      api: {
+        items: {
+          add: (item: any) => void
+          clear: () => Promise<void>
+        }
+      }
+      theme: {
+        cart: {
+          open: () => void
+        }
+      }
+    }
+  }
+}
+
 interface CartItem {
   id: string
   name: string
   price: number
   quantity: number
   image?: string
-  url?: string // Product URL
+  url?: string
   description?: string
-  fileGuid?: string // Snipcart file GUID for digital delivery
+  fileGuid?: string
 }
 
 export default function CartPage() {
@@ -18,13 +37,11 @@ export default function CartPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Load cart from localStorage on mount
   useEffect(() => {
     const storedCart = localStorage.getItem('cart')
     if (storedCart) setCartItems(JSON.parse(storedCart))
   }, [])
 
-  // Save cart and reset error
   const updateCart = (items: CartItem[]) => {
     setCartItems(items)
     localStorage.setItem('cart', JSON.stringify(items))
@@ -53,7 +70,6 @@ export default function CartPage() {
     0
   )
 
-  // Checkout handler with safe window.Snipcart access
   const handleCheckout = async () => {
     if (!cartItems.length) {
       setError('Your cart is empty!')
@@ -69,10 +85,8 @@ export default function CartPage() {
     setError(null)
 
     try {
-      // Clear existing Snipcart items
       await window.Snipcart.api.items.clear()
 
-      // Add current cart items to Snipcart
       cartItems.forEach(item => {
         window.Snipcart!.api.items.add({
           id: item.id,
@@ -84,7 +98,6 @@ export default function CartPage() {
         })
       })
 
-      // Open Snipcart checkout modal
       window.Snipcart.api.theme.cart.open()
     } catch {
       setError('Failed to start checkout. Please try again.')
