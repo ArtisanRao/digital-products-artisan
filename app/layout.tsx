@@ -24,6 +24,8 @@ export const metadata: Metadata = {
       "Empowering innovation with a curated collection of digital tools for creators and entrepreneurs.",
     type: "website",
     locale: "en_US",
+    url: "https://digitalproductsartisan.com",
+    siteName: "InnovateSphere",
   },
   twitter: {
     card: "summary_large_image",
@@ -35,6 +37,15 @@ export const metadata: Metadata = {
     follow: true,
   },
   generator: "v0.dev",
+  manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon1.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon0.svg", type: "image/svg+xml" },
+    ],
+    apple: "/apple-icon.png",
+  },
 };
 
 export default function RootLayout({
@@ -45,12 +56,20 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Favicons and web manifest */}
+        {/* Web manifest and PWA */}
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#ffffff" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="application-name" content="InnovateSphere" />
+        <meta name="apple-mobile-web-app-title" content="InnovateSphere" />
+
+        {/* Favicons */}
         <link rel="icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon.png" />
         <link rel="icon" type="image/png" sizes="192x192" href="/icon1.png" />
         <link rel="icon" type="image/svg+xml" href="/icon0.svg" />
-        <link rel="manifest" href="/manifest.json" />
 
         {/* Snipcart stylesheet */}
         <link
