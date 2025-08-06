@@ -15,11 +15,13 @@ export const metadata: Metadata = {
   title: "InnovateSphere - Digital Solutions for Tomorrow's World",
   description:
     "Discover cutting-edge digital solutions—software, templates, and resources to power your innovation. Instant access, limitless potential.",
-  keywords: "digital solutions, software, templates, AI tools, digital downloads, innovation resources",
+  keywords:
+    "digital solutions, software, templates, AI tools, digital downloads, innovation resources",
   authors: [{ name: "InnovateSphere" }],
   openGraph: {
     title: "InnovateSphere - Digital Solutions",
-    description: "Empowering innovation with a curated collection of digital tools for creators and entrepreneurs.",
+    description:
+      "Empowering innovation with a curated collection of digital tools for creators and entrepreneurs.",
     type: "website",
     locale: "en_US",
   },
@@ -43,10 +45,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Snipcart style */}
+        {/* Snipcart stylesheet */}
         <link
           rel="stylesheet"
-          href="https://cdn.snipcart.com/themes/v3.3.0/default/snipcart.css"
+          href="https://cdn.snipcart.com/themes/v3.4.1/default/snipcart.css"
         />
       </head>
       <body className={inter.className}>
@@ -58,15 +60,16 @@ export default function RootLayout({
             <LiveChat />
             <Toaster />
 
-            {/* Snipcart script + API key integration */}
+            {/* Snipcart script and config */}
             <script
               async
-              src="https://cdn.snipcart.com/themes/v3.3.0/default/snipcart.js"
+              src="https://cdn.snipcart.com/themes/v3.4.1/default/snipcart.js"
             ></script>
             <div
               hidden
               id="snipcart"
               data-api-key="ZDgyODMyODgtMzdhZC00ZTI0LTkzZTUtYjRhMTM0MDg4ODM2NjM4ODg4NTc5NTI0NTk5MjQ4"
+              data-config-modal-style="side"
             ></div>
           </CartProvider>
         </AuthProvider>
