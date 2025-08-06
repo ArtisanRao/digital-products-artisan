@@ -2,25 +2,6 @@
 
 import { useState, useEffect } from 'react'
 
-// ✅ Extend global window to include Snipcart
-declare global {
-  interface Window {
-    Snipcart?: {
-      api: {
-        items: {
-          add: (item: any) => void
-          clear: () => Promise<void>
-        }
-      }
-      theme: {
-        cart: {
-          open: () => void
-        }
-      }
-    }
-  }
-}
-
 interface CartItem {
   id: string
   name: string
@@ -98,7 +79,7 @@ export default function CartPage() {
         })
       })
 
-      window.Snipcart.api.theme.cart.open()
+      window.Snipcart.api.cart.open() // ✅ Corrected line
     } catch {
       setError('Failed to start checkout. Please try again.')
     } finally {
