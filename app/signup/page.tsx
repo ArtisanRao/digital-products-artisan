@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Toaster, toast } from '@/components/ui/toaster'
+import { Toaster } from "@/components/ui/toaster"
+import { toast } from "sonner"
 
 export default function SignupPage() {
   const { signup } = useAuth()
