@@ -34,9 +34,9 @@ export default function Footer() {
     <footer className="bg-gradient-to-br from-[#0f172a] to-[#1e3a8a] text-gray-300 px-6 py-10">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between gap-12">
         {/* Left Section */}
-        <div className="md:w-1/2">
+        <div className="md:w-1/2 pl-10">
           <div className="flex items-center space-x-3">
-            <img src="/logo.png" alt="Logo" className="w-10 h-10" />
+            <img src="/images/logo-new.png" alt="Logo" className="w-10 h-10 object-contain" />
             <div>
               <h2 className="text-white text-xl font-bold">Digital Products</h2>
               <span className="text-blue-400 font-medium">Artisan</span>
@@ -54,7 +54,7 @@ export default function Footer() {
         </div>
 
         {/* Right Section */}
-        <div className="md:w-1/2 flex flex-col sm:flex-row justify-end gap-10">
+        <div className="md:w-1/2 pr-10 flex flex-col sm:flex-row justify-end gap-24">
           <div>
             <h3 className="text-lg font-semibold text-blue-400 mb-2">Quick Links</h3>
             <ul className="space-y-2 text-sm">
@@ -77,34 +77,6 @@ export default function Footer() {
             </ul>
           </div>
         </div>
-      </div>
-
-      {/* FAQ Section */}
-      <div className="max-w-4xl mx-auto mt-10 border-t border-gray-600 pt-8">
-        <h4 className="text-xl font-semibold text-white mb-4">FAQs</h4>
-        {faqs.map((faq, index) => (
-          <div key={index} className="border-b border-gray-700 py-4">
-            <button
-              className="flex justify-between items-center w-full text-left"
-              onClick={() => toggleFAQ(index)}
-            >
-              <span className="text-sm font-medium text-white">{faq.question}</span>
-              <svg
-                className={`w-5 h-5 transform transition-transform ${openIndex === index ? 'rotate-180' : ''}`}
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            {openIndex === index && (
-              <div className="mt-2 text-sm text-gray-300">{faq.answer}</div>
-            )}
-          </div>
-        ))}
       </div>
 
       {/* Footer Bottom */}
