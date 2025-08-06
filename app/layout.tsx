@@ -45,6 +45,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* Favicons and web manifest */}
+        <link rel="icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/icon1.png" />
+        <link rel="icon" type="image/svg+xml" href="/icon0.svg" />
+        <link rel="manifest" href="/manifest.json" />
+
         {/* Snipcart stylesheet */}
         <link
           rel="stylesheet"
