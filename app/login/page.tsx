@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Toaster } from "@/components/ui/toaster"
-import { toast } from "sonner"
+import { Toaster } from '@/components/ui/toaster'
+import { toast } from 'sonner'
 
 export default function LoginPage() {
   const { login } = useAuth()
@@ -20,10 +20,10 @@ export default function LoginPage() {
     setLoading(true)
     try {
       await login(email, password)
-      toast({ title: 'Login successful!' })
+      toast('Login successful!')
       router.push('/')
     } catch (err: any) {
-      toast({ title: 'Login failed', description: err.message })
+      toast(`Login failed: ${err.message}`)
     } finally {
       setLoading(false)
     }
@@ -31,11 +31,11 @@ export default function LoginPage() {
 
   return (
     <div className="max-w-md mx-auto mt-24 p-6 bg-white shadow rounded">
-      <h1 className="text-2xl font-semibold mb-4">Login</h1>
+      <h1 className="text-2xl font-semibold mb-4">Log In</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
           type="email"
-          placeholder="Email"
+          placeholder="Email address"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -48,7 +48,7 @@ export default function LoginPage() {
           required
         />
         <Button type="submit" disabled={loading} className="w-full">
-          {loading ? 'Logging in...' : 'Login'}
+          {loading ? 'Logging in...' : 'Log In'}
         </Button>
       </form>
       <p className="text-sm mt-4">
