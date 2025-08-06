@@ -31,7 +31,6 @@ export default function LoginPage() {
 
   return (
     <div className="max-w-md mx-auto mt-24 p-6 bg-white shadow rounded">
-      <Toaster />
       <h1 className="text-2xl font-semibold mb-4">Log In</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
@@ -43,7 +42,7 @@ export default function LoginPage() {
         />
         <Input
           type="password"
-          placeholder="Enter password"
+          placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
@@ -58,6 +57,7 @@ export default function LoginPage() {
           Sign Up
         </a>
       </p>
+      <Toaster />
     </div>
   )
 }
