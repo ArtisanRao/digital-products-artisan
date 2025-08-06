@@ -1,4 +1,4 @@
-<!-- Printable Planners Page -->
+// Printable Planners Page
 
 import Image from "next/image";
 
