@@ -1,68 +1,79 @@
-'use client';
+<!-- Printable Planners Page -->
+
+import Image from "next/image";
 
 export default function PrintablePlannersPage() {
-  const planners = [
-    {
-      id: "daily-productivity-planner",
-      title: "Daily Productivity Planner",
-      image: "/images/daily-productivity-planner-cover",
-      price: 3.95,
-      description: "Plan your day with clarity — printable PDF format.",
-      fileUrl: "/downloads/daily-productivity-planner.pdf",
-    },
-    {
-      id: "health-goal-tracker",
-      title: "Health & Wellness Tracker",
-      image: "/images/health-&-wellness-tracker-cover",
-      price: 4.75,
-      description: "Printable pages for workouts, meals, and habit tracking.",
-      fileUrl: "/downloads/health-goal-tracker.zip",
-    },
-    {
-      id: "weekly-family-planner",
-      title: "Weekly Family Organizer",
-      image: "/images/weekly-family-organizer-cover",
-      price: 4.25,
-      description: "Keep your home life organized with stylish templates.",
-      fileUrl: "/downloads/weekly-family-planner.pdf",
-    },
-  ];
-
   return (
-    <main className="max-w-7xl mx-auto px-4 py-12">
-      <h1 className="text-4xl font-bold text-center mb-10">🗓️ Printable Planners
-      </h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        {planners.map((item) => (
-          <div
-            key={item.id}
-            className="border rounded-xl p-4 shadow hover:shadow-lg transition"
-          >
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-4xl font-bold mb-6">Printable Planners</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[
+          {
+            title: "Daily Productivity Planner",
+            price: "9.99",
+            image: "/images/daily-productivity-planner-cover.jpg",
+            url: "/products/daily-productivity-planner",
+            guid: "GUID1"
+          },
+          {
+            title: "Weekly Family Organizer",
+            price: "8.99",
+            image: "/images/weekly-family-organizer-cover.jpg",
+            url: "/products/weekly-family-organizer",
+            guid: "GUID2"
+          },
+          {
+            title: "Fantasy Novel",
+            price: "4.99",
+            image: "/images/fantasy-novel-cover.jpg",
+            url: "/products/fantasy-novel",
+            guid: "GUID3"
+          },
+          {
+            title: "Science Fiction Novel",
+            price: "5.99",
+            image: "/images/science-fiction-novel-cover.jpg",
+            url: "/products/science-fiction-novel",
+            guid: "GUID4"
+          },
+          {
+            title: "Animated Titles & Animations",
+            price: "12.00",
+            image: "/images/animated-titles-&-animations-cover.jpg",
+            url: "/products/animated-titles-and-animations",
+            guid: "GUID5"
+          },
+          {
+            title: "Stock Footage Mega Bundle",
+            price: "29.00",
+            image: "/images/stock-footage-mega-bundle-cover.jpg",
+            url: "/products/stock-footage-mega-bundle",
+            guid: "GUID6"
+          }
+        ].map((product) => (
+          <div key={product.title} className="bg-white rounded-xl shadow-md overflow-hidden">
             <img
-              src={item.image}
-              alt={item.title}
-              className="w-full h-48 object-cover rounded mb-4"
+              src={product.image}
+              alt={product.title}
+              className="w-full h-48 object-cover rounded-t-xl"
             />
-            <h2 className="text-xl font-semibold mb-2">{item.title}</h2>
-            <p className="text-gray-600 text-sm mb-2">{item.description}</p>
-            <p className="text-lg font-bold mb-3">€{item.price.toFixed(2)}</p>
-            <button
-              className="snipcart-add-item bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-              data-item-id={item.id}
-              data-item-name={item.title}
-              data-item-price={item.price}
-              data-item-url="/categories/printable-planners"
-              data-item-description={item.description}
-              data-item-image={item.image}
-              data-item-custom1-name="download_url"
-              data-item-custom1-value={item.fileUrl}
-              data-item-custom1-type="hidden"
-            >
-              Add to Cart
-            </button>
+            <div className="p-4">
+              <h2 className="text-xl font-semibold mb-2">{product.title}</h2>
+              <p className="text-gray-700 mb-4">${product.price}</p>
+              <button
+                className="snipcart-add-item bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                data-item-id={product.title.replace(/\s+/g, '-').toLowerCase()}
+                data-item-name={product.title}
+                data-item-price={product.price}
+                data-item-url={product.url}
+                data-item-file-guid={product.guid}
+              >
+                Add to Cart
+              </button>
+            </div>
           </div>
         ))}
       </div>
-    </main>
+    </div>
   );
 }
