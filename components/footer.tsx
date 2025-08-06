@@ -72,7 +72,7 @@ export default function Footer() {
               <li><Link href="/help">Help Center</Link></li>
               <li><Link href="/contact">Contact Us</Link></li>
               <li><Link href="/faq">FAQ</Link></li>
-              <li><Link href="/returns">Returns</Link></li>
+              <li><Link href="/returns">Returns & Refund Policy</Link></li>
               <li><Link href="/affiliate">Affiliate Program</Link></li>
             </ul>
           </div>
