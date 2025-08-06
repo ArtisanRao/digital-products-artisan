@@ -32,9 +32,9 @@ export default function Footer() {
 
   return (
     <footer className="bg-gradient-to-br from-[#0f172a] to-[#1e3a8a] text-gray-300 px-6 py-10">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between gap-12">
         {/* Left Section */}
-        <div className="md:col-span-1">
+        <div className="md:w-1/2">
           <div className="flex items-center space-x-3">
             <img src="/logo.png" alt="Logo" className="w-10 h-10" />
             <div>
@@ -54,7 +54,7 @@ export default function Footer() {
         </div>
 
         {/* Right Section */}
-        <div className="md:col-span-2 grid grid-cols-2 gap-8">
+        <div className="md:w-1/2 flex flex-col sm:flex-row justify-end gap-10">
           <div>
             <h3 className="text-lg font-semibold text-blue-400 mb-2">Quick Links</h3>
             <ul className="space-y-2 text-sm">
