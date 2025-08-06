@@ -81,7 +81,13 @@ export default function FooterFAQ() {
                 className="w-full text-left px-6 py-4 font-semibold text-lg hover:bg-gray-100 transition flex justify-between items-center"
               >
                 <span>{faq.question}</span>
-                <span className="text-xl">{openIndex === idx ? '−' : '+'}</span>
+                <span
+                  className={`text-xl transform transition-transform duration-300 ${
+                    openIndex === idx ? 'rotate-180' : ''
+                  }`}
+                >
+                  ⌄
+                </span>
               </button>
               {openIndex === idx && (
                 <div className="px-6 pb-4 text-gray-700 text-sm">{faq.answer}</div>
