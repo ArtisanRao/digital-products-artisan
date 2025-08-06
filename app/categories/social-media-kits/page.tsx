@@ -1,77 +1,102 @@
-import Image from "next/image";
+'use client';
 
 export default function SocialMediaKitsPage() {
+  const products = [
+    {
+      id: "instagram-branding-kit",
+      title: "Instagram Branding Kit",
+      image: "/images/instagram-branding-kit-cover.jpg",
+      price: 9.99,
+      description: "Editable templates optimized for Instagram branding.",
+      fileUrl: "/downloads/instagram-branding-kit.zip",
+    },
+    {
+      id: "pinterest-growth-pack",
+      title: "Pinterest Growth Pack",
+      image: "/images/pinterest-growth-pack-cover.jpg",
+      price: 8.99,
+      description: "Styled Pinterest pins and templates to boost traffic.",
+      fileUrl: "/downloads/pinterest-growth-pack.zip",
+    },
+    {
+      id: "facebook-ad-templates",
+      title: "Facebook Ad Templates",
+      image: "/images/facebook-ad-templates-cover.jpg",
+      price: 7.99,
+      description: "Ready-for-use Facebook ad templates in PNG format.",
+      fileUrl: "/downloads/facebook-ad-templates.zip",
+    },
+    {
+      id: "canva-social-media-bundle",
+      title: "Canva Social Media Bundle",
+      image: "/images/canva-social-media-bundle-cover.jpg",
+      price: 12.99,
+      description: "A bundle of Canva templates for multiple platforms.",
+      fileUrl: "/downloads/canva-social-media-bundle.zip",
+    },
+    {
+      id: "instagram-story-templates",
+      title: "Instagram Story Templates",
+      image: "/images/instagram-story-templates-cover.jpg",
+      price: 6.99,
+      description: "Stylish Stories designs for promotions or engagement.",
+      fileUrl: "/downloads/instagram-story-templates.zip",
+    },
+    {
+      id: "youtube-channel-kit",
+      title: "YouTube Channel Kit",
+      image: "/images/youtube-channel-kit-cover.jpg",
+      price: 10.0,
+      description: "Cover art, thumbnails, and banner templates included.",
+      fileUrl: "/downloads/youtube-channel-kit.zip",
+    },
+    {
+      id: "chatgpt-guide",
+      title: "ChatGPT Guide for Social Media",
+      image: "/images/chatgpt-guide-cover.jpg",
+      price: 11.99,
+      description: "Learn how to use ChatGPT to generate content ideas, captions, and ads.",
+      fileUrl: "/downloads/chatgpt-guide.zip",
+    },
+    {
+      id: "excel-social-tracker",
+      title: "Excel Tracker for Social Media",
+      image: "/images/excel-tracker-cover.jpg",
+      price: 5.99,
+      description: "Simple Excel tracker for posts, analytics, and performance.",
+      fileUrl: "/downloads/excel-social-tracker.zip",
+    },
+  ];
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-6">Social Media Kits</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[
-          {
-            title: "Instagram Branding Kit",
-            price: "9.99",
-            image: "/images/instagram-branding-kit-cover.jpg",
-            url: "/products/instagram-branding-kit",
-            guid: "GUID1"
-          },
-          {
-            title: "Pinterest Growth Pack",
-            price: "8.99",
-            image: "/images/pinterest-growth-pack-cover.jpg",
-            url: "/products/pinterest-growth-pack",
-            guid: "GUID2"
-          },
-          {
-            title: "Facebook Ad Templates",
-            price: "7.99",
-            image: "/images/facebook-ad-templates-cover.jpg",
-            url: "/products/facebook-ad-templates",
-            guid: "GUID3"
-          },
-          {
-            title: "Canva Social Media Bundle",
-            price: "12.99",
-            image: "/images/canva-social-media-bundle-cover.jpg",
-            url: "/products/canva-social-media-bundle",
-            guid: "GUID4"
-          },
-          {
-            title: "Instagram Story Templates",
-            price: "6.99",
-            image: "/images/instagram-story-templates-cover.jpg",
-            url: "/products/instagram-story-templates",
-            guid: "GUID5"
-          },
-          {
-            title: "YouTube Channel Kit",
-            price: "10.00",
-            image: "/images/youtube-channel-kit-cover.jpg",
-            url: "/products/youtube-channel-kit",
-            guid: "GUID6"
-          }
-        ].map((product) => (
-          <div key={product.title} className="bg-white rounded-xl shadow-md overflow-hidden">
+    <main className="max-w-7xl mx-auto px-4 py-8">
+      <h1 className="text-4xl font-bold text-center mb-10">Social Media Kits</h1>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        {products.map((item) => (
+          <div key={item.id} className="border rounded-xl p-4 shadow hover:shadow-lg transition">
             <img
-              src={product.image}
-              alt={product.title}
-              className="w-full h-48 object-cover rounded-t-xl"
+              src={item.image}
+              alt={item.title}
+              className="w-full h-48 object-cover rounded mb-4"
             />
-            <div className="p-4">
-              <h2 className="text-xl font-semibold mb-2">{product.title}</h2>
-              <p className="text-gray-700 mb-4">${product.price}</p>
-              <button
-                className="snipcart-add-item bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                data-item-id={product.title.replace(/\s+/g, '-').toLowerCase()}
-                data-item-name={product.title}
-                data-item-price={product.price}
-                data-item-url={product.url}
-                data-item-file-guid={product.guid}
-              >
-                Add to Cart
-              </button>
-            </div>
+            <h2 className="text-xl font-semibold mb-2">{item.title}</h2>
+            <p className="text-gray-600 text-sm mb-2">{item.description}</p>
+            <p className="text-lg font-bold mb-3">€{item.price.toFixed(2)}</p>
+            <button
+              className="snipcart-add-item bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+              data-item-id={item.id}
+              data-item-name={item.title}
+              data-item-price={item.price}
+              data-item-url="/categories/social-media-kits"
+              data-item-description={item.description}
+              data-item-image={item.image}
+              data-item-file-guid={item.fileUrl}
+            >
+              Add to Cart
+            </button>
           </div>
         ))}
       </div>
-    </div>
+    </main>
   );
 }
