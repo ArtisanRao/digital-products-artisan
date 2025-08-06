@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { FaFacebookF, FaTwitter, FaInstagram, FaYoutube } from 'react-icons/fa';
+import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 
 const faqs = [
@@ -23,10 +24,25 @@ const faqs = [
   },
 ];
 
+const policies = [
+  {
+    title: 'Privacy Policy',
+    content: `We respect your privacy and are committed to protecting your personal data. Any information collected during your use of our site is used solely for order processing, support, and improving your experience. We do not sell or share your data.`,
+  },
+  {
+    title: 'Terms of Service',
+    content: `By purchasing and downloading from Digital Products Artisan, you agree not to redistribute, resell, or reproduce our products without permission. All items are licensed to the buyer only, and usage is subject to each product's license.`,
+  },
+  {
+    title: 'Cookies',
+    content: `We use cookies to personalize content, analyze traffic, and offer a better user experience. By continuing to browse, you consent to the use of cookies in accordance with our policy.`,
+  },
+];
+
 export default function Footer() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
-  const toggleFAQ = (index: number) => {
+  const toggle = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
   };
 
@@ -79,14 +95,34 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Footer Bottom */}
-      <div className="mt-10 pt-6 border-t border-gray-700 text-sm flex flex-col md:flex-row justify-between items-center">
-        <p className="mb-2 md:mb-0">© 2025 Digital Products Artisan. All rights reserved.</p>
-        <div className="flex space-x-4">
-          <Link href="/privacy">Privacy Policy</Link>
-          <Link href="/terms">Terms of Service</Link>
-          <Link href="/cookies">Cookies</Link>
-        </div>
+      {/* Footer Bottom with Collapsibles */}
+      <div className="mt-10 pt-6 border-t border-gray-700 text-sm w-full max-w-5xl mx-auto space-y-2">
+        <p className="text-center text-gray-400 mb-4">© 2025 Digital Products Artisan. All rights reserved.</p>
+
+        {policies.map((policy, index) => {
+          const isOpen = openIndex === index + 100; // Offset to avoid conflict with FAQ toggle
+          return (
+            <div key={index} className="border border-gray-600 rounded-md overflow-hidden">
+              <button
+                onClick={() => toggle(index + 100)}
+                className="w-full flex justify-between items-center px-4 py-3 text-left text-gray-300 hover:text-white"
+                aria-expanded={isOpen}
+              >
+                <span>{policy.title}</span>
+                <ChevronDown
+                  className={`h-4 w-4 transform transition-transform duration-300 ${
+                    isOpen ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+              {isOpen && (
+                <div className="px-4 pb-4 text-xs text-gray-400 animate-fadeIn">
+                  {policy.content}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </footer>
   );
