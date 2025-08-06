@@ -1,169 +1,88 @@
-import Link from "next/link"
-import { Facebook, Twitter, Instagram, Youtube } from "lucide-react"
-import Logo from "@/components/logo"
+'use client'
 
-export default function Footer() {
+import { useState } from 'react'
+
+const faqs = [
+  {
+    question: "What is Digital Products Artisan?",
+    answer:
+      "Digital Products Artisan is a curated marketplace for premium digital goods — ebooks, AI prompts & packs, templates, graphics, planners, and productivity assets. Whether you're a creator, entrepreneur, building a brand, managing a project, boosting creativity or a lifelong learner, we offer the tools you need to bring your vision to life — all delivered instantly and effortlessly, with no fluff.",
+  },
+  {
+    question: "Are your digital products compatible with my software?",
+    answer:
+      "Most of our products come in widely supported formats like PDF, PSD, PNG, DOCX, and more. Product pages include compatibility details — always check there first.",
+  },
+  {
+    question: "Can I customize the templates I purchase?",
+    answer:
+      "Yes! Many of our templates are fully editable using common software like Microsoft Office, Google Docs, Adobe tools, or Canva (if stated). Customization instructions are usually included.",
+  },
+  {
+    question: "Is there a limit to how many times I can download my purchase?",
+    answer:
+      "No, once you've purchased a product, the download link is yours to use at any time. If the link expires or is lost, just contact us.",
+  },
+  {
+    question: "How long will my download link be active?",
+    answer:
+      "Download links are typically active for at least 7 days after purchase. However, we’re happy to reactivate or resend it if needed.",
+  },
+  {
+    question: "Do I need an account to purchase or download?",
+    answer:
+      "No account is required to make a purchase, but creating one allows you to track orders and easily access your downloads anytime.",
+  },
+  {
+    question: "Can I get an invoice or receipt?",
+    answer:
+      "Yes, a receipt is automatically emailed to you after purchase. If you need a business invoice, contact support with your billing details.",
+  },
+  {
+    question: "Do you offer bulk or business licensing?",
+    answer:
+      "We offer commercial licenses for most products and can arrange bulk or extended licensing for teams. Contact us with your request.",
+  },
+  {
+    question: "I found a bug or issue with a file. What should I do?",
+    answer:
+      "Please contact us immediately with details and a screenshot if possible. We’ll replace, update, or assist you as quickly as possible.",
+  },
+]
+
+export default function FooterFAQ() {
+  const [openIndex, setOpenIndex] = useState<number | null>(null)
+
+  const toggle = (idx: number) => {
+    setOpenIndex(openIndex === idx ? null : idx)
+  }
+
   return (
-    <footer className="bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 text-white">
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Brand */}
-          <div className="col-span-1 md:col-span-2">
-            <div className="mb-4">
-              <Logo size="md" showText={false} />
-              <div className="flex flex-col mt-2">
-                <span className="font-bold text-xl text-white leading-tight">Digital Products</span>
-                <span className="font-semibold text-base bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent leading-tight -mt-1">
-                  Artisan
+    <section className="bg-gray-50 py-16 px-4">
+      <div className="max-w-4xl mx-auto text-center">
+        <h2 className="text-3xl font-bold mb-4">Frequently Asked Questions</h2>
+        <p className="text-gray-600 mb-10 text-lg">
+          Everything you need to know about our digital products and services
+        </p>
+        <div className="space-y-4 text-left">
+          {faqs.map((faq, idx) => (
+            <div key={idx} className="border rounded-md bg-white shadow-sm hover:shadow-md transition">
+              <button
+                onClick={() => toggle(idx)}
+                className="w-full text-left px-6 py-4 font-semibold text-lg hover:bg-gray-100 transition flex justify-between items-center"
+              >
+                <span>{faq.question}</span>
+                <span className="text-xl">
+                  {openIndex === idx ? '−' : '+'}
                 </span>
-              </div>
+              </button>
+              {openIndex === idx && (
+                <div className="px-6 pb-4 text-gray-700 text-sm">{faq.answer}</div>
+              )}
             </div>
-            <p className="text-gray-300 mb-6 max-w-md leading-relaxed">
-              Empowering creators with high-quality digital downloads. From templates to ebooks, we provide the tools
-              you need to succeed in the digital world.
-            </p>
-            <div className="flex space-x-4">
-              <Link
-                href="#"
-                className="text-gray-400 hover:text-blue-400 transition-colors p-2 rounded-full hover:bg-blue-900/30"
-              >
-                <Facebook className="w-5 h-5" />
-              </Link>
-              <Link
-                href="#"
-                className="text-gray-400 hover:text-blue-400 transition-colors p-2 rounded-full hover:bg-blue-900/30"
-              >
-                <Twitter className="w-5 h-5" />
-              </Link>
-              <Link
-                href="#"
-                className="text-gray-400 hover:text-blue-400 transition-colors p-2 rounded-full hover:bg-blue-900/30"
-              >
-                <Instagram className="w-5 h-5" />
-              </Link>
-              <Link
-                href="#"
-                className="text-gray-400 hover:text-blue-400 transition-colors p-2 rounded-full hover:bg-blue-900/30"
-              >
-                <Youtube className="w-5 h-5" />
-              </Link>
-            </div>
-          </div>
-
-          {/* Quick Links */}
-          <div>
-            <h3 className="font-semibold text-lg mb-4 text-blue-300">Quick Links</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link
-                  href="/products"
-                  className="text-gray-300 hover:text-blue-300 transition-colors hover:translate-x-1 inline-block"
-                >
-                  All Products
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/bundles"
-                  className="text-gray-300 hover:text-blue-300 transition-colors hover:translate-x-1 inline-block"
-                >
-                  Bundles
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/categories"
-                  className="text-gray-300 hover:text-blue-300 transition-colors hover:translate-x-1 inline-block"
-                >
-                  Categories
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/bestsellers"
-                  className="text-gray-300 hover:text-blue-300 transition-colors hover:translate-x-1 inline-block"
-                >
-                  Best Sellers
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/new-releases"
-                  className="text-gray-300 hover:text-blue-300 transition-colors hover:translate-x-1 inline-block"
-                >
-                  New Releases
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Support */}
-          <div>
-            <h3 className="font-semibold text-lg mb-4 text-blue-300">Support</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link
-                  href="/help"
-                  className="text-gray-300 hover:text-blue-300 transition-colors hover:translate-x-1 inline-block"
-                >
-                  Help Center
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/contact"
-                  className="text-gray-300 hover:text-blue-300 transition-colors hover:translate-x-1 inline-block"
-                >
-                  Contact Us
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/faq"
-                  className="text-gray-300 hover:text-blue-300 transition-colors hover:translate-x-1 inline-block"
-                >
-                  FAQ
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/returns"
-                  className="text-gray-300 hover:text-blue-300 transition-colors hover:translate-x-1 inline-block"
-                >
-                  Returns
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/affiliate"
-                  className="text-gray-300 hover:text-blue-300 transition-colors hover:translate-x-1 inline-block"
-                >
-                  Affiliate Program
-                </Link>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="border-t border-blue-800/50 mt-8 pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="text-gray-400 text-sm mb-4 md:mb-0">
-              © {new Date().getFullYear()} Digital Products Artisan. All rights reserved.
-            </div>
-            <div className="flex space-x-6 text-sm">
-              <Link href="/privacy" className="text-gray-400 hover:text-blue-300 transition-colors">
-                Privacy Policy
-              </Link>
-              <Link href="/terms" className="text-gray-400 hover:text-blue-300 transition-colors">
-                Terms & Conditions
-              </Link>
-              <Link href="/cookies" className="text-gray-400 hover:text-blue-300 transition-colors">
-                Cookie Policy
-              </Link>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
-    </footer>
+    </section>
   )
 }
