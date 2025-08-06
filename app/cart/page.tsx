@@ -18,13 +18,13 @@ export default function CartPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Load cart from localStorage or your own backend
+  // Load cart from localStorage on mount
   useEffect(() => {
     const storedCart = localStorage.getItem('cart')
     if (storedCart) setCartItems(JSON.parse(storedCart))
   }, [])
 
-  // Update cart in localStorage and reset errors
+  // Save cart and reset error
   const updateCart = (items: CartItem[]) => {
     setCartItems(items)
     localStorage.setItem('cart', JSON.stringify(items))
@@ -53,35 +53,40 @@ export default function CartPage() {
     0
   )
 
-  // Trigger Snipcart checkout
-  const handleCheckout = () => {
+  // Checkout handler with safe window.Snipcart access
+  const handleCheckout = async () => {
     if (!cartItems.length) {
       setError('Your cart is empty!')
       return
     }
 
+    if (typeof window === 'undefined' || !window.Snipcart?.api?.items) {
+      setError('Snipcart is not loaded yet. Please try again in a moment.')
+      return
+    }
+
     setLoading(true)
+    setError(null)
 
     try {
-      // Remove existing cart items in Snipcart to avoid duplicates
-      window.Snipcart?.api?.items.clear().then(() => {
-        // Add items to Snipcart cart
-        cartItems.forEach(item => {
-          window.Snipcart.api.items.add({
-            id: item.id,
-            name: item.name,
-            price: item.price,
-            quantity: item.quantity,
-            url: item.url || window.location.href,
-            // For digital products, include file GUID for automatic delivery
-            ...(item.fileGuid && { fileGuid: item.fileGuid }),
-          })
-        })
+      // Clear existing Snipcart items
+      await window.Snipcart.api.items.clear()
 
-        // Open Snipcart checkout modal
-        window.Snipcart.api.theme.cart.open()
+      // Add current cart items to Snipcart
+      cartItems.forEach(item => {
+        window.Snipcart!.api.items.add({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          url: item.url || window.location.href,
+          ...(item.fileGuid && { fileGuid: item.fileGuid }),
+        })
       })
-    } catch (err: any) {
+
+      // Open Snipcart checkout modal
+      window.Snipcart.api.theme.cart.open()
+    } catch {
       setError('Failed to start checkout. Please try again.')
     } finally {
       setLoading(false)
