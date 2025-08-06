@@ -21,10 +21,10 @@ export default function SignupPage() {
     setLoading(true)
     try {
       await signup(name, email, password)
-      toast({ title: 'Signup successful! Please check your email to confirm.' })
+      toast('Signup successful! Please check your email to confirm.')
       router.push('/login')
     } catch (err: any) {
-      toast({ title: 'Signup failed', description: err.message })
+      toast(`Signup failed: ${err.message}`)
     } finally {
       setLoading(false)
     }
@@ -64,6 +64,7 @@ export default function SignupPage() {
           Log In
         </a>
       </p>
+      <Toaster />
     </div>
   )
 }
