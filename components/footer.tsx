@@ -2,12 +2,7 @@
 
 import { useState } from 'react'
 
-interface FAQ {
-  question: string
-  answer: string
-}
-
-const faqs: FAQ[] = [
+const faqs = [
   {
     question: "What is Digital Products Artisan?",
     answer:
@@ -55,7 +50,7 @@ const faqs: FAQ[] = [
   },
 ]
 
-export default function Footer() {
+export default function FooterFAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
 
   const toggle = (idx: number) => {
@@ -63,81 +58,31 @@ export default function Footer() {
   }
 
   return (
-    <footer className="bg-gray-50 text-gray-800">
-      {/* FAQ Section */}
-      <section className="py-16 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-4">Frequently Asked Questions</h2>
-          <p className="text-gray-600 mb-10 text-lg">
-            Everything you need to know about our digital products and services
-          </p>
-          <div className="space-y-4 text-left">
-            {faqs.map((faq, idx) => (
-              <div
-                key={idx}
-                className="border rounded-md bg-white shadow-sm hover:shadow-md transition"
+    <section className="bg-gray-50 py-16 px-4">
+      <div className="max-w-4xl mx-auto text-center">
+        <h2 className="text-3xl font-bold mb-4">Frequently Asked Questions</h2>
+        <p className="text-gray-600 mb-10 text-lg">
+          Everything you need to know about our digital products and services
+        </p>
+        <div className="space-y-4 text-left">
+          {faqs.map((faq, idx) => (
+            <div key={idx} className="border rounded-md bg-white shadow-sm hover:shadow-md transition">
+              <button
+                onClick={() => toggle(idx)}
+                className="w-full text-left px-6 py-4 font-semibold text-lg hover:bg-gray-100 transition flex justify-between items-center"
               >
-                <button
-                  onClick={() => toggle(idx)}
-                  aria-expanded={openIndex === idx}
-                  className="w-full text-left px-6 py-4 font-semibold text-lg hover:bg-gray-100 transition flex justify-between items-center"
-                >
-                  <span>{faq.question}</span>
-                  <span
-                    className={`transform transition-transform duration-300 ${
-                      openIndex === idx ? 'rotate-180' : ''
-                    }`}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 text-gray-700"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </span>
-                </button>
-                {openIndex === idx && (
-                  <div className="px-6 pb-4 text-gray-700 text-sm">{faq.answer}</div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Traditional Footer Section */}
-      <div className="border-t border-gray-200 py-8 px-4">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-sm">
-          <div>
-            <h4 className="font-bold mb-2">Digital Products Artisan</h4>
-            <p>Your source for premium ebooks, templates, planners, and more.</p>
-          </div>
-          <div>
-            <h4 className="font-bold mb-2">Quick Links</h4>
-            <ul className="space-y-1">
-              <li><a href="/categories/ebooks" className="hover:underline">eBooks</a></li>
-              <li><a href="/categories/templates" className="hover:underline">Templates</a></li>
-              <li><a href="/categories/printable-planners" className="hover:underline">Planners</a></li>
-              <li><a href="/categories/digital-art" className="hover:underline">Digital Art</a></li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-bold mb-2">Support</h4>
-            <ul className="space-y-1">
-              <li><a href="/contact" className="hover:underline">Contact</a></li>
-              <li><a href="/privacy-policy" className="hover:underline">Privacy Policy</a></li>
-              <li><a href="/terms-of-service" className="hover:underline">Terms of Service</a></li>
-            </ul>
-          </div>
-        </div>
-        <div className="mt-8 text-center text-xs text-gray-500">
-          &copy; {new Date().getFullYear()} Digital Products Artisan. All rights reserved.
+                <span>{faq.question}</span>
+                <span className="text-xl">
+                  {openIndex === idx ? '−' : '+'}
+                </span>
+              </button>
+              {openIndex === idx && (
+                <div className="px-6 pb-4 text-gray-700 text-sm">{faq.answer}</div>
+              )}
+            </div>
+          ))}
         </div>
       </div>
-    </footer>
+    </section>
   )
 }
