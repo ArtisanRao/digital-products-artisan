@@ -11,7 +11,7 @@ export default function ReturnsPage() {
         </p>
 
         <p>
-          However, if you encounter an issue with a file—such as corruption, download problems, or incorrect content—please contact us within 7 days of purchase. We will investigate and, if necessary, offer a replacement or refund at our discretion.
+          However, if you encounter an issue with a file — such as corruption, download problems, or incorrect content — please contact us within 7 days of purchase. We will investigate and, if necessary, offer a replacement or refund at our discretion.
         </p>
 
         <p>

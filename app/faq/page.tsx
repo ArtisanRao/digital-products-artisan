@@ -8,7 +8,7 @@ export default function FAQPage() {
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-2">What is Digital Products Artisan?</h2>
         <p className="text-gray-700">
-          Digital Products Artisan is a curated marketplace for premium digital goods—ebooks, AI prompts & packs, templates, graphics, planners, and productivity assets. Whether you're a creator, entrepreneur, building a brand, managing a project, boosting creativity or a lifelong learner, we offer the tools you need to bring your vision to life—all delivered instantly and effortlessly, with no fluff.
+          Digital Products Artisan is a curated marketplace for premium digital goods — ebooks, AI prompts & packs, templates, graphics, planners, and productivity assets. Whether you're a creator, entrepreneur, building a brand, managing a project, boosting creativity or a lifelong learner, we offer the tools you need to bring your vision to life — all delivered instantly and effortlessly, with no fluff.
         </p>
       </div>
 
