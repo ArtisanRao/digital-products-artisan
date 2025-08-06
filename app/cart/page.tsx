@@ -1,8 +1,174 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+
+interface CartItem {
+  id: string
+  name: string
+  price: number
+  quantity: number
+  image?: string
+  url?: string // Product URL
+  description?: string
+  fileGuid?: string // Snipcart file GUID for digital delivery
+}
+
 export default function CartPage() {
+  const [cartItems, setCartItems] = useState<CartItem[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // Load cart from localStorage or your own backend
+  useEffect(() => {
+    const storedCart = localStorage.getItem('cart')
+    if (storedCart) setCartItems(JSON.parse(storedCart))
+  }, [])
+
+  // Update cart in localStorage and reset errors
+  const updateCart = (items: CartItem[]) => {
+    setCartItems(items)
+    localStorage.setItem('cart', JSON.stringify(items))
+    setError(null)
+  }
+
+  const handleQuantityChange = (id: string, quantity: number) => {
+    if (quantity < 1) return
+    const updated = cartItems.map(item =>
+      item.id === id ? { ...item, quantity } : item
+    )
+    updateCart(updated)
+  }
+
+  const handleRemove = (id: string) => {
+    const filtered = cartItems.filter(item => item.id !== id)
+    updateCart(filtered)
+  }
+
+  const handleClear = () => {
+    updateCart([])
+  }
+
+  const totalPrice = cartItems.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  )
+
+  // Trigger Snipcart checkout
+  const handleCheckout = () => {
+    if (!cartItems.length) {
+      setError('Your cart is empty!')
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      // Remove existing cart items in Snipcart to avoid duplicates
+      window.Snipcart?.api?.items.clear().then(() => {
+        // Add items to Snipcart cart
+        cartItems.forEach(item => {
+          window.Snipcart.api.items.add({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            url: item.url || window.location.href,
+            // For digital products, include file GUID for automatic delivery
+            ...(item.fileGuid && { fileGuid: item.fileGuid }),
+          })
+        })
+
+        // Open Snipcart checkout modal
+        window.Snipcart.api.theme.cart.open()
+      })
+    } catch (err: any) {
+      setError('Failed to start checkout. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (!cartItems.length)
+    return (
+      <main className="container mx-auto p-6 text-center">
+        <h1 className="text-4xl font-bold mb-4">Your Cart is Empty</h1>
+        <p className="text-gray-600">Browse products and add them to your cart.</p>
+      </main>
+    )
+
   return (
-    <main className="container mx-auto p-6">
-      <h1 className="text-4xl font-bold mb-6">Cart</h1>
-      <p>Review your selected products here.</p>
+    <main className="container mx-auto p-6 max-w-4xl">
+      <h1 className="text-4xl font-bold mb-8">Your Cart</h1>
+
+      {error && (
+        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">{error}</div>
+      )}
+
+      <ul className="divide-y divide-gray-200 mb-8">
+        {cartItems.map(({ id, name, price, quantity, image }) => (
+          <li key={id} className="flex items-center py-6">
+            {image && (
+              <img
+                src={image}
+                alt={name}
+                className="w-24 h-24 rounded object-cover mr-6"
+                loading="lazy"
+              />
+            )}
+            <div className="flex-grow">
+              <h2 className="text-xl font-semibold">{name}</h2>
+              <p className="text-gray-700 mt-1">${price.toFixed(2)} each</p>
+              <div className="mt-2 flex items-center space-x-2">
+                <label htmlFor={`qty-${id}`} className="mr-2 font-medium">
+                  Quantity:
+                </label>
+                <input
+                  id={`qty-${id}`}
+                  type="number"
+                  min={1}
+                  value={quantity}
+                  onChange={(e) =>
+                    handleQuantityChange(id, Number(e.target.value))
+                  }
+                  className="w-16 p-1 border rounded text-center"
+                />
+              </div>
+            </div>
+            <div className="ml-6 flex flex-col items-end">
+              <p className="text-lg font-bold mb-4">
+                ${(price * quantity).toFixed(2)}
+              </p>
+              <button
+                onClick={() => handleRemove(id)}
+                className="text-red-600 hover:text-red-800 font-semibold"
+                aria-label={`Remove ${name} from cart`}
+              >
+                Remove
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      <div className="flex justify-between items-center border-t border-gray-300 pt-6">
+        <p className="text-2xl font-bold">Total: ${totalPrice.toFixed(2)}</p>
+        <div className="space-x-4">
+          <button
+            onClick={handleClear}
+            disabled={loading}
+            className="px-4 py-2 border border-gray-400 rounded hover:bg-gray-100"
+          >
+            Clear Cart
+          </button>
+          <button
+            onClick={handleCheckout}
+            disabled={loading}
+            className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            {loading ? 'Processing...' : 'Checkout'}
+          </button>
+        </div>
+      </div>
     </main>
-  );
+  )
 }
