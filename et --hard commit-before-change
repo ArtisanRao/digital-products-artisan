@@ -1,0 +1,114 @@
+[33m85dbe29[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Fix: Restore full footer layout and insert FAQ section with dropdown icons
+[33mca05568[m Enhancement: Replace dropdown icon with SVG chevron and remove old FAQ
+[33mde570fe[m Cleanup: Remove old FAQ and update FooterFAQ with dropdown arrow (⌄)
+[33maa086fb[m Fix: Add explicit FAQ type and make FooterFAQ a client component
+[33m73899c8[m Fix: Make FooterFAQ a client component and capitalize component name
+[33m79ecaea[m Fix: Capitalize FooterFAQ component and connect dropdown
+[33medbae77[m Add footer component with hover dropdown functionality
+[33m281bb9e[m Tweak spacing in FAQ and Returns pages
+[33mb9b5667[m Restore full Header layout and replace Affiliate with About
+[33m2b02120[m Restore logo in Header and replace Affiliate with About
+[33m6fffb9f[m Add and style updated About page and AboutSection component
+[33m52aa2a4[m Add and style updated About page and AboutSection component
+[33m62961d3[m Add and style updated About page and AboutSection component
+[33maaee853[m Update AboutSection with professional design and CTA
+[33m65b4bb5[m fix: remove .jpg extensions from planner image paths
+[33mead7dec[m add: weekly family organizer image for printable planners
+[33m7a04a6e[m fix: corrected planner product image paths to use specific cover images
+[33m823da2a[m Update printable planners with correct -cover image names
+[33m60d5958[m Update video-resources page with correct image filenames and new products
+[33m14d6e39[m Fix: Update Printable Planners with correct cover images
+[33m7801053[m Update Photography Prints page with correct image for Monochrome Mood Collection
+[33m02937fc[m Update FontsPage.tsx with correct image filenames
+[33mc63c8b8[m Update IconsPage with correct Business & Finance Icons image
+[33m27e7122[m Replace Affiliate link with About in both desktop and mobile nav
+[33m40268b0[m Replace Affiliate link with About in both desktop and mobile nav
+[33m7115b39[m Add About page with Tailwind styling for Digital Products Artisan
+[33m5482421[m Add FAQ and Returns pages with updated content and structure
+[33mbc9c302[m Add FAQ and Returns policy pages
+[33ma134a00[m Fix: Update Digital Art page with fantasy-concept-art-collection-cover
+[33m2329fbb[m Add and update web-templates page with cover images
+[33md3920f2[m Update image paths in video-resources page
+[33mee89995[m Fix image paths for Software Plugins category
+[33m0162ef2[m Update Printable Planners with corrected image paths
+[33m41b8cdd[m Add Photography Prints page with correct image paths
+[33m5eecdd2[m Add Marketing Tools page with updated cover image filenames
+[33mdad5f17[m Update: Fixed image filename for Motivational Prompt Posters in Digital Art
+[33m583776b[m Add: Icon Sets category with four products
+[33m374184a[m Fix: Updated Notion Planner image filename in Templates page
+[33m5698f7e[m Fix: Updated image filenames in FontsPage to match renamed -cover.jpg files
+[33m2b9be03[m Fix: Updated ebook images to use -cover filenames
+[33m109e0af[m Fix Templates slug and correct image paths for Printable Planners
+[33me20f822[m Fix Templates slug and correct image paths for Printable Planners
+[33m8567823[m Fix Templates slug and correct image paths for Printable Planners
+[33me261ee6[m Add cookie policy page to complete footer links
+[33mb80016e[m Update footer with final Terms & Conditions link
+[33md13f6d2[m Add Contact and Help pages with styled content
+[33m4127f17[m Add Privacy Policy page and improve accessibility structure
+[33mdf55812[m Add footer links and BackToTop button to homepage
+[33mc657ff2[m Add footer to homepage for improved UX
+[33m3804ba9[m Add new product/category images to public/images
+[33m449e9e4[m Add footer to improve UX on long pages
+[33m455fe2e[m Add Software Plugins category page
+[33m176961f[m Add Fonts category with downloadable Snipcart products
+[33m5a754b4[m Add Web Templates category with Snipcart download links
+[33mf2b9b77[m Add Audio Samples category with Snipcart download_url support
+[33m61ecd31[m Add Printable Planners category with Snipcart hidden download links
+[33mbfeb035[m Add Marketing Tools category with Snipcart download_url fields
+[33m7af2e46[m Add Templates category with Snipcart download links
+[33m265b643[m Add Digital Art category with product cards
+[33m0873032[m Add categories overview and eBooks product listing with Snipcart integration
+[33me769bcc[m Add custom download_url fields to Digital Art products
+[33mf934ffb[m Add hidden download_url custom fields to eBooks products
+[33macd7ca5[m Update categories index with 12 category tiles
+[33m8515d1b[m Add Audio Samples category page with Snipcart items
+[33m4baef6a[m Add Video Resources category with digital product cards
+[33m09b899c[m Add Web Templates category with downloadable products
+[33m42eed6b[m Add Icons category with product cards and Snipcart setup
+[33m62ca00a[m Add Fonts category page with Snipcart digital font downloads
+[33m1e7b5fc[m Add Printable Planners category with digital product cards
+[33m28128c3[m Add Marketing Tools category with downloadable products
+[33m21107f1[m Add Templates category with Snipcart product cards
+[33m474f79a[m Add Digital Art category with product cards
+[33mc204798[m Add categories overview and eBooks product listing with Snipcart integration
+[33m18250b3[m Add Snipcart integration to layout
+[33m8108c4d[m Added product images for bestseller cards
+[33m4ee029b[m Enhanced bestsellers page with product cards and Snipcart buttons
+[33m811e69c[m Renamed help, contact, and bestsellers folders for clean URLs
+[33m804700f[m Add redirects and real pages for help, contact, and bestsellers
+[33m49a53c8[m Updated help center page and removed next.config.mjs
+[33m5fd57a7[m Replaced Help Center page with UTF-8 safe version
+[33m64090cc[m Fix Help Center page with clean UTF-8 file
+[33m18bf807[m Fix Help Center encoding issue for Vercel
+[33m89fdb2c[m Apply Help Center UTF-8 fix and Vercel redirect
+[33m7e0421e[m Fix UTF-8 encoding and restore Help Center page content
+[33mf1585c2[m Add fallback redirect from /help-center → /help
+[33m8367ece[m Enable /help-center → /help redirect
+[33m8b49330[m Force commit for /help-center redirect
+[33me75d936[m Add redirects and harmless comment to next.config.mjs
+[33m1073b0e[m Fix vercel.json with proper UTF-8 encoding via .NET
+[33m4b2e49a[m Recreate vercel.json with valid formatting
+[33m944021e[m Delete vercel.json to reset it
+[33mf45ddc5[m Add vercel.json with security headers, redirects, and rewrites
+[33m4dde90e[m Remove vercel.json to test build
+[33m4998253[m Trigger redeploy with empty change
+[33mb3ba57a[m Restore valid vercel.json
+[33mc45ecdb[m Recreate clean vercel.json
+[33mc3b7638[m Fix vercel.json encoding and formatting
+[33m2efb4bc[m Add vercel.json to normalize route handling
+[33m3416943[m Fix: correct next.config.mjs format for deployment
+[33m8bd68fe[m Switched to Next.js dev script and enabled routing
+[33m52842ca[m Add working placeholder pages for contact, help, best sellers, and new releases
+[33mfa5ed79[m Add placeholder pages for contact, help, best sellers, and new releases
+[33m7ef8408[m WIP commit before pull
+[33mcc59272[m Add metadata for homepage to fix OG screenshot and SEO
+[33mf77f63a[m Fix SSR error: wrapped redirects in useEffect
+[33m37c6fa5[m Fix filename: new-releases/pages.tsx → page.tsx
+[33mdef4376[m Add working pages: Contact, Help Center, Best Sellers, New Releases
+[33mc448bb8[m Fix JSX syntax in login and signup pages
+[33mc8152dc[m Add placeholder pages to fix 404 errors on main navigation and category links
+[33mcbf738b[m Add spacing between logo and Products in header
+[33meb844de[m Replaced logo image with new file logo-new.png
+[33m2e3be41[m Removed DIGITAL PRODUCTS ARTISAN text from logo component
+[33m7f0da0b[m Cleaned up header: removed 'DIGITAL PRODUCTS ARTISAN' text and added spacing between Support and search bar
+[33m0c9cb81[m Remove brand name from heade
