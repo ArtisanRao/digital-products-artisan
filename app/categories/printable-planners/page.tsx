@@ -1,4 +1,4 @@
-// Printable Planners Page
+<!-- Printable Planners Page -->
 
 import Image from "next/image";
 
@@ -23,18 +23,18 @@ export default function PrintablePlannersPage() {
             guid: "GUID2"
           },
           {
-            title: "Fantasy Novel",
-            price: "4.99",
-            image: "/images/fantasy-novel-cover.jpg",
-            url: "/products/fantasy-novel",
-            guid: "GUID3"
+            title: "Student Study Planner",
+            price: "6.99",
+            image: "/images/student-study-planner-cover.jpg",
+            url: "/products/student-study-planner",
+            guid: "GUID7"
           },
           {
-            title: "Science Fiction Novel",
-            price: "5.99",
-            image: "/images/science-fiction-novel-cover.jpg",
-            url: "/products/science-fiction-novel",
-            guid: "GUID4"
+            title: "2025 Business Planner",
+            price: "11.99",
+            image: "/images/2025-business-planner-cover.jpg",
+            url: "/products/2025-business-planner",
+            guid: "GUID8"
           },
           {
             title: "Animated Titles & Animations",
