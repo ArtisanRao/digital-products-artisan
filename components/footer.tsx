@@ -11,7 +11,7 @@ export default function Footer() {
         <div>
           <div className="flex items-center space-x-3 mb-4">
             <Image
-              src="/images/logo.png" // replace with your logo path
+              src="/images/logo.png"
               alt="Digital Products Artisan Logo"
               width={50}
               height={50}
@@ -27,7 +27,6 @@ export default function Footer() {
           <p className="text-gray-300 max-w-xs leading-relaxed">
             Empowering creators with high-quality digital downloads. From templates to ebooks, we provide the tools you need to succeed in the digital world.
           </p>
-          {/* Social Icons */}
           <div className="flex space-x-6 mt-6 text-gray-400">
             <a href="#" aria-label="Facebook" className="hover:text-white transition">
               <svg fill="currentColor" viewBox="0 0 24 24" className="w-6 h-6"><path d="M22 12a10 10 0 10-11.5 9.9v-7h-2v-3h2v-2.3c0-2 1.2-3.1 3-3.1.9 0 1.8.2 1.8.2v2h-1c-1 0-1.3.6-1.3 1.3V12h2.3l-.4 3H13v7A10 10 0 0022 12z"/></svg>
@@ -48,80 +47,34 @@ export default function Footer() {
         <div>
           <h3 className="text-xl font-semibold mb-6 text-[#699CF7]">Quick Links</h3>
           <ul className="space-y-4 text-gray-300">
-            <li>
-              <Link href="/products" className="hover:text-white transition">
-                All Products
-              </Link>
-            </li>
-            <li>
-              <Link href="/bundles" className="hover:text-white transition">
-                Bundles
-              </Link>
-            </li>
-            <li>
-              <Link href="/categories" className="hover:text-white transition">
-                Categories
-              </Link>
-            </li>
-            <li>
-              <Link href="/bestsellers" className="hover:text-white transition">
-                Best Sellers
-              </Link>
-            </li>
-            <li>
-              <Link href="/new-releases" className="hover:text-white transition">
-                New Releases
-              </Link>
-            </li>
+            <li><Link href="/products" className="hover:text-white transition">All Products</Link></li>
+            <li><Link href="/bundles" className="hover:text-white transition">Bundles</Link></li>
+            <li><Link href="/categories" className="hover:text-white transition">Categories</Link></li>
+            <li><Link href="/bestsellers" className="hover:text-white transition">Best Sellers</Link></li>
+            <li><Link href="/new-releases" className="hover:text-white transition">New Releases</Link></li>
           </ul>
         </div>
 
-        {/* Support Links */}
+        {/* Support */}
         <div>
           <h3 className="text-xl font-semibold mb-6 text-[#699CF7]">Support</h3>
           <ul className="space-y-4 text-gray-300">
-            <li>
-              <Link href="/help-center" className="hover:text-white transition">
-                Help Center
-              </Link>
-            </li>
-            <li>
-              <Link href="/contact" className="hover:text-white transition">
-                Contact Us
-              </Link>
-            </li>
-            <li>
-              <Link href="/faq" className="hover:text-white transition">
-                FAQ
-              </Link>
-            </li>
-            <li>
-              <Link href="/returns" className="hover:text-white transition">
-                Returns
-              </Link>
-            </li>
-            <li>
-              <Link href="/affiliate" className="hover:text-white transition">
-                Affiliate Program
-              </Link>
-            </li>
+            <li><Link href="/help-center" className="hover:text-white transition">Help Center</Link></li>
+            <li><Link href="/contact" className="hover:text-white transition">Contact Us</Link></li>
+            <li><Link href="/faq" className="hover:text-white transition">FAQ</Link></li>
+            <li><Link href="/returns" className="hover:text-white transition">Returns</Link></li>
+            <li><Link href="/affiliate" className="hover:text-white transition">Affiliate Program</Link></li>
           </ul>
         </div>
       </div>
 
-      {/* Bottom bar */}
+      {/* Bottom Bar */}
       <div className="mt-12 border-t border-blue-700 pt-6 flex flex-col md:flex-row justify-between text-gray-400 text-sm">
         <div>© 2024 Digital Products Artisan. All rights reserved.</div>
         <div className="space-x-6 mt-4 md:mt-0">
-          <Link href="/privacy" className="hover:text-white transition">
-            Privacy Policy
-          </Link>
-          <Link href="/terms" className="hover:text-white transition">
-            Terms of Service
-          </Link>
-          <Link href="/cookies" className="hover:text-white transition">
-            Cookie Policy
-          </Link>
+          <Link href="/privacy" className="hover:text-white transition">Privacy Policy</Link>
+          <Link href="/terms" className="hover:text-white transition">Terms of Service</Link>
+          <Link href="/cookies" className="hover:text-white transition">Cookie Policy</Link>
         </div>
       </div>
 
@@ -130,16 +83,7 @@ export default function Footer() {
         aria-label="Help Chat"
         className="fixed bottom-8 right-8 w-14 h-14 rounded-full bg-gradient-to-br from-[#3CA0F0] to-[#1968D3] shadow-lg flex items-center justify-center text-white hover:scale-110 transition-transform"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="w-7 h-7"
-          viewBox="0 0 24 24"
-        >
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7" viewBox="0 0 24 24">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z" />
         </svg>
       </button>
