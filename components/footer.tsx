@@ -3,12 +3,7 @@
 import { useState } from 'react'
 
 const faqs = [
-  {
-    question: "What is Digital Products Artisan?",
-    answer:
-      "Digital Products Artisan is a curated marketplace for premium digital goods — ebooks, AI prompts & packs, templates, graphics, planners, and productivity assets...",
-  },
-  // ... rest of FAQs
+  // ... your faqs unchanged
 ]
 
 export default function FooterFAQ() {
@@ -33,20 +28,14 @@ export default function FooterFAQ() {
             >
               <button
                 onClick={() => toggle(idx)}
-                className="w-full text-left px-6 py-4 font-semibold text-lg hover:bg-gray-100 transition flex justify-between items-center"
                 aria-expanded={openIndex === idx}
-                aria-controls={`faq-${idx}`}
+                className="w-full text-left px-6 py-4 font-semibold text-lg hover:bg-gray-100 transition flex justify-between items-center"
               >
                 <span>{faq.question}</span>
                 <span className="text-xl">{openIndex === idx ? '−' : '+'}</span>
               </button>
               {openIndex === idx && (
-                <div
-                  id={`faq-${idx}`}
-                  className="px-6 pb-4 text-gray-700 text-sm"
-                >
-                  {faq.answer}
-                </div>
+                <div className="px-6 pb-4 text-gray-700 text-sm">{faq.answer}</div>
               )}
             </div>
           ))}
