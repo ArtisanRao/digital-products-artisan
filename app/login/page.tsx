@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Toaster } from '@/components/ui/toaster'
-import { toast } from 'sonner'
+import { Toaster } from "@/components/ui/toaster"
+import { toast } from "sonner"
 
 export default function LoginPage() {
   const { login } = useAuth()
@@ -31,6 +31,7 @@ export default function LoginPage() {
 
   return (
     <div className="max-w-md mx-auto mt-24 p-6 bg-white shadow rounded">
+      <Toaster />
       <h1 className="text-2xl font-semibold mb-4">Log In</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
@@ -42,7 +43,7 @@ export default function LoginPage() {
         />
         <Input
           type="password"
-          placeholder="Password"
+          placeholder="Enter password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
@@ -52,7 +53,7 @@ export default function LoginPage() {
         </Button>
       </form>
       <p className="text-sm mt-4">
-        Don’t have an account?{' '}
+        Don't have an account?{' '}
         <a href="/signup" className="text-blue-600 hover:underline">
           Sign Up
         </a>
