@@ -13,7 +13,7 @@ export default function DigitalArtPage() {
     {
       id: "fantasy-concept-art",
       title: "Fantasy Concept Art Collection",
-      image: "/images/fantasy-concept-art-collection-cover.jpg", // ✅ updated image
+      image: "/images/fantasy-concept-art-collection-cover.jpg",
       price: 6.49,
       description: "Epic fantasy artworks for creatives and storytellers.",
       fileUrl: "/downloads/fantasy-art.zip",
@@ -21,7 +21,7 @@ export default function DigitalArtPage() {
     {
       id: "motivational-prompts",
       title: "Motivational Prompt Posters",
-      image: "/images/motivational-prompt-posters-cover.jpg", // ✅ previously updated
+      image: "/images/motivational-prompt-posters-cover.jpg",
       price: 3.99,
       description: "Printable affirmations and quotes for your wall or feed.",
       fileUrl: "/downloads/motivational-prompts.pdf",
@@ -61,7 +61,9 @@ export default function DigitalArtPage() {
               data-item-url="/categories/digital-art"
               data-item-description={art.description}
               data-item-image={art.image}
-              data-item-file-guid={art.fileUrl}
+              data-item-custom1-name="download_url"
+              data-item-custom1-value={art.fileUrl}
+              data-item-custom1-type="hidden"
             >
               Add to Cart
             </button>
