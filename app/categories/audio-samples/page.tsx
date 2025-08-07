@@ -1,5 +1,7 @@
 'use client';
 
+import Head from 'next/head';
+
 export default function AudioSamplesPage() {
   const audioPacks = [
     {
@@ -13,7 +15,7 @@ export default function AudioSamplesPage() {
     {
       id: "motivational-intros",
       title: "Motivational Podcast Intros",
-      image: "/images/the-code-of-success-cover.jpg", // ✅ updated with -cover
+      image: "/images/the-code-of-success-cover.jpg",
       price: 3.75,
       description: "Uplifting intros and transitions for audio creators.",
       fileUrl: "/downloads/motivational-intros.zip",
@@ -21,15 +23,46 @@ export default function AudioSamplesPage() {
     {
       id: "calm-ambient-kit",
       title: "Calm Ambient Background Kit",
-      image: "/images/mystery-thriller-novel-cover.jpg", // ✅ updated with -cover
+      image: "/images/mystery-thriller-novel-cover.jpg",
       price: 4.25,
       description: "Peaceful audio beds for mindfulness and meditation.",
       fileUrl: "/downloads/calm-ambient-kit.zip",
     },
   ];
 
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    itemListElement: audioPacks.map((item, index) => ({
+      "@type": "Product",
+      name: item.title,
+      image: `https://digitalproductsartisan.com${item.image}`,
+      description: item.description,
+      offers: {
+        "@type": "Offer",
+        priceCurrency: "EUR",
+        price: item.price,
+        availability: "https://schema.org/InStock",
+        url: `https://digitalproductsartisan.com/categories/audio-samples#${item.id}`,
+      },
+      position: index + 1,
+    })),
+  };
+
   return (
     <main className="max-w-7xl mx-auto px-4 py-12">
+      <Head>
+        <title>🎵 Audio Samples | Digital Products Artisan</title>
+        <meta
+          name="description"
+          content="Explore premium audio packs for creators: cinematic, ambient, motivational intros & more."
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
+      </Head>
+
       <h1 className="text-4xl font-bold text-center mb-10">🎵 Audio Samples</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         {audioPacks.map((audio) => (
