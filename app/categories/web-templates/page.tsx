@@ -5,7 +5,7 @@ export default function WebTemplatesPage() {
     {
       id: "portfolio-starter-kit",
       title: "Portfolio Starter Kit",
-      image: "/images/web-templates-cover.jpg", // ✅ make sure this exists
+      image: "/images/web-templates-cover.jpg",
       price: 6.95,
       description: "Modern personal portfolio template (HTML, CSS, JS).",
       fileUrl: "/downloads/portfolio-starter-kit.zip",
@@ -13,7 +13,7 @@ export default function WebTemplatesPage() {
     {
       id: "business-landing-page",
       title: "Business Landing Page",
-      image: "/images/business-templates-cover.jpg", // ✅ updated to -cover version if renamed
+      image: "/images/business-templates-cover.jpg",
       price: 5.50,
       description: "Clean and responsive landing page for startups.",
       fileUrl: "/downloads/business-landing-page.zip",
@@ -21,7 +21,7 @@ export default function WebTemplatesPage() {
     {
       id: "ui-components-pack",
       title: "UI Components Pack",
-      image: "/images/icons-cover.jpg", // ✅ already correct
+      image: "/images/icons-cover.jpg",
       price: 4.75,
       description: "Reusable components for rapid web development.",
       fileUrl: "/downloads/ui-components-pack.zip",
@@ -53,9 +53,7 @@ export default function WebTemplatesPage() {
               data-item-url="/categories/web-templates"
               data-item-description={item.description}
               data-item-image={item.image}
-              data-item-custom1-name="download_url"
-              data-item-custom1-value={item.fileUrl}
-              data-item-custom1-type="hidden"
+              data-item-file-guid={item.fileUrl}
             >
               Add to Cart
             </button>
