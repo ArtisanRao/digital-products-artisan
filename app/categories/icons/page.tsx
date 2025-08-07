@@ -21,7 +21,7 @@ export default function IconsPage() {
     {
       id: "finance-icons",
       title: "Business & Finance Icons",
-      image: "/images/business-&-finance-icons-cover.jpg", // ✅ updated image path
+      image: "/images/business-&-finance-icons-cover.jpg",
       price: 3.99,
       description: "Icons representing analytics, currency, and finance tools.",
       fileUrl: "/downloads/finance-icons.zip",
@@ -61,7 +61,9 @@ export default function IconsPage() {
               data-item-url="/categories/icons"
               data-item-description={icon.description}
               data-item-image={icon.image}
-              data-item-file-guid={icon.fileUrl}
+              data-item-custom1-name="download_url"
+              data-item-custom1-value={icon.fileUrl}
+              data-item-custom1-type="hidden"
             >
               Add to Cart
             </button>
