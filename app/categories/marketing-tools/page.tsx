@@ -1,11 +1,13 @@
 'use client';
 
+import Head from 'next/head';
+
 export default function MarketingToolsPage() {
   const tools = [
     {
       id: "social-media-kit",
       title: "Social Media Kit Pro",
-      image: "/images/social-media-kits-cover.jpg", // ✅ should exist
+      image: "/images/social-media-kits-cover.jpg",
       price: 6.99,
       description: "Editable Canva and PSD assets for Instagram, LinkedIn & more.",
       fileUrl: "/downloads/social-media-kit-pro.zip",
@@ -13,7 +15,7 @@ export default function MarketingToolsPage() {
     {
       id: "email-templates-pack",
       title: "Email Templates Pack",
-      image: "/images/marketing-tools-cover.jpg", // ✅ should exist
+      image: "/images/marketing-tools-cover.jpg",
       price: 4.50,
       description: "High-converting email layouts and swipe files.",
       fileUrl: "/downloads/email-templates-pack.zip",
@@ -21,7 +23,7 @@ export default function MarketingToolsPage() {
     {
       id: "sales-funnel-builder",
       title: "Sales Funnel Builder Toolkit",
-      image: "/images/business-templates-cover.jpg", // ✅ confirm this one too
+      image: "/images/business-templates-cover.jpg",
       price: 7.25,
       description: "Wireframes and templates to build landing pages and funnels.",
       fileUrl: "/downloads/sales-funnel-builder.zip",
@@ -30,7 +32,16 @@ export default function MarketingToolsPage() {
 
   return (
     <main className="max-w-7xl mx-auto px-4 py-12">
+      <Head>
+        <title>Marketing Tools | Digital Products Artisan</title>
+        <meta
+          name="description"
+          content="Download professional marketing tools — email templates, social media kits, sales funnel builders and more."
+        />
+      </Head>
+
       <h1 className="text-4xl font-bold text-center mb-10">📥 Marketing Tools</h1>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         {tools.map((tool) => (
           <div
