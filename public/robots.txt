@@ -1,0 +1,13 @@
+# *
+User-agent: *
+Allow: /
+Disallow: /404
+Disallow: /500
+Disallow: /thank-you
+Disallow: /contact/success
+
+# Host
+Host: https://digitalproductsartisan.com
+
+# Sitemaps
+Sitemap: https://digitalproductsartisan.com/sitemap.xml
