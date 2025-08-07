@@ -1,3 +1,4 @@
+
 'use client';
 
 export default function SocialMediaKitsPage() {
@@ -8,7 +9,7 @@ export default function SocialMediaKitsPage() {
       image: "/images/instagram-branding-kit-cover.jpg",
       price: 9.99,
       description: "Editable templates optimized for Instagram branding.",
-      fileUrl: "/downloads/instagram-branding-kit.zip",
+      fileGuid: "GUID1",
     },
     {
       id: "pinterest-growth-pack",
@@ -16,7 +17,7 @@ export default function SocialMediaKitsPage() {
       image: "/images/pinterest-growth-pack-cover.jpg",
       price: 8.99,
       description: "Styled Pinterest pins and templates to boost traffic.",
-      fileUrl: "/downloads/pinterest-growth-pack.zip",
+      fileGuid: "GUID2",
     },
     {
       id: "facebook-ad-templates",
@@ -24,7 +25,7 @@ export default function SocialMediaKitsPage() {
       image: "/images/facebook-ad-templates-cover.jpg",
       price: 7.99,
       description: "Ready-for-use Facebook ad templates in PNG format.",
-      fileUrl: "/downloads/facebook-ad-templates.zip",
+      fileGuid: "GUID3",
     },
     {
       id: "canva-social-media-bundle",
@@ -32,7 +33,7 @@ export default function SocialMediaKitsPage() {
       image: "/images/canva-social-media-bundle-cover.jpg",
       price: 12.99,
       description: "A bundle of Canva templates for multiple platforms.",
-      fileUrl: "/downloads/canva-social-media-bundle.zip",
+      fileGuid: "GUID4",
     },
     {
       id: "instagram-story-templates",
@@ -40,7 +41,7 @@ export default function SocialMediaKitsPage() {
       image: "/images/instagram-story-templates-cover.jpg",
       price: 6.99,
       description: "Stylish Stories designs for promotions or engagement.",
-      fileUrl: "/downloads/instagram-story-templates.zip",
+      fileGuid: "GUID5",
     },
     {
       id: "youtube-channel-kit",
@@ -48,7 +49,7 @@ export default function SocialMediaKitsPage() {
       image: "/images/youtube-channel-kit-cover.jpg",
       price: 10.0,
       description: "Cover art, thumbnails, and banner templates included.",
-      fileUrl: "/downloads/youtube-channel-kit.zip",
+      fileGuid: "GUID6",
     },
     {
       id: "chatgpt-guide",
@@ -56,7 +57,7 @@ export default function SocialMediaKitsPage() {
       image: "/images/chatgpt-guide-cover.jpg",
       price: 11.99,
       description: "Learn how to use ChatGPT to generate content ideas, captions, and ads.",
-      fileUrl: "/downloads/chatgpt-guide.zip",
+      fileGuid: "GUID7",
     },
     {
       id: "excel-social-tracker",
@@ -64,7 +65,7 @@ export default function SocialMediaKitsPage() {
       image: "/images/excel-tracker-cover.jpg",
       price: 5.99,
       description: "Simple Excel tracker for posts, analytics, and performance.",
-      fileUrl: "/downloads/excel-social-tracker.zip",
+      fileGuid: "GUID8",
     },
   ];
 
@@ -90,7 +91,7 @@ export default function SocialMediaKitsPage() {
               data-item-url="/categories/social-media-kits"
               data-item-description={item.description}
               data-item-image={item.image}
-              data-item-file-guid={item.fileUrl}
+              data-item-file-guid={item.fileGuid}
             >
               Add to Cart
             </button>
