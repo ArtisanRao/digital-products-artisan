@@ -1,7 +1,7 @@
 /** @type {import('next-sitemap').IConfig} */
 module.exports = {
   siteUrl: 'https://digitalproductsartisan.com',
-  generateRobotsTxt: true, // Automatically creates robots.txt
+  generateRobotsTxt: true,
   sitemapSize: 7000,
   changefreq: 'weekly',
   priority: 0.7,
@@ -13,6 +13,7 @@ module.exports = {
     '/terms',
     '/privacy-policy',
     '/contact/success',
+    '/sitemap.xml', // ✅ Prevent sitemap index from referencing itself
   ],
   robotsTxtOptions: {
     policies: [
@@ -29,8 +30,11 @@ module.exports = {
         ],
       },
     ],
+    // ✅ Remove additionalSitemaps pointing to sitemap.xml
     additionalSitemaps: [
-      'https://digitalproductsartisan.com/sitemap.xml',
+      // If you ever generate additional sitemaps manually (e.g. blog sitemap), list them here
+      // Example:
+      // 'https://digitalproductsartisan.com/blog-sitemap.xml',
     ],
   },
 };
