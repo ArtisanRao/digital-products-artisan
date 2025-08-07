@@ -61,7 +61,9 @@ export default function VideoResourcesPage() {
               data-item-url="/categories/video-resources"
               data-item-description={item.description}
               data-item-image={item.image}
-              data-item-file-guid={item.fileUrl}
+              data-item-custom1-name="download_url"
+              data-item-custom1-value={item.fileUrl}
+              data-item-custom1-type="hidden"
             >
               Add to Cart
             </button>
