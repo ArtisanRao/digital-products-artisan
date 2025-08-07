@@ -1,5 +1,7 @@
 'use client';
 
+import Head from 'next/head';
+
 export default function PhotographyPrintsPage() {
   const prints = [
     {
@@ -21,7 +23,7 @@ export default function PhotographyPrintsPage() {
     {
       id: "monochrome-moods",
       title: "Monochrome Mood Collection",
-      image: "/images/monochrome-mood-collection-cover.jpg", // ✅ Updated
+      image: "/images/monochrome-mood-collection-cover.jpg",
       price: 4.95,
       description: "Black & white photo art prints for minimalist lovers.",
       fileUrl: "/downloads/monochrome-moods.zip",
@@ -38,7 +40,16 @@ export default function PhotographyPrintsPage() {
 
   return (
     <main className="max-w-7xl mx-auto px-4 py-12">
+      <Head>
+        <title>Photography Prints | Digital Products Artisan</title>
+        <meta
+          name="description"
+          content="Printable photography art — landscapes, monochrome, city life, and abstract bokeh effects for instant download."
+        />
+      </Head>
+
       <h1 className="text-4xl font-bold text-center mb-10">📸 Photography Prints</h1>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         {prints.map((item) => (
           <div
@@ -61,7 +72,9 @@ export default function PhotographyPrintsPage() {
               data-item-url="/categories/photography-prints"
               data-item-description={item.description}
               data-item-image={item.image}
-              data-item-file-guid={item.fileUrl}
+              data-item-custom1-name="download_url"
+              data-item-custom1-value={item.fileUrl}
+              data-item-custom1-type="hidden"
             >
               Add to Cart
             </button>
