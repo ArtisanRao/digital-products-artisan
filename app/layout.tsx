@@ -12,25 +12,25 @@ import LiveChat from "@/components/live-chat";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "InnovateSphere - Digital Solutions for Tomorrow's World",
+  title: "Digital Products Artisan",
   description:
-    "Discover cutting-edge digital solutions—software, templates, and resources to power your innovation. Instant access, limitless potential.",
+    "Premium planners, templates, and digital tools designed to elevate your productivity and creativity. Instant access. Unlimited possibilities.",
   keywords:
-    "digital solutions, software, templates, AI tools, digital downloads, innovation resources",
-  authors: [{ name: "InnovateSphere" }],
+    "digital downloads, productivity planners, templates, digital tools, notion templates, printable PDFs, digital shop",
+  authors: [{ name: "Digital Products Artisan" }],
   openGraph: {
-    title: "InnovateSphere - Digital Solutions",
+    title: "Digital Products Artisan",
     description:
-      "Empowering innovation with a curated collection of digital tools for creators and entrepreneurs.",
+      "Curated digital resources for creators and entrepreneurs—planners, templates, and tools to help you thrive.",
     type: "website",
     locale: "en_US",
     url: "https://digitalproductsartisan.com",
-    siteName: "InnovateSphere",
+    siteName: "Digital Products Artisan",
   },
   twitter: {
     card: "summary_large_image",
-    title: "InnovateSphere",
-    description: "Digital solutions for creators and entrepreneurs",
+    title: "Digital Products Artisan",
+    description: "Tools and templates for creators, entrepreneurs, and doers.",
   },
   robots: {
     index: true,
@@ -38,6 +38,7 @@ export const metadata: Metadata = {
   },
   generator: "v0.dev",
   manifest: "/manifest.json",
+  themeColor: "#0f172a",
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
@@ -45,6 +46,11 @@ export const metadata: Metadata = {
       { url: "/icon0.svg", type: "image/svg+xml" },
     ],
     apple: "/apple-icon.png",
+  },
+  appleWebApp: {
+    capable: true,
+    title: "Digital Products Artisan",
+    statusBarStyle: "black-translucent",
   },
 };
 
@@ -58,12 +64,12 @@ export default function RootLayout({
       <head>
         {/* Web manifest and PWA */}
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#ffffff" />
+        <meta name="theme-color" content="#0f172a" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="application-name" content="InnovateSphere" />
-        <meta name="apple-mobile-web-app-title" content="InnovateSphere" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="application-name" content="Digital Products Artisan" />
+        <meta name="apple-mobile-web-app-title" content="Digital Products Artisan" />
 
         {/* Favicons */}
         <link rel="icon" href="/favicon.ico" />
