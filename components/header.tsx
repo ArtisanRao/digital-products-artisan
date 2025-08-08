@@ -28,8 +28,8 @@ export default function Header() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
 
-          {/* Left side: Logo + desktop nav links including Support */}
-          <div className="flex items-center space-x-6 flex-shrink-0">
+          {/* Left side: Logo + desktop nav links except Support */}
+          <div className="flex items-center space-x-4 flex-shrink-0">
             <Logo size="md" />
             <nav className="hidden md:flex items-center space-x-6">
               <Link href="/products" className="nav-link">Products</Link>
@@ -37,7 +37,7 @@ export default function Header() {
               <Link href="/categories" className="nav-link">Categories</Link>
               <Link href="/about" className="nav-link">About</Link>
 
-              {/* Support dropdown */}
+              {/* Support inline with equal spacing */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="nav-link inline-flex items-center space-x-1">
@@ -68,6 +68,19 @@ export default function Header() {
             <Link href="/products" className="hover:text-blue-600">Products</Link>
             <Link href="/categories" className="hover:text-blue-600">Categories</Link>
             <Link href="/about" className="hover:text-blue-600">About</Link>
+            {/* Support with dropdown in mobile */}
+            <details className="relative group">
+              <summary className="cursor-pointer flex items-center space-x-1 hover:text-blue-600">
+                <span>Support</span>
+                <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
+              </summary>
+              <nav className="absolute left-0 mt-2 bg-white border border-gray-200 rounded-md shadow-lg w-40 p-2 flex flex-col space-y-1 z-50">
+                <Link href="/help" className="mobile-link px-2 py-1 hover:bg-blue-50 rounded">Help Center</Link>
+                <Link href="/faq" className="mobile-link px-2 py-1 hover:bg-blue-50 rounded">FAQ</Link>
+                <Link href="/returns" className="mobile-link px-2 py-1 hover:bg-blue-50 rounded">Returns & Refund Policy</Link>
+                <Link href="/contact" className="mobile-link px-2 py-1 hover:bg-blue-50 rounded">Contact Us</Link>
+              </nav>
+            </details>
           </nav>
 
           {/* Right side */}
@@ -112,7 +125,7 @@ export default function Header() {
               </Link>
             </Button>
 
-            {/* Desktop menu dropdown with Login, Sign Up, etc. */}
+            {/* Desktop Menu toggle with dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -148,7 +161,7 @@ export default function Header() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Mobile menu toggle */}
+            {/* Mobile Menu toggle */}
             <Button
               variant="ghost"
               size="sm"
@@ -165,48 +178,46 @@ export default function Header() {
             </Button>
           </div>
         </div>
-
-        {/* Mobile menu dropdown */}
-        {isMenuOpen && (
-          <div className="md:hidden py-4 border-t border-blue-100 bg-blue-50/50 animate-fadeIn">
-            <nav className="flex flex-col space-y-4 px-2">
-
-              {/* Mobile main nav */}
-              <Link href="/products" className="mobile-link">Products</Link>
-              <Link href="/categories" className="mobile-link">Categories</Link>
-              <Link href="/about" className="mobile-link">About</Link>
-
-              {/* Support submenu with dropdown */}
-              <details className="mobile-link group" role="group">
-                <summary className="cursor-pointer flex justify-between items-center">
-                  Support
-                  <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
-                </summary>
-                <nav className="pl-4 mt-2 flex flex-col space-y-2">
-                  <Link href="/help" className="mobile-link">Help Center</Link>
-                  <Link href="/faq" className="mobile-link">FAQ</Link>
-                  <Link href="/returns" className="mobile-link">Returns & Refund Policy</Link>
-                  <Link href="/contact" className="mobile-link">Contact Us</Link>
-                </nav>
-              </details>
-
-              {/* Cart inside mobile menu */}
-              <Link href="/cart" className="mobile-link">Cart ({itemCount})</Link>
-
-              {/* Auth and extra menu */}
-              {!user && (
-                <>
-                  <Link href="/login" className="mobile-link">Login</Link>
-                  <Link href="/signup" className="mobile-link">Sign Up</Link>
-                  <Link href="/best-seller" className="mobile-link">Best Seller</Link>
-                  <Link href="/new-releases" className="mobile-link">New Releases</Link>
-                  <Link href="/bundles" className="mobile-link">Bundles</Link>
-                </>
-              )}
-            </nav>
-          </div>
-        )}
       </div>
+
+      {/* Mobile menu dropdown */}
+      {isMenuOpen && (
+        <div className="md:hidden py-4 border-t border-blue-100 bg-blue-50/50 animate-fadeIn">
+          <nav className="flex flex-col space-y-4 px-2">
+            <Link href="/products" className="mobile-link">Products</Link>
+            <Link href="/categories" className="mobile-link">Categories</Link>
+            <Link href="/about" className="mobile-link">About</Link>
+
+            {/* Support submenu with dropdown */}
+            <details className="mobile-link group" role="group">
+              <summary className="cursor-pointer flex justify-between items-center">
+                Support
+                <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
+              </summary>
+              <nav className="pl-4 mt-2 flex flex-col space-y-2">
+                <Link href="/help" className="mobile-link">Help Center</Link>
+                <Link href="/faq" className="mobile-link">FAQ</Link>
+                <Link href="/returns" className="mobile-link">Returns & Refund Policy</Link>
+                <Link href="/contact" className="mobile-link">Contact Us</Link>
+              </nav>
+            </details>
+
+            {/* Cart inside mobile menu */}
+            <Link href="/cart" className="mobile-link">Cart ({itemCount})</Link>
+
+            {/* Auth and extra menu */}
+            {!user && (
+              <>
+                <Link href="/login" className="mobile-link">Login</Link>
+                <Link href="/signup" className="mobile-link">Sign Up</Link>
+                <Link href="/best-seller" className="mobile-link">Best Seller</Link>
+                <Link href="/new-releases" className="mobile-link">New Releases</Link>
+                <Link href="/bundles" className="mobile-link">Bundles</Link>
+              </>
+            )}
+          </nav>
+        </div>
+      )}
     </header>
   )
 }
