@@ -1,11 +1,18 @@
-
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Download, Zap, Sparkles } from "lucide-react"
 import Link from "next/link"
 
 export default function HeroSection() {
   return (
-    <section className="relative bg-gradient-to-br from-blue-50 via-white to-blue-100/50 py-12 md:py-16 overflow-hidden">
+    <section
+      className="
+        relative 
+        bg-gradient-to-br from-blue-50 via-white to-blue-100/50 
+        pt-20 md:pt-24   /* Reduced top padding for less gap */
+        pb-12 md:pb-16 
+        overflow-hidden
+      "
+    >
       {/* Background decorative elements */}
       <div className="absolute top-10 left-10 w-20 h-20 bg-blue-200/30 rounded-full blur-xl"></div>
       <div className="absolute top-32 right-20 w-32 h-32 bg-blue-300/20 rounded-full blur-2xl"></div>
@@ -89,4 +96,3 @@ export default function HeroSection() {
     </section>
   )
 }
- 
