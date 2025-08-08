@@ -26,12 +26,12 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-blue-100">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16 gap-2">
+        <div className="flex items-center justify-between h-16 gap-4 md:gap-6">
           {/* Logo */}
           <Logo size="md" className="mr-2" />
 
           {/* Mobile Nav Links inline between logo and cart */}
-          <nav className="flex md:hidden items-center space-x-4 text-sm">
+          <nav className="flex md:hidden items-center space-x-3 text-sm">
             <Link href="/products" className="hover:text-blue-600">Products</Link>
             <Link href="/categories" className="hover:text-blue-600">Categories</Link>
             <Link href="/about" className="hover:text-blue-600">About</Link>
@@ -39,7 +39,7 @@ export default function Header() {
           </nav>
 
           {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center space-x-8">
+          <nav className="hidden md:flex items-center space-x-4">
             <Link href="/products" className="nav-link">Products</Link>
             <Link href="/bundles" className="nav-link">Bundles</Link>
             <Link href="/categories" className="nav-link">Categories</Link>
@@ -74,14 +74,14 @@ export default function Header() {
           </nav>
 
           {/* Search (desktop only) */}
-          <div className="hidden md:flex items-center space-x-2 ml-6 relative">
+          <div className="hidden md:flex items-center space-x-2 ml-4 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400 w-4 h-4" />
             <Input
               type="search"
               placeholder="Search products..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-64 border-blue-200 focus:border-blue-500 focus:ring-blue-500/20 focus:ring-1 rounded-md"
+              className="pl-10 w-56 border-blue-200 focus:border-blue-500 focus:ring-blue-500/20 focus:ring-1 rounded-md"
             />
             {searchTerm && (
               <button
@@ -133,11 +133,39 @@ export default function Header() {
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-blue-100 bg-blue-50/50 animate-fadeIn">
             <nav className="flex flex-col space-y-4">
-              <Link href="/login" className="mobile-link">Login</Link>
-              <Link href="/signup" className="mobile-link">Sign Up</Link>
-              <Link href="/best-seller" className="mobile-link">Best Seller</Link>
-              <Link href="/new-releases" className="mobile-link">New Releases</Link>
+              <Link href="/products" className="mobile-link">Products</Link>
               <Link href="/bundles" className="mobile-link">Bundles</Link>
+              <Link href="/categories" className="mobile-link">Categories</Link>
+              <Link href="/about" className="mobile-link">About</Link>
+
+              {/* Support dropdown submenu in mobile */}
+              <details className="mobile-link group" role="group">
+                <summary className="cursor-pointer flex justify-between items-center">
+                  Support
+                  <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
+                </summary>
+                <nav className="pl-4 mt-2 flex flex-col space-y-2">
+                  <Link href="/help" className="mobile-link">Help Center</Link>
+                  <Link href="/faq" className="mobile-link">FAQ</Link>
+                  <Link href="/returns" className="mobile-link">Returns & Refund Policy</Link>
+                  <Link href="/contact" className="mobile-link">Contact Us</Link>
+                </nav>
+              </details>
+
+              {!user && (
+                <div className="flex space-x-2 pt-4">
+                  <Button variant="ghost" size="sm" asChild className="hover:bg-blue-100">
+                    <Link href="/login">Login</Link>
+                  </Button>
+                  <Button
+                    size="sm"
+                    asChild
+                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+                  >
+                    <Link href="/signup">Sign Up</Link>
+                  </Button>
+                </div>
+              )}
             </nav>
           </div>
         )}
