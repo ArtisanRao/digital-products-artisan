@@ -25,9 +25,6 @@ export default function Header() {
 
   // For collapsing details element on submenu click (mobile Support submenu)
   const supportDetailsRef = useRef<HTMLDetailsElement | null>(null)
-  function handleSupportSubmenuClick() {
-    if (supportDetailsRef.current) supportDetailsRef.current.open = false
-  }
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-blue-100">
@@ -117,9 +114,10 @@ export default function Header() {
         </div>
 
         {/* Mobile header */}
-        <div className="flex md:hidden items-center justify-between h-16 px-4">
+        <div className="flex md:hidden items-center justify-between h-16 px-4 w-full">
           <Logo size="md" />
 
+          {/* Only menu toggle button here, no separate cart */}
           <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
             <DropdownMenuTrigger asChild>
               <Button
@@ -138,13 +136,28 @@ export default function Header() {
 
             <DropdownMenuContent className="border-blue-200">
               <DropdownMenuItem asChild>
-                <Link href="/products">Products</Link>
+                <Link
+                  href="/products"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Products
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/categories">Categories</Link>
+                <Link
+                  href="/categories"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Categories
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/about">About</Link>
+                <Link
+                  href="/about"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  About
+                </Link>
               </DropdownMenuItem>
 
               {/* Support submenu using details */}
@@ -152,13 +165,18 @@ export default function Header() {
                 className="group"
                 role="group"
                 ref={supportDetailsRef}
-                onClick={handleSupportSubmenuClick}
               >
                 <summary className="cursor-pointer flex justify-between items-center px-3 py-1 rounded hover:bg-blue-50">
                   Support
                   <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
                 </summary>
-                <nav className="pl-4 flex flex-col space-y-1 mt-1">
+                <nav
+                  className="pl-4 flex flex-col space-y-1 mt-1"
+                  onClick={() => {
+                    if (supportDetailsRef.current) supportDetailsRef.current.open = false
+                    setIsMenuOpen(false)
+                  }}
+                >
                   <Link href="/help" className="mobile-nav-link">
                     Help Center
                   </Link>
@@ -176,16 +194,22 @@ export default function Header() {
 
               {/* Cart inside menu */}
               <DropdownMenuItem asChild>
-                <Link href="/cart">Cart ({itemCount})</Link>
+                <Link href="/cart" onClick={() => setIsMenuOpen(false)}>
+                  Cart ({itemCount})
+                </Link>
               </DropdownMenuItem>
 
               {!user && (
                 <>
                   <DropdownMenuItem asChild>
-                    <Link href="/login">Login</Link>
+                    <Link href="/login" onClick={() => setIsMenuOpen(false)}>
+                      Login
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/signup">Sign Up</Link>
+                    <Link href="/signup" onClick={() => setIsMenuOpen(false)}>
+                      Sign Up
+                    </Link>
                   </DropdownMenuItem>
                 </>
               )}
