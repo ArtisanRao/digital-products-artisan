@@ -32,15 +32,23 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-blue-100">
       <div className="container mx-auto px-4">
-        {/* Desktop header: flex container with centered items and equal spacing */}
+        {/* Desktop header */}
         <div className="hidden md:flex items-center justify-center space-x-8 h-16">
           <Logo size="md" />
 
           <nav className="flex items-center space-x-6">
-            <Link href="/products" className="nav-link">Products</Link>
-            <Link href="/bundles" className="nav-link">Bundles</Link>
-            <Link href="/categories" className="nav-link">Categories</Link>
-            <Link href="/about" className="nav-link">About</Link>
+            <Link href="/products" className="nav-link">
+              Products
+            </Link>
+            <Link href="/bundles" className="nav-link">
+              Bundles
+            </Link>
+            <Link href="/categories" className="nav-link">
+              Categories
+            </Link>
+            <Link href="/about" className="nav-link">
+              About
+            </Link>
 
             {/* Support dropdown */}
             <DropdownMenu>
@@ -105,58 +113,20 @@ export default function Header() {
                 )}
               </Link>
             </Button>
-
-            {/* Menu dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="hover:bg-blue-50"
-                  aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
-                >
-                  {isMenuOpen ? (
-                    <X className="w-5 h-5 text-blue-600" />
-                  ) : (
-                    <Menu className="w-5 h-5 text-blue-600" />
-                  )}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="border-blue-200">
-                <DropdownMenuItem asChild>
-                  <Link href="/login">Login</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/signup">Sign Up</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/best-seller">Best Seller</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/new-releases">New Releases</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/bundles">Bundles</Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          </nav>
         </div>
 
-        {/* Mobile header: flex container */}
+        {/* Mobile header */}
         <div className="flex md:hidden items-center justify-between h-16 px-4">
           <Logo size="md" />
 
-          {/* Mobile Menu toggle with DropdownMenu */}
-          <DropdownMenu>
+          <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="sm"
                 className="hover:bg-blue-50"
                 aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
               >
                 {isMenuOpen ? (
                   <X className="w-5 h-5 text-blue-600" />
@@ -166,49 +136,60 @@ export default function Header() {
               </Button>
             </DropdownMenuTrigger>
 
-            {isMenuOpen && (
-              <DropdownMenuContent className="border-blue-200">
-                <DropdownMenuItem asChild>
-                  <Link href="/products">Products</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/categories">Categories</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/about">About</Link>
-                </DropdownMenuItem>
+            <DropdownMenuContent className="border-blue-200">
+              <DropdownMenuItem asChild>
+                <Link href="/products">Products</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/categories">Categories</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/about">About</Link>
+              </DropdownMenuItem>
 
-                {/* Support submenu using details */}
-                <details className="group" role="group">
-                  <summary className="cursor-pointer flex justify-between items-center px-3 py-1 rounded hover:bg-blue-50">
-                    Support
-                    <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
-                  </summary>
-                  <nav className="pl-4 flex flex-col space-y-1 mt-1">
-                    <Link href="/help" className="mobile-nav-link">Help Center</Link>
-                    <Link href="/faq" className="mobile-nav-link">FAQ</Link>
-                    <Link href="/returns" className="mobile-nav-link">Returns & Refund Policy</Link>
-                    <Link href="/contact" className="mobile-nav-link">Contact Us</Link>
-                  </nav>
-                </details>
+              {/* Support submenu using details */}
+              <details
+                className="group"
+                role="group"
+                ref={supportDetailsRef}
+                onClick={handleSupportSubmenuClick}
+              >
+                <summary className="cursor-pointer flex justify-between items-center px-3 py-1 rounded hover:bg-blue-50">
+                  Support
+                  <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
+                </summary>
+                <nav className="pl-4 flex flex-col space-y-1 mt-1">
+                  <Link href="/help" className="mobile-nav-link">
+                    Help Center
+                  </Link>
+                  <Link href="/faq" className="mobile-nav-link">
+                    FAQ
+                  </Link>
+                  <Link href="/returns" className="mobile-nav-link">
+                    Returns & Refund Policy
+                  </Link>
+                  <Link href="/contact" className="mobile-nav-link">
+                    Contact Us
+                  </Link>
+                </nav>
+              </details>
 
-                {/* Cart inside menu */}
-                <DropdownMenuItem asChild>
-                  <Link href="/cart">Cart ({itemCount})</Link>
-                </DropdownMenuItem>
+              {/* Cart inside menu */}
+              <DropdownMenuItem asChild>
+                <Link href="/cart">Cart ({itemCount})</Link>
+              </DropdownMenuItem>
 
-                {!user && (
-                  <>
-                    <DropdownMenuItem asChild>
-                      <Link href="/login">Login</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/signup">Sign Up</Link>
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            )}
+              {!user && (
+                <>
+                  <DropdownMenuItem asChild>
+                    <Link href="/login">Login</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/signup">Sign Up</Link>
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
