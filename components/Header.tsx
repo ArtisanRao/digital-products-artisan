@@ -54,6 +54,7 @@ export default function Header() {
             >
               About
             </Link>
+            {/* Desktop Support Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors inline-flex items-center">
@@ -176,6 +177,7 @@ export default function Header() {
                   About
                 </Link>
               </DropdownMenuItem>
+              {/* Mobile Support Dropdown */}
               <DropdownMenuItem onClick={handleSupportClick}>
                 Support
               </DropdownMenuItem>
