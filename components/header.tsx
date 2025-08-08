@@ -2,11 +2,17 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ShoppingCart, Search, Menu, X, User } from 'lucide-react'
+import { ShoppingCart, Search, Menu, X, User, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useCart } from '@/contexts/cart-context'
 import { useAuth } from '@/contexts/auth-context'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import Logo from '@/components/logo'
 
 export default function Header() {
@@ -21,7 +27,6 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-blue-100">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 gap-2">
-          
           {/* Logo */}
           <Logo size="md" className="mr-2" />
 
@@ -39,7 +44,33 @@ export default function Header() {
             <Link href="/bundles" className="nav-link">Bundles</Link>
             <Link href="/categories" className="nav-link">Categories</Link>
             <Link href="/about" className="nav-link">About</Link>
-            <Link href="/support" className="nav-link">Support</Link>
+
+            {/* Support Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  aria-haspopup="true"
+                  className="nav-link inline-flex items-center space-x-1"
+                >
+                  <span>Support</span>
+                  <ChevronDown className="w-3 h-3 mt-0.5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="border-blue-200">
+                <DropdownMenuItem asChild>
+                  <Link href="/help">Help Center</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/faq">FAQ</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/returns">Returns & Refund Policy</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/contact">Contact Us</Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </nav>
 
           {/* Search (desktop only) */}
@@ -63,7 +94,7 @@ export default function Header() {
           </div>
 
           {/* Cart + Mobile Menu Toggle */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-1">
             <Button
               variant="ghost"
               size="sm"
@@ -80,12 +111,14 @@ export default function Header() {
               </Link>
             </Button>
 
-            {/* Mobile toggle */}
+            {/* Mobile toggle with reduced space */}
             <Button
               variant="ghost"
               size="sm"
-              className="md:hidden hover:bg-blue-50"
+              className="md:hidden hover:bg-blue-50 ml-1"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={isMenuOpen}
             >
               {isMenuOpen ? (
                 <X className="w-5 h-5 text-blue-600" />
