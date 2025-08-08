@@ -26,32 +26,52 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-blue-100">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16 gap-4 md:gap-6">
+        <div className="flex items-center justify-between h-16 gap-2 md:gap-4">
           {/* Logo */}
           <Logo size="md" className="mr-2" />
 
-          {/* Mobile Nav Links inline between logo and cart */}
+          {/* Mobile main nav links (without Support) */}
           <nav className="flex md:hidden items-center space-x-3 text-sm">
             <Link href="/products" className="hover:text-blue-600">Products</Link>
             <Link href="/categories" className="hover:text-blue-600">Categories</Link>
             <Link href="/about" className="hover:text-blue-600">About</Link>
-            <Link href="/support" className="hover:text-blue-600">Support</Link>
+
+            {/* Support dropdown inline in mobile nav */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="inline-flex items-center space-x-1 text-blue-600 hover:text-blue-800">
+                  <span>Support</span>
+                  <ChevronDown className="w-3 h-3 mt-0.5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="border-blue-200">
+                <DropdownMenuItem asChild>
+                  <Link href="/help">Help Center</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/faq">FAQ</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/returns">Returns & Refund Policy</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/contact">Contact Us</Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </nav>
 
-          {/* Desktop Nav */}
+          {/* Desktop nav links */}
           <nav className="hidden md:flex items-center space-x-4">
             <Link href="/products" className="nav-link">Products</Link>
             <Link href="/bundles" className="nav-link">Bundles</Link>
             <Link href="/categories" className="nav-link">Categories</Link>
             <Link href="/about" className="nav-link">About</Link>
 
-            {/* Support Dropdown */}
+            {/* Support dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button
-                  aria-haspopup="true"
-                  className="nav-link inline-flex items-center space-x-1"
-                >
+                <button className="nav-link inline-flex items-center space-x-1">
                   <span>Support</span>
                   <ChevronDown className="w-3 h-3 mt-0.5" />
                 </button>
@@ -93,7 +113,7 @@ export default function Header() {
             )}
           </div>
 
-          {/* Cart + Mobile Menu Toggle */}
+          {/* Cart + Mobile menu toggle */}
           <div className="flex items-center space-x-1">
             <Button
               variant="ghost"
@@ -111,7 +131,7 @@ export default function Header() {
               </Link>
             </Button>
 
-            {/* Mobile toggle with reduced space */}
+            {/* Mobile menu toggle */}
             <Button
               variant="ghost"
               size="sm"
@@ -129,43 +149,15 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Mobile menu dropdown for Login/SignUp/BestSeller/NewReleases/Bundles */}
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-blue-100 bg-blue-50/50 animate-fadeIn">
-            <nav className="flex flex-col space-y-4">
-              <Link href="/products" className="mobile-link">Products</Link>
+            <nav className="flex flex-col space-y-4 px-2">
+              <Link href="/login" className="mobile-link">Login</Link>
+              <Link href="/signup" className="mobile-link">Sign Up</Link>
+              <Link href="/best-seller" className="mobile-link">Best Seller</Link>
+              <Link href="/new-releases" className="mobile-link">New Releases</Link>
               <Link href="/bundles" className="mobile-link">Bundles</Link>
-              <Link href="/categories" className="mobile-link">Categories</Link>
-              <Link href="/about" className="mobile-link">About</Link>
-
-              {/* Support dropdown submenu in mobile */}
-              <details className="mobile-link group" role="group">
-                <summary className="cursor-pointer flex justify-between items-center">
-                  Support
-                  <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
-                </summary>
-                <nav className="pl-4 mt-2 flex flex-col space-y-2">
-                  <Link href="/help" className="mobile-link">Help Center</Link>
-                  <Link href="/faq" className="mobile-link">FAQ</Link>
-                  <Link href="/returns" className="mobile-link">Returns & Refund Policy</Link>
-                  <Link href="/contact" className="mobile-link">Contact Us</Link>
-                </nav>
-              </details>
-
-              {!user && (
-                <div className="flex space-x-2 pt-4">
-                  <Button variant="ghost" size="sm" asChild className="hover:bg-blue-100">
-                    <Link href="/login">Login</Link>
-                  </Button>
-                  <Button
-                    size="sm"
-                    asChild
-                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
-                  >
-                    <Link href="/signup">Sign Up</Link>
-                  </Button>
-                </div>
-              )}
             </nav>
           </div>
         )}
