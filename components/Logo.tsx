@@ -20,7 +20,7 @@ export default function Logo({ className = "", size = "md" }: LogoProps) {
         className={`${sizeClasses[size]} relative overflow-hidden group-hover:scale-110 transition-all duration-300`}
       >
         <Image
-          src="/images/logo-new.png"
+          src="/images/logo.jpg"
           alt="Digital Products Artisan Logo"
           width={size === "sm" ? 32 : size === "md" ? 40 : 56}
           height={size === "sm" ? 32 : size === "md" ? 40 : 56}
