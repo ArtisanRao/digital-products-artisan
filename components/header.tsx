@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ShoppingCart, Search, Menu, X, User, ChevronDown } from 'lucide-react'
+import { ShoppingCart, Search, Menu, X, ChevronDown, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useCart } from '@/contexts/cart-context'
@@ -36,21 +36,7 @@ export default function Header() {
               <Link href="/bundles" className="nav-link">Bundles</Link>
               <Link href="/categories" className="nav-link">Categories</Link>
               <Link href="/about" className="nav-link">About</Link>
-            </nav>
-          </div>
-
-          {/* Center: mobile nav links */}
-          <nav className="flex md:hidden items-center space-x-4 text-sm">
-            <Link href="/products" className="hover:text-blue-600">Products</Link>
-            <Link href="/categories" className="hover:text-blue-600">Categories</Link>
-            <Link href="/about" className="hover:text-blue-600">About</Link>
-          </nav>
-
-          {/* Right side */}
-          <div className="flex items-center space-x-3 md:space-x-5 flex-shrink-0">
-
-            {/* Desktop Support dropdown */}
-            <div className="hidden md:block">
+              {/* Support inline with equal spacing */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="nav-link inline-flex items-center space-x-1">
@@ -73,7 +59,18 @@ export default function Header() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
+            </nav>
+          </div>
+
+          {/* Center: mobile nav links */}
+          <nav className="flex md:hidden items-center space-x-4 text-sm">
+            <Link href="/products" className="hover:text-blue-600">Products</Link>
+            <Link href="/categories" className="hover:text-blue-600">Categories</Link>
+            <Link href="/about" className="hover:text-blue-600">About</Link>
+          </nav>
+
+          {/* Right side */}
+          <div className="flex items-center space-x-3 md:space-x-5 flex-shrink-0">
 
             {/* Desktop search */}
             <div className="hidden md:flex items-center space-x-2 relative">
