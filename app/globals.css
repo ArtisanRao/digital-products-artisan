@@ -88,3 +88,21 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  /* Desktop nav links */
+  .nav-link {
+    @apply px-3 py-2 font-medium text-blue-700 transition-colors duration-200 ease-in-out;
+  }
+  .nav-link:hover {
+    @apply text-blue-600;
+  }
+
+  /* Mobile nav links */
+  .mobile-nav-link {
+    @apply block px-4 py-2 font-medium text-blue-700;
+  }
+  .mobile-nav-link:hover {
+    @apply text-blue-600;
+  }
+}

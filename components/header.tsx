@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react'
 import Link from 'next/link'
-import { ShoppingCart, Search, Menu, X, ChevronDown, User } from 'lucide-react'
+import { ShoppingCart, Search, Menu, X, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useCart } from '@/contexts/cart-context'
@@ -19,11 +19,11 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const { items } = useCart()
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
 
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
 
-  // For collapsing details element on submenu click (mobile Support submenu)
+  // Collapse mobile Support submenu on submenu click
   const supportDetailsRef = useRef<HTMLDetailsElement | null>(null)
   function handleSupportSubmenuClick() {
     if (supportDetailsRef.current) supportDetailsRef.current.open = false
@@ -32,13 +32,11 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-blue-100">
       <div className="container mx-auto px-4">
-        {/* Desktop header: flex container with centered items and equal spacing */}
-        <div className="hidden md:flex items-center justify-center space-x-8 h-16">
 
-          {/* Logo */}
+        {/* Desktop header */}
+        <div className="hidden md:flex items-center justify-center space-x-8 h-16">
           <Logo size="md" />
 
-          {/* Nav links */}
           <nav className="flex items-center space-x-6">
             <Link href="/products" className="nav-link">Products</Link>
             <Link href="/bundles" className="nav-link">Bundles</Link>
@@ -127,12 +125,16 @@ export default function Header() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="border-blue-200">
-                <DropdownMenuItem asChild>
-                  <Link href="/login">Login</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/signup">Sign Up</Link>
-                </DropdownMenuItem>
+                {!user && (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href="/login">Login</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/signup">Sign Up</Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
                 <DropdownMenuItem asChild>
                   <Link href="/best-seller">Best Seller</Link>
                 </DropdownMenuItem>
@@ -144,50 +146,32 @@ export default function Header() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
+          </nav>
         </div>
 
-        {/* Mobile header: flex container */}
+        {/* Mobile header */}
         <div className="flex md:hidden items-center justify-between h-16 px-4">
           <Logo size="md" />
 
           <nav className="flex items-center space-x-6">
-            {/* Add spacing between logo and first nav link */}
-            <Link href="/products" className="mobile-nav-link">
-              Products
-            </Link>
-            <Link href="/categories" className="mobile-nav-link">
-              Categories
-            </Link>
-            <Link href="/about" className="mobile-nav-link">
-              About
-            </Link>
+            <Link href="/products" className="mobile-nav-link ml-6">Products</Link>
+            <Link href="/categories" className="mobile-nav-link">Categories</Link>
+            <Link href="/about" className="mobile-nav-link">About</Link>
 
-            {/* Support dropdown as details */}
+            {/* Support dropdown */}
             <details
               className="relative"
               ref={supportDetailsRef}
-              onToggle={(e) => {
-                // Close other dropdowns logic can go here if needed
-              }}
             >
               <summary className="cursor-pointer flex items-center space-x-1">
                 <span>Support</span>
                 <ChevronDown className="w-4 h-4" />
               </summary>
               <nav className="absolute left-0 mt-2 w-40 bg-white border border-gray-200 rounded shadow-md flex flex-col space-y-1 p-2 z-50">
-                <Link href="/help" className="mobile-nav-link" onClick={handleSupportSubmenuClick}>
-                  Help Center
-                </Link>
-                <Link href="/faq" className="mobile-nav-link" onClick={handleSupportSubmenuClick}>
-                  FAQ
-                </Link>
-                <Link href="/returns" className="mobile-nav-link" onClick={handleSupportSubmenuClick}>
-                  Returns & Refund Policy
-                </Link>
-                <Link href="/contact" className="mobile-nav-link" onClick={handleSupportSubmenuClick}>
-                  Contact Us
-                </Link>
+                <Link href="/help" className="mobile-nav-link" onClick={handleSupportSubmenuClick}>Help Center</Link>
+                <Link href="/faq" className="mobile-nav-link" onClick={handleSupportSubmenuClick}>FAQ</Link>
+                <Link href="/returns" className="mobile-nav-link" onClick={handleSupportSubmenuClick}>Returns & Refund Policy</Link>
+                <Link href="/contact" className="mobile-nav-link" onClick={handleSupportSubmenuClick}>Contact Us</Link>
               </nav>
             </details>
           </nav>
@@ -210,6 +194,7 @@ export default function Header() {
             </Link>
           </Button>
         </div>
+
       </div>
     </header>
   )
