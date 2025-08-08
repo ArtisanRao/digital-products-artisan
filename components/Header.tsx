@@ -1,9 +1,10 @@
-"use client"
+'use client'
 
+import { useState, useRef } from 'react'
 import Link from 'next/link'
-import { useRef, useState } from 'react'
-import { Menu, X, ShoppingCart } from 'lucide-react'
+import { ShoppingCart, Menu, X, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useCart } from '@/contexts/cart-context'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,14 +12,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import Logo from './Logo'
-import { useCart } from '@/contexts/cart-context'  // make sure this path is correct
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const supportDetailsRef = useRef<HTMLDetailsElement | null>(null)
-  const { items } = useCart()
 
-  const itemCount = items.reduce((total, item) => total + item.quantity, 0)
+  const { items } = useCart()
+  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
 
   const handleSupportClick = () => {
     if (supportDetailsRef.current) {
@@ -33,46 +33,76 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4">
         {/* Desktop Header */}
         <div className="hidden md:flex items-center justify-between h-16">
-          {/* Left: Logo */}
           <Logo size="lg" />
 
-          {/* Middle: Nav Links */}
           <nav className="flex items-center space-x-8">
-            <Link href="/products" className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors">
+            <Link
+              href="/products"
+              className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
+            >
               Products
             </Link>
-            <Link href="/categories" className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors">
+            <Link
+              href="/categories"
+              className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
+            >
               Categories
             </Link>
-            <Link href="/about" className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors">
+            <Link
+              href="/about"
+              className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
+            >
               About
             </Link>
-            <Link href="#" onClick={handleSupportClick} className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors">
-              Support
-            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors inline-flex items-center">
+                  Support
+                  <ChevronDown className="ml-1 w-3 h-3" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="border-blue-200">
+                <DropdownMenuItem asChild>
+                  <Link href="/help" className="px-3 py-2 rounded-md hover:bg-blue-50">
+                    Help Center
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/faq" className="px-3 py-2 rounded-md hover:bg-blue-50">
+                    FAQ
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/returns" className="px-3 py-2 rounded-md hover:bg-blue-50">
+                    Returns & Refund Policy
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/contact" className="px-3 py-2 rounded-md hover:bg-blue-50">
+                    Contact Us
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </nav>
 
-          {/* Right: Action Buttons */}
-          <div className="flex items-center gap-3">
-            <Button variant="outline" size="icon" aria-label="Cart" className="relative">
-              <Link href="/cart" className="relative block">
-                <ShoppingCart className="w-5 h-5" />
-                {itemCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-semibold">
-                    {itemCount}
-                  </span>
-                )}
-              </Link>
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              aria-label={isMenuOpen ? 'Close Menu' : 'Open Menu'}
-            >
-              {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </Button>
-          </div>
+          {/* Cart */}
+          <Button
+            variant="ghost"
+            size="sm"
+            asChild
+            className="relative hover:bg-blue-50"
+            aria-label={`Shopping cart with ${itemCount} items`}
+          >
+            <Link href="/cart" className="relative">
+              <ShoppingCart className="w-6 h-6 text-blue-600" />
+              {itemCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-semibold">
+                  {itemCount}
+                </span>
+              )}
+            </Link>
+          </Button>
         </div>
 
         {/* Mobile Header */}
@@ -80,18 +110,24 @@ export default function Header() {
           <Logo size="md" />
 
           {/* Mobile Nav Links */}
-          <div className="flex items-center space-x-4 ml-4 overflow-x-auto text-nowrap scrollbar-none">
-            <Link href="/products" className="text-sm font-medium text-blue-600 hover:underline">
+          <div className="flex items-center space-x-3 ml-4 overflow-x-auto text-nowrap">
+            <Link
+              href="/products"
+              className="text-sm font-medium text-blue-600 hover:underline"
+            >
               Products
             </Link>
-            <Link href="/categories" className="text-sm font-medium text-blue-600 hover:underline">
+            <Link
+              href="/categories"
+              className="text-sm font-medium text-blue-600 hover:underline"
+            >
               Categories
             </Link>
-            <Link href="/about" className="text-sm font-medium text-blue-600 hover:underline">
+            <Link
+              href="/about"
+              className="text-sm font-medium text-blue-600 hover:underline"
+            >
               About
-            </Link>
-            <Link href="#" onClick={handleSupportClick} className="text-sm font-medium text-blue-600 hover:underline">
-              Support
             </Link>
           </div>
 
@@ -112,23 +148,35 @@ export default function Header() {
               </Button>
             </DropdownMenuTrigger>
 
-            <DropdownMenuContent align="end" className="w-56 mt-2">
+            <DropdownMenuContent className="w-56 mt-2">
               <DropdownMenuItem asChild>
-                <Link href="/products" className="w-full" onClick={() => setIsMenuOpen(false)}>
+                <Link
+                  href="/products"
+                  className="w-full"
+                  onClick={() => setIsMenuOpen(false)}
+                >
                   Products
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/categories" className="w-full" onClick={() => setIsMenuOpen(false)}>
+                <Link
+                  href="/categories"
+                  className="w-full"
+                  onClick={() => setIsMenuOpen(false)}
+                >
                   Categories
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/about" className="w-full" onClick={() => setIsMenuOpen(false)}>
+                <Link
+                  href="/about"
+                  className="w-full"
+                  onClick={() => setIsMenuOpen(false)}
+                >
                   About
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleSupportClick} className="cursor-pointer">
+              <DropdownMenuItem onClick={handleSupportClick}>
                 Support
               </DropdownMenuItem>
             </DropdownMenuContent>
