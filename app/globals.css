@@ -16,38 +16,39 @@
     margin-bottom: 1cm;
   }
 
+  /* Reduced gap spacing from 1cm to 1rem (16px) */
   .gap-1cm {
-    gap: 1cm;
+    gap: 1rem;
   }
 
   /* Desktop-only gap utility */
   @media (min-width: 1024px) {
     .desktop-gap-1cm {
-      gap: 1cm;
+      gap: 1rem;
     }
   }
 
   /* Mobile-specific utilities */
   @media (max-width: 1023px) {
     .mobile-link {
-      margin-left: 1cm;
-      margin-right: 1cm;
+      margin-left: 0.75rem;
+      margin-right: 0.75rem;
     }
 
     /* Mobile header spacing and fit */
     .mobile-header-fit {
       display: flex; /* ensure flex container */
-      gap: 1cm;
+      gap: 1rem;
       padding-left: 1rem;
       padding-right: 1rem;
-      align-items: center; /* vertical alignment */
+      align-items: center;
     }
 
     header img {
-      max-width: 80px; /* adjust as needed */
-      max-height: 40px; /* prevent tall stretching */
+      max-width: 60px;  /* smaller logo on mobile */
+      max-height: 30px;
       height: auto;
-      object-fit: contain; /* preserve aspect ratio */
+      object-fit: contain;
       display: block;
     }
   }

@@ -38,21 +38,21 @@ export default function Header() {
 
   return (
     <header className="w-full bg-white shadow-md sticky top-0 z-50">
-      <div className="container mx-auto flex items-center justify-between h-16 px-4 mobile-header-fit desktop-gap-1cm">
+      <div className="container mx-auto flex items-center justify-between h-16 px-4 gap-4 lg:gap-6">
         {/* Logo */}
         <Link href="/" onClick={closeMenu} className="flex items-center">
           <Image
             src="/images/logo.jpg"
             alt="Logo"
-            width={140}
-            height={40}
+            width={120}
+            height={35}
             className="object-contain"
             priority
           />
         </Link>
 
         {/* Desktop Menu */}
-        <nav className="hidden lg:flex items-center desktop-gap-1cm">
+        <nav className="hidden lg:flex items-center gap-6">
           {menuItems.map((item) => (
             <div key={item.label} className="relative group">
               <Link
@@ -81,9 +81,9 @@ export default function Header() {
         </nav>
 
         {/* Mobile quick nav between logo & menu toggle */}
-        <div className="flex lg:hidden items-center gap-[1cm]">
+        <div className="flex lg:hidden items-center gap-3">
           {menuItems
-            .filter((item) => item.label !== "Bundles") /* optional: hide Bundles on mobile if you want */
+            .filter((item) => item.label !== "Bundles") /* optional: hide Bundles on mobile */
             .map((item) => (
               <Link
                 key={item.label}
