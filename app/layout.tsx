@@ -81,7 +81,10 @@ export default function RootLayout({
         <AuthProvider>
           <CartProvider>
             <Header />
-            {children}
+            {/* Added consistent space below header */}
+            <main className="mt-1cm">
+              {children}
+            </main>
             <Footer />
             <LiveChat />
             <Toaster />
