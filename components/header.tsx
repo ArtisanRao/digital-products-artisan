@@ -1,4 +1,5 @@
 "use client";
+
 import Link from "next/link";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
@@ -19,18 +20,16 @@ export default function Header() {
   return (
     <header className="border-b bg-white dark:bg-gray-900 dark:border-gray-800">
       <div className="container mx-auto flex items-center justify-between px-4 py-3 md:py-4">
-        {/* Left - Mobile Menu Toggle */}
-        <div className="flex items-center md:hidden">
-          <button
-            onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-md text-gray-700 dark:text-gray-200 focus:outline-none"
-          >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
-        </div>
+        {/* Mobile Menu Toggle (Left) */}
+        <button
+          onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
+          className="p-2 rounded-md text-gray-700 dark:text-gray-200 focus:outline-none md:hidden"
+        >
+          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
 
         {/* Logo */}
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 flex items-center">
           <Link href="/">
             <img
               src="/images/logo.png"
@@ -40,7 +39,7 @@ export default function Header() {
           </Link>
         </div>
 
-        {/* Nav Links - Mobile (between logo & cart) */}
+        {/* Nav Links - Mobile ONLY (Between Logo & Cart) */}
         <nav className="hidden md:flex space-x-6">
           {/* Keep desktop nav same as before */}
           <Link href="/products" className="hover:text-blue-500">
@@ -55,8 +54,8 @@ export default function Header() {
         </nav>
 
         {/* Cart Icon */}
-        <div className="flex items-center space-x-4">
-          <Link href="/cart" className="hover:text-blue-500">
+        <div className="flex items-center">
+          <Link href="/cart" className="hover:text-blue-500 text-xl">
             🛒
           </Link>
         </div>
@@ -64,14 +63,14 @@ export default function Header() {
 
       {/* Mobile Dropdown Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-3">
-          <ul className="space-y-3">
+        <div className="md:hidden border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-4">
+          <ul className="flex flex-col items-center space-y-4">
             {mobileLinks.map((link) => (
               <li key={link.href}>
                 <Link
                   href={link.href}
                   onClick={handleLinkClick}
-                  className="block text-gray-700 dark:text-gray-200 hover:text-blue-500"
+                  className="block text-gray-700 dark:text-gray-200 hover:text-blue-500 text-lg"
                 >
                   {link.label}
                 </Link>
