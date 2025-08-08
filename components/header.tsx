@@ -28,7 +28,7 @@ export default function Header() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
 
-          {/* Left side - Logo + some space + Desktop nav (except Support) */}
+          {/* Left side - Logo + space + Desktop nav (except Support) */}
           <div className="flex items-center space-x-6 flex-shrink-0">
             <Logo size="md" />
             <nav className="hidden md:flex items-center space-x-4">
@@ -39,7 +39,7 @@ export default function Header() {
             </nav>
           </div>
 
-          {/* Center - Mobile nav links (Products, Categories, About) */}
+          {/* Center - Mobile nav links */}
           <nav className="flex md:hidden items-center space-x-4 text-sm">
             <Link href="/products" className="hover:text-blue-600">Products</Link>
             <Link href="/categories" className="hover:text-blue-600">Categories</Link>
@@ -75,7 +75,7 @@ export default function Header() {
               </DropdownMenu>
             </div>
 
-            {/* Desktop search bar */}
+            {/* Desktop search */}
             <div className="hidden md:flex items-center space-x-2 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400 w-4 h-4" />
               <Input
@@ -114,23 +114,43 @@ export default function Header() {
               </Link>
             </Button>
 
-            {/* Desktop Menu toggle */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="hidden md:inline-flex hover:bg-blue-50"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
-              aria-expanded={isMenuOpen}
-            >
-              {isMenuOpen ? (
-                <X className="w-5 h-5 text-blue-600" />
-              ) : (
-                <Menu className="w-5 h-5 text-blue-600" />
-              )}
-            </Button>
+            {/* Desktop Menu toggle with dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="hidden md:inline-flex hover:bg-blue-50"
+                  aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                >
+                  {isMenuOpen ? (
+                    <X className="w-5 h-5 text-blue-600" />
+                  ) : (
+                    <Menu className="w-5 h-5 text-blue-600" />
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="border-blue-200">
+                <DropdownMenuItem asChild>
+                  <Link href="/login">Login</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/signup">Sign Up</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/best-seller">Best Seller</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/new-releases">New Releases</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/bundles">Bundles</Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-            {/* Mobile Menu toggle replaces Cart */}
+            {/* Mobile Menu toggle */}
             <Button
               variant="ghost"
               size="sm"
@@ -152,16 +172,33 @@ export default function Header() {
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-blue-100 bg-blue-50/50 animate-fadeIn">
             <nav className="flex flex-col space-y-4 px-2">
-              <Link href="/login" className="mobile-link">Login</Link>
-              <Link href="/signup" className="mobile-link">Sign Up</Link>
-              <Link href="/best-seller" className="mobile-link">Best Seller</Link>
-              <Link href="/new-releases" className="mobile-link">New Releases</Link>
-              <Link href="/bundles" className="mobile-link">Bundles</Link>
-              {/* Cart inside mobile menu dropdown */}
-              <Link href="/cart" className="mobile-link font-semibold flex items-center space-x-1">
-                <ShoppingCart className="w-4 h-4" />
-                <span>Cart {itemCount > 0 ? `(${itemCount})` : ''}</span>
-              </Link>
+              <Link href="/products" className="mobile-link">Products</Link>
+              <Link href="/categories" className="mobile-link">Categories</Link>
+              <Link href="/about" className="mobile-link">About</Link>
+
+              {/* Support submenu in mobile */}
+              <details className="mobile-link group" role="group">
+                <summary className="cursor-pointer flex justify-between items-center">
+                  Support
+                  <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
+                </summary>
+                <nav className="pl-4 mt-2 flex flex-col space-y-2">
+                  <Link href="/help" className="mobile-link">Help Center</Link>
+                  <Link href="/faq" className="mobile-link">FAQ</Link>
+                  <Link href="/returns" className="mobile-link">Returns & Refund Policy</Link>
+                  <Link href="/contact" className="mobile-link">Contact Us</Link>
+                </nav>
+              </details>
+
+              {!user && (
+                <>
+                  <Link href="/login" className="mobile-link">Login</Link>
+                  <Link href="/signup" className="mobile-link">Sign Up</Link>
+                  <Link href="/best-seller" className="mobile-link">Best Seller</Link>
+                  <Link href="/new-releases" className="mobile-link">New Releases</Link>
+                  <Link href="/bundles" className="mobile-link">Bundles</Link>
+                </>
+              )}
             </nav>
           </div>
         )}
