@@ -1,122 +1,68 @@
-"use client";
+import Header from "@/components/header";
 
-import Link from "next/link";
-import { useState } from "react";
-import { Menu, X, ShoppingCart } from "lucide-react";
-
-export default function Header() {
-  const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const topNavMobile = [
-    { href: "/products", label: "Products" },
-    { href: "/categories", label: "Categories" },
-    { href: "/about", label: "About" },
-    { href: "/support", label: "Support" },
-  ];
-
-  const mobileMenuLinks = [
-    { href: "/login", label: "Login" },
-    { href: "/signup", label: "Sign Up" },
-    { href: "/best-seller", label: "Best Seller" },
-    { href: "/new-releases", label: "New Releases" },
-    { href: "/bundles", label: "Bundles" },
-  ];
-
-  const handleLinkClick = () => setMobileMenuOpen(false);
-
+export default function HomePage() {
   return (
-    <header className="bg-white border-b shadow-sm dark:bg-gray-900 dark:border-gray-800 sticky top-0 z-50">
-      <div className="container mx-auto flex items-center justify-between px-4 h-16">
-        {/* Logo */}
-        <Link href="/" className="flex-shrink-0">
-          <img
-            src="/images/logo.png"
-            alt="Digital Products Artisan"
-            className="h-10 w-auto"
-          />
-        </Link>
+    <>
+      <Header />
+      <main className="bg-gray-50 min-h-screen">
+        {/* Hero Section */}
+        <section className="relative bg-white py-20">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-gray-900">
+              Your Marketplace for Premium Digital Products
+            </h1>
+            <p className="mt-6 text-lg text-gray-600 max-w-2xl mx-auto">
+              Browse, purchase, and download instantly from our curated
+              collection of templates, art, resources, and more.
+            </p>
+            <div className="mt-8 flex justify-center gap-4">
+              <a
+                href="/products"
+                className="px-6 py-3 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700"
+              >
+                Explore Products
+              </a>
+              <a
+                href="/bundles"
+                className="px-6 py-3 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-100"
+              >
+                View Bundles
+              </a>
+            </div>
+          </div>
+        </section>
 
-        {/* Mobile Nav Links (between logo & menu) */}
-        <nav className="flex items-center space-x-4 overflow-x-auto md:hidden">
-          {topNavMobile.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-500 whitespace-nowrap"
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
+        {/* Featured Products */}
+        <section className="py-16">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+            <h2 className="text-2xl font-bold mb-8">Best Sellers</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {/* Product Card */}
+              <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
+                <img
+                  src="/images/product-1.jpg"
+                  alt="Product 1"
+                  className="w-full h-48 object-cover"
+                />
+                <div className="p-6">
+                  <h3 className="text-lg font-semibold">Self-Help Success Guide</h3>
+                  <p className="mt-2 text-gray-600 text-sm">
+                    A comprehensive guide to personal and professional growth.
+                  </p>
+                  <div className="mt-4 flex justify-between items-center">
+                    <span className="text-indigo-600 font-bold">$15.00</span>
+                    <button className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
+                      Add to Cart
+                    </button>
+                  </div>
+                </div>
+              </div>
 
-        {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center space-x-8">
-          <Link
-            href="/products"
-            className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
-          >
-            Products
-          </Link>
-          <Link
-            href="/categories"
-            className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
-          >
-            Categories
-          </Link>
-          <Link
-            href="/about"
-            className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
-          >
-            About
-          </Link>
-          <Link
-            href="/support"
-            className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
-          >
-            Support
-          </Link>
-        </nav>
-
-        {/* Right Side: Cart + Mobile Menu Toggle */}
-        <div className="flex items-center space-x-3">
-          {/* Cart */}
-          <Link href="/cart" className="relative hover:text-blue-500">
-            <ShoppingCart className="w-6 h-6 text-blue-600" />
-            {/* Example count badge */}
-            {/* <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full px-1.5">
-              3
-            </span> */}
-          </Link>
-
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setMobileMenuOpen((prev) => !prev)}
-            className="p-2 rounded-md text-gray-700 dark:text-gray-200 focus:outline-none md:hidden"
-            aria-label="Toggle menu"
-          >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile Menu Dropdown */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-3">
-          <ul className="space-y-3">
-            {mobileMenuLinks.map((link) => (
-              <li key={link.href}>
-                <Link
-                  href={link.href}
-                  onClick={handleLinkClick}
-                  className="block text-gray-700 dark:text-gray-200 hover:text-blue-500"
-                >
-                  {link.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </header>
+              {/* Add more product cards as needed */}
+            </div>
+          </div>
+        </section>
+      </main>
+    </>
   );
 }
