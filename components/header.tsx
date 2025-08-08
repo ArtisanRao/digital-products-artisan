@@ -23,7 +23,7 @@ export default function Header() {
 
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
 
-  // Collapse mobile Support submenu on submenu click
+  // For collapsing details element on submenu click (mobile Support submenu)
   const supportDetailsRef = useRef<HTMLDetailsElement | null>(null)
   function handleSupportSubmenuClick() {
     if (supportDetailsRef.current) supportDetailsRef.current.open = false
@@ -32,8 +32,7 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-blue-100">
       <div className="container mx-auto px-4">
-
-        {/* Desktop header */}
+        {/* Desktop header: flex container with centered items and equal spacing */}
         <div className="hidden md:flex items-center justify-center space-x-8 h-16">
           <Logo size="md" />
 
@@ -125,16 +124,12 @@ export default function Header() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="border-blue-200">
-                {!user && (
-                  <>
-                    <DropdownMenuItem asChild>
-                      <Link href="/login">Login</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/signup">Sign Up</Link>
-                    </DropdownMenuItem>
-                  </>
-                )}
+                <DropdownMenuItem asChild>
+                  <Link href="/login">Login</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/signup">Sign Up</Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/best-seller">Best Seller</Link>
                 </DropdownMenuItem>
@@ -146,55 +141,76 @@ export default function Header() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </nav>
+          </div>
         </div>
 
-        {/* Mobile header */}
+        {/* Mobile header: flex container */}
         <div className="flex md:hidden items-center justify-between h-16 px-4">
           <Logo size="md" />
 
-          <nav className="flex items-center space-x-6">
-            <Link href="/products" className="mobile-nav-link ml-6">Products</Link>
-            <Link href="/categories" className="mobile-nav-link">Categories</Link>
-            <Link href="/about" className="mobile-nav-link">About</Link>
+          {/* Mobile Menu toggle with DropdownMenu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="hover:bg-blue-50"
+                aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+              >
+                {isMenuOpen ? (
+                  <X className="w-5 h-5 text-blue-600" />
+                ) : (
+                  <Menu className="w-5 h-5 text-blue-600" />
+                )}
+              </Button>
+            </DropdownMenuTrigger>
 
-            {/* Support dropdown */}
-            <details
-              className="relative"
-              ref={supportDetailsRef}
-            >
-              <summary className="cursor-pointer flex items-center space-x-1">
-                <span>Support</span>
-                <ChevronDown className="w-4 h-4" />
-              </summary>
-              <nav className="absolute left-0 mt-2 w-40 bg-white border border-gray-200 rounded shadow-md flex flex-col space-y-1 p-2 z-50">
-                <Link href="/help" className="mobile-nav-link" onClick={handleSupportSubmenuClick}>Help Center</Link>
-                <Link href="/faq" className="mobile-nav-link" onClick={handleSupportSubmenuClick}>FAQ</Link>
-                <Link href="/returns" className="mobile-nav-link" onClick={handleSupportSubmenuClick}>Returns & Refund Policy</Link>
-                <Link href="/contact" className="mobile-nav-link" onClick={handleSupportSubmenuClick}>Contact Us</Link>
-              </nav>
-            </details>
-          </nav>
+            {isMenuOpen && (
+              <DropdownMenuContent className="border-blue-200">
+                <DropdownMenuItem asChild>
+                  <Link href="/products">Products</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/categories">Categories</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/about">About</Link>
+                </DropdownMenuItem>
 
-          {/* Cart icon */}
-          <Button
-            variant="ghost"
-            size="sm"
-            asChild
-            className="relative hover:bg-blue-50"
-            aria-label={`Shopping cart with ${itemCount} items`}
-          >
-            <Link href="/cart" className="relative">
-              <ShoppingCart className="w-5 h-5 text-blue-600" />
-              {itemCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
-                  {itemCount}
-                </span>
-              )}
-            </Link>
-          </Button>
+                {/* Support submenu using details */}
+                <details className="group" role="group">
+                  <summary className="cursor-pointer flex justify-between items-center px-3 py-1 rounded hover:bg-blue-50">
+                    Support
+                    <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
+                  </summary>
+                  <nav className="pl-4 flex flex-col space-y-1 mt-1">
+                    <Link href="/help" className="mobile-nav-link">Help Center</Link>
+                    <Link href="/faq" className="mobile-nav-link">FAQ</Link>
+                    <Link href="/returns" className="mobile-nav-link">Returns & Refund Policy</Link>
+                    <Link href="/contact" className="mobile-nav-link">Contact Us</Link>
+                  </nav>
+                </details>
+
+                {/* Cart inside menu */}
+                <DropdownMenuItem asChild>
+                  <Link href="/cart">Cart ({itemCount})</Link>
+                </DropdownMenuItem>
+
+                {!user && (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href="/login">Login</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/signup">Sign Up</Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            )}
+          </DropdownMenu>
         </div>
-
       </div>
     </header>
   )

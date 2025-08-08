@@ -105,4 +105,20 @@
   .mobile-nav-link:hover {
     @apply text-blue-600;
   }
+
+  /* Support dropdown summary */
+  details > summary {
+    @apply cursor-pointer flex justify-between items-center px-3 py-2 rounded hover:bg-blue-50;
+  }
+
+  /* Rotate arrow on open */
+  details[open] > summary svg {
+    transform: rotate(180deg);
+    transition: transform 0.3s ease;
+  }
+
+  /* Dropdown nav inside details */
+  details nav {
+    @apply pl-4 flex flex-col space-y-1 mt-1;
+  }
 }
