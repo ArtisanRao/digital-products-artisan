@@ -27,7 +27,7 @@
     }
   }
 
-  /* Mobile-only gap utility for header links */
+  /* Mobile-specific utilities */
   @media (max-width: 1023px) {
     .mobile-link {
       margin-left: 1cm;
@@ -36,14 +36,19 @@
 
     /* Mobile header spacing and fit */
     .mobile-header-fit {
+      display: flex; /* ensure flex container */
       gap: 1cm;
       padding-left: 1rem;
       padding-right: 1rem;
+      align-items: center; /* vertical alignment */
     }
 
     header img {
-      max-width: 80px; /* adjust to your liking */
+      max-width: 80px; /* adjust as needed */
+      max-height: 40px; /* prevent tall stretching */
       height: auto;
+      object-fit: contain; /* preserve aspect ratio */
+      display: block;
     }
   }
 }
