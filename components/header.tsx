@@ -23,50 +23,69 @@ export default function Header() {
 
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
 
-  // For collapsing details element on submenu click (mobile Support submenu)
   const supportDetailsRef = useRef<HTMLDetailsElement | null>(null)
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-blue-100">
       <div className="container mx-auto px-4">
         {/* Desktop header */}
-        <div className="hidden md:flex items-center justify-center space-x-8 h-16">
+        <div className="hidden md:flex items-center justify-center space-x-10 h-16">
           <Logo size="md" />
 
-          <nav className="flex items-center space-x-6">
-            <Link href="/products" className="nav-link">
+          <nav className="flex items-center space-x-8">
+            <Link
+              href="/products"
+              className="nav-link px-3 py-2 rounded-md hover:bg-blue-50 transition"
+            >
               Products
             </Link>
-            <Link href="/bundles" className="nav-link">
+            <Link
+              href="/bundles"
+              className="nav-link px-3 py-2 rounded-md hover:bg-blue-50 transition"
+            >
               Bundles
             </Link>
-            <Link href="/categories" className="nav-link">
+            <Link
+              href="/categories"
+              className="nav-link px-3 py-2 rounded-md hover:bg-blue-50 transition"
+            >
               Categories
             </Link>
-            <Link href="/about" className="nav-link">
+            <Link
+              href="/about"
+              className="nav-link px-3 py-2 rounded-md hover:bg-blue-50 transition"
+            >
               About
             </Link>
 
             {/* Support dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="nav-link inline-flex items-center space-x-1">
+                <button className="nav-link inline-flex items-center space-x-1 px-3 py-2 rounded-md hover:bg-blue-50 transition">
                   <span>Support</span>
-                  <ChevronDown className="w-3 h-3 mt-0.5" />
+                  <ChevronDown className="w-3 h-3 mt-0.5 transition-transform" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="border-blue-200">
                 <DropdownMenuItem asChild>
-                  <Link href="/help">Help Center</Link>
+                  <Link href="/help" className="px-3 py-2 rounded-md hover:bg-blue-50">
+                    Help Center
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/faq">FAQ</Link>
+                  <Link href="/faq" className="px-3 py-2 rounded-md hover:bg-blue-50">
+                    FAQ
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/returns">Returns & Refund Policy</Link>
+                  <Link href="/returns" className="px-3 py-2 rounded-md hover:bg-blue-50">
+                    Returns & Refund Policy
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/contact">Contact Us</Link>
+                  <Link href="/contact" className="px-3 py-2 rounded-md hover:bg-blue-50">
+                    Contact Us
+                  </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -102,9 +121,9 @@ export default function Header() {
               aria-label={`Shopping cart with ${itemCount} items`}
             >
               <Link href="/cart" className="relative">
-                <ShoppingCart className="w-5 h-5 text-blue-600" />
+                <ShoppingCart className="w-6 h-6 text-blue-600" />
                 {itemCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
+                  <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-semibold">
                     {itemCount}
                   </span>
                 )}
@@ -117,7 +136,7 @@ export default function Header() {
         <div className="flex md:hidden items-center justify-between h-16 px-4 w-full">
           <Logo size="md" />
 
-          {/* Only menu toggle button here, no separate cart */}
+          {/* Mobile menu toggle */}
           <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
             <DropdownMenuTrigger asChild>
               <Button
@@ -127,18 +146,19 @@ export default function Header() {
                 aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
               >
                 {isMenuOpen ? (
-                  <X className="w-5 h-5 text-blue-600" />
+                  <X className="w-6 h-6 text-blue-600" />
                 ) : (
-                  <Menu className="w-5 h-5 text-blue-600" />
+                  <Menu className="w-6 h-6 text-blue-600" />
                 )}
               </Button>
             </DropdownMenuTrigger>
 
-            <DropdownMenuContent className="border-blue-200">
+            <DropdownMenuContent className="border-blue-200 p-2">
               <DropdownMenuItem asChild>
                 <Link
                   href="/products"
                   onClick={() => setIsMenuOpen(false)}
+                  className="block px-4 py-2 rounded-md hover:bg-blue-50 transition"
                 >
                   Products
                 </Link>
@@ -147,6 +167,7 @@ export default function Header() {
                 <Link
                   href="/categories"
                   onClick={() => setIsMenuOpen(false)}
+                  className="block px-4 py-2 rounded-md hover:bg-blue-50 transition"
                 >
                   Categories
                 </Link>
@@ -155,38 +176,47 @@ export default function Header() {
                 <Link
                   href="/about"
                   onClick={() => setIsMenuOpen(false)}
+                  className="block px-4 py-2 rounded-md hover:bg-blue-50 transition"
                 >
                   About
                 </Link>
               </DropdownMenuItem>
 
               {/* Support submenu using details */}
-              <details
-                className="group"
-                role="group"
-                ref={supportDetailsRef}
-              >
-                <summary className="cursor-pointer flex justify-between items-center px-3 py-1 rounded hover:bg-blue-50">
+              <details className="group" role="group" ref={supportDetailsRef}>
+                <summary className="cursor-pointer flex justify-between items-center px-4 py-2 rounded-md hover:bg-blue-50 transition">
                   Support
-                  <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
+                  <ChevronDown className="w-5 h-5 transition-transform group-open:rotate-180" />
                 </summary>
                 <nav
-                  className="pl-4 flex flex-col space-y-1 mt-1"
+                  className="pl-6 flex flex-col space-y-2 mt-2"
                   onClick={() => {
                     if (supportDetailsRef.current) supportDetailsRef.current.open = false
                     setIsMenuOpen(false)
                   }}
                 >
-                  <Link href="/help" className="mobile-nav-link">
+                  <Link
+                    href="/help"
+                    className="block px-4 py-2 rounded-md hover:bg-blue-50 transition"
+                  >
                     Help Center
                   </Link>
-                  <Link href="/faq" className="mobile-nav-link">
+                  <Link
+                    href="/faq"
+                    className="block px-4 py-2 rounded-md hover:bg-blue-50 transition"
+                  >
                     FAQ
                   </Link>
-                  <Link href="/returns" className="mobile-nav-link">
+                  <Link
+                    href="/returns"
+                    className="block px-4 py-2 rounded-md hover:bg-blue-50 transition"
+                  >
                     Returns & Refund Policy
                   </Link>
-                  <Link href="/contact" className="mobile-nav-link">
+                  <Link
+                    href="/contact"
+                    className="block px-4 py-2 rounded-md hover:bg-blue-50 transition"
+                  >
                     Contact Us
                   </Link>
                 </nav>
@@ -194,7 +224,11 @@ export default function Header() {
 
               {/* Cart inside menu */}
               <DropdownMenuItem asChild>
-                <Link href="/cart" onClick={() => setIsMenuOpen(false)}>
+                <Link
+                  href="/cart"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="block px-4 py-2 rounded-md hover:bg-blue-50 transition"
+                >
                   Cart ({itemCount})
                 </Link>
               </DropdownMenuItem>
@@ -202,12 +236,20 @@ export default function Header() {
               {!user && (
                 <>
                   <DropdownMenuItem asChild>
-                    <Link href="/login" onClick={() => setIsMenuOpen(false)}>
+                    <Link
+                      href="/login"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="block px-4 py-2 rounded-md hover:bg-blue-50 transition"
+                    >
                       Login
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/signup" onClick={() => setIsMenuOpen(false)}>
+                    <Link
+                      href="/signup"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="block px-4 py-2 rounded-md hover:bg-blue-50 transition"
+                    >
                       Sign Up
                     </Link>
                   </DropdownMenuItem>
@@ -220,4 +262,3 @@ export default function Header() {
     </header>
   )
 }
- 
