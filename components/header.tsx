@@ -19,17 +19,9 @@ export default function Header() {
 
   return (
     <header className="border-b bg-white dark:bg-gray-900 dark:border-gray-800">
-      <div className="container mx-auto flex items-center justify-between px-4 py-3 md:py-4">
-        {/* Mobile Menu Toggle (Left) */}
-        <button
-          onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
-          className="p-2 rounded-md text-gray-700 dark:text-gray-200 focus:outline-none md:hidden"
-        >
-          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-
-        {/* Logo */}
-        <div className="flex-shrink-0 flex items-center">
+      <div className="container mx-auto flex items-center justify-between px-4 py-2 md:py-3">
+        {/* Logo (Left) */}
+        <div className="flex-shrink-0">
           <Link href="/">
             <img
               src="/images/logo.png"
@@ -39,25 +31,33 @@ export default function Header() {
           </Link>
         </div>
 
-        {/* Nav Links - Mobile ONLY (Between Logo & Cart) */}
+        {/* Desktop Navigation (Center) */}
         <nav className="hidden md:flex space-x-6">
-          {/* Keep desktop nav same as before */}
           <Link href="/products" className="hover:text-blue-500">
             Products
           </Link>
           <Link href="/categories" className="hover:text-blue-500">
             Categories
           </Link>
-          <Link href="/contact" className="hover:text-blue-500">
-            Contact
+          <Link href="/about" className="hover:text-blue-500">
+            About
+          </Link>
+          <Link href="/support" className="hover:text-blue-500">
+            Support
           </Link>
         </nav>
 
-        {/* Cart Icon */}
-        <div className="flex items-center">
+        {/* Cart + Mobile Menu Toggle (Right) */}
+        <div className="flex items-center space-x-4">
           <Link href="/cart" className="hover:text-blue-500 text-xl">
             🛒
           </Link>
+          <button
+            onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
+            className="p-2 rounded-md text-gray-700 dark:text-gray-200 focus:outline-none md:hidden"
+          >
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
         </div>
       </div>
 

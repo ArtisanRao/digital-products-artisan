@@ -11,7 +11,8 @@ import BackToTopButton from "@/components/BackToTopButton" // ✅ Import this
 
 export const metadata = {
   title: "Digital Products Artisan | Premium Digital Downloads",
-  description: "Instantly download ebooks, templates, graphics, and more — created for creators.",
+  description:
+    "Instantly download ebooks, templates, graphics, and more — created for creators.",
   openGraph: {
     title: "Digital Products Artisan",
     description: "Premium digital downloads. Instant access. No fluff.",
@@ -38,10 +39,15 @@ export const metadata = {
 export default function HomePage() {
   return (
     <main className="min-h-screen">
-      <HeroSection />
+      {/* Hero section with tightened spacing */}
+      <section className="text-center pt-6 pb-10 md:pt-8 md:pb-12">
+        <HeroSection />
+      </section>
+
       <Suspense fallback={<LoadingSpinner />}>
         <FeaturedProducts />
       </Suspense>
+
       <ProductCategories />
       <AboutSection />
       <TestimonialsSection />
@@ -53,9 +59,15 @@ export default function HomePage() {
           &copy; {new Date().getFullYear()} Digital Products Artisan. All rights reserved.
         </div>
         <div className="space-x-4">
-          <a href="/contact" className="hover:underline text-blue-600">Contact</a>
-          <a href="/privacy" className="hover:underline text-blue-600">Privacy</a>
-          <a href="/help" className="hover:underline text-blue-600">Support</a>
+          <a href="/contact" className="hover:underline text-blue-600">
+            Contact
+          </a>
+          <a href="/privacy" className="hover:underline text-blue-600">
+            Privacy
+          </a>
+          <a href="/help" className="hover:underline text-blue-600">
+            Support
+          </a>
         </div>
       </footer>
 
