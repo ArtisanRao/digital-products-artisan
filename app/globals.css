@@ -6,6 +6,46 @@
   .text-balance {
     text-wrap: balance;
   }
+
+  /* Custom cm-based spacing utilities */
+  .mt-1cm {
+    margin-top: 1cm;
+  }
+
+  .mb-1cm {
+    margin-bottom: 1cm;
+  }
+
+  .gap-1cm {
+    gap: 1cm;
+  }
+
+  /* Desktop-only gap utility */
+  @media (min-width: 1024px) {
+    .desktop-gap-1cm {
+      gap: 1cm;
+    }
+  }
+
+  /* Mobile-only gap utility for header links */
+  @media (max-width: 1023px) {
+    .mobile-link {
+      margin-left: 1cm;
+      margin-right: 1cm;
+    }
+
+    /* Mobile header spacing and fit */
+    .mobile-header-fit {
+      gap: 1cm;
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+
+    header img {
+      max-width: 80px; /* adjust to your liking */
+      height: auto;
+    }
+  }
 }
 
 @layer base {
@@ -44,6 +84,7 @@
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+
   .dark {
     --background: 0 0% 3.9%;
     --foreground: 0 0% 98%;
