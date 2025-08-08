@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import Link from 'next/link'
 import { ShoppingCart, Search, Menu, X, ChevronDown, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -20,8 +20,18 @@ export default function Header() {
   const [searchTerm, setSearchTerm] = useState('')
   const { items } = useCart()
   const { user, logout } = useAuth()
+  const mobileSupportDetailsRef = useRef<HTMLDetailsElement | null>(null)
 
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
+
+  // Collapse mobile Support dropdown on submenu click
+  const handleMobileSupportClick = () => {
+    if (mobileSupportDetailsRef.current) {
+      mobileSupportDetailsRef.current.open = false
+    }
+    // Also close main mobile menu if you want
+    setIsMenuOpen(false)
+  }
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-blue-100">
@@ -29,14 +39,13 @@ export default function Header() {
         <div className="flex items-center justify-between h-16">
 
           {/* Left side: Logo + desktop nav links except Support */}
-          <div className="flex items-center space-x-4 flex-shrink-0">
+          <div className="hidden md:flex items-center space-x-8 flex-shrink-0">
             <Logo size="md" />
-            <nav className="hidden md:flex items-center space-x-6">
+            <nav className="flex items-center space-x-6">
               <Link href="/products" className="nav-link">Products</Link>
               <Link href="/bundles" className="nav-link">Bundles</Link>
               <Link href="/categories" className="nav-link">Categories</Link>
               <Link href="/about" className="nav-link">About</Link>
-
               {/* Support inline with equal spacing */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -64,23 +73,18 @@ export default function Header() {
           </div>
 
           {/* Center: mobile nav links */}
-          <nav className="flex md:hidden items-center space-x-4 text-sm">
-            <Link href="/products" className="hover:text-blue-600">Products</Link>
-            <Link href="/categories" className="hover:text-blue-600">Categories</Link>
-            <Link href="/about" className="hover:text-blue-600">About</Link>
-            {/* Support with dropdown in mobile */}
-            <details className="relative group">
-              <summary className="cursor-pointer flex items-center space-x-1 hover:text-blue-600">
-                <span>Support</span>
-                <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
-              </summary>
-              <nav className="absolute left-0 mt-2 bg-white border border-gray-200 rounded-md shadow-lg w-40 p-2 flex flex-col space-y-1 z-50">
-                <Link href="/help" className="mobile-link px-2 py-1 hover:bg-blue-50 rounded">Help Center</Link>
-                <Link href="/faq" className="mobile-link px-2 py-1 hover:bg-blue-50 rounded">FAQ</Link>
-                <Link href="/returns" className="mobile-link px-2 py-1 hover:bg-blue-50 rounded">Returns & Refund Policy</Link>
-                <Link href="/contact" className="mobile-link px-2 py-1 hover:bg-blue-50 rounded">Contact Us</Link>
-              </nav>
-            </details>
+          <nav className="flex md:hidden items-center space-x-6 text-sm">
+            <Logo size="md" />
+            {/* Space between logo and Products */}
+            <Link href="/products" className="hover:text-blue-600">
+              Products
+            </Link>
+            <Link href="/categories" className="hover:text-blue-600">
+              Categories
+            </Link>
+            <Link href="/about" className="hover:text-blue-600">
+              About
+            </Link>
           </nav>
 
           {/* Right side */}
@@ -178,46 +182,54 @@ export default function Header() {
             </Button>
           </div>
         </div>
+
+        {/* Mobile menu dropdown */}
+        {isMenuOpen && (
+          <div className="md:hidden py-4 border-t border-blue-100 bg-blue-50/50 animate-fadeIn">
+            <nav className="flex flex-col space-y-4 px-2">
+
+              {/* Mobile main nav */}
+              <Link href="/products" className="mobile-link" onClick={() => setIsMenuOpen(false)}>Products</Link>
+              <Link href="/categories" className="mobile-link" onClick={() => setIsMenuOpen(false)}>Categories</Link>
+              <Link href="/about" className="mobile-link" onClick={() => setIsMenuOpen(false)}>About</Link>
+
+              {/* Support submenu with dropdown */}
+              <details
+                className="mobile-link group"
+                role="group"
+                ref={mobileSupportDetailsRef}
+              >
+                <summary className="cursor-pointer flex justify-between items-center">
+                  Support
+                  <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
+                </summary>
+                <nav className="pl-4 mt-2 flex flex-col space-y-2">
+                  <Link href="/help" className="mobile-link" onClick={handleMobileSupportClick}>Help Center</Link>
+                  <Link href="/faq" className="mobile-link" onClick={handleMobileSupportClick}>FAQ</Link>
+                  <Link href="/returns" className="mobile-link" onClick={handleMobileSupportClick}>Returns & Refund Policy</Link>
+                  <Link href="/contact" className="mobile-link" onClick={handleMobileSupportClick}>Contact Us</Link>
+                </nav>
+              </details>
+
+              {/* Cart inside mobile menu */}
+              <Link href="/cart" className="mobile-link" onClick={() => setIsMenuOpen(false)}>
+                Cart ({itemCount})
+              </Link>
+
+              {/* Auth and extra menu */}
+              {!user && (
+                <>
+                  <Link href="/login" className="mobile-link" onClick={() => setIsMenuOpen(false)}>Login</Link>
+                  <Link href="/signup" className="mobile-link" onClick={() => setIsMenuOpen(false)}>Sign Up</Link>
+                  <Link href="/best-seller" className="mobile-link" onClick={() => setIsMenuOpen(false)}>Best Seller</Link>
+                  <Link href="/new-releases" className="mobile-link" onClick={() => setIsMenuOpen(false)}>New Releases</Link>
+                  <Link href="/bundles" className="mobile-link" onClick={() => setIsMenuOpen(false)}>Bundles</Link>
+                </>
+              )}
+            </nav>
+          </div>
+        )}
       </div>
-
-      {/* Mobile menu dropdown */}
-      {isMenuOpen && (
-        <div className="md:hidden py-4 border-t border-blue-100 bg-blue-50/50 animate-fadeIn">
-          <nav className="flex flex-col space-y-4 px-2">
-            <Link href="/products" className="mobile-link">Products</Link>
-            <Link href="/categories" className="mobile-link">Categories</Link>
-            <Link href="/about" className="mobile-link">About</Link>
-
-            {/* Support submenu with dropdown */}
-            <details className="mobile-link group" role="group">
-              <summary className="cursor-pointer flex justify-between items-center">
-                Support
-                <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
-              </summary>
-              <nav className="pl-4 mt-2 flex flex-col space-y-2">
-                <Link href="/help" className="mobile-link">Help Center</Link>
-                <Link href="/faq" className="mobile-link">FAQ</Link>
-                <Link href="/returns" className="mobile-link">Returns & Refund Policy</Link>
-                <Link href="/contact" className="mobile-link">Contact Us</Link>
-              </nav>
-            </details>
-
-            {/* Cart inside mobile menu */}
-            <Link href="/cart" className="mobile-link">Cart ({itemCount})</Link>
-
-            {/* Auth and extra menu */}
-            {!user && (
-              <>
-                <Link href="/login" className="mobile-link">Login</Link>
-                <Link href="/signup" className="mobile-link">Sign Up</Link>
-                <Link href="/best-seller" className="mobile-link">Best Seller</Link>
-                <Link href="/new-releases" className="mobile-link">New Releases</Link>
-                <Link href="/bundles" className="mobile-link">Bundles</Link>
-              </>
-            )}
-          </nav>
-        </div>
-      )}
     </header>
   )
 }
