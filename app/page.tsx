@@ -1,68 +1,65 @@
-import Header from "@/components/header";
+import { Suspense } from "react"
+import HeroSection from "@/components/hero-section"
+import FeaturedProducts from "@/components/featured-products"
+import ProductCategories from "@/components/product-categories"
+import AboutSection from "@/components/about-section"
+import TestimonialsSection from "@/components/testimonials-section"
+import NewsletterSection from "@/components/newsletter-section"
+import FAQSection from "@/components/faq-section"
+import LoadingSpinner from "@/components/loading-spinner"
+import BackToTopButton from "@/components/BackToTopButton" // ✅ Import this
+
+export const metadata = {
+  title: "Digital Products Artisan | Premium Digital Downloads",
+  description: "Instantly download ebooks, templates, graphics, and more — created for creators.",
+  openGraph: {
+    title: "Digital Products Artisan",
+    description: "Premium digital downloads. Instant access. No fluff.",
+    url: "https://digitalproductsartisan.com",
+    siteName: "Digital Products Artisan",
+    images: [
+      {
+        url: "/images/logo.png",
+        width: 1200,
+        height: 630,
+        alt: "Digital Products Artisan",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Digital Products Artisan",
+    description: "High-quality digital downloads at your fingertips.",
+    images: ["/images/logo.png"],
+  },
+}
 
 export default function HomePage() {
   return (
-    <>
-      <Header />
-      <main className="bg-gray-50 min-h-screen">
-        {/* Hero Section */}
-        <section className="relative bg-white py-20">
-          <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-gray-900">
-              Your Marketplace for Premium Digital Products
-            </h1>
-            <p className="mt-6 text-lg text-gray-600 max-w-2xl mx-auto">
-              Browse, purchase, and download instantly from our curated
-              collection of templates, art, resources, and more.
-            </p>
-            <div className="mt-8 flex justify-center gap-4">
-              <a
-                href="/products"
-                className="px-6 py-3 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700"
-              >
-                Explore Products
-              </a>
-              <a
-                href="/bundles"
-                className="px-6 py-3 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-100"
-              >
-                View Bundles
-              </a>
-            </div>
-          </div>
-        </section>
+    <main className="min-h-screen">
+      <HeroSection />
+      <Suspense fallback={<LoadingSpinner />}>
+        <FeaturedProducts />
+      </Suspense>
+      <ProductCategories />
+      <AboutSection />
+      <TestimonialsSection />
+      <FAQSection />
+      <NewsletterSection />
 
-        {/* Featured Products */}
-        <section className="py-16">
-          <div className="max-w-7xl mx-auto px-6 lg:px-8">
-            <h2 className="text-2xl font-bold mb-8">Best Sellers</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {/* Product Card */}
-              <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
-                <img
-                  src="/images/product-1.jpg"
-                  alt="Product 1"
-                  className="w-full h-48 object-cover"
-                />
-                <div className="p-6">
-                  <h3 className="text-lg font-semibold">Self-Help Success Guide</h3>
-                  <p className="mt-2 text-gray-600 text-sm">
-                    A comprehensive guide to personal and professional growth.
-                  </p>
-                  <div className="mt-4 flex justify-between items-center">
-                    <span className="text-indigo-600 font-bold">$15.00</span>
-                    <button className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
-                      Add to Cart
-                    </button>
-                  </div>
-                </div>
-              </div>
+      <footer className="text-center text-sm text-gray-500 py-6 space-y-2">
+        <div>
+          &copy; {new Date().getFullYear()} Digital Products Artisan. All rights reserved.
+        </div>
+        <div className="space-x-4">
+          <a href="/contact" className="hover:underline text-blue-600">Contact</a>
+          <a href="/privacy" className="hover:underline text-blue-600">Privacy</a>
+          <a href="/help" className="hover:underline text-blue-600">Support</a>
+        </div>
+      </footer>
 
-              {/* Add more product cards as needed */}
-            </div>
-          </div>
-        </section>
-      </main>
-    </>
-  );
+      <BackToTopButton />
+    </main>
+  )
 }
