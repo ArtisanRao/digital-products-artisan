@@ -28,7 +28,7 @@ export default function Header() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
 
-          {/* Left side - Logo + space + Desktop nav (except Support) */}
+          {/* Left side: Logo + desktop nav links except Support */}
           <div className="flex items-center space-x-6 flex-shrink-0">
             <Logo size="md" />
             <nav className="hidden md:flex items-center space-x-4">
@@ -39,7 +39,7 @@ export default function Header() {
             </nav>
           </div>
 
-          {/* Center - Mobile nav links */}
+          {/* Center: mobile nav links */}
           <nav className="flex md:hidden items-center space-x-4 text-sm">
             <Link href="/products" className="hover:text-blue-600">Products</Link>
             <Link href="/categories" className="hover:text-blue-600">Categories</Link>
@@ -101,7 +101,7 @@ export default function Header() {
               variant="ghost"
               size="sm"
               asChild
-              className="relative hover:bg-blue-50"
+              className="relative hover:bg-blue-50 hidden md:inline-flex"
               aria-label={`Shopping cart with ${itemCount} items`}
             >
               <Link href="/cart" className="relative">
@@ -172,11 +172,13 @@ export default function Header() {
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-blue-100 bg-blue-50/50 animate-fadeIn">
             <nav className="flex flex-col space-y-4 px-2">
+
+              {/* Mobile main nav */}
               <Link href="/products" className="mobile-link">Products</Link>
               <Link href="/categories" className="mobile-link">Categories</Link>
               <Link href="/about" className="mobile-link">About</Link>
 
-              {/* Support submenu in mobile */}
+              {/* Support submenu with dropdown */}
               <details className="mobile-link group" role="group">
                 <summary className="cursor-pointer flex justify-between items-center">
                   Support
@@ -190,6 +192,10 @@ export default function Header() {
                 </nav>
               </details>
 
+              {/* Cart inside mobile menu */}
+              <Link href="/cart" className="mobile-link">Cart ({itemCount})</Link>
+
+              {/* Auth and extra menu */}
               {!user && (
                 <>
                   <Link href="/login" className="mobile-link">Login</Link>
