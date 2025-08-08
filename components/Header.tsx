@@ -27,7 +27,7 @@ export default function Header() {
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4">
-        {/* Desktop header */}
+        {/* Desktop Header */}
         <div className="hidden md:flex items-center justify-between h-16">
           <Logo size="lg" />
 
@@ -60,12 +60,12 @@ export default function Header() {
           </nav>
         </div>
 
-        {/* Mobile header */}
-        <div className="flex md:hidden items-center justify-between h-16 w-full max-w-full">
+        {/* Mobile Header */}
+        <div className="flex md:hidden items-center justify-between h-16 w-full">
           <Logo size="md" />
 
-          {/* Mobile nav links */}
-          <nav className="flex items-center space-x-4 ml-4">
+          {/* Mobile Nav Links */}
+          <div className="flex items-center space-x-3 ml-4 overflow-x-auto text-nowrap">
             <Link
               href="/products"
               className="text-sm font-medium text-blue-600 hover:underline"
@@ -91,9 +91,9 @@ export default function Header() {
             >
               Support
             </Link>
-          </nav>
+          </div>
 
-          {/* Mobile menu toggle */}
+          {/* Mobile Dropdown Menu */}
           <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
             <DropdownMenuTrigger asChild>
               <Button
@@ -149,7 +149,7 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Anchor reference for Support */}
+      {/* Hidden anchor for Support section scroll */}
       <details ref={supportDetailsRef} className="hidden" />
     </header>
   )
