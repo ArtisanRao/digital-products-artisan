@@ -1,77 +1,70 @@
-import { Suspense } from "react"
-import HeroSection from "@/components/hero-section"
-import FeaturedProducts from "@/components/featured-products"
-import ProductCategories from "@/components/product-categories"
-import AboutSection from "@/components/about-section"
-import TestimonialsSection from "@/components/testimonials-section"
-import NewsletterSection from "@/components/newsletter-section"
-import FAQSection from "@/components/faq-section"
-import LoadingSpinner from "@/components/loading-spinner"
-import BackToTopButton from "@/components/BackToTopButton" // ✅ Import this
+import Header from "@/components/Header";
 
-export const metadata = {
-  title: "Digital Products Artisan | Premium Digital Downloads",
-  description:
-    "Instantly download ebooks, templates, graphics, and more — created for creators.",
-  openGraph: {
-    title: "Digital Products Artisan",
-    description: "Premium digital downloads. Instant access. No fluff.",
-    url: "https://digitalproductsartisan.com",
-    siteName: "Digital Products Artisan",
-    images: [
-      {
-        url: "/images/logo.png",
-        width: 1200,
-        height: 630,
-        alt: "Digital Products Artisan",
-      },
-    ],
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Digital Products Artisan",
-    description: "High-quality digital downloads at your fingertips.",
-    images: ["/images/logo.png"],
-  },
-}
-
-export default function HomePage() {
+export default function Home() {
   return (
-    <main className="min-h-screen">
-      {/* Hero section with tightened spacing */}
-      <section className="text-center pt-6 pb-10 md:pt-8 md:pb-12">
-        <HeroSection />
+    <main className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <Header />
+
+      {/* Hero Section */}
+      <section className="bg-gradient-to-r from-blue-50 to-purple-50 py-20">
+        <div className="container mx-auto px-4 text-center">
+          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-gray-900">
+            Welcome to Digital Products Artisan
+          </h1>
+          <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+            Your one-stop shop for premium digital assets — templates, tools,
+            guides, and more to help your business thrive.
+          </p>
+          <div className="mt-6 flex justify-center gap-4">
+            <a
+              href="/products"
+              className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition"
+            >
+              Browse Products
+            </a>
+            <a
+              href="/categories"
+              className="px-6 py-3 bg-white text-gray-900 border border-gray-300 font-medium rounded-lg hover:bg-gray-100 transition"
+            >
+              Explore Categories
+            </a>
+          </div>
+        </div>
       </section>
 
-      <Suspense fallback={<LoadingSpinner />}>
-        <FeaturedProducts />
-      </Suspense>
-
-      <ProductCategories />
-      <AboutSection />
-      <TestimonialsSection />
-      <FAQSection />
-      <NewsletterSection />
-
-      <footer className="text-center text-sm text-gray-500 py-6 space-y-2">
-        <div>
-          &copy; {new Date().getFullYear()} Digital Products Artisan. All rights reserved.
+      {/* Featured Section */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-10">
+            Featured Products
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[1, 2, 3].map((item) => (
+              <div
+                key={item}
+                className="bg-white rounded-xl shadow-sm hover:shadow-md transition p-5"
+              >
+                <img
+                  src={`/images/product-${item}.jpg`}
+                  alt={`Product ${item}`}
+                  className="rounded-lg mb-4"
+                />
+                <h3 className="text-lg font-semibold mb-2">
+                  Product Title {item}
+                </h3>
+                <p className="text-gray-600 text-sm mb-4">
+                  Short description of the product highlighting its benefits and
+                  features.
+                </p>
+                <button className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">
+                  View Details
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="space-x-4">
-          <a href="/contact" className="hover:underline text-blue-600">
-            Contact
-          </a>
-          <a href="/privacy" className="hover:underline text-blue-600">
-            Privacy
-          </a>
-          <a href="/help" className="hover:underline text-blue-600">
-            Support
-          </a>
-        </div>
-      </footer>
-
-      <BackToTopButton />
+      </section>
     </main>
-  )
+  );
 }
