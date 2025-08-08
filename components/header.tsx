@@ -27,7 +27,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-blue-100">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 max-w-full">
         {/* Desktop header */}
         <div className="hidden md:flex items-center justify-center space-x-10 h-16">
           <Logo size="md" />
@@ -133,7 +133,7 @@ export default function Header() {
         </div>
 
         {/* Mobile header */}
-        <div className="flex md:hidden items-center justify-between h-16 px-4 w-full">
+        <div className="flex md:hidden items-center justify-between h-16 px-4 w-full max-w-full">
           <Logo size="md" />
 
           {/* Mobile menu toggle */}

@@ -78,6 +78,18 @@
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+
+  /* Prevent horizontal overflow and force full container width on small devices */
+  body, html {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  .container {
+    max-width: 100% !important;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
 }
 
 @layer base {
@@ -100,15 +112,15 @@
 
   /* Mobile nav links */
   .mobile-nav-link {
-    @apply block px-4 py-2 font-medium text-blue-700;
+    @apply block px-4 py-2 font-medium text-blue-700 rounded-md transition-colors duration-200 ease-in-out;
   }
   .mobile-nav-link:hover {
-    @apply text-blue-600;
+    @apply text-blue-600 bg-blue-50;
   }
 
   /* Support dropdown summary */
   details > summary {
-    @apply cursor-pointer flex justify-between items-center px-3 py-2 rounded hover:bg-blue-50;
+    @apply cursor-pointer flex justify-between items-center px-4 py-2 rounded-md hover:bg-blue-50 transition;
   }
 
   /* Rotate arrow on open */
@@ -119,6 +131,6 @@
 
   /* Dropdown nav inside details */
   details nav {
-    @apply pl-4 flex flex-col space-y-1 mt-1;
+    @apply pl-6 flex flex-col space-y-2 mt-2;
   }
 }

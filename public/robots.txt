@@ -1,21 +1,15 @@
-# Allow all search engines to crawl the site
+# *
 User-agent: *
 Allow: /
-
-# Disallow error and utility pages that shouldn't be indexed
 Disallow: /404
 Disallow: /500
 Disallow: /thank-you
+Disallow: /terms
+Disallow: /privacy-policy
 Disallow: /contact/success
 
-# Allow legal pages (terms, privacy) — recommended for trust/SEO
-# You had them disallowed. Let's allow them:
-# Remove these lines if still preferred hidden:
-# Disallow: /terms
-# Disallow: /privacy-policy
-
-# Declare preferred domain
+# Host
 Host: https://digitalproductsartisan.com
 
-# Point to sitemap
+# Sitemaps
 Sitemap: https://digitalproductsartisan.com/sitemap.xml
