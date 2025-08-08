@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { ShoppingCart, Search, Menu, X, User, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,17 +25,36 @@ export default function Header() {
 
   const clearSearch = () => setSearchTerm('')
 
+  // Auto-collapse support submenu in mobile
+  const handleMobileSupportClick = () => {
+    setIsMenuOpen(false)
+  }
+
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-blue-100">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo (text-based for now) */}
-          <Link href="/" className="text-xl font-bold text-blue-700 tracking-tight">
-            Digital Artisan
+        <div className="flex items-center justify-between h-16 desktop-gap-1cm">
+          {/* Logo */}
+          <Link href="/" className="flex items-center">
+            <Image
+              src="/logo.png" // Replace this with your logo path
+              alt="Site Logo"
+              width={140}
+              height={40}
+              priority
+            />
           </Link>
 
+          {/* Mobile quick nav between logo & menu */}
+          <div className="flex md:hidden items-center gap-[1cm]">
+            <Link href="/products" className="mobile-link">Products</Link>
+            <Link href="/categories" className="mobile-link">Categories</Link>
+            <Link href="/about" className="mobile-link">About</Link>
+            <Link href="/support" className="mobile-link">Support</Link>
+          </div>
+
           {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center space-x-8">
+          <nav className="hidden md:flex items-center desktop-gap-1cm">
             <Link href="/products" className="nav-link">Products</Link>
             <Link href="/bundles" className="nav-link">Bundles</Link>
             <Link href="/categories" className="nav-link">Categories</Link>
@@ -62,7 +82,7 @@ export default function Header() {
           </nav>
 
           {/* Search */}
-          <div className="hidden md:flex items-center space-x-2 ml-6 relative">
+          <div className="hidden md:flex items-center relative desktop-gap-1cm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400 w-4 h-4" />
             <Input
               type="search"
@@ -84,7 +104,7 @@ export default function Header() {
           </div>
 
           {/* Auth + Cart */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center desktop-gap-1cm">
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -110,7 +130,7 @@ export default function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <div className="hidden md:flex space-x-2">
+              <div className="hidden md:flex desktop-gap-1cm">
                 <Button variant="ghost" size="sm" asChild className="hover:bg-blue-50 hover:text-blue-700">
                   <Link href="/login">Login</Link>
                 </Button>
@@ -148,37 +168,41 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Mobile dropdown menu */}
         {isMenuOpen && (
-          <div className="md:hidden py-4 border-t border-blue-100 bg-blue-50/50 animate-fadeIn">
+          <div className="md:hidden py-4 border-t border-blue-100 bg-blue-50/50 animate-fadeIn mt-[1cm]">
             <nav className="flex flex-col space-y-4">
-              <Link href="/products" className="mobile-link">Products</Link>
-              <Link href="/bundles" className="mobile-link">Bundles</Link>
-              <Link href="/categories" className="mobile-link">Categories</Link>
-              <Link href="/about" className="mobile-link">About</Link>
+              <Link href="/products" className="mobile-link" onClick={() => setIsMenuOpen(false)}>Products</Link>
+              <Link href="/bundles" className="mobile-link" onClick={() => setIsMenuOpen(false)}>Bundles</Link>
+              <Link href="/categories" className="mobile-link" onClick={() => setIsMenuOpen(false)}>Categories</Link>
+              <Link href="/about" className="mobile-link" onClick={() => setIsMenuOpen(false)}>About</Link>
 
-              <details className="mobile-link group">
-                <summary className="cursor-pointer flex justify-between items-center">
+              {/* Support with auto-collapse */}
+              <div className="flex flex-col space-y-2">
+                <button
+                  onClick={handleMobileSupportClick}
+                  className="mobile-link text-left"
+                >
                   Support
-                  <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
-                </summary>
-                <div className="pl-4 mt-2 flex flex-col space-y-2">
-                  <Link href="/help" className="mobile-link">Help Center</Link>
-                  <Link href="/faq" className="mobile-link">FAQ</Link>
-                  <Link href="/returns" className="mobile-link">Returns & Refund Policy</Link>
-                  <Link href="/contact" className="mobile-link">Contact Us</Link>
+                </button>
+                <div className="pl-4 flex flex-col space-y-2">
+                  <Link href="/help" className="mobile-link" onClick={() => setIsMenuOpen(false)}>Help Center</Link>
+                  <Link href="/faq" className="mobile-link" onClick={() => setIsMenuOpen(false)}>FAQ</Link>
+                  <Link href="/returns" className="mobile-link" onClick={() => setIsMenuOpen(false)}>Returns & Refund Policy</Link>
+                  <Link href="/contact" className="mobile-link" onClick={() => setIsMenuOpen(false)}>Contact Us</Link>
                 </div>
-              </details>
+              </div>
 
               {!user && (
                 <div className="flex space-x-2 pt-4">
-                  <Button variant="ghost" size="sm" asChild className="hover:bg-blue-100">
+                  <Button variant="ghost" size="sm" asChild className="hover:bg-blue-100" onClick={() => setIsMenuOpen(false)}>
                     <Link href="/login">Login</Link>
                   </Button>
                   <Button
                     size="sm"
                     asChild
                     className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+                    onClick={() => setIsMenuOpen(false)}
                   >
                     <Link href="/signup">Sign Up</Link>
                   </Button>
