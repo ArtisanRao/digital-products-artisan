@@ -26,100 +26,119 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-blue-100">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16 gap-2 md:gap-4">
-          {/* Logo */}
-          <Logo size="md" className="mr-2" />
+        {/* Mobile: flex row with 3 groups: Left logo, Center nav links, Right search+cart+menu */}
+        {/* Desktop: flex row with 2 groups: Left (logo + main nav), Right (Support + search + cart + user) */}
+        <div className="flex items-center justify-between h-16">
 
-          {/* Mobile main nav links (without Support) */}
+          {/* Left side */}
+          <div className="flex items-center space-x-2 md:space-x-6 flex-shrink-0">
+            <Logo size="md" />
+            {/* Desktop main nav (except Support) */}
+            <nav className="hidden md:flex items-center space-x-4">
+              <Link href="/products" className="nav-link">Products</Link>
+              <Link href="/bundles" className="nav-link">Bundles</Link>
+              <Link href="/categories" className="nav-link">Categories</Link>
+              <Link href="/about" className="nav-link">About</Link>
+            </nav>
+          </div>
+
+          {/* Center - Mobile nav links (except Support) */}
           <nav className="flex md:hidden items-center space-x-3 text-sm">
             <Link href="/products" className="hover:text-blue-600">Products</Link>
             <Link href="/categories" className="hover:text-blue-600">Categories</Link>
             <Link href="/about" className="hover:text-blue-600">About</Link>
-
-            {/* Support dropdown inline in mobile nav */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="inline-flex items-center space-x-1 text-blue-600 hover:text-blue-800">
-                  <span>Support</span>
-                  <ChevronDown className="w-3 h-3 mt-0.5" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="border-blue-200">
-                <DropdownMenuItem asChild>
-                  <Link href="/help">Help Center</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/faq">FAQ</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/returns">Returns & Refund Policy</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/contact">Contact Us</Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </nav>
 
-          {/* Desktop nav links */}
-          <nav className="hidden md:flex items-center space-x-4">
-            <Link href="/products" className="nav-link">Products</Link>
-            <Link href="/bundles" className="nav-link">Bundles</Link>
-            <Link href="/categories" className="nav-link">Categories</Link>
-            <Link href="/about" className="nav-link">About</Link>
+          {/* Right side */}
+          <div className="flex items-center space-x-2 md:space-x-4 flex-shrink-0">
 
-            {/* Support dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="nav-link inline-flex items-center space-x-1">
-                  <span>Support</span>
-                  <ChevronDown className="w-3 h-3 mt-0.5" />
+            {/* Desktop Support dropdown */}
+            <div className="hidden md:block">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="nav-link inline-flex items-center space-x-1">
+                    <span>Support</span>
+                    <ChevronDown className="w-3 h-3 mt-0.5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="border-blue-200">
+                  <DropdownMenuItem asChild>
+                    <Link href="/help">Help Center</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/faq">FAQ</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/returns">Returns & Refund Policy</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/contact">Contact Us</Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            {/* Mobile Support dropdown inline */}
+            <div className="md:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="inline-flex items-center space-x-1 text-blue-600 hover:text-blue-800">
+                    <span>Support</span>
+                    <ChevronDown className="w-3 h-3 mt-0.5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="border-blue-200">
+                  <DropdownMenuItem asChild>
+                    <Link href="/help">Help Center</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/faq">FAQ</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/returns">Returns & Refund Policy</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/contact">Contact Us</Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            {/* Desktop search bar */}
+            <div className="hidden md:flex items-center space-x-2 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400 w-4 h-4" />
+              <Input
+                type="search"
+                placeholder="Search products..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 w-56 border-blue-200 focus:border-blue-500 focus:ring-blue-500/20 focus:ring-1 rounded-md"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  aria-label="Clear search input"
+                >
+                  &times;
                 </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="border-blue-200">
-                <DropdownMenuItem asChild>
-                  <Link href="/help">Help Center</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/faq">FAQ</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/returns">Returns & Refund Policy</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/contact">Contact Us</Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </nav>
+              )}
+            </div>
 
-          {/* Search (desktop only) */}
-          <div className="hidden md:flex items-center space-x-2 ml-4 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400 w-4 h-4" />
-            <Input
-              type="search"
-              placeholder="Search products..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-56 border-blue-200 focus:border-blue-500 focus:ring-blue-500/20 focus:ring-1 rounded-md"
-            />
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                &times;
-              </button>
-            )}
-          </div>
+            {/* Mobile search icon only */}
+            <div className="md:hidden">
+              <Button variant="ghost" size="sm" className="p-0">
+                <Search className="w-5 h-5 text-blue-600" />
+              </Button>
+            </div>
 
-          {/* Cart + Mobile menu toggle */}
-          <div className="flex items-center space-x-1">
+            {/* Cart */}
             <Button
               variant="ghost"
               size="sm"
               asChild
               className="relative hover:bg-blue-50"
+              aria-label={`Shopping cart with ${itemCount} items`}
             >
               <Link href="/cart" className="relative">
                 <ShoppingCart className="w-5 h-5 text-blue-600" />
@@ -135,7 +154,7 @@ export default function Header() {
             <Button
               variant="ghost"
               size="sm"
-              className="md:hidden hover:bg-blue-50 ml-1"
+              className="md:hidden hover:bg-blue-50"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
               aria-expanded={isMenuOpen}
