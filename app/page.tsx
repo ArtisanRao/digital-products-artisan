@@ -1,69 +1,65 @@
-'use client'
+import { Suspense } from "react"
+import HeroSection from "@/components/hero-section"
+import FeaturedProducts from "@/components/featured-products"
+import ProductCategories from "@/components/product-categories"
+import AboutSection from "@/components/about-section"
+import TestimonialsSection from "@/components/testimonials-section"
+import NewsletterSection from "@/components/newsletter-section"
+import FAQSection from "@/components/faq-section"
+import LoadingSpinner from "@/components/loading-spinner"
+import BackToTopButton from "@/components/BackToTopButton" // ✅ Import this
 
-import Image from "next/image";
-import Link from "next/link";
-import { useState } from "react";
+export const metadata = {
+  title: "Digital Products Artisan | Premium Digital Downloads",
+  description: "Instantly download ebooks, templates, graphics, and more — created for creators.",
+  openGraph: {
+    title: "Digital Products Artisan",
+    description: "Premium digital downloads. Instant access. No fluff.",
+    url: "https://digitalproductsartisan.com",
+    siteName: "Digital Products Artisan",
+    images: [
+      {
+        url: "/images/logo.png",
+        width: 1200,
+        height: 630,
+        alt: "Digital Products Artisan",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Digital Products Artisan",
+    description: "High-quality digital downloads at your fingertips.",
+    images: ["/images/logo.png"],
+  },
+}
 
-export default function Page() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const handleMenuClick = () => {
-    setMobileMenuOpen(false); // Auto collapse after click
-  };
-
+export default function HomePage() {
   return (
-    <header className="border-b border-gray-200">
-      {/* Top Navigation */}
-      <div className="flex items-center justify-between px-4 py-3 md:py-4">
-        {/* Logo */}
-        <Link href="/" className="flex items-center">
-          <Image
-            src="/logo-new.png"
-            alt="Digital Products Artisan"
-            width={180}
-            height={50}
-            priority
-          />
-        </Link>
+    <main className="min-h-screen">
+      <HeroSection />
+      <Suspense fallback={<LoadingSpinner />}>
+        <FeaturedProducts />
+      </Suspense>
+      <ProductCategories />
+      <AboutSection />
+      <TestimonialsSection />
+      <FAQSection />
+      <NewsletterSection />
 
-        {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-[38px]">
-          <Link href="/products">Products</Link>
-          <Link href="/bundles">Bundles</Link>
-          <Link href="/categories">Categories</Link>
-          <Link href="/about">About</Link>
-          <Link href="/support">Support</Link>
-          <input
-            type="text"
-            placeholder="Search..."
-            className="border rounded px-2 py-1"
-          />
-          <Link href="/login">Login</Link>
-          <Link href="/signup">Sign Up</Link>
-          <Link href="/cart">Cart</Link>
-        </nav>
+      <footer className="text-center text-sm text-gray-500 py-6 space-y-2">
+        <div>
+          &copy; {new Date().getFullYear()} Digital Products Artisan. All rights reserved.
+        </div>
+        <div className="space-x-4">
+          <a href="/contact" className="hover:underline text-blue-600">Contact</a>
+          <a href="/privacy" className="hover:underline text-blue-600">Privacy</a>
+          <a href="/help" className="hover:underline text-blue-600">Support</a>
+        </div>
+      </footer>
 
-        {/* Mobile Menu Button */}
-        <button
-          className="md:hidden text-gray-700"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        >
-          ☰
-        </button>
-      </div>
-
-      {/* Mobile Nav */}
-      {mobileMenuOpen && (
-        <nav className="md:hidden flex flex-col items-start px-4 py-2 space-y-2">
-          <Link href="/products" onClick={handleMenuClick}>Products</Link>
-          <Link href="/categories" onClick={handleMenuClick}>Categories</Link>
-          <Link href="/about" onClick={handleMenuClick}>About</Link>
-          <Link href="/support" onClick={handleMenuClick}>Support</Link>
-        </nav>
-      )}
-
-      {/* Spacing between header and hero */}
-      <div className="mt-[38px]"></div>
-    </header>
-  );
+      <BackToTopButton />
+    </main>
+  )
 }
