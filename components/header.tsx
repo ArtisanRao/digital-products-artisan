@@ -26,14 +26,11 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-blue-100">
       <div className="container mx-auto px-4">
-        {/* Mobile: flex row with 3 groups: Left logo, Center nav links, Right search+cart+menu */}
-        {/* Desktop: flex row with 2 groups: Left (logo + main nav), Right (Support + search + cart + user) */}
         <div className="flex items-center justify-between h-16">
 
-          {/* Left side */}
-          <div className="flex items-center space-x-2 md:space-x-6 flex-shrink-0">
+          {/* Left side - Logo + some space + Desktop nav (except Support) */}
+          <div className="flex items-center space-x-6 flex-shrink-0">
             <Logo size="md" />
-            {/* Desktop main nav (except Support) */}
             <nav className="hidden md:flex items-center space-x-4">
               <Link href="/products" className="nav-link">Products</Link>
               <Link href="/bundles" className="nav-link">Bundles</Link>
@@ -42,47 +39,21 @@ export default function Header() {
             </nav>
           </div>
 
-          {/* Center - Mobile nav links (except Support) */}
-          <nav className="flex md:hidden items-center space-x-3 text-sm">
+          {/* Center - Mobile nav links (Products, Categories, About) */}
+          <nav className="flex md:hidden items-center space-x-4 text-sm">
             <Link href="/products" className="hover:text-blue-600">Products</Link>
             <Link href="/categories" className="hover:text-blue-600">Categories</Link>
             <Link href="/about" className="hover:text-blue-600">About</Link>
           </nav>
 
           {/* Right side */}
-          <div className="flex items-center space-x-2 md:space-x-4 flex-shrink-0">
+          <div className="flex items-center space-x-3 md:space-x-5 flex-shrink-0">
 
             {/* Desktop Support dropdown */}
             <div className="hidden md:block">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="nav-link inline-flex items-center space-x-1">
-                    <span>Support</span>
-                    <ChevronDown className="w-3 h-3 mt-0.5" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="border-blue-200">
-                  <DropdownMenuItem asChild>
-                    <Link href="/help">Help Center</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/faq">FAQ</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/returns">Returns & Refund Policy</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/contact">Contact Us</Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-
-            {/* Mobile Support dropdown inline */}
-            <div className="md:hidden">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="inline-flex items-center space-x-1 text-blue-600 hover:text-blue-800">
                     <span>Support</span>
                     <ChevronDown className="w-3 h-3 mt-0.5" />
                   </button>
@@ -125,14 +96,7 @@ export default function Header() {
               )}
             </div>
 
-            {/* Mobile search icon only */}
-            <div className="md:hidden">
-              <Button variant="ghost" size="sm" className="p-0">
-                <Search className="w-5 h-5 text-blue-600" />
-              </Button>
-            </div>
-
-            {/* Cart */}
+            {/* Desktop Cart */}
             <Button
               variant="ghost"
               size="sm"
@@ -150,7 +114,23 @@ export default function Header() {
               </Link>
             </Button>
 
-            {/* Mobile menu toggle */}
+            {/* Desktop Menu toggle */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="hidden md:inline-flex hover:bg-blue-50"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={isMenuOpen}
+            >
+              {isMenuOpen ? (
+                <X className="w-5 h-5 text-blue-600" />
+              ) : (
+                <Menu className="w-5 h-5 text-blue-600" />
+              )}
+            </Button>
+
+            {/* Mobile Menu toggle replaces Cart */}
             <Button
               variant="ghost"
               size="sm"
@@ -168,7 +148,7 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Mobile menu dropdown for Login/SignUp/BestSeller/NewReleases/Bundles */}
+        {/* Mobile menu dropdown */}
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-blue-100 bg-blue-50/50 animate-fadeIn">
             <nav className="flex flex-col space-y-4 px-2">
@@ -177,6 +157,11 @@ export default function Header() {
               <Link href="/best-seller" className="mobile-link">Best Seller</Link>
               <Link href="/new-releases" className="mobile-link">New Releases</Link>
               <Link href="/bundles" className="mobile-link">Bundles</Link>
+              {/* Cart inside mobile menu dropdown */}
+              <Link href="/cart" className="mobile-link font-semibold flex items-center space-x-1">
+                <ShoppingCart className="w-4 h-4" />
+                <span>Cart {itemCount > 0 ? `(${itemCount})` : ''}</span>
+              </Link>
             </nav>
           </div>
         )}
