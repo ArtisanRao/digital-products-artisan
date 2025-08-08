@@ -28,15 +28,16 @@ export default function Header() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
 
-          {/* Left side: Logo + desktop nav links except Support */}
+          {/* Left side: Logo + desktop nav links including Support */}
           <div className="flex items-center space-x-6 flex-shrink-0">
             <Logo size="md" />
-            <nav className="hidden md:flex items-center space-x-4">
+            <nav className="hidden md:flex items-center space-x-6">
               <Link href="/products" className="nav-link">Products</Link>
               <Link href="/bundles" className="nav-link">Bundles</Link>
               <Link href="/categories" className="nav-link">Categories</Link>
               <Link href="/about" className="nav-link">About</Link>
-              {/* Support inline with equal spacing */}
+
+              {/* Support dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="nav-link inline-flex items-center space-x-1">
@@ -111,7 +112,7 @@ export default function Header() {
               </Link>
             </Button>
 
-            {/* Desktop Menu toggle with dropdown */}
+            {/* Desktop menu dropdown with Login, Sign Up, etc. */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -147,7 +148,7 @@ export default function Header() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Mobile Menu toggle */}
+            {/* Mobile menu toggle */}
             <Button
               variant="ghost"
               size="sm"
