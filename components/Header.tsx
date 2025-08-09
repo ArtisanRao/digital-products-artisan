@@ -25,9 +25,8 @@ export default function Header() {
   const clearSearch = () => setSearchTerm('')
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-blue-100">
-      {/* Removed extra padding and margin from container */}
-      <div className="container mx-auto px-4">
+    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-blue-100 m-0 p-0">
+      <div className="container mx-auto px-4 m-0 p-0">
         <div className="flex items-center justify-between h-16 m-0 p-0">
           <Logo size="md" className="mr-8" />
 
