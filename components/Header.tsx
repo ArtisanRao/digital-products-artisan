@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { ShoppingCart, Search, Menu, X, User, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -22,30 +22,21 @@ export default function Header() {
   const { user, logout } = useAuth()
 
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
-
   const clearSearch = () => setSearchTerm('')
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-blue-100">
+      {/* Removed extra padding and margin from container */}
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
+        <div className="flex items-center justify-between h-16 m-0 p-0">
           <Logo size="md" className="mr-8" />
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center space-x-8">
-            <Link href="/products" className="nav-link">
-              Products
-            </Link>
-            <Link href="/bundles" className="nav-link">
-              Bundles
-            </Link>
-            <Link href="/categories" className="nav-link">
-              Categories
-            </Link>
-            <Link href="/about" className="nav-link">
-              About
-            </Link>
+            <Link href="/products" className="nav-link">Products</Link>
+            <Link href="/bundles" className="nav-link">Bundles</Link>
+            <Link href="/categories" className="nav-link">Categories</Link>
+            <Link href="/about" className="nav-link">About</Link>
 
             {/* Support Dropdown */}
             <DropdownMenu>
@@ -60,18 +51,10 @@ export default function Header() {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="border-blue-200">
-                <DropdownMenuItem asChild>
-                  <Link href="/help">Help Center</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/faq">FAQ</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/returns">Returns & Refund Policy</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/contact">Contact Us</Link>
-                </DropdownMenuItem>
+                <DropdownMenuItem asChild><Link href="/help">Help Center</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link href="/faq">FAQ</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link href="/returns">Returns & Refund Policy</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link href="/contact">Contact Us</Link></DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </nav>
@@ -107,22 +90,15 @@ export default function Header() {
                     variant="ghost"
                     size="sm"
                     className="hover:bg-blue-50 hover:text-blue-700 inline-flex items-center"
-                    aria-label={`User menu for ${user.name}`}
                   >
                     <User className="w-4 h-4 mr-2" />
                     {user.name}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="border-blue-200">
-                  <DropdownMenuItem asChild>
-                    <Link href="/dashboard">Dashboard</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/orders">My Orders</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/subscriptions">Subscriptions</Link>
-                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild><Link href="/dashboard">Dashboard</Link></DropdownMenuItem>
+                  <DropdownMenuItem asChild><Link href="/orders">My Orders</Link></DropdownMenuItem>
+                  <DropdownMenuItem asChild><Link href="/subscriptions">Subscriptions</Link></DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={logout}
                     className="hover:bg-red-50 hover:text-red-700 cursor-pointer"
@@ -133,19 +109,10 @@ export default function Header() {
               </DropdownMenu>
             ) : (
               <div className="hidden md:flex space-x-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  asChild
-                  className="hover:bg-blue-50 hover:text-blue-700"
-                >
+                <Button variant="ghost" size="sm" asChild className="hover:bg-blue-50 hover:text-blue-700">
                   <Link href="/login">Login</Link>
                 </Button>
-                <Button
-                  size="sm"
-                  asChild
-                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg"
-                >
+                <Button size="sm" asChild className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg">
                   <Link href="/signup">Sign Up</Link>
                 </Button>
               </div>
@@ -157,7 +124,6 @@ export default function Header() {
               size="sm"
               asChild
               className="relative hover:bg-blue-50"
-              aria-label={`Shopping cart with ${itemCount} items`}
             >
               <Link href="/cart" className="relative">
                 <ShoppingCart className="w-5 h-5 text-blue-600" />
@@ -174,72 +140,38 @@ export default function Header() {
               variant="ghost"
               size="sm"
               className="md:hidden hover:bg-blue-50"
-              aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
-              aria-expanded={isMenuOpen}
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
-              {isMenuOpen ? (
-                <X className="w-5 h-5 text-blue-600" />
-              ) : (
-                <Menu className="w-5 h-5 text-blue-600" />
-              )}
+              {isMenuOpen ? <X className="w-5 h-5 text-blue-600" /> : <Menu className="w-5 h-5 text-blue-600" />}
             </Button>
           </div>
         </div>
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div
-            className="md:hidden py-4 border-t border-blue-100 bg-blue-50/50 animate-fadeIn"
-            role="menu"
-            aria-label="Mobile navigation menu"
-          >
+          <div className="md:hidden py-4 border-t border-blue-100 bg-blue-50/50 animate-fadeIn">
             <nav className="flex flex-col space-y-4">
-              <Link href="/products" className="mobile-link" role="menuitem">
-                Products
-              </Link>
-              <Link href="/bundles" className="mobile-link" role="menuitem">
-                Bundles
-              </Link>
-              <Link href="/categories" className="mobile-link" role="menuitem">
-                Categories
-              </Link>
-              <Link href="/about" className="mobile-link" role="menuitem">
-                About
-              </Link>
-
-              {/* Support submenu */}
-              <details className="mobile-link group" role="group">
+              <Link href="/products" className="mobile-link">Products</Link>
+              <Link href="/bundles" className="mobile-link">Bundles</Link>
+              <Link href="/categories" className="mobile-link">Categories</Link>
+              <Link href="/about" className="mobile-link">About</Link>
+              <details className="mobile-link group">
                 <summary className="cursor-pointer flex justify-between items-center">
                   Support
                   <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
                 </summary>
                 <nav className="pl-4 mt-2 flex flex-col space-y-2">
-                  <Link href="/help" className="mobile-link" role="menuitem">
-                    Help Center
-                  </Link>
-                  <Link href="/faq" className="mobile-link" role="menuitem">
-                    FAQ
-                  </Link>
-                  <Link href="/returns" className="mobile-link" role="menuitem">
-                    Returns & Refund Policy
-                  </Link>
-                  <Link href="/contact" className="mobile-link" role="menuitem">
-                    Contact Us
-                  </Link>
+                  <Link href="/help" className="mobile-link">Help Center</Link>
+                  <Link href="/faq" className="mobile-link">FAQ</Link>
+                  <Link href="/returns" className="mobile-link">Returns & Refund Policy</Link>
+                  <Link href="/contact" className="mobile-link">Contact Us</Link>
                 </nav>
               </details>
 
               {!user && (
                 <div className="flex space-x-2 pt-4">
-                  <Button variant="ghost" size="sm" asChild className="hover:bg-blue-100">
-                    <Link href="/login">Login</Link>
-                  </Button>
-                  <Button
-                    size="sm"
-                    asChild
-                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
-                  >
+                  <Button variant="ghost" size="sm" asChild><Link href="/login">Login</Link></Button>
+                  <Button size="sm" asChild className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800">
                     <Link href="/signup">Sign Up</Link>
                   </Button>
                 </div>
