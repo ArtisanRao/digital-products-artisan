@@ -33,7 +33,7 @@ export default function Header() {
       <div className="container mx-auto px-4 !py-0 max-w-full">
         <div className="flex flex-wrap items-center justify-between h-16 gap-2">
 
-          {/* Mobile Header Nav */}
+          {/* Mobile Header Nav with Menu Toggle */}
           <nav className="flex md:hidden items-center space-x-3 flex-shrink-0 overflow-x-auto no-scrollbar">
             <Logo size="md" className="flex-shrink-0" />
             <Link href="/products" className="nav-link whitespace-nowrap">Products</Link>
@@ -59,6 +59,18 @@ export default function Header() {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* Mobile toggle button moved here for proximity to Support */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="hover:bg-blue-50"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={isMenuOpen}
+            >
+              {isMenuOpen ? <X className="w-5 h-5 text-blue-600" /> : <Menu className="w-5 h-5 text-blue-600" />}
+            </Button>
           </nav>
 
           {/* Desktop Nav */}
@@ -111,8 +123,8 @@ export default function Header() {
             )}
           </div>
 
-          {/* Auth + Cart + Mobile toggle */}
-          <div className="flex items-center space-x-4 flex-shrink-0">
+          {/* Auth + Cart (desktop only) */}
+          <div className="hidden md:flex items-center space-x-4 flex-shrink-0">
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -134,7 +146,7 @@ export default function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <div className="hidden md:flex space-x-2">
+              <div className="flex space-x-2">
                 <Button variant="ghost" size="sm" asChild>
                   <Link href="/login">Login</Link>
                 </Button>
@@ -145,7 +157,7 @@ export default function Header() {
             )}
 
             {/* Cart (desktop) */}
-            <Button variant="ghost" size="sm" asChild className="relative hover:bg-blue-50 hidden md:inline-flex">
+            <Button variant="ghost" size="sm" asChild className="relative hover:bg-blue-50">
               <Link href="/cart" className="relative">
                 <ShoppingCart className="w-5 h-5 text-blue-600" />
                 {itemCount > 0 && (
@@ -154,18 +166,6 @@ export default function Header() {
                   </span>
                 )}
               </Link>
-            </Button>
-
-            {/* Mobile toggle */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="md:hidden hover:bg-blue-50 ml-[-0.5rem]"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
-              aria-expanded={isMenuOpen}
-            >
-              {isMenuOpen ? <X className="w-5 h-5 text-blue-600" /> : <Menu className="w-5 h-5 text-blue-600" />}
             </Button>
           </div>
         </div>
