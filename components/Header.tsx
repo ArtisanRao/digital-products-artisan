@@ -17,26 +17,22 @@ import Logo from '@/components/Logo'
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isSupportOpenDesktop, setIsSupportOpenDesktop] = useState(false)
+  const [isSubmenuOpen, setIsSubmenuOpen] = useState(false) // mobile About submenu
   const [searchTerm, setSearchTerm] = useState('')
-  const [isSubmenuOpen, setIsSubmenuOpen] = useState(false) // Mobile About submenu
-  const [isSupportOpenDesktop, setIsSupportOpenDesktop] = useState(false) // Desktop Support dropdown
+
   const { items } = useCart()
   const { user, logout } = useAuth()
 
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
   const clearSearch = () => setSearchTerm('')
 
-  // Close desktop support dropdown after clicking submenu link
-  const handleDesktopSubmenuClick = () => {
-    setIsSupportOpenDesktop(false)
-  }
-
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-blue-100 overflow-x-hidden">
       <div className="container mx-auto px-4 !py-0 max-w-full">
         <div className="flex flex-wrap items-center justify-between h-16 gap-2">
 
-          {/* Mobile Header Nav - SHOW only on mobile */}
+          {/* Mobile Header Nav */}
           <nav className="flex md:hidden items-center space-x-3 flex-shrink-0 overflow-x-auto no-scrollbar">
             <Logo size="md" className="flex-shrink-0" />
             <Link href="/products" className="nav-link whitespace-nowrap">Products</Link>
@@ -51,11 +47,7 @@ export default function Header() {
             <Link href="/about" className="nav-link">About</Link>
             <DropdownMenu open={isSupportOpenDesktop} onOpenChange={setIsSupportOpenDesktop}>
               <DropdownMenuTrigger asChild>
-                <button
-                  aria-haspopup="true"
-                  aria-expanded={isSupportOpenDesktop}
-                  className="nav-link inline-flex items-center space-x-1"
-                >
+                <button className="nav-link inline-flex items-center space-x-1">
                   <span>Support</span>
                   <ChevronDown className="w-3 h-3 mt-0.5" />
                 </button>
@@ -68,7 +60,7 @@ export default function Header() {
                   { href: '/contact', label: 'Contact Us' },
                 ].map(({ href, label }) => (
                   <DropdownMenuItem key={href} asChild>
-                    <Link href={href} onClick={handleDesktopSubmenuClick}>{label}</Link>
+                    <Link href={href} onClick={() => setIsSupportOpenDesktop(false)}>{label}</Link>
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
@@ -102,11 +94,7 @@ export default function Header() {
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="hover:bg-blue-50 hover:text-blue-700 inline-flex items-center"
-                  >
+                  <Button variant="ghost" size="sm" className="hover:bg-blue-50 hover:text-blue-700 inline-flex items-center">
                     <User className="w-4 h-4 mr-2" />
                     {user.name}
                   </Button>
@@ -125,7 +113,7 @@ export default function Header() {
               </DropdownMenu>
             ) : (
               <div className="hidden md:flex space-x-2">
-                <Button variant="ghost" size="sm" asChild className="hover:bg-blue-50 hover:text-blue-700">
+                <Button variant="ghost" size="sm" asChild>
                   <Link href="/login">Login</Link>
                 </Button>
                 <Button size="sm" asChild className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg">
@@ -134,13 +122,8 @@ export default function Header() {
               </div>
             )}
 
-            {/* Cart - Desktop only */}
-            <Button
-              variant="ghost"
-              size="sm"
-              asChild
-              className="relative hover:bg-blue-50 hidden md:inline-flex"
-            >
+            {/* Cart (desktop) */}
+            <Button variant="ghost" size="sm" asChild className="relative hover:bg-blue-50 hidden md:inline-flex">
               <Link href="/cart" className="relative">
                 <ShoppingCart className="w-5 h-5 text-blue-600" />
                 {itemCount > 0 && (
@@ -151,7 +134,7 @@ export default function Header() {
               </Link>
             </Button>
 
-            {/* Mobile toggle button */}
+            {/* Mobile toggle */}
             <Button
               variant="ghost"
               size="sm"
@@ -169,7 +152,6 @@ export default function Header() {
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-blue-100 bg-blue-50/50 animate-fadeIn overflow-x-hidden">
             <nav className="flex flex-col space-y-4 max-w-full">
-
               {/* Main menu links */}
               <Link href="/products" className="mobile-link" onClick={() => { setIsMenuOpen(false); setIsSubmenuOpen(false); }}>
                 Products
@@ -221,7 +203,7 @@ export default function Header() {
                 )}
               </Link>
 
-              {/* Auth buttons for mobile */}
+              {/* Auth buttons (mobile) */}
               {!user ? (
                 <div className="flex space-x-2 pt-4">
                   <Button variant="ghost" size="sm" asChild onClick={() => setIsMenuOpen(false)}>
