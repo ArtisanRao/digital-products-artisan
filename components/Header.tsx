@@ -34,7 +34,7 @@ export default function Header() {
         <div className="flex flex-wrap items-center justify-between h-16 gap-2">
 
           {/* Mobile Header Nav */}
-          <nav className="flex md:hidden items-center space-x-2 flex-shrink-0 overflow-x-auto no-scrollbar">
+          <nav className="flex md:hidden items-center space-x-3 flex-shrink-0 overflow-x-auto no-scrollbar">
             <Logo size="md" className="flex-shrink-0" />
             <Link href="/products" className="nav-link whitespace-nowrap">Products</Link>
             <Link href="/categories" className="nav-link whitespace-nowrap">Categories</Link>
@@ -160,7 +160,7 @@ export default function Header() {
             <Button
               variant="ghost"
               size="sm"
-              className="md:hidden hover:bg-blue-50"
+              className="md:hidden hover:bg-blue-50 ml-[-0.5rem]"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
               aria-expanded={isMenuOpen}
