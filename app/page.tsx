@@ -7,7 +7,7 @@ import TestimonialsSection from "@/components/testimonials-section"
 import NewsletterSection from "@/components/newsletter-section"
 import FAQSection from "@/components/faq-section"
 import LoadingSpinner from "@/components/loading-spinner"
-import BackToTopButton from "@/components/BackToTopButton" // ✅ Import this
+import BackToTopButton from "@/components/BackToTopButton"
 
 export const metadata = {
   title: "Digital Products Artisan | Premium Digital Downloads",
@@ -38,11 +38,11 @@ export const metadata = {
 export default function HomePage() {
   return (
     <main className="min-h-screen">
-      {/* Add margin-top of 1cm below header */}
+      {/* Set exact spacing of 1cm between header and hero */}
       <div className="mt-[38px]">
         <HeroSection />
       </div>
-      
+
       <Suspense fallback={<LoadingSpinner />}>
         <FeaturedProducts />
       </Suspense>
