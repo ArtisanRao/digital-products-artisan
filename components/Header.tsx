@@ -18,6 +18,7 @@ import Logo from '@/components/Logo'
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [isSupportOpen, setIsSupportOpen] = useState(false) // mobile collapsible
   const { items } = useCart()
   const { user, logout } = useAuth()
 
@@ -39,9 +40,8 @@ export default function Header() {
             <Link href="/categories" className="nav-link whitespace-nowrap">
               Categories
             </Link>
-            <Link href="/about" className="nav-link whitespace-nowrap">
-              About
-            </Link>
+
+            {/* Removed "About" from mobile */}
 
             {/* Support Dropdown (same style as desktop) */}
             <DropdownMenu>
@@ -72,7 +72,7 @@ export default function Header() {
             </DropdownMenu>
           </nav>
 
-          {/* Desktop Nav (unchanged, still has Bundles) */}
+          {/* Desktop Nav */}
           <nav className="hidden md:flex items-center space-x-8 flex-shrink-0">
             <Link href="/products" className="nav-link">Products</Link>
             <Link href="/bundles" className="nav-link">Bundles</Link>
@@ -195,21 +195,40 @@ export default function Header() {
               <Link href="/products" className="mobile-link">Products</Link>
               <Link href="/bundles" className="mobile-link">Bundles</Link>
               <Link href="/categories" className="mobile-link">Categories</Link>
-              <Link href="/about" className="mobile-link">About</Link>
 
-              {/* Support dropdown as collapsible on mobile */}
-              <details className="mobile-link group">
-                <summary className="cursor-pointer flex justify-between items-center">
+              {/* Removed About from mobile */}
+
+              {/* Support dropdown with auto-collapse */}
+              <div className="mobile-link">
+                <button
+                  onClick={() => setIsSupportOpen(!isSupportOpen)}
+                  className="w-full flex justify-between items-center"
+                >
                   Support
-                  <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
-                </summary>
-                <nav className="pl-4 mt-2 flex flex-col space-y-2">
-                  <Link href="/help" className="mobile-link">Help Center</Link>
-                  <Link href="/faq" className="mobile-link">FAQ</Link>
-                  <Link href="/returns" className="mobile-link">Returns & Refund Policy</Link>
-                  <Link href="/contact" className="mobile-link">Contact Us</Link>
-                </nav>
-              </details>
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform ${isSupportOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+                {isSupportOpen && (
+                  <nav className="pl-4 mt-2 flex flex-col space-y-2">
+                    {[
+                      { href: '/help', label: 'Help Center' },
+                      { href: '/faq', label: 'FAQ' },
+                      { href: '/returns', label: 'Returns & Refund Policy' },
+                      { href: '/contact', label: 'Contact Us' },
+                    ].map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className="mobile-link"
+                        onClick={() => setIsSupportOpen(false)}
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </nav>
+                )}
+              </div>
 
               {/* Cart inside mobile menu */}
               <Link href="/cart" className="mobile-link flex items-center space-x-2">
