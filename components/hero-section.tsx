@@ -1,52 +1,98 @@
-'use client';
-
-import Image from 'next/image';
-import Link from 'next/link';
+This is also my existing hero-section code: import { Button } from "@/components/ui/button"
+import { ArrowRight, Download, Zap, Sparkles } from "lucide-react"
+import Link from "next/link"
 
 export default function HeroSection() {
   return (
-    <section className="bg-white relative">
-      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="lg:grid lg:grid-cols-12 lg:gap-8 lg:items-center">
-          {/* Text Content */}
-          <div className="sm:text-center md:max-w-2xl md:mx-auto lg:col-span-6 lg:text-left">
-            <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight sm:leading-none sm:text-5xl lg:text-6xl">
-              Discover Premium{' '}
-              <span className="text-indigo-600">Digital Products</span>
-            </h1>
-            <p className="mt-6 text-lg text-gray-600 sm:mt-8 sm:text-xl sm:max-w-xl sm:mx-auto lg:mx-0">
-              Explore our curated collection of eBooks, templates, art, and
-              digital tools designed to elevate your projects.
-            </p>
-            <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row sm:justify-center lg:justify-start gap-4">
-              <Link
-                href="/categories"
-                className="px-6 py-3 text-lg font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md shadow"
-              >
-                Browse Categories
-              </Link>
-              <Link
-                href="/about"
-                className="px-6 py-3 text-lg font-medium text-indigo-600 border border-indigo-600 rounded-md shadow hover:bg-indigo-50"
-              >
-                Learn More
-              </Link>
-            </div>
+    <section
+      className="
+        relative 
+        bg-gradient-to-br from-blue-50 via-white to-blue-100/50 
+        pt-[38px]   /* Exactly 1 cm top padding */
+        pb-12 md:pb-16 
+        overflow-hidden
+      "
+    >
+      {/* Background decorative elements */}
+      <div className="absolute top-10 left-10 w-20 h-20 bg-blue-200/30 rounded-full blur-xl"></div>
+      <div className="absolute top-32 right-20 w-32 h-32 bg-blue-300/20 rounded-full blur-2xl"></div>
+      <div className="absolute bottom-20 left-1/4 w-24 h-24 bg-blue-400/20 rounded-full blur-xl"></div>
+
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="mb-4">
+            <span className="inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 text-sm font-semibold shadow-lg">
+              <Sparkles className="w-4 h-4 mr-2" />
+              Instant Access. Unlimited Possibilities.
+            </span>
           </div>
 
-          {/* Image Content */}
-          <div className="relative mt-8 lg:mt-0 lg:col-span-6">
-            <Image
-              src="/images/hero-image.jpg"
-              alt="Digital products showcase"
-              width={600}
-              height={400}
-              className="w-full h-auto rounded-md shadow-lg object-cover"
-              priority
-            />
+          <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-4 leading-tight">
+            Digital Products{" "}
+            <span className="bg-gradient-to-r from-blue-700 via-blue-600 to-blue-800 bg-clip-text text-transparent relative">
+              Artisan
+              <div className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full opacity-30"></div>
+            </span>
+          </h1>
+
+          <p className="text-xl md:text-2xl text-gray-600 mb-6 max-w-3xl mx-auto leading-relaxed">
+            Fuel Your Creativity. Build Your Vision. Explore high-quality digital downloads—ebooks, templates, prompt
+            packs, and more—crafted to empower creators, entrepreneurs, and lifelong learners.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
+            <Button
+              size="lg"
+              className="bg-gradient-to-r from-blue-700 to-blue-800 hover:from-blue-800 hover:to-blue-900 shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 px-8 py-4 text-lg"
+              asChild
+            >
+              <Link href="/products">
+                Explore Products
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Link>
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              asChild
+              className="border-2 border-blue-600 text-blue-700 hover:bg-blue-50 px-8 py-4 text-lg shadow-lg hover:shadow-xl transition-all duration-300 bg-transparent"
+            >
+              <Link href="/bundles">
+                <Download className="mr-2 w-5 h-5" />
+                View Bundles
+              </Link>
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+            <div className="text-center group">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl group-hover:shadow-2xl group-hover:scale-110 transition-all duration-300">
+                <Download className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="font-bold text-xl text-gray-900 mb-2">Instant Downloads</h3>
+              <p className="text-gray-600 leading-relaxed">
+                Get your products immediately after purchase with secure, lifetime access
+              </p>
+            </div>
+            <div className="text-center group">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl group-hover:shadow-2xl group-hover:scale-110 transition-all duration-300">
+                <Zap className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="font-bold text-xl text-gray-900 mb-2">Expertly Designed</h3>
+              <p className="text-gray-600 leading-relaxed">
+                Professional quality resources crafted by industry experts
+              </p>
+            </div>
+            <div className="text-center group">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-700 to-blue-800 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl group-hover:shadow-2xl group-hover:scale-110 transition-all duration-300">
+                <Sparkles className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="font-bold text-xl text-gray-900 mb-2">Always Ready</h3>
+              <p className="text-gray-600 leading-relaxed">Available 24/7 when inspiration strikes, wherever you are</p>
+            </div>
           </div>
         </div>
       </div>
     </section>
-  );
+  )
 }
