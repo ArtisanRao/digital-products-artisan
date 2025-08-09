@@ -34,7 +34,6 @@
     .mobile-link {
       margin-left: 0.75rem;
       margin-right: 0.75rem;
-      /* Ensure links in mobile horizontal nav look good */
       display: inline-flex;
       align-items: center;
       text-decoration: none;
@@ -45,7 +44,6 @@
       color: #2563eb; /* Tailwind blue-700 */
     }
 
-    /* Mobile header spacing and fit */
     .mobile-header-fit {
       display: flex;
       gap: 1rem;
@@ -63,44 +61,76 @@
     }
   }
 
-  /* ===== New: Further reduce horizontal spacing specifically on small mobiles (below 768px) ===== */
+  /* Extra-small mobile spacing tweaks */
   @media (max-width: 767px) {
     nav.flex.md\\:hidden.items-center.space-x-2 > a.mobile-link {
-      margin-left: 0.25rem;  /* smaller left/right margin */
+      margin-left: 0.25rem;
       margin-right: 0.25rem;
-      font-size: 0.875rem; /* slightly smaller font */
+      font-size: 0.875rem;
     }
-
     nav.flex.md\\:hidden.items-center.space-x-2 {
-      gap: 0.5rem; /* less horizontal space */
+      gap: 0.5rem;
     }
+  }
+
+  /* ===== Smooth Fade-In Animation (iOS-friendly) ===== */
+  @keyframes fadeInSmooth {
+    0% {
+      opacity: 0;
+      transform: translateY(-10px) scale(0.98);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes fadeInSmoothIOS {
+    0% {
+      opacity: 0;
+      transform: translate3d(0, -10px, 0) scale(0.98);
+    }
+    100% {
+      opacity: 1;
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+  }
+
+  .animate-fadeIn {
+    animation: fadeInSmooth 0.25s ease-out forwards;
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+  }
+
+  .animate-fadeIn-ios {
+    animation: fadeInSmoothIOS 0.25s ease-out forwards;
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased; /* helps reduce flicker on iOS */
+    transform-style: preserve-3d; /* forces GPU acceleration */
+    transform: translateZ(0); /* iOS GPU acceleration */
   }
 }
 
 /* ===== Header & Navigation Safeguards ===== */
 @layer components {
-  /* Reset margin & padding for html/body */
   html, body {
     margin: 0;
     padding: 0;
   }
 
-  /* Navigation links */
   .nav-link {
     @apply text-gray-700 hover:text-blue-700 transition-colors duration-200 font-medium;
   }
 
-  /* Mobile menu links */
   .mobile-link {
     @apply text-gray-700 hover:text-blue-700 transition-colors duration-200 block;
   }
 
-  /* Dropdown menus */
   [data-radix-popper-content-wrapper] {
     @apply bg-white shadow-lg rounded-md;
   }
 
-  /* Header search input */
   header input[type="search"] {
     @apply border border-blue-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 rounded-md;
   }
