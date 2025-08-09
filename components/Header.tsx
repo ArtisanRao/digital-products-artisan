@@ -210,33 +210,6 @@ export default function Header() {
                 )}
               </div>
 
-              {/* Support dropdown (mobile) */}
-              <div className="mobile-link">
-                <button onClick={() => setIsSupportOpenMobile(!isSupportOpenMobile)} className="w-full flex justify-between items-center">
-                  Support
-                  <ChevronDown className={`w-4 h-4 transition-transform ${isSupportOpenMobile ? 'rotate-180' : ''}`} />
-                </button>
-                {isSupportOpenMobile && (
-                  <nav className="pl-4 mt-2 flex flex-col space-y-2">
-                    {[
-                      { href: '/help', label: 'Help Center' },
-                      { href: '/faq', label: 'FAQ' },
-                      { href: '/returns', label: 'Returns & Refund Policy' },
-                      { href: '/contact', label: 'Contact Us' },
-                    ].map((item) => (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className="mobile-link"
-                        onClick={() => { setIsMenuOpen(false); setIsSupportOpenMobile(false); }}
-                      >
-                        {item.label}
-                      </Link>
-                    ))}
-                  </nav>
-                )}
-              </div>
-
               {/* Cart */}
               <Link href="/cart" className="mobile-link flex items-center space-x-2" onClick={() => { setIsMenuOpen(false); setIsAboutOpenMobile(false); setIsSupportOpenMobile(false); }}>
                 <ShoppingCart className="w-5 h-5 text-blue-600" />
