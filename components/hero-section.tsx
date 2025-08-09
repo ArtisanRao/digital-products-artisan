@@ -8,7 +8,7 @@ export default function HeroSection() {
       className="
         relative 
         bg-gradient-to-br from-blue-50 via-white to-blue-100/50 
-        pt-20 md:pt-24   /* Reduced top padding for less gap */
+        pt-[38px]   /* Exactly 1 cm top padding */
         pb-12 md:pb-16 
         overflow-hidden
       "
