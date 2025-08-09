@@ -26,19 +26,19 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-blue-100 m-0 p-0">
-      <div className="container mx-auto px-4 !py-0 m-0">
-        <div className="flex items-center justify-between h-16 m-0 p-0">
+      <div className="container mx-auto px-4 py-0">
+        <div className="flex items-center justify-between h-16">
 
           {/* Logo */}
-          <Logo size="md" className="mr-2 md:mr-4" />
+          <Logo size="md" className="mr-4" />
 
-          {/* ===== Mobile Nav Links: Products, Categories, About, Support (no cart here) ===== */}
+          {/* Mobile nav links */}
           <nav className="flex md:hidden items-center space-x-2">
             <Link href="/products" className="mobile-link whitespace-nowrap">Products</Link>
             <Link href="/categories" className="mobile-link whitespace-nowrap">Categories</Link>
             <Link href="/about" className="mobile-link whitespace-nowrap">About</Link>
 
-            {/* Support Dropdown */}
+            {/* Support dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="mobile-link inline-flex items-center space-x-1 whitespace-nowrap">
@@ -55,21 +55,17 @@ export default function Header() {
             </DropdownMenu>
           </nav>
 
-          {/* ===== Desktop Nav (unchanged) ===== */}
+          {/* Desktop nav links */}
           <nav className="hidden md:flex items-center space-x-8">
             <Link href="/products" className="nav-link">Products</Link>
             <Link href="/bundles" className="nav-link">Bundles</Link>
             <Link href="/categories" className="nav-link">Categories</Link>
             <Link href="/about" className="nav-link">About</Link>
 
-            {/* Support Dropdown */}
+            {/* Support dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button
-                  aria-haspopup="true"
-                  aria-expanded={isMenuOpen}
-                  className="nav-link inline-flex items-center space-x-1"
-                >
+                <button aria-haspopup="true" aria-expanded={isMenuOpen} className="nav-link inline-flex items-center space-x-1">
                   <span>Support</span>
                   <ChevronDown className="w-3 h-3 mt-0.5" />
                 </button>
@@ -83,7 +79,7 @@ export default function Header() {
             </DropdownMenu>
           </nav>
 
-          {/* Search (desktop only) */}
+          {/* Search desktop only */}
           <div className="hidden md:flex items-center space-x-2 ml-6 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 w-4 h-4" />
             <Input
@@ -105,16 +101,12 @@ export default function Header() {
             )}
           </div>
 
-          {/* Auth + Cart (desktop only) */}
+          {/* Auth + Cart desktop only */}
           <div className="hidden md:flex items-center space-x-4">
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="hover:bg-blue-50 hover:text-blue-700 inline-flex items-center"
-                  >
+                  <Button variant="ghost" size="sm" className="hover:bg-blue-50 hover:text-blue-700 inline-flex items-center">
                     <User className="w-4 h-4 mr-2" />
                     {user.name}
                   </Button>
@@ -123,10 +115,7 @@ export default function Header() {
                   <DropdownMenuItem asChild><Link href="/dashboard">Dashboard</Link></DropdownMenuItem>
                   <DropdownMenuItem asChild><Link href="/orders">My Orders</Link></DropdownMenuItem>
                   <DropdownMenuItem asChild><Link href="/subscriptions">Subscriptions</DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={logout}
-                    className="hover:bg-red-50 hover:text-red-700 cursor-pointer"
-                  >
+                  <DropdownMenuItem onClick={logout} className="hover:bg-red-50 hover:text-red-700 cursor-pointer">
                     Logout
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -142,13 +131,7 @@ export default function Header() {
               </div>
             )}
 
-            {/* Cart button desktop only */}
-            <Button
-              variant="ghost"
-              size="sm"
-              asChild
-              className="relative hover:bg-blue-50"
-            >
+            <Button variant="ghost" size="sm" asChild className="relative hover:bg-blue-50">
               <Link href="/cart" className="relative">
                 <ShoppingCart className="w-5 h-5 text-blue-600" />
                 {itemCount > 0 && (
@@ -160,18 +143,13 @@ export default function Header() {
             </Button>
           </div>
 
-          {/* Mobile menu toggle button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="md:hidden hover:bg-blue-50"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
+          {/* Mobile menu toggle */}
+          <Button variant="ghost" size="sm" className="md:hidden hover:bg-blue-50" onClick={() => setIsMenuOpen(!isMenuOpen)}>
             {isMenuOpen ? <X className="w-5 h-5 text-blue-600" /> : <Menu className="w-5 h-5 text-blue-600" />}
           </Button>
         </div>
 
-        {/* ===== Mobile slide-down menu (with Cart inside) ===== */}
+        {/* Mobile slide-down menu with cart inside */}
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-blue-100 bg-blue-50/50 animate-fadeIn">
             <nav className="flex flex-col space-y-4">
@@ -185,10 +163,7 @@ export default function Header() {
                   <Link href="/dashboard" className="mobile-link">Dashboard</Link>
                   <Link href="/orders" className="mobile-link">My Orders</Link>
                   <Link href="/subscriptions" className="mobile-link">Subscriptions</Link>
-                  <button
-                    onClick={logout}
-                    className="mobile-link text-red-600 hover:text-red-800 text-left"
-                  >
+                  <button onClick={logout} className="mobile-link text-red-600 hover:text-red-800 text-left">
                     Logout
                   </button>
                 </>
