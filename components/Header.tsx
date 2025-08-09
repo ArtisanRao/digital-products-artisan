@@ -18,12 +18,24 @@ import Logo from '@/components/Logo'
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
-  const [isSupportOpen, setIsSupportOpen] = useState(false) // mobile collapsible
+  const [isSupportOpenMobile, setIsSupportOpenMobile] = useState(false) // for mobile support submenu toggle
+  const [isSupportOpenDesktop, setIsSupportOpenDesktop] = useState(false) // for desktop support dropdown open state
   const { items } = useCart()
   const { user, logout } = useAuth()
 
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
   const clearSearch = () => setSearchTerm('')
+
+  // Close mobile menu and submenu after clicking a submenu link
+  const handleMobileSubmenuClick = () => {
+    setIsSupportOpenMobile(false)
+    setIsMenuOpen(false)
+  }
+
+  // Close desktop support dropdown after clicking submenu link
+  const handleDesktopSubmenuClick = () => {
+    setIsSupportOpenDesktop(false)
+  }
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-blue-100 overflow-x-hidden">
@@ -41,14 +53,14 @@ export default function Header() {
               Categories
             </Link>
 
-            {/* Removed "About" from mobile */}
+            {/* About removed from mobile */}
 
             {/* Support Dropdown (same style as desktop) */}
-            <DropdownMenu>
+            <DropdownMenu open={isSupportOpenMobile} onOpenChange={setIsSupportOpenMobile}>
               <DropdownMenuTrigger asChild>
                 <button
                   aria-haspopup="true"
-                  aria-expanded={isMenuOpen}
+                  aria-expanded={isSupportOpenMobile}
                   className="nav-link inline-flex items-center space-x-1 whitespace-nowrap"
                 >
                   <span>Support</span>
@@ -56,18 +68,16 @@ export default function Header() {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="border-blue-200">
-                <DropdownMenuItem asChild>
-                  <Link href="/help">Help Center</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/faq">FAQ</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/returns">Returns & Refund Policy</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/contact">Contact Us</Link>
-                </DropdownMenuItem>
+                {[
+                  { href: '/help', label: 'Help Center' },
+                  { href: '/faq', label: 'FAQ' },
+                  { href: '/returns', label: 'Returns & Refund Policy' },
+                  { href: '/contact', label: 'Contact Us' },
+                ].map(({ href, label }) => (
+                  <DropdownMenuItem key={href} asChild>
+                    <Link href={href} onClick={handleMobileSubmenuClick}>{label}</Link>
+                  </DropdownMenuItem>
+                ))}
               </DropdownMenuContent>
             </DropdownMenu>
           </nav>
@@ -78,11 +88,11 @@ export default function Header() {
             <Link href="/bundles" className="nav-link">Bundles</Link>
             <Link href="/categories" className="nav-link">Categories</Link>
             <Link href="/about" className="nav-link">About</Link>
-            <DropdownMenu>
+            <DropdownMenu open={isSupportOpenDesktop} onOpenChange={setIsSupportOpenDesktop}>
               <DropdownMenuTrigger asChild>
                 <button
                   aria-haspopup="true"
-                  aria-expanded={isMenuOpen}
+                  aria-expanded={isSupportOpenDesktop}
                   className="nav-link inline-flex items-center space-x-1"
                 >
                   <span>Support</span>
@@ -90,10 +100,16 @@ export default function Header() {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="border-blue-200">
-                <DropdownMenuItem asChild><Link href="/help">Help Center</Link></DropdownMenuItem>
-                <DropdownMenuItem asChild><Link href="/faq">FAQ</Link></DropdownMenuItem>
-                <DropdownMenuItem asChild><Link href="/returns">Returns & Refund Policy</Link></DropdownMenuItem>
-                <DropdownMenuItem asChild><Link href="/contact">Contact Us</Link></DropdownMenuItem>
+                {[
+                  { href: '/help', label: 'Help Center' },
+                  { href: '/faq', label: 'FAQ' },
+                  { href: '/returns', label: 'Returns & Refund Policy' },
+                  { href: '/contact', label: 'Contact Us' },
+                ].map(({ href, label }) => (
+                  <DropdownMenuItem key={href} asChild>
+                    <Link href={href} onClick={handleDesktopSubmenuClick}>{label}</Link>
+                  </DropdownMenuItem>
+                ))}
               </DropdownMenuContent>
             </DropdownMenu>
           </nav>
@@ -196,34 +212,34 @@ export default function Header() {
               <Link href="/bundles" className="mobile-link">Bundles</Link>
               <Link href="/categories" className="mobile-link">Categories</Link>
 
-              {/* Removed About from mobile */}
+              {/* About removed from mobile */}
 
-              {/* Support dropdown with auto-collapse */}
+              {/* Support dropdown as collapsible on mobile */}
               <div className="mobile-link">
                 <button
-                  onClick={() => setIsSupportOpen(!isSupportOpen)}
+                  onClick={() => setIsSupportOpenMobile(!isSupportOpenMobile)}
                   className="w-full flex justify-between items-center"
                 >
                   Support
                   <ChevronDown
-                    className={`w-4 h-4 transition-transform ${isSupportOpen ? 'rotate-180' : ''}`}
+                    className={`w-4 h-4 transition-transform ${isSupportOpenMobile ? 'rotate-180' : ''}`}
                   />
                 </button>
-                {isSupportOpen && (
+                {isSupportOpenMobile && (
                   <nav className="pl-4 mt-2 flex flex-col space-y-2">
                     {[
                       { href: '/help', label: 'Help Center' },
                       { href: '/faq', label: 'FAQ' },
                       { href: '/returns', label: 'Returns & Refund Policy' },
                       { href: '/contact', label: 'Contact Us' },
-                    ].map((item) => (
+                    ].map(({ href, label }) => (
                       <Link
-                        key={item.href}
-                        href={item.href}
+                        key={href}
+                        href={href}
                         className="mobile-link"
-                        onClick={() => setIsSupportOpen(false)}
+                        onClick={handleMobileSubmenuClick}
                       >
-                        {item.label}
+                        {label}
                       </Link>
                     ))}
                   </nav>
