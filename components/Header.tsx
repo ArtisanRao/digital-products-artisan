@@ -3,7 +3,7 @@
   <div
     className="md:hidden fixed inset-x-0 top-[env(safe-area-inset-top)] bg-blue-50/50 border-t border-blue-100 animate-fadeIn
                overflow-y-auto overflow-x-hidden h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom))]
-               pb-[env(safe-area-inset-bottom)] z-50"
+               pb-[env(safe-area-inset-bottom)] z-50 will-change-transform will-change-opacity backface-hidden"
   >
     <nav className="flex flex-col space-y-4 p-4">
       <Link href="/products" className="mobile-link" onClick={() => { setIsMenuOpen(false); setIsAboutOpenMobile(false); setIsSupportOpenMobile(false); }}>
