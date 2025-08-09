@@ -33,8 +33,7 @@ export default function Header() {
           <Logo size="md" className="mr-2 md:mr-4" />
 
           {/* ===== Mobile Nav Links: Products, Categories, About, Support, Cart ===== */}
-          <nav className="flex md:hidden items-center space-x-2"> 
-          {/* reduced space-x-4 → space-x-2 to reduce spacing on mobile */}
+          <nav className="flex md:hidden items-center space-x-2">
             <Link href="/products" className="mobile-link whitespace-nowrap">Products</Link>
             <Link href="/categories" className="mobile-link whitespace-nowrap">Categories</Link>
             <Link href="/about" className="mobile-link whitespace-nowrap">About</Link>
@@ -134,7 +133,7 @@ export default function Header() {
                 <DropdownMenuContent className="border-blue-200">
                   <DropdownMenuItem asChild><Link href="/dashboard">Dashboard</Link></DropdownMenuItem>
                   <DropdownMenuItem asChild><Link href="/orders">My Orders</Link></DropdownMenuItem>
-                  <DropdownMenuItem asChild><Link href="/subscriptions">Subscriptions</DropdownMenuItem>
+                  <DropdownMenuItem asChild><Link href="/subscriptions">Subscriptions</Link></DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={logout}
                     className="hover:bg-red-50 hover:text-red-700 cursor-pointer"
