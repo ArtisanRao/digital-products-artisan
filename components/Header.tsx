@@ -18,19 +18,13 @@ import Logo from '@/components/Logo'
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
-  const [isSupportOpenMobile, setIsSupportOpenMobile] = useState(false) // for mobile support submenu toggle
-  const [isSupportOpenDesktop, setIsSupportOpenDesktop] = useState(false) // for desktop support dropdown open state
+  const [isSubmenuOpen, setIsSubmenuOpen] = useState(false) // Mobile About submenu
+  const [isSupportOpenDesktop, setIsSupportOpenDesktop] = useState(false) // Desktop Support dropdown
   const { items } = useCart()
   const { user, logout } = useAuth()
 
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
   const clearSearch = () => setSearchTerm('')
-
-  // Close mobile menu and submenu after clicking a submenu link
-  const handleMobileSubmenuClick = () => {
-    setIsSupportOpenMobile(false)
-    setIsMenuOpen(false)
-  }
 
   // Close desktop support dropdown after clicking submenu link
   const handleDesktopSubmenuClick = () => {
@@ -45,41 +39,8 @@ export default function Header() {
           {/* Mobile Header Nav - SHOW only on mobile */}
           <nav className="flex md:hidden items-center space-x-3 flex-shrink-0 overflow-x-auto no-scrollbar">
             <Logo size="md" className="flex-shrink-0" />
-
-            <Link href="/products" className="nav-link whitespace-nowrap">
-              Products
-            </Link>
-            <Link href="/categories" className="nav-link whitespace-nowrap">
-              Categories
-            </Link>
-
-            {/* About removed from mobile */}
-
-            {/* Support Dropdown (same style as desktop) */}
-            <DropdownMenu open={isSupportOpenMobile} onOpenChange={setIsSupportOpenMobile}>
-              <DropdownMenuTrigger asChild>
-                <button
-                  aria-haspopup="true"
-                  aria-expanded={isSupportOpenMobile}
-                  className="nav-link inline-flex items-center space-x-1 whitespace-nowrap"
-                >
-                  <span>Support</span>
-                  <ChevronDown className="w-3 h-3 mt-0.5" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="border-blue-200">
-                {[
-                  { href: '/help', label: 'Help Center' },
-                  { href: '/faq', label: 'FAQ' },
-                  { href: '/returns', label: 'Returns & Refund Policy' },
-                  { href: '/contact', label: 'Contact Us' },
-                ].map(({ href, label }) => (
-                  <DropdownMenuItem key={href} asChild>
-                    <Link href={href} onClick={handleMobileSubmenuClick}>{label}</Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Link href="/products" className="nav-link whitespace-nowrap">Products</Link>
+            <Link href="/categories" className="nav-link whitespace-nowrap">Categories</Link>
           </nav>
 
           {/* Desktop Nav */}
@@ -208,46 +169,49 @@ export default function Header() {
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-blue-100 bg-blue-50/50 animate-fadeIn overflow-x-hidden">
             <nav className="flex flex-col space-y-4 max-w-full">
-              <Link href="/products" className="mobile-link">Products</Link>
-              <Link href="/bundles" className="mobile-link">Bundles</Link>
-              <Link href="/categories" className="mobile-link">Categories</Link>
 
-              {/* About removed from mobile */}
+              {/* Main menu links */}
+              <Link href="/products" className="mobile-link" onClick={() => { setIsMenuOpen(false); setIsSubmenuOpen(false); }}>
+                Products
+              </Link>
+              <Link href="/bundles" className="mobile-link" onClick={() => { setIsMenuOpen(false); setIsSubmenuOpen(false); }}>
+                Bundles
+              </Link>
+              <Link href="/categories" className="mobile-link" onClick={() => { setIsMenuOpen(false); setIsSubmenuOpen(false); }}>
+                Categories
+              </Link>
 
-              {/* Support dropdown as collapsible on mobile */}
+              {/* About dropdown (mobile only) */}
               <div className="mobile-link">
                 <button
-                  onClick={() => setIsSupportOpenMobile(!isSupportOpenMobile)}
+                  onClick={() => setIsSubmenuOpen(!isSubmenuOpen)}
                   className="w-full flex justify-between items-center"
                 >
-                  Support
-                  <ChevronDown
-                    className={`w-4 h-4 transition-transform ${isSupportOpenMobile ? 'rotate-180' : ''}`}
-                  />
+                  About
+                  <ChevronDown className={`w-4 h-4 transition-transform ${isSubmenuOpen ? 'rotate-180' : ''}`} />
                 </button>
-                {isSupportOpenMobile && (
+                {isSubmenuOpen && (
                   <nav className="pl-4 mt-2 flex flex-col space-y-2">
                     {[
-                      { href: '/help', label: 'Help Center' },
-                      { href: '/faq', label: 'FAQ' },
-                      { href: '/returns', label: 'Returns & Refund Policy' },
-                      { href: '/contact', label: 'Contact Us' },
-                    ].map(({ href, label }) => (
+                      { href: '/about', label: 'About Us' },
+                      { href: '/team', label: 'Our Team' },
+                      { href: '/careers', label: 'Careers' },
+                    ].map((item) => (
                       <Link
-                        key={href}
-                        href={href}
+                        key={item.href}
+                        href={item.href}
                         className="mobile-link"
-                        onClick={handleMobileSubmenuClick}
+                        onClick={() => { setIsMenuOpen(false); setIsSubmenuOpen(false); }}
                       >
-                        {label}
+                        {item.label}
                       </Link>
                     ))}
                   </nav>
                 )}
               </div>
 
-              {/* Cart inside mobile menu */}
-              <Link href="/cart" className="mobile-link flex items-center space-x-2">
+              {/* Cart */}
+              <Link href="/cart" className="mobile-link flex items-center space-x-2" onClick={() => { setIsMenuOpen(false); setIsSubmenuOpen(false); }}>
                 <ShoppingCart className="w-5 h-5 text-blue-600" />
                 <span>Cart</span>
                 {itemCount > 0 && (
@@ -260,13 +224,14 @@ export default function Header() {
               {/* Auth buttons for mobile */}
               {!user ? (
                 <div className="flex space-x-2 pt-4">
-                  <Button variant="ghost" size="sm" asChild>
+                  <Button variant="ghost" size="sm" asChild onClick={() => setIsMenuOpen(false)}>
                     <Link href="/login">Login</Link>
                   </Button>
                   <Button
                     size="sm"
                     asChild
                     className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+                    onClick={() => setIsMenuOpen(false)}
                   >
                     <Link href="/signup">Sign Up</Link>
                   </Button>
