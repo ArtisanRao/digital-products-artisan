@@ -18,7 +18,8 @@ import Logo from '@/components/Logo'
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isSupportOpenDesktop, setIsSupportOpenDesktop] = useState(false)
-  const [isSubmenuOpen, setIsSubmenuOpen] = useState(false) // mobile About submenu
+  const [isAboutOpenMobile, setIsAboutOpenMobile] = useState(false)
+  const [isSupportOpenMobile, setIsSupportOpenMobile] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
 
   const { items } = useCart()
@@ -37,6 +38,27 @@ export default function Header() {
             <Logo size="md" className="flex-shrink-0" />
             <Link href="/products" className="nav-link whitespace-nowrap">Products</Link>
             <Link href="/categories" className="nav-link whitespace-nowrap">Categories</Link>
+            {/* Support dropdown in mobile header */}
+            <DropdownMenu open={isSupportOpenMobile} onOpenChange={setIsSupportOpenMobile}>
+              <DropdownMenuTrigger asChild>
+                <button className="nav-link inline-flex items-center space-x-1 whitespace-nowrap">
+                  <span>Support</span>
+                  <ChevronDown className="w-3 h-3 mt-0.5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="border-blue-200">
+                {[
+                  { href: '/help', label: 'Help Center' },
+                  { href: '/faq', label: 'FAQ' },
+                  { href: '/returns', label: 'Returns & Refund Policy' },
+                  { href: '/contact', label: 'Contact Us' },
+                ].map(({ href, label }) => (
+                  <DropdownMenuItem key={href} asChild>
+                    <Link href={href} onClick={() => setIsSupportOpenMobile(false)}>{label}</Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </nav>
 
           {/* Desktop Nav */}
@@ -152,27 +174,23 @@ export default function Header() {
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-blue-100 bg-blue-50/50 animate-fadeIn overflow-x-hidden">
             <nav className="flex flex-col space-y-4 max-w-full">
-              {/* Main menu links */}
-              <Link href="/products" className="mobile-link" onClick={() => { setIsMenuOpen(false); setIsSubmenuOpen(false); }}>
+              <Link href="/products" className="mobile-link" onClick={() => { setIsMenuOpen(false); setIsAboutOpenMobile(false); setIsSupportOpenMobile(false); }}>
                 Products
               </Link>
-              <Link href="/bundles" className="mobile-link" onClick={() => { setIsMenuOpen(false); setIsSubmenuOpen(false); }}>
+              <Link href="/bundles" className="mobile-link" onClick={() => { setIsMenuOpen(false); setIsAboutOpenMobile(false); setIsSupportOpenMobile(false); }}>
                 Bundles
               </Link>
-              <Link href="/categories" className="mobile-link" onClick={() => { setIsMenuOpen(false); setIsSubmenuOpen(false); }}>
+              <Link href="/categories" className="mobile-link" onClick={() => { setIsMenuOpen(false); setIsAboutOpenMobile(false); setIsSupportOpenMobile(false); }}>
                 Categories
               </Link>
 
-              {/* About dropdown (mobile only) */}
+              {/* About dropdown (mobile) */}
               <div className="mobile-link">
-                <button
-                  onClick={() => setIsSubmenuOpen(!isSubmenuOpen)}
-                  className="w-full flex justify-between items-center"
-                >
+                <button onClick={() => setIsAboutOpenMobile(!isAboutOpenMobile)} className="w-full flex justify-between items-center">
                   About
-                  <ChevronDown className={`w-4 h-4 transition-transform ${isSubmenuOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-4 h-4 transition-transform ${isAboutOpenMobile ? 'rotate-180' : ''}`} />
                 </button>
-                {isSubmenuOpen && (
+                {isAboutOpenMobile && (
                   <nav className="pl-4 mt-2 flex flex-col space-y-2">
                     {[
                       { href: '/about', label: 'About Us' },
@@ -183,7 +201,34 @@ export default function Header() {
                         key={item.href}
                         href={item.href}
                         className="mobile-link"
-                        onClick={() => { setIsMenuOpen(false); setIsSubmenuOpen(false); }}
+                        onClick={() => { setIsMenuOpen(false); setIsAboutOpenMobile(false); }}
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </nav>
+                )}
+              </div>
+
+              {/* Support dropdown (mobile) */}
+              <div className="mobile-link">
+                <button onClick={() => setIsSupportOpenMobile(!isSupportOpenMobile)} className="w-full flex justify-between items-center">
+                  Support
+                  <ChevronDown className={`w-4 h-4 transition-transform ${isSupportOpenMobile ? 'rotate-180' : ''}`} />
+                </button>
+                {isSupportOpenMobile && (
+                  <nav className="pl-4 mt-2 flex flex-col space-y-2">
+                    {[
+                      { href: '/help', label: 'Help Center' },
+                      { href: '/faq', label: 'FAQ' },
+                      { href: '/returns', label: 'Returns & Refund Policy' },
+                      { href: '/contact', label: 'Contact Us' },
+                    ].map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className="mobile-link"
+                        onClick={() => { setIsMenuOpen(false); setIsSupportOpenMobile(false); }}
                       >
                         {item.label}
                       </Link>
@@ -193,7 +238,7 @@ export default function Header() {
               </div>
 
               {/* Cart */}
-              <Link href="/cart" className="mobile-link flex items-center space-x-2" onClick={() => { setIsMenuOpen(false); setIsSubmenuOpen(false); }}>
+              <Link href="/cart" className="mobile-link flex items-center space-x-2" onClick={() => { setIsMenuOpen(false); setIsAboutOpenMobile(false); setIsSupportOpenMobile(false); }}>
                 <ShoppingCart className="w-5 h-5 text-blue-600" />
                 <span>Cart</span>
                 {itemCount > 0 && (
