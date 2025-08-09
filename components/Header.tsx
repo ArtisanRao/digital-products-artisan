@@ -1,4 +1,4 @@
-'use client' 
+'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -28,11 +28,12 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-blue-100 m-0 p-0">
       <div className="container mx-auto px-4 !py-0 m-0">
         <div className="flex items-center justify-between h-16 m-0 p-0">
+
           {/* Logo */}
           <Logo size="md" className="mr-4" />
 
           {/* ===== Mobile Nav Links: Products, Categories, About, Support, Cart ===== */}
-          <nav className="flex md:hidden items-center space-x-4">
+          <nav className="flex md:hidden items-center space-x-2"> {/* Reduced spacing from 4 to 2 */}
             <Link href="/products" className="mobile-link">Products</Link>
             <Link href="/categories" className="mobile-link">Categories</Link>
             <Link href="/about" className="mobile-link">About</Link>
@@ -115,7 +116,7 @@ export default function Header() {
             )}
           </div>
 
-          {/* Auth + Cart (desktop only) */}
+          {/* Auth (desktop only) */}
           <div className="hidden md:flex items-center space-x-4">
             {user ? (
               <DropdownMenu>
@@ -151,23 +152,6 @@ export default function Header() {
                 </Button>
               </div>
             )}
-
-            {/* Cart button desktop only */}
-            <Button
-              variant="ghost"
-              size="sm"
-              asChild
-              className="relative hover:bg-blue-50"
-            >
-              <Link href="/cart" className="relative">
-                <ShoppingCart className="w-5 h-5 text-blue-600" />
-                {itemCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold shadow-lg animate-pulse">
-                    {itemCount}
-                  </span>
-                )}
-              </Link>
-            </Button>
           </div>
 
           {/* Mobile menu toggle button */}
@@ -181,11 +165,10 @@ export default function Header() {
           </Button>
         </div>
 
-        {/* Optional: You can remove this mobile menu below if you want, or keep it for user auth */}
+        {/* Optional: You can keep your existing mobile menu for auth, etc. */}
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-blue-100 bg-blue-50/50 animate-fadeIn">
             <nav className="flex flex-col space-y-4">
-              {/* For example, keep auth links here */}
               {user ? (
                 <>
                   <Link href="/dashboard" className="mobile-link">Dashboard</Link>
@@ -213,4 +196,3 @@ export default function Header() {
     </header>
   )
 }
-  
