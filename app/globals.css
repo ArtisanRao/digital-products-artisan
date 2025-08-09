@@ -62,6 +62,19 @@
       display: block;
     }
   }
+
+  /* ===== New: Further reduce horizontal spacing specifically on small mobiles (below 768px) ===== */
+  @media (max-width: 767px) {
+    nav.flex.md\\:hidden.items-center.space-x-2 > a.mobile-link {
+      margin-left: 0.25rem;  /* smaller left/right margin */
+      margin-right: 0.25rem;
+      font-size: 0.875rem; /* slightly smaller font */
+    }
+
+    nav.flex.md\\:hidden.items-center.space-x-2 {
+      gap: 0.5rem; /* less horizontal space */
+    }
+  }
 }
 
 /* ===== Header & Navigation Safeguards ===== */

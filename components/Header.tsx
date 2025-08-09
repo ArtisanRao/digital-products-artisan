@@ -32,13 +32,13 @@ export default function Header() {
           {/* Logo */}
           <Logo size="md" className="mr-2 md:mr-4" />
 
-          {/* ===== Mobile Nav Links: Products, Categories, About, Support, Cart ===== */}
+          {/* ===== Mobile Nav Links: Products, Categories, About, Support (no cart here) ===== */}
           <nav className="flex md:hidden items-center space-x-2">
             <Link href="/products" className="mobile-link whitespace-nowrap">Products</Link>
             <Link href="/categories" className="mobile-link whitespace-nowrap">Categories</Link>
             <Link href="/about" className="mobile-link whitespace-nowrap">About</Link>
 
-            {/* Support Dropdown - same as desktop */}
+            {/* Support Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="mobile-link inline-flex items-center space-x-1 whitespace-nowrap">
@@ -53,17 +53,6 @@ export default function Header() {
                 <DropdownMenuItem asChild><Link href="/contact">Contact Us</Link></DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-
-            {/* Cart inside mobile nav */}
-            <Link href="/cart" className="mobile-link flex items-center space-x-1 relative whitespace-nowrap">
-              <ShoppingCart className="w-5 h-5 text-blue-600" />
-              {itemCount > 0 && (
-                <span className="absolute -top-2 -right-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold shadow-lg animate-pulse">
-                  {itemCount}
-                </span>
-              )}
-              <span>Cart</span>
-            </Link>
           </nav>
 
           {/* ===== Desktop Nav (unchanged) ===== */}
@@ -133,7 +122,7 @@ export default function Header() {
                 <DropdownMenuContent className="border-blue-200">
                   <DropdownMenuItem asChild><Link href="/dashboard">Dashboard</Link></DropdownMenuItem>
                   <DropdownMenuItem asChild><Link href="/orders">My Orders</Link></DropdownMenuItem>
-                  <DropdownMenuItem asChild><Link href="/subscriptions">Subscriptions</Link></DropdownMenuItem>
+                  <DropdownMenuItem asChild><Link href="/subscriptions">Subscriptions</DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={logout}
                     className="hover:bg-red-50 hover:text-red-700 cursor-pointer"
@@ -182,10 +171,15 @@ export default function Header() {
           </Button>
         </div>
 
-        {/* Optional: Mobile auth menu */}
+        {/* ===== Mobile slide-down menu (with Cart inside) ===== */}
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-blue-100 bg-blue-50/50 animate-fadeIn">
             <nav className="flex flex-col space-y-4">
+              <Link href="/cart" className="mobile-link flex items-center space-x-2">
+                <ShoppingCart className="w-5 h-5 text-blue-600" />
+                <span>Cart {itemCount > 0 && `(${itemCount})`}</span>
+              </Link>
+
               {user ? (
                 <>
                   <Link href="/dashboard" className="mobile-link">Dashboard</Link>
