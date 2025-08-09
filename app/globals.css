@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ===== Custom Utilities ===== */
 @layer utilities {
   .text-balance {
     text-wrap: balance;
@@ -33,11 +34,20 @@
     .mobile-link {
       margin-left: 0.75rem;
       margin-right: 0.75rem;
+      /* Ensure links in mobile horizontal nav look good */
+      display: inline-flex;
+      align-items: center;
+      text-decoration: none;
+      color: #374151; /* Tailwind gray-700 */
+      transition: color 0.2s;
+    }
+    .mobile-link:hover {
+      color: #2563eb; /* Tailwind blue-700 */
     }
 
     /* Mobile header spacing and fit */
     .mobile-header-fit {
-      display: flex; /* ensure flex container */
+      display: flex;
       gap: 1rem;
       padding-left: 1rem;
       padding-right: 1rem;
@@ -45,7 +55,7 @@
     }
 
     header img {
-      max-width: 60px;  /* smaller logo on mobile */
+      max-width: 60px;
       max-height: 30px;
       height: auto;
       object-fit: contain;
@@ -54,6 +64,36 @@
   }
 }
 
+/* ===== Header & Navigation Safeguards ===== */
+@layer components {
+  /* Reset margin & padding for html/body */
+  html, body {
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Navigation links */
+  .nav-link {
+    @apply text-gray-700 hover:text-blue-700 transition-colors duration-200 font-medium;
+  }
+
+  /* Mobile menu links */
+  .mobile-link {
+    @apply text-gray-700 hover:text-blue-700 transition-colors duration-200 block;
+  }
+
+  /* Dropdown menus */
+  [data-radix-popper-content-wrapper] {
+    @apply bg-white shadow-lg rounded-md;
+  }
+
+  /* Header search input */
+  header input[type="search"] {
+    @apply border border-blue-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 rounded-md;
+  }
+}
+
+/* ===== Theme Variables ===== */
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -83,55 +123,9 @@
     --radius: 0.5rem;
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary: 240 5.3% 23.1%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
+    --sidebar-secondary: 240 5.3% 34.1%;
+    --sidebar-secondary-foreground: 240 5.3% 26.1%;
   }
 }

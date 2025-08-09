@@ -1,4 +1,4 @@
-'use client'
+'use client' 
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -26,11 +26,46 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-blue-100 m-0 p-0">
-      <div className="container mx-auto px-4 m-0 p-0">
+      <div className="container mx-auto px-4 !py-0 m-0">
         <div className="flex items-center justify-between h-16 m-0 p-0">
-          <Logo size="md" className="mr-8" />
+          {/* Logo */}
+          <Logo size="md" className="mr-4" />
 
-          {/* Desktop Nav */}
+          {/* ===== Mobile Nav Links: Products, Categories, About, Support, Cart ===== */}
+          <nav className="flex md:hidden items-center space-x-4">
+            <Link href="/products" className="mobile-link">Products</Link>
+            <Link href="/categories" className="mobile-link">Categories</Link>
+            <Link href="/about" className="mobile-link">About</Link>
+
+            {/* Support Dropdown same as desktop */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="mobile-link inline-flex items-center space-x-1">
+                  <span>Support</span>
+                  <ChevronDown className="w-3 h-3 mt-0.5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="border-blue-200">
+                <DropdownMenuItem asChild><Link href="/help">Help Center</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link href="/faq">FAQ</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link href="/returns">Returns & Refund Policy</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link href="/contact">Contact Us</Link></DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Cart inside mobile nav */}
+            <Link href="/cart" className="mobile-link flex items-center space-x-1 relative">
+              <ShoppingCart className="w-5 h-5 text-blue-600" />
+              {itemCount > 0 && (
+                <span className="absolute -top-2 -right-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold shadow-lg animate-pulse">
+                  {itemCount}
+                </span>
+              )}
+              <span>Cart</span>
+            </Link>
+          </nav>
+
+          {/* ===== Desktop Nav (unchanged) ===== */}
           <nav className="hidden md:flex items-center space-x-8">
             <Link href="/products" className="nav-link">Products</Link>
             <Link href="/bundles" className="nav-link">Bundles</Link>
@@ -58,7 +93,7 @@ export default function Header() {
             </DropdownMenu>
           </nav>
 
-          {/* Search */}
+          {/* Search (desktop only) */}
           <div className="hidden md:flex items-center space-x-2 ml-6 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 w-4 h-4" />
             <Input
@@ -80,8 +115,8 @@ export default function Header() {
             )}
           </div>
 
-          {/* Auth + Cart */}
-          <div className="flex items-center space-x-4">
+          {/* Auth + Cart (desktop only) */}
+          <div className="hidden md:flex items-center space-x-4">
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -117,7 +152,7 @@ export default function Header() {
               </div>
             )}
 
-            {/* Cart */}
+            {/* Cart button desktop only */}
             <Button
               variant="ghost"
               size="sm"
@@ -133,41 +168,37 @@ export default function Header() {
                 )}
               </Link>
             </Button>
-
-            {/* Mobile toggle */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="md:hidden hover:bg-blue-50"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-            >
-              {isMenuOpen ? <X className="w-5 h-5 text-blue-600" /> : <Menu className="w-5 h-5 text-blue-600" />}
-            </Button>
           </div>
+
+          {/* Mobile menu toggle button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="md:hidden hover:bg-blue-50"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            {isMenuOpen ? <X className="w-5 h-5 text-blue-600" /> : <Menu className="w-5 h-5 text-blue-600" />}
+          </Button>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Optional: You can remove this mobile menu below if you want, or keep it for user auth */}
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-blue-100 bg-blue-50/50 animate-fadeIn">
             <nav className="flex flex-col space-y-4">
-              <Link href="/products" className="mobile-link">Products</Link>
-              <Link href="/bundles" className="mobile-link">Bundles</Link>
-              <Link href="/categories" className="mobile-link">Categories</Link>
-              <Link href="/about" className="mobile-link">About</Link>
-              <details className="mobile-link group">
-                <summary className="cursor-pointer flex justify-between items-center">
-                  Support
-                  <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
-                </summary>
-                <nav className="pl-4 mt-2 flex flex-col space-y-2">
-                  <Link href="/help" className="mobile-link">Help Center</Link>
-                  <Link href="/faq" className="mobile-link">FAQ</Link>
-                  <Link href="/returns" className="mobile-link">Returns & Refund Policy</Link>
-                  <Link href="/contact" className="mobile-link">Contact Us</Link>
-                </nav>
-              </details>
-
-              {!user && (
+              {/* For example, keep auth links here */}
+              {user ? (
+                <>
+                  <Link href="/dashboard" className="mobile-link">Dashboard</Link>
+                  <Link href="/orders" className="mobile-link">My Orders</Link>
+                  <Link href="/subscriptions" className="mobile-link">Subscriptions</Link>
+                  <button
+                    onClick={logout}
+                    className="mobile-link text-red-600 hover:text-red-800 text-left"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
                 <div className="flex space-x-2 pt-4">
                   <Button variant="ghost" size="sm" asChild><Link href="/login">Login</Link></Button>
                   <Button size="sm" asChild className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800">
@@ -182,3 +213,4 @@ export default function Header() {
     </header>
   )
 }
+  
