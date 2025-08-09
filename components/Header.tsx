@@ -28,17 +28,22 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-blue-100 overflow-x-hidden">
       <div className="container mx-auto px-4 !py-0 max-w-full">
         <div className="flex flex-wrap items-center justify-between h-16 gap-2">
-          {/* Logo */}
-          <Logo size="md" className="mr-8 flex-shrink-0" />
 
-          {/* Navigation links (always visible, desktop + mobile) */}
-          <nav className="flex items-center space-x-4 flex-shrink min-w-0 overflow-x-auto no-scrollbar">
-            <Link href="/products" className="nav-link whitespace-nowrap">Products</Link>
-            <Link href="/bundles" className="nav-link whitespace-nowrap">Bundles</Link>
-            <Link href="/categories" className="nav-link whitespace-nowrap">Categories</Link>
-            <Link href="/about" className="nav-link whitespace-nowrap">About</Link>
+          {/* Mobile Header Nav - SHOW only on mobile */}
+          <nav className="flex md:hidden items-center space-x-3 flex-shrink-0 overflow-x-auto no-scrollbar">
+            <Logo size="md" className="flex-shrink-0" />
 
-            {/* Support dropdown - same style on all devices */}
+            <Link href="/products" className="nav-link whitespace-nowrap">
+              Products
+            </Link>
+            <Link href="/categories" className="nav-link whitespace-nowrap">
+              Categories
+            </Link>
+            <Link href="/about" className="nav-link whitespace-nowrap">
+              About
+            </Link>
+
+            {/* Support Dropdown (same style as desktop) */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
@@ -50,7 +55,7 @@ export default function Header() {
                   <ChevronDown className="w-3 h-3 mt-0.5" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="border-blue-200 min-w-[180px]">
+              <DropdownMenuContent className="border-blue-200">
                 <DropdownMenuItem asChild>
                   <Link href="/help">Help Center</Link>
                 </DropdownMenuItem>
@@ -63,6 +68,32 @@ export default function Header() {
                 <DropdownMenuItem asChild>
                   <Link href="/contact">Contact Us</Link>
                 </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </nav>
+
+          {/* Desktop Nav (unchanged, still has Bundles) */}
+          <nav className="hidden md:flex items-center space-x-8 flex-shrink-0">
+            <Link href="/products" className="nav-link">Products</Link>
+            <Link href="/bundles" className="nav-link">Bundles</Link>
+            <Link href="/categories" className="nav-link">Categories</Link>
+            <Link href="/about" className="nav-link">About</Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  aria-haspopup="true"
+                  aria-expanded={isMenuOpen}
+                  className="nav-link inline-flex items-center space-x-1"
+                >
+                  <span>Support</span>
+                  <ChevronDown className="w-3 h-3 mt-0.5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="border-blue-200">
+                <DropdownMenuItem asChild><Link href="/help">Help Center</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link href="/faq">FAQ</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link href="/returns">Returns & Refund Policy</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link href="/contact">Contact Us</Link></DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </nav>
@@ -104,15 +135,9 @@ export default function Header() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="border-blue-200">
-                  <DropdownMenuItem asChild>
-                    <Link href="/dashboard">Dashboard</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/orders">My Orders</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/subscriptions">Subscriptions</Link>
-                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild><Link href="/dashboard">Dashboard</Link></DropdownMenuItem>
+                  <DropdownMenuItem asChild><Link href="/orders">My Orders</Link></DropdownMenuItem>
+                  <DropdownMenuItem asChild><Link href="/subscriptions">Subscriptions</Link></DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={logout}
                     className="hover:bg-red-50 hover:text-red-700 cursor-pointer"
@@ -132,7 +157,7 @@ export default function Header() {
               </div>
             )}
 
-            {/* Cart - desktop only */}
+            {/* Cart - Desktop only */}
             <Button
               variant="ghost"
               size="sm"
@@ -149,7 +174,7 @@ export default function Header() {
               </Link>
             </Button>
 
-            {/* Mobile menu toggle */}
+            {/* Mobile toggle button */}
             <Button
               variant="ghost"
               size="sm"
@@ -163,33 +188,28 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Mobile menu dropdown triggered by hamburger */}
+        {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-blue-100 bg-blue-50/50 animate-fadeIn overflow-x-hidden">
             <nav className="flex flex-col space-y-4 max-w-full">
-              {/* Support submenu as collapsible DropdownMenu */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="mobile-link inline-flex justify-between w-full items-center">
-                    Support
-                    <ChevronDown className="w-4 h-4" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="border-blue-200 min-w-[180px]">
-                  <DropdownMenuItem asChild>
-                    <Link href="/help">Help Center</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/faq">FAQ</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/returns">Returns & Refund Policy</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/contact">Contact Us</Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Link href="/products" className="mobile-link">Products</Link>
+              <Link href="/bundles" className="mobile-link">Bundles</Link>
+              <Link href="/categories" className="mobile-link">Categories</Link>
+              <Link href="/about" className="mobile-link">About</Link>
+
+              {/* Support dropdown as collapsible on mobile */}
+              <details className="mobile-link group">
+                <summary className="cursor-pointer flex justify-between items-center">
+                  Support
+                  <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
+                </summary>
+                <nav className="pl-4 mt-2 flex flex-col space-y-2">
+                  <Link href="/help" className="mobile-link">Help Center</Link>
+                  <Link href="/faq" className="mobile-link">FAQ</Link>
+                  <Link href="/returns" className="mobile-link">Returns & Refund Policy</Link>
+                  <Link href="/contact" className="mobile-link">Contact Us</Link>
+                </nav>
+              </details>
 
               {/* Cart inside mobile menu */}
               <Link href="/cart" className="mobile-link flex items-center space-x-2">
@@ -203,7 +223,7 @@ export default function Header() {
               </Link>
 
               {/* Auth buttons for mobile */}
-              {!user && (
+              {!user ? (
                 <div className="flex space-x-2 pt-4">
                   <Button variant="ghost" size="sm" asChild>
                     <Link href="/login">Login</Link>
@@ -216,7 +236,7 @@ export default function Header() {
                     <Link href="/signup">Sign Up</Link>
                   </Button>
                 </div>
-              )}
+              ) : null}
             </nav>
           </div>
         )}
