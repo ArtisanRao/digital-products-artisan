@@ -30,18 +30,19 @@ export default function Header() {
         <div className="flex items-center justify-between h-16 m-0 p-0">
 
           {/* Logo */}
-          <Logo size="md" className="mr-4" />
+          <Logo size="md" className="mr-2 md:mr-4" />
 
           {/* ===== Mobile Nav Links: Products, Categories, About, Support, Cart ===== */}
-          <nav className="flex md:hidden items-center space-x-2"> {/* Reduced spacing from 4 to 2 */}
-            <Link href="/products" className="mobile-link">Products</Link>
-            <Link href="/categories" className="mobile-link">Categories</Link>
-            <Link href="/about" className="mobile-link">About</Link>
+          <nav className="flex md:hidden items-center space-x-2"> 
+          {/* reduced space-x-4 → space-x-2 to reduce spacing on mobile */}
+            <Link href="/products" className="mobile-link whitespace-nowrap">Products</Link>
+            <Link href="/categories" className="mobile-link whitespace-nowrap">Categories</Link>
+            <Link href="/about" className="mobile-link whitespace-nowrap">About</Link>
 
-            {/* Support Dropdown same as desktop */}
+            {/* Support Dropdown - same as desktop */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="mobile-link inline-flex items-center space-x-1">
+                <button className="mobile-link inline-flex items-center space-x-1 whitespace-nowrap">
                   <span>Support</span>
                   <ChevronDown className="w-3 h-3 mt-0.5" />
                 </button>
@@ -55,7 +56,7 @@ export default function Header() {
             </DropdownMenu>
 
             {/* Cart inside mobile nav */}
-            <Link href="/cart" className="mobile-link flex items-center space-x-1 relative">
+            <Link href="/cart" className="mobile-link flex items-center space-x-1 relative whitespace-nowrap">
               <ShoppingCart className="w-5 h-5 text-blue-600" />
               {itemCount > 0 && (
                 <span className="absolute -top-2 -right-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold shadow-lg animate-pulse">
@@ -116,7 +117,7 @@ export default function Header() {
             )}
           </div>
 
-          {/* Auth (desktop only) */}
+          {/* Auth + Cart (desktop only) */}
           <div className="hidden md:flex items-center space-x-4">
             {user ? (
               <DropdownMenu>
@@ -133,7 +134,7 @@ export default function Header() {
                 <DropdownMenuContent className="border-blue-200">
                   <DropdownMenuItem asChild><Link href="/dashboard">Dashboard</Link></DropdownMenuItem>
                   <DropdownMenuItem asChild><Link href="/orders">My Orders</Link></DropdownMenuItem>
-                  <DropdownMenuItem asChild><Link href="/subscriptions">Subscriptions</Link></DropdownMenuItem>
+                  <DropdownMenuItem asChild><Link href="/subscriptions">Subscriptions</DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={logout}
                     className="hover:bg-red-50 hover:text-red-700 cursor-pointer"
@@ -152,6 +153,23 @@ export default function Header() {
                 </Button>
               </div>
             )}
+
+            {/* Cart button desktop only */}
+            <Button
+              variant="ghost"
+              size="sm"
+              asChild
+              className="relative hover:bg-blue-50"
+            >
+              <Link href="/cart" className="relative">
+                <ShoppingCart className="w-5 h-5 text-blue-600" />
+                {itemCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold shadow-lg animate-pulse">
+                    {itemCount}
+                  </span>
+                )}
+              </Link>
+            </Button>
           </div>
 
           {/* Mobile menu toggle button */}
@@ -165,7 +183,7 @@ export default function Header() {
           </Button>
         </div>
 
-        {/* Optional: You can keep your existing mobile menu for auth, etc. */}
+        {/* Optional: Mobile auth menu */}
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-blue-100 bg-blue-50/50 animate-fadeIn">
             <nav className="flex flex-col space-y-4">
