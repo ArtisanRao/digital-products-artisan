@@ -38,7 +38,11 @@ export const metadata = {
 export default function HomePage() {
   return (
     <main className="min-h-screen">
-      <HeroSection />
+      {/* Add margin-top of 1cm below header */}
+      <div className="mt-[38px]">
+        <HeroSection />
+      </div>
+      
       <Suspense fallback={<LoadingSpinner />}>
         <FeaturedProducts />
       </Suspense>
