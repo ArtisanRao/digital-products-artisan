@@ -103,15 +103,15 @@ export default function Header() {
               </DropdownMenu>
             </nav>
 
-            {/* Search bar */}
-            <div className="flex items-center space-x-2 relative">
+            {/* Search bar - responsive */}
+            <div className="flex items-center space-x-2 relative flex-shrink min-w-[140px] max-w-xs w-full sm:w-52 md:w-64 lg:w-72">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 w-4 h-4" />
               <Input
                 type="search"
                 placeholder="Search products..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-64 border-blue-200 focus:border-blue-500 focus:ring-blue-500/20 focus:ring-1 rounded-md"
+                className="pl-10 border-blue-200 focus:border-blue-500 focus:ring-blue-500/20 focus:ring-1 rounded-md w-full"
                 aria-label="Search products"
               />
               {searchTerm && (
@@ -156,6 +156,21 @@ export default function Header() {
                     )}
                   </Link>
                 </DropdownMenuItem>
+                {/* Search inside dropdown (desktop menu button) */}
+                <DropdownMenuItem asChild>
+                  <div className="w-full px-1">
+                    <div className="relative w-full">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 w-4 h-4" />
+                      <Input
+                        type="search"
+                        placeholder="Search..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 w-full border-blue-200 focus:border-blue-500 focus:ring-blue-500/20 focus:ring-1 rounded-md"
+                      />
+                    </div>
+                  </div>
+                </DropdownMenuItem>
                 {user ? (
                   <>
                     <DropdownMenuItem asChild><Link href="/dashboard">Dashboard</Link></DropdownMenuItem>
@@ -183,6 +198,18 @@ export default function Header() {
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-blue-100 bg-blue-50/50 animate-fadeIn overflow-x-hidden">
             <nav className="flex flex-col space-y-4 max-w-full">
+              {/* Search inside mobile menu */}
+              <div className="relative px-2">
+                <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 text-blue-400 w-4 h-4" />
+                <Input
+                  type="search"
+                  placeholder="Search products..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 border-blue-200 focus:border-blue-500 focus:ring-blue-500/20 focus:ring-1 rounded-md w-full"
+                />
+              </div>
+
               <Link href="/products" className="mobile-link" onClick={() => setIsMenuOpen(false)}>Products</Link>
               <Link href="/bundles" className="mobile-link" onClick={() => setIsMenuOpen(false)}>Bundles</Link>
               <Link href="/categories" className="mobile-link" onClick={() => setIsMenuOpen(false)}>Categories</Link>
