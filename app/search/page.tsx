@@ -1,6 +1,4 @@
-'use client'  // <-- added at the very top
-
-export const dynamic = 'force-dynamic'
+'use client'
 
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -9,7 +7,6 @@ export default function SearchPage() {
   const searchParams = useSearchParams()
   const query = searchParams.get('q') || ''
 
-  // Mock search results for demonstration — replace with your real search logic or API
   const allItems = [
     { id: 1, name: 'Product A', href: '/products/a' },
     { id: 2, name: 'Bundle B', href: '/bundles/b' },
@@ -18,7 +15,6 @@ export default function SearchPage() {
     { id: 5, name: 'Support Help Center', href: '/help' },
   ]
 
-  // Simple filtering by name matching query (case-insensitive)
   const results = allItems.filter(item =>
     item.name.toLowerCase().includes(query.toLowerCase())
   )
