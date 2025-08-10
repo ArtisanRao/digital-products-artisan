@@ -1,4 +1,4 @@
-'use client'
+'use client'  // <-- add this at the very top
 
 export const dynamic = 'force-dynamic'
 
