@@ -31,16 +31,16 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-blue-100 overflow-x-hidden">
       <div className="container mx-auto px-4 !py-0 max-w-full">
-        <div className="flex flex-wrap items-center justify-between h-16 gap-2">
+        <div className="flex flex-wrap items-center justify-center h-16 gap-2">
 
           {/* Mobile Header Nav */}
-          <nav className="flex md:hidden items-center space-x-3 flex-shrink-0 overflow-x-auto no-scrollbar">
+          <nav className="flex md:hidden items-center justify-center gap-3 flex-shrink-0 overflow-x-auto no-scrollbar">
             <Logo size="md" className="flex-shrink-0" />
             <Link href="/products" className="nav-link whitespace-nowrap">Products</Link>
             <Link href="/categories" className="nav-link whitespace-nowrap">Categories</Link>
             <DropdownMenu open={isSupportOpenMobile} onOpenChange={setIsSupportOpenMobile}>
               <DropdownMenuTrigger asChild>
-                <button className="nav-link inline-flex items-center space-x-1 whitespace-nowrap">
+                <button className="nav-link inline-flex items-center gap-1 whitespace-nowrap">
                   <span>Support</span>
                   <ChevronDown className="w-3 h-3 mt-0.5" />
                 </button>
@@ -71,12 +71,12 @@ export default function Header() {
           </nav>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center flex-1 gap-8">
+          <div className="hidden md:flex items-center justify-center flex-1 gap-8">
             {/* Logo */}
             <Logo size="md" className="flex-shrink-0" />
 
             {/* Main menu */}
-            <nav className="flex items-center space-x-6">
+            <nav className="flex items-center gap-6">
               <Link href="/products" className="nav-link">Products</Link>
               <Link href="/bundles" className="nav-link">Bundles</Link>
               <Link href="/categories" className="nav-link">Categories</Link>
@@ -127,7 +127,7 @@ export default function Header() {
 
             {/* Auth */}
             {!user ? (
-              <div className="flex space-x-2">
+              <div className="flex gap-2">
                 <Button variant="ghost" size="sm" asChild>
                   <Link href="/login">Login</Link>
                 </Button>
@@ -137,7 +137,7 @@ export default function Header() {
               </div>
             ) : null}
 
-            {/* Menu button with dropdown */}
+            {/* Menu button */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="hover:bg-blue-50">
@@ -146,7 +146,7 @@ export default function Header() {
               </DropdownMenuTrigger>
               <DropdownMenuContent className="border-blue-200">
                 <DropdownMenuItem asChild>
-                  <Link href="/cart" className="flex items-center space-x-2">
+                  <Link href="/cart" className="flex items-center gap-2">
                     <ShoppingCart className="w-5 h-5 text-blue-600" />
                     <span>Cart</span>
                     {itemCount > 0 && (
@@ -229,7 +229,7 @@ export default function Header() {
               ) : (
                 <>
                   <Link href="/login" className="mobile-link" onClick={() => setIsMenuOpen(false)}>Login</Link>
-                  <Link href="/signup" className="mobile-link" onClick={() => setIsMenuOpen(false)}>Sign Up</Link>a
+                  <Link href="/signup" className="mobile-link" onClick={() => setIsMenuOpen(false)}>Sign Up</Link>
                 </>
               )}
             </nav>
