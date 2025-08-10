@@ -38,7 +38,7 @@ export default function Header() {
     bundles: '/bundles',
     products: '/products',
     categories: '/categories',
-    support: '/help', // you can adjust this as needed
+    support: '/help',
   }
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -217,7 +217,7 @@ export default function Header() {
                 ) : (
                   <>
                     <DropdownMenuItem asChild><Link href="/login">Login</Link></DropdownMenuItem>
-                    <DropdownMenuItem asChild><Link href="/signup">Sign Up</DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link href="/signup">Sign Up</Link></DropdownMenuItem>
                   </>
                 )}
               </DropdownMenuContent>
@@ -297,4 +297,4 @@ export default function Header() {
       </div>
     </header>
   )
-} 
+}
