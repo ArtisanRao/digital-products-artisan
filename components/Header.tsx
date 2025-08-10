@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/router'
+// Changed this import from 'next/router' to 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { ShoppingCart, Search, Menu, X, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -216,7 +217,7 @@ export default function Header() {
                 ) : (
                   <>
                     <DropdownMenuItem asChild><Link href="/login">Login</Link></DropdownMenuItem>
-                    <DropdownMenuItem asChild><Link href="/signup">Sign Up</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link href="/signup">Sign Up</DropdownMenuItem>
                   </>
                 )}
               </DropdownMenuContent>
