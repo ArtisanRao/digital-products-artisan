@@ -128,7 +128,10 @@ export default function Header() {
             </nav>
 
             {/* Search bar - responsive - wrapped in form */}
-            <form onSubmit={handleSearchSubmit} className="flex items-center space-x-2 relative flex-shrink min-w-[140px] max-w-xs w-full sm:w-52 md:w-64 lg:w-72">
+            <form
+              onSubmit={handleSearchSubmit}
+              className="flex items-center space-x-2 relative flex-grow min-w-[120px] max-w-[300px] w-full"
+            >
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 w-4 h-4" />
               <Input
                 type="search"
