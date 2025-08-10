@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { ShoppingCart, Search, Menu, X, User, ChevronDown } from 'lucide-react'
+import { useRouter } from 'next/router'
+import { ShoppingCart, Search, Menu, X, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useCart } from '@/contexts/cart-context'
@@ -16,6 +17,8 @@ import {
 import Logo from '@/components/Logo'
 
 export default function Header() {
+  const router = useRouter()
+
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isSupportOpenDesktop, setIsSupportOpenDesktop] = useState(false)
   const [isAboutOpenMobile, setIsAboutOpenMobile] = useState(false)
@@ -27,6 +30,27 @@ export default function Header() {
 
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
   const clearSearch = () => setSearchTerm('')
+
+  // Map keywords to routes
+  const routeMap: Record<string, string> = {
+    about: '/about',
+    bundles: '/bundles',
+    products: '/products',
+    categories: '/categories',
+    support: '/help', // you can adjust this as needed
+  }
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const term = searchTerm.trim().toLowerCase()
+    if (term in routeMap) {
+      router.push(routeMap[term])
+    } else if (term.length > 0) {
+      router.push(`/search?q=${encodeURIComponent(term)}`)
+    }
+    clearSearch()
+    setIsMenuOpen(false) // close mobile menu if open
+  }
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-blue-100 overflow-x-hidden">
@@ -103,8 +127,8 @@ export default function Header() {
               </DropdownMenu>
             </nav>
 
-            {/* Search bar - responsive */}
-            <div className="flex items-center space-x-2 relative flex-shrink min-w-[140px] max-w-xs w-full sm:w-52 md:w-64 lg:w-72">
+            {/* Search bar - responsive - wrapped in form */}
+            <form onSubmit={handleSearchSubmit} className="flex items-center space-x-2 relative flex-shrink min-w-[140px] max-w-xs w-full sm:w-52 md:w-64 lg:w-72">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 w-4 h-4" />
               <Input
                 type="search"
@@ -116,6 +140,7 @@ export default function Header() {
               />
               {searchTerm && (
                 <button
+                  type="button"
                   onClick={clearSearch}
                   aria-label="Clear search input"
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
@@ -123,7 +148,7 @@ export default function Header() {
                   &times;
                 </button>
               )}
-            </div>
+            </form>
 
             {/* Auth */}
             {!user ? (
@@ -156,9 +181,10 @@ export default function Header() {
                     )}
                   </Link>
                 </DropdownMenuItem>
+
                 {/* Search inside dropdown (desktop menu button) */}
                 <DropdownMenuItem asChild>
-                  <div className="w-full px-1">
+                  <form onSubmit={handleSearchSubmit} className="w-full px-1">
                     <div className="relative w-full">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 w-4 h-4" />
                       <Input
@@ -169,8 +195,9 @@ export default function Header() {
                         className="pl-10 w-full border-blue-200 focus:border-blue-500 focus:ring-blue-500/20 focus:ring-1 rounded-md"
                       />
                     </div>
-                  </div>
+                  </form>
                 </DropdownMenuItem>
+
                 {user ? (
                   <>
                     <DropdownMenuItem asChild><Link href="/dashboard">Dashboard</Link></DropdownMenuItem>
@@ -198,8 +225,9 @@ export default function Header() {
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-blue-100 bg-blue-50/50 animate-fadeIn overflow-x-hidden">
             <nav className="flex flex-col space-y-4 max-w-full">
+
               {/* Search inside mobile menu */}
-              <div className="relative px-2">
+              <form onSubmit={handleSearchSubmit} className="relative px-2">
                 <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 text-blue-400 w-4 h-4" />
                 <Input
                   type="search"
@@ -208,7 +236,7 @@ export default function Header() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 border-blue-200 focus:border-blue-500 focus:ring-blue-500/20 focus:ring-1 rounded-md w-full"
                 />
-              </div>
+              </form>
 
               <Link href="/products" className="mobile-link" onClick={() => setIsMenuOpen(false)}>Products</Link>
               <Link href="/bundles" className="mobile-link" onClick={() => setIsMenuOpen(false)}>Bundles</Link>
