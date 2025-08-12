@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 const withPWA = require('next-pwa')({
   dest: 'public',
   register: true,
@@ -7,31 +6,9 @@ const withPWA = require('next-pwa')({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = withPWA({
-  async redirects() {
-    return [
-      {
-        source: '/help-center',
-        destination: '/help',
-        permanent: true,
-      },
-      {
-        source: '/contact-us',
-        destination: '/contact',
-        permanent: true,
-      },
-      {
-        source: '/best-sellers',
-        destination: '/bestsellers',
-=======
-﻿ /** @type {import('next').NextConfig} */
-
-// Added redirects config for hyphenated URLs
-// Harmless comment to force Git to detect a change
-
-const nextConfig = {
   reactStrictMode: true,
   experimental: {
-    serverActions: {}, // ✅ FIX: must be an object, not a boolean
+    serverActions: {}, // ✅ Must be object, not boolean
   },
   images: {
     domains: ['localhost', 'digitalproductsartisan.com', 'images.unsplash.com'],
@@ -45,6 +22,24 @@ const nextConfig = {
 
   async redirects() {
     return [
+      // Redirects from HEAD
+      {
+        source: '/help-center',
+        destination: '/help',
+        permanent: true,
+      },
+      {
+        source: '/contact-us',
+        destination: '/contact',
+        permanent: true,
+      },
+      {
+        source: '/best-sellers',
+        destination: '/bestsellers',
+        permanent: true,
+      },
+
+      // Redirects from other branch
       {
         source: '/contact',
         destination: '/contact-us',
@@ -53,19 +48,10 @@ const nextConfig = {
       {
         source: '/bestsellers',
         destination: '/best-sellers',
->>>>>>> 154bd8d (Fix config: use CommonJS syntax for PWA and redirects)
         permanent: true,
       },
     ];
   },
-<<<<<<< HEAD
-  reactStrictMode: true,
 });
 
 module.exports = nextConfig;
-=======
-};
-
-export default nextConfig;
- 
->>>>>>> 154bd8d (Fix config: use CommonJS syntax for PWA and redirects)
