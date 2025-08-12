@@ -1,4 +1,4 @@
-# General rules for all bots
+# *
 User-agent: *
 Allow: /
 Disallow: /404
@@ -7,11 +7,6 @@ Disallow: /thank-you
 Disallow: /terms
 Disallow: /privacy-policy
 Disallow: /contact/success
-
-# Block unwanted images from appearing in Google Images
-User-agent: Googlebot-Image
-Disallow: /wp-content/uploads/2025/08/cropped-dpa_20250810_000042.jpg
-Disallow: /wp-content/uploads/2025/08/cropped-dpa_20250808_011857_1.jpg
 
 # Host
 Host: https://digitalproductsartisan.com
