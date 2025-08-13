@@ -24,6 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Initialize user on mount
     const init = async () => {
       const { data } = await supabase.auth.getUser();
       if (data.user) {
@@ -35,6 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     init();
 
+    // Subscribe to auth state changes
     const { data: subscription } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
         const { id, email, user_metadata } = session.user;
@@ -79,8 +81,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
+  if (!context) throw new Error("useAuth must be used within an AuthProvider");
   return context;
 }
