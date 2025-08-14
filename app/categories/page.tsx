@@ -1,83 +1,48 @@
 'use client';
 
 import Link from 'next/link';
+import { createClient } from '@supabase/supabase-js';
+import { useEffect, useState } from 'react';
 
-const categories = [
-  {
-    name: '📚 eBooks',
-    slug: 'ebooks',
-    image: '/images/ebooks-cover.jpg',
-  },
-  {
-    name: '🎨 Digital Art',
-    slug: 'digital-art',
-    image: '/images/digital-art-cover.jpg',
-  },
-  {
-    name: '🧾 Templates',
-    slug: 'business-templates',
-    image: '/images/business-templates-cover.jpg',
-  },
-  {
-    name: '📥 Marketing Tools',
-    slug: 'marketing-tools',
-    image: '/images/marketing-tools-cover.jpg',
-  },
-  {
-    name: '🗓️ Printable Planners',
-    slug: 'printable-planners',
-    image: '/images/printable-planners-cover.jpg',
-  },
-  {
-    name: '📸 Photography Prints',
-    slug: 'photography-prints',
-    image: '/images/photography-prints-cover.jpg',
-  },
-  {
-    name: '🔤 Fonts',
-    slug: 'fonts',
-    image: '/images/fonts-cover.jpg',
-  },
-  {
-    name: '🔘 Icons',
-    slug: 'icons',
-    image: '/images/icons-cover.jpg',
-  },
-  {
-    name: '🌐 Web Templates',
-    slug: 'web-templates',
-    image: '/images/web-templates-cover.jpg',
-  },
-  {
-    name: '🎥 Video Resources',
-    slug: 'video-resources',
-    image: '/images/video-resources-cover.jpg',
-  },
-  {
-    name: '🎵 Audio Samples',
-    slug: 'audio-samples',
-    image: '/images/audio-samples-cover.jpg',
-  },
-  {
-    name: '📱 Social Media Kits',
-    slug: 'social-media-kits',
-    image: '/images/social-media-kits-cover.jpg',
-  },
-];
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  image_url: string;
+}
 
 export default function CategoriesPage() {
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    async function fetchCategories() {
+      const { data, error } = await supabase.from('categories').select('*');
+      if (error) {
+        console.error(error);
+      } else {
+        setCategories(data || []);
+      }
+    }
+    fetchCategories();
+  }, []);
+
   return (
     <main className="max-w-7xl mx-auto px-4 py-12">
       <h1 className="text-4xl font-bold text-center mb-12">🗂️ All Categories</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {categories.map((category) => (
           <Link
-            key={category.slug}
+            key={category.id}
             href={`/categories/${category.slug}`}
             className="block group border rounded-xl overflow-hidden shadow hover:shadow-lg transition"
           >
             <img
-              src={category.image}
+              src={category.image_url}
               alt={category.name}
               className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
             />
