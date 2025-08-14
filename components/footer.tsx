@@ -52,7 +52,7 @@ export default function Footer() {
         {/* Left Section */}
         <div className="md:w-1/2 pl-10">
           <div className="flex items-center space-x-3">
-            <img src="/images/logo-new.png" alt="Logo" className="w-10 h-10 object-contain" />
+            <img src="/images/logo.jpg" alt="Logo" className="w-10 h-10 object-contain" />
             <div>
               <h2 className="text-white text-xl font-bold">Digital Products</h2>
               <span className="text-blue-400 font-medium">Artisan</span>
