@@ -1,63 +1,62 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { useAuth } from '@/contexts/auth-context'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Toaster } from "@/components/ui/toaster"
-import { toast } from "sonner"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/auth-context";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export default function LoginPage() {
-  const { login } = useAuth()
-  const router = useRouter()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
+  const { login } = useAuth(); // ✅ use 'login' alias
+  const router = useRouter();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
     try {
-      await login(email, password)
-      toast('Login successful!')
-      router.push('/')
+      await login(email, password);
+      router.push("/dashboard");
     } catch (err: any) {
-      toast(`Login failed: ${err.message}`)
+      setError(err.message || "Failed to log in");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="max-w-md mx-auto mt-24 p-6 bg-white shadow rounded">
-      <h1 className="text-2xl font-semibold mb-4">Log In</h1>
+    <div className="container mx-auto px-4 py-8 max-w-md">
+      <h1 className="text-2xl font-bold mb-6">Login</h1>
+      {error && <p className="text-red-500 mb-4">{error}</p>}
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
-          type="email"
-          placeholder="Email address"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <Input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+          <Input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+          <Input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="********"
+          />
+        </div>
         <Button type="submit" disabled={loading} className="w-full">
-          {loading ? 'Logging in...' : 'Log In'}
+          {loading ? "Logging in..." : "Login"}
         </Button>
       </form>
-      <p className="text-sm mt-4">
-        Don't have an account?{' '}
-        <a href="/signup" className="text-blue-600 hover:underline">
-          Sign Up
-        </a>
-      </p>
-      <Toaster />
     </div>
-  )
+  );
 }
