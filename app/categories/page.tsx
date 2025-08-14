@@ -1,13 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { useEffect, useState } from 'react';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 interface Category {
   id: string;
@@ -18,8 +13,21 @@ interface Category {
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
+  const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
 
   useEffect(() => {
+    if (!supabase) {
+      const client = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+      setSupabase(client);
+    }
+  }, [supabase]);
+
+  useEffect(() => {
+    if (!supabase) return;
+
     async function fetchCategories() {
       const { data, error } = await supabase.from('categories').select('*');
       if (error) {
@@ -28,8 +36,9 @@ export default function CategoriesPage() {
         setCategories(data || []);
       }
     }
+
     fetchCategories();
-  }, []);
+  }, [supabase]);
 
   return (
     <main className="max-w-7xl mx-auto px-4 py-12">
