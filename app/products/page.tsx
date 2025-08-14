@@ -49,9 +49,9 @@ export default function ProductsPage() {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-      // DEBUG: check if env variables are present
-      console.log("Supabase URL set:", !!supabaseUrl);
-      console.log("Supabase Anon Key set:", !!supabaseAnonKey);
+      // DEBUG: confirm environment variables (without exposing keys)
+      console.log("Supabase URL present:", !!supabaseUrl);
+      console.log("Supabase Anon Key present:", !!supabaseAnonKey);
 
       if (!supabaseUrl || !supabaseAnonKey) {
         setError("Supabase configuration missing. Products cannot be loaded.");
@@ -63,8 +63,8 @@ export default function ProductsPage() {
       setLoading(true);
 
       try {
-        // Supabase v2 type args: from<TableName, RowType>
-        const { data, error } = await supabase.from<Product, Product>("products").select("*");
+        // Correct Supabase v2 syntax: from<TableName as string literal, RowType>
+        const { data, error } = await supabase.from<"products", Product>("products").select("*");
         if (error) throw error;
         if (!data || data.length === 0) {
           setError("No products available right now.");
@@ -124,7 +124,7 @@ export default function ProductsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* ...rest of your layout remains the same */}
+      {/* Header, Filters, Product Grid/List layout remains the same as before */}
     </div>
   );
 }
