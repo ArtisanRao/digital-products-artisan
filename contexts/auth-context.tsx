@@ -3,14 +3,17 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 
+// Updated User type with optional name
 type User = {
   id: string;
   email: string | null;
+  name?: string | null;
 };
 
 type AuthContextType = {
   user: User | null;
   loading: boolean;
+  login: (email: string, password: string) => Promise<void>;  // login alias
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -55,6 +58,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(false);
   };
 
+  // login is just an alias to signIn
+  const login = async (email: string, password: string) => {
+    await signIn(email, password);
+  };
+
   const signUp = async (email: string, password: string) => {
     setLoading(true);
     const { error } = await supabase.auth.signUp({ email, password });
@@ -71,7 +79,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, loading, login, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );
