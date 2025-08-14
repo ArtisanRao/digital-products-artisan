@@ -17,7 +17,7 @@ type AuthContextType = {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
-  logout: () => Promise<void>; // Added logout
+  logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -36,15 +36,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const supabase = getSupabaseClient();
 
+  // Helper to map Supabase user to our User type
+  const mapUser = (u: any): User => ({
+    id: u.id,
+    email: u.email ?? null,
+    name: u.user_metadata?.name ?? null,
+  });
+
   useEffect(() => {
     const session = supabase.auth.getSession();
     session.then(({ data }) => {
-      setUser(data.session?.user || null);
+      const supaUser = data.session?.user;
+      setUser(supaUser ? mapUser(supaUser) : null);
       setLoading(false);
     });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null);
+      const supaUser = session?.user;
+      setUser(supaUser ? mapUser(supaUser) : null);
     });
 
     return () => {
@@ -59,7 +68,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(false);
   };
 
-  // login is just an alias to signIn
   const login = async (email: string, password: string) => {
     await signIn(email, password);
   };
@@ -79,7 +87,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(false);
   };
 
-  // logout is simply an alias to signOut
   const logout = async () => {
     await signOut();
   };
@@ -90,4 +97,3 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     </AuthContext.Provider>
   );
 };
- 
