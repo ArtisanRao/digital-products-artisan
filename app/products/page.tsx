@@ -57,9 +57,10 @@ export default function ProductsPage() {
 
       const supabase = getSupabaseClient();
       setLoading(true);
+
       try {
-        // FIX: Supabase v2 expects 2 type arguments
-        const { data, error } = await supabase.from<Product, Product>("products").select("*");
+        // Supabase v2: from<TableName, RowType>
+        const { data, error } = await supabase.from<"products", Product>("products").select("*");
         if (error) throw error;
         if (!data || data.length === 0) {
           setError("No products available right now.");
@@ -75,6 +76,7 @@ export default function ProductsPage() {
         setLoading(false);
       }
     };
+
     fetchProducts();
   }, []);
 
@@ -106,12 +108,15 @@ export default function ProductsPage() {
   });
 
   if (loading) return <div className="p-8 text-center">Loading products...</div>;
-  if (error) return (
-    <div className="p-8 text-center text-red-500">
-      {error}
-      <div className="mt-4"><Button onClick={() => window.location.reload()}>Retry</Button></div>
-    </div>
-  );
+  if (error)
+    return (
+      <div className="p-8 text-center text-red-500">
+        {error}
+        <div className="mt-4">
+          <Button onClick={() => window.location.reload()}>Retry</Button>
+        </div>
+      </div>
+    );
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -198,7 +203,9 @@ export default function ProductsPage() {
               className="w-full px-3 py-2 border rounded"
             >
               {sortOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
               ))}
             </select>
           </div>
@@ -233,7 +240,13 @@ export default function ProductsPage() {
                   <CardContent>
                     <p className="text-gray-600">{product.description}</p>
                     {product.image_url && (
-                      <Image src={product.image_url} alt={product.name} width={300} height={200} className="mt-2 rounded" />
+                      <Image
+                        src={product.image_url}
+                        alt={product.name}
+                        width={300}
+                        height={200}
+                        className="mt-2 rounded"
+                      />
                     )}
                     <div className="flex flex-wrap gap-1 mt-2">
                       {product.tags?.map((tag) => (
