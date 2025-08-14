@@ -13,10 +13,11 @@ type User = {
 type AuthContextType = {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;  // login alias
+  login: (email: string, password: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  logout: () => Promise<void>; // Added logout
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -78,9 +79,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(false);
   };
 
+  // logout is simply an alias to signOut
+  const logout = async () => {
+    await signOut();
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, loading, login, signIn, signUp, signOut, logout }}>
       {children}
     </AuthContext.Provider>
   );
 };
+ 
