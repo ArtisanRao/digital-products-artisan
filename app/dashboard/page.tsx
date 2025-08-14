@@ -10,6 +10,13 @@ import { useAuth } from "@/contexts/auth-context"
 import Link from "next/link"
 import Image from "next/image"
 
+// Updated User type to include optional name
+interface User {
+  id: string
+  email: string
+  name?: string
+}
+
 interface Order {
   id: string
   date: string
@@ -33,7 +40,7 @@ interface Subscription {
 }
 
 export default function DashboardPage() {
-  const { user } = useAuth()
+  const { user } = useAuth() as { user: User | null } // Type assertion
   const [orders, setOrders] = useState<Order[]>([])
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
   const [stats, setStats] = useState({
@@ -102,7 +109,10 @@ export default function DashboardPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome back, {user.name}!</h1>
+        {/* Fallback to email if name is missing */}
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          Welcome back, {user.name || user.email}!
+        </h1>
         <p className="text-gray-600">Manage your orders, downloads, and subscriptions</p>
       </div>
 
@@ -166,6 +176,7 @@ export default function DashboardPage() {
           <TabsTrigger value="profile">Profile</TabsTrigger>
         </TabsList>
 
+        {/* Orders Tab */}
         <TabsContent value="orders" className="space-y-6">
           <Card>
             <CardHeader>
@@ -215,6 +226,7 @@ export default function DashboardPage() {
           </Card>
         </TabsContent>
 
+        {/* Downloads Tab */}
         <TabsContent value="downloads" className="space-y-6">
           <Card>
             <CardHeader>
@@ -249,6 +261,7 @@ export default function DashboardPage() {
           </Card>
         </TabsContent>
 
+        {/* Subscriptions Tab */}
         <TabsContent value="subscriptions" className="space-y-6">
           <Card>
             <CardHeader>
@@ -287,6 +300,7 @@ export default function DashboardPage() {
           </Card>
         </TabsContent>
 
+        {/* Profile Tab */}
         <TabsContent value="profile" className="space-y-6">
           <Card>
             <CardHeader>
@@ -296,7 +310,7 @@ export default function DashboardPage() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                  <p className="text-gray-900">{user.name}</p>
+                  <p className="text-gray-900">{user.name || user.email}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
