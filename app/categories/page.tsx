@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { useEffect, useState } from 'react';
+import { getSupabaseClient } from '@/lib/supabaseClient';
 
 interface Category {
   id: string;
@@ -11,37 +11,25 @@ interface Category {
   image_url: string;
 }
 
-// Safe Supabase client initialization
-function getSupabaseClient(): SupabaseClient {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!url || !anonKey) {
-    throw new Error(
-      'Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY'
-    );
-  }
-
-  return createClient(url, anonKey);
-}
-
-const supabase = getSupabaseClient();
-
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const supabase = getSupabaseClient();
+
     async function fetchCategories() {
       try {
-        const { data, error } = await supabase.from<Category>('categories').select('*');
+        const { data, error } = await supabase.from('categories').select('*');
         if (error) {
-          console.error('Supabase error:', error.message);
+          console.error(error);
+          setCategories([]);
         } else {
           setCategories(data || []);
         }
       } catch (err) {
-        console.error('Unexpected error:', err);
+        console.error(err);
+        setCategories([]);
       } finally {
         setLoading(false);
       }
@@ -50,13 +38,8 @@ export default function CategoriesPage() {
     fetchCategories();
   }, []);
 
-  if (loading) {
-    return <p className="text-center py-12">Loading categories...</p>;
-  }
-
-  if (categories.length === 0) {
-    return <p className="text-center py-12">No categories found.</p>;
-  }
+  if (loading) return <p className="text-center py-12">Loading categories…</p>;
+  if (!categories.length) return <p className="text-center py-12">No categories found.</p>;
 
   return (
     <main className="max-w-7xl mx-auto px-4 py-12">
