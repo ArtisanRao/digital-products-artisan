@@ -59,16 +59,13 @@ export default function ProductsPage() {
       setLoading(true);
 
       try {
-        // ✅ Correct Supabase v2 syntax: table name as string literal, row type as interface
         const { data, error } = await supabase.from<"products", Product>("products").select("*");
         if (error) throw error;
-
         if (!data || data.length === 0) {
           setError("No products available right now.");
           setProducts([]);
           return;
         }
-
         setProducts(data);
         setError(null);
       } catch (err: any) {
@@ -122,7 +119,84 @@ export default function ProductsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Header, Filters, Product Grid/List layout remains the same */}
+      {/* Filters and Search */}
+      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+        <input
+          type="text"
+          placeholder="Search products..."
+          className="border p-2 rounded w-full md:w-1/3"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+        <div className="flex gap-2">
+          {categories.map((cat) => (
+            <Button
+              key={cat}
+              variant={selectedCategory === cat ? "default" : "outline"}
+              onClick={() => setSelectedCategory(cat)}
+            >
+              {cat}
+            </Button>
+          ))}
+        </div>
+        <select
+          className="border p-2 rounded"
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+        >
+          {sortOptions.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+        <div className="flex gap-2">
+          <Button onClick={() => setViewMode("grid")} variant={viewMode === "grid" ? "default" : "outline"}>
+            <Grid size={18} />
+          </Button>
+          <Button onClick={() => setViewMode("list")} variant={viewMode === "list" ? "default" : "outline"}>
+            <List size={18} />
+          </Button>
+        </div>
+      </div>
+
+      {/* Products Grid/List */}
+      <div
+        className={
+          viewMode === "grid"
+            ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+            : "flex flex-col gap-4"
+        }
+      >
+        {sortedProducts.map((product) => (
+          <Card key={product.id} className={viewMode === "list" ? "flex gap-4 p-4" : ""}>
+            {product.image_url && (
+              <Image
+                src={product.image_url}
+                alt={product.name}
+                width={viewMode === "grid" ? 400 : 150}
+                height={viewMode === "grid" ? 250 : 150}
+                className="rounded object-cover"
+              />
+            )}
+            <CardHeader>
+              <CardTitle>{product.name}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm">{product.description}</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {product.tags?.map((tag) => (
+                  <Badge key={tag}>{tag}</Badge>
+                ))}
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-between items-center">
+              <span className="font-bold">${product.price.toFixed(2)}</span>
+              <Button>Add to Cart</Button>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
