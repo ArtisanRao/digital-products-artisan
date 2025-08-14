@@ -58,7 +58,8 @@ export default function ProductsPage() {
       const supabase = getSupabaseClient();
       setLoading(true);
       try {
-        const { data, error } = await supabase.from<Product>("products").select("*");
+        // FIX: Supabase v2 expects 2 type arguments
+        const { data, error } = await supabase.from<Product, Product>("products").select("*");
         if (error) throw error;
         if (!data || data.length === 0) {
           setError("No products available right now.");
