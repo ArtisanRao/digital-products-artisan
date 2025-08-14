@@ -11,34 +11,52 @@ interface Category {
   image_url: string;
 }
 
+// Safe Supabase client initialization
+function getSupabaseClient(): SupabaseClient {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || !anonKey) {
+    throw new Error(
+      'Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY'
+    );
+  }
+
+  return createClient(url, anonKey);
+}
+
+const supabase = getSupabaseClient();
+
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!supabase) {
-      const client = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      );
-      setSupabase(client);
-    }
-  }, [supabase]);
-
-  useEffect(() => {
-    if (!supabase) return;
-
     async function fetchCategories() {
-      const { data, error } = await supabase.from('categories').select('*');
-      if (error) {
-        console.error(error);
-      } else {
-        setCategories(data || []);
+      try {
+        const { data, error } = await supabase.from<Category>('categories').select('*');
+        if (error) {
+          console.error('Supabase error:', error.message);
+        } else {
+          setCategories(data || []);
+        }
+      } catch (err) {
+        console.error('Unexpected error:', err);
+      } finally {
+        setLoading(false);
       }
     }
 
     fetchCategories();
-  }, [supabase]);
+  }, []);
+
+  if (loading) {
+    return <p className="text-center py-12">Loading categories...</p>;
+  }
+
+  if (categories.length === 0) {
+    return <p className="text-center py-12">No categories found.</p>;
+  }
 
   return (
     <main className="max-w-7xl mx-auto px-4 py-12">
