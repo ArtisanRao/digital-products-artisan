@@ -49,10 +49,6 @@ export default function ProductsPage() {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-      // DEBUG: confirm environment variables (without exposing keys)
-      console.log("Supabase URL present:", !!supabaseUrl);
-      console.log("Supabase Anon Key present:", !!supabaseAnonKey);
-
       if (!supabaseUrl || !supabaseAnonKey) {
         setError("Supabase configuration missing. Products cannot be loaded.");
         setLoading(false);
@@ -63,14 +59,16 @@ export default function ProductsPage() {
       setLoading(true);
 
       try {
-        // Correct Supabase v2 syntax: from<TableName as string literal, RowType>
+        // ✅ Correct Supabase v2 syntax: table name as string literal, row type as interface
         const { data, error } = await supabase.from<"products", Product>("products").select("*");
         if (error) throw error;
+
         if (!data || data.length === 0) {
           setError("No products available right now.");
           setProducts([]);
           return;
         }
+
         setProducts(data);
         setError(null);
       } catch (err: any) {
@@ -124,7 +122,7 @@ export default function ProductsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Header, Filters, Product Grid/List layout remains the same as before */}
+      {/* Header, Filters, Product Grid/List layout remains the same */}
     </div>
   );
 }
