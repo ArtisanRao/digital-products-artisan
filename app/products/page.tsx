@@ -3,29 +3,27 @@
 import { useEffect, useState } from 'react';
 import { getSupabaseClient } from '@/lib/supabaseClient';
 
-const supabase = getSupabaseClient();
-
-async function getProducts() {
-  try {
-    const { data, error } = await supabase.from('products').select('*');
-    if (error) throw error;
-    return data;
-  } catch (err: any) {
-    console.error('Unexpected error fetching products:', err);
-    throw err;
-  }
-}
-
 export default function ProductsPage() {
   const [products, setProducts] = useState<any[]>([]);
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    getProducts()
-      .then((data) => setProducts(data || []))
-      .catch((err) => setError(err.message || 'Unknown error'))
-      .finally(() => setLoading(false));
+    const supabase = getSupabaseClient(); // get the safe client
+    async function fetchProducts() {
+      try {
+        const { data, error } = await supabase.from('products').select('*');
+        if (error) throw error;
+        setProducts(data || []);
+      } catch (err: any) {
+        console.error('Error fetching products:', err);
+        setError(err.message || 'Unknown error');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchProducts();
   }, []);
 
   if (loading) return <div>Loading products...</div>;
