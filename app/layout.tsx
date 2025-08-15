@@ -8,6 +8,7 @@ import { CartProvider } from "@/contexts/cart-context";
 import { AuthProvider } from "@/contexts/auth-context";
 import { Toaster } from "@/components/ui/toaster";
 import LiveChat from "@/components/live-chat";
+import Script from "next/script";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -71,10 +72,10 @@ export default function RootLayout({
         <link rel="icon" type="image/png" sizes="192x192" href="/icon1.png" />
         <link rel="icon" type="image/svg+xml" href="/icon0.svg" />
 
-        {/* Snipcart stylesheet (updated to v3.6.0) */}
+        {/* Snipcart stylesheet (latest v3.7.1) */}
         <link
           rel="stylesheet"
-          href="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.css"
+          href="https://cdn.snipcart.com/themes/v3.7.1/default/snipcart.css"
         />
       </head>
       <body className={inter.className}>
@@ -86,29 +87,28 @@ export default function RootLayout({
             <LiveChat />
             <Toaster />
 
-            {/* Snipcart script (updated to v3.6.0) */}
-            <script
-              async
-              src="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.js"
-            ></script>
-
-            {/* Snipcart configuration */}
+            {/* Snipcart container with ENV key */}
             <div
               hidden
               id="snipcart"
-              data-api-key="ZDgyODMyODgtMzdhZC00ZTI0LTkzZTUtYjRhMTM0MDg4ODM2NjM4ODg4NTc5NTI0NTk5MjQ4"
+              data-api-key={process.env.NEXT_PUBLIC_SNIPCART_API_KEY}
               data-config-modal-style="side"
             ></div>
 
-            {/* Console checks for env vars */}
-            <script
-              dangerouslySetInnerHTML={{
-                __html: `
-                  console.log("ENV URL:", "${process.env.NEXT_PUBLIC_SUPABASE_URL}");
-                  console.log("ENV KEY:", "${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Loaded" : "Missing"}");
-                `,
-              }}
+            {/* Load Snipcart JS after page is interactive */}
+            <Script
+              src="https://cdn.snipcart.com/themes/v3.7.1/default/snipcart.js"
+              strategy="afterInteractive"
             />
+
+            {/* Console checks for ENV variables */}
+            <Script id="env-checks" strategy="afterInteractive">
+              {`
+                console.log("ENV SUPABASE URL:", "${process.env.NEXT_PUBLIC_SUPABASE_URL}");
+                console.log("ENV SUPABASE KEY:", "${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Loaded" : "Missing"}");
+                console.log("ENV SNIPCART API KEY:", "${process.env.NEXT_PUBLIC_SNIPCART_API_KEY ? "Loaded" : "Missing"}");
+              `}
+            </Script>
           </CartProvider>
         </AuthProvider>
       </body>
