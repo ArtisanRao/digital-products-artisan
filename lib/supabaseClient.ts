@@ -4,29 +4,29 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 let supabase: SupabaseClient | null = null;
 
+/**
+ * Returns a singleton Supabase client.
+ * Logs env vars (URL fully, anon key masked) for debugging.
+ */
 export function getSupabaseClient(): SupabaseClient {
   if (supabase) return supabase;
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  // Debug log (masked for safety)
-  console.log('[Supabase Init] URL:', url || '(undefined)');
+  console.log("Supabase URL:", url || "MISSING");
   console.log(
-    '[Supabase Init] Anon Key:',
-    anonKey ? anonKey.substring(0, 6) + '...' : '(undefined)'
+    "Supabase Anon Key:",
+    anonKey ? anonKey.substring(0, 4) + "...[hidden]" : "MISSING"
   );
 
   if (!url || !anonKey) {
-    const msg = `❌ Supabase configuration missing.
-      NEXT_PUBLIC_SUPABASE_URL: ${url || '(undefined)'}
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${anonKey ? '(set)' : '(undefined)'}
-    `;
     if (process.env.NODE_ENV === 'production') {
-      throw new Error(msg);
+      throw new Error(
+        'Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables!'
+      );
     } else {
-      console.warn(msg);
-      console.warn('⚠️ Using fallback Supabase credentials for local development.');
+      console.warn('Using hardcoded Supabase credentials for local development');
     }
   }
 
