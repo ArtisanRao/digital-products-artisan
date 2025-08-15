@@ -1,6 +1,7 @@
 'use client'
 
 import { Suspense } from "react"
+import Head from "next/head"
 import HeroSection from "@/components/hero-section"
 import FeaturedProducts from "@/components/featured-products"
 import ProductCategories from "@/components/product-categories"
@@ -16,31 +17,25 @@ import { Toaster } from "@/components/ui/toaster"
 import LiveChat from "@/components/live-chat"
 import Script from "next/script"
 
-export const metadata = {
-  title: "Digital Products Artisan | Premium Digital Downloads",
-  description: "Instantly download ebooks, templates, graphics, and more — created for creators.",
-  openGraph: {
-    title: "Digital Products Artisan",
-    description: "Premium digital downloads. Instant access. No fluff.",
-    url: "https://digitalproductsartisan.com",
-    siteName: "Digital Products Artisan",
-    images: [
-      { url: "/images/logo.png", width: 1200, height: 630, alt: "Digital Products Artisan" },
-    ],
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Digital Products Artisan",
-    description: "High-quality digital downloads at your fingertips.",
-    images: ["/images/logo.png"],
-  },
-}
-
 export default function HomePage() {
   return (
     <AuthProvider>
       <CartProvider>
+        <Head>
+          <title>Digital Products Artisan | Premium Digital Downloads</title>
+          <meta name="description" content="Instantly download ebooks, templates, graphics, and more — created for creators." />
+          <meta property="og:title" content="Digital Products Artisan" />
+          <meta property="og:description" content="Premium digital downloads. Instant access. No fluff." />
+          <meta property="og:url" content="https://digitalproductsartisan.com" />
+          <meta property="og:site_name" content="Digital Products Artisan" />
+          <meta property="og:type" content="website" />
+          <meta property="og:image" content="/images/logo.png" />
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:title" content="Digital Products Artisan" />
+          <meta name="twitter:description" content="High-quality digital downloads at your fingertips." />
+          <meta name="twitter:image" content="/images/logo.png" />
+        </Head>
+
         <main className="min-h-screen">
           {/* Set exact spacing of 1cm between header and hero */}
           <div className="mt-[38px]">
