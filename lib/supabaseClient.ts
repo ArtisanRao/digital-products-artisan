@@ -4,24 +4,29 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 let supabase: SupabaseClient | null = null;
 
-/**
- * Returns a singleton Supabase client.
- * Throws in production if env vars are missing.
- * Falls back to hardcoded credentials in local development (optional).
- */
 export function getSupabaseClient(): SupabaseClient {
   if (supabase) return supabase;
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+  // Debug log (masked for safety)
+  console.log('[Supabase Init] URL:', url || '(undefined)');
+  console.log(
+    '[Supabase Init] Anon Key:',
+    anonKey ? anonKey.substring(0, 6) + '...' : '(undefined)'
+  );
+
   if (!url || !anonKey) {
+    const msg = `❌ Supabase configuration missing.
+      NEXT_PUBLIC_SUPABASE_URL: ${url || '(undefined)'}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${anonKey ? '(set)' : '(undefined)'}
+    `;
     if (process.env.NODE_ENV === 'production') {
-      throw new Error(
-        'Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables!'
-      );
+      throw new Error(msg);
     } else {
-      console.warn('Using hardcoded Supabase credentials for local development');
+      console.warn(msg);
+      console.warn('⚠️ Using fallback Supabase credentials for local development.');
     }
   }
 
