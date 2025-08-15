@@ -6,7 +6,7 @@ let supabase: SupabaseClient | null = null;
 
 /**
  * Returns a singleton Supabase client.
- * Logs env vars (URL fully, anon key masked) for debugging.
+ * Throws an error if environment variables are missing in production.
  */
 export function getSupabaseClient(): SupabaseClient {
   if (supabase) return supabase;
@@ -26,14 +26,15 @@ export function getSupabaseClient(): SupabaseClient {
         'Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables!'
       );
     } else {
-      console.warn('Using hardcoded Supabase credentials for local development');
+      console.warn(
+        'Supabase env variables missing. Using fallback values for local development.'
+      );
     }
   }
 
   supabase = createClient(
-    url || 'https://lwcrabjetfsxncfygtvq.supabase.co',
-    anonKey ||
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx3Y3JhYmpldGZzeG5jZnlndHZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0NzYyOTIsImV4cCI6MjA3MDA1MjI5Mn0.04V_2Egctqf4-BbO8ZX4ITADarEpQVcl7Ow1zD5poqs'
+    url || '', // fallback to empty string to avoid using hardcoded key
+    anonKey || ''
   );
 
   return supabase;

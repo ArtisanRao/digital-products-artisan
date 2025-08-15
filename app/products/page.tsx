@@ -1,27 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
-
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-// Fetch products from Supabase
-async function getProducts() {
-  try {
-    const { data, error } = await supabase.from('products').select('*');
-    if (error) {
-      console.error('Supabase error:', error);
-      throw error;
-    }
-    return data;
-  } catch (err) {
-    console.error('Unexpected error fetching products:', err);
-    throw err;
-  }
-}
+import { supabase } from '@/lib/supabaseClient'; // Import the safe client
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -29,12 +9,23 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getProducts()
-      .then((data) => {
+    async function fetchProducts() {
+      try {
+        const { data, error } = await supabase.from('products').select('*');
+        if (error) {
+          console.error('Supabase error:', error);
+          throw error;
+        }
         setProducts(data || []);
-      })
-      .catch((err) => setError(err.message || 'Unknown error'))
-      .finally(() => setLoading(false));
+      } catch (err: any) {
+        console.error('Unexpected error fetching products:', err);
+        setError(err.message || 'Unknown error');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchProducts();
   }, []);
 
   if (loading) return <div>Loading products...</div>;
