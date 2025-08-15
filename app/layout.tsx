@@ -71,10 +71,10 @@ export default function RootLayout({
         <link rel="icon" type="image/png" sizes="192x192" href="/icon1.png" />
         <link rel="icon" type="image/svg+xml" href="/icon0.svg" />
 
-        {/* Snipcart stylesheet */}
+        {/* Snipcart stylesheet (updated to v3.6.0) */}
         <link
           rel="stylesheet"
-          href="https://cdn.snipcart.com/themes/v3.4.1/default/snipcart.css"
+          href="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.css"
         />
       </head>
       <body className={inter.className}>
@@ -86,17 +86,29 @@ export default function RootLayout({
             <LiveChat />
             <Toaster />
 
-            {/* Snipcart script and config */}
+            {/* Snipcart script (updated to v3.6.0) */}
             <script
               async
-              src="https://cdn.snipcart.com/themes/v3.4.1/default/snipcart.js"
+              src="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.js"
             ></script>
+
+            {/* Snipcart configuration */}
             <div
               hidden
               id="snipcart"
               data-api-key="ZDgyODMyODgtMzdhZC00ZTI0LTkzZTUtYjRhMTM0MDg4ODM2NjM4ODg4NTc5NTI0NTk5MjQ4"
               data-config-modal-style="side"
             ></div>
+
+            {/* Console checks for env vars */}
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `
+                  console.log("ENV URL:", "${process.env.NEXT_PUBLIC_SUPABASE_URL}");
+                  console.log("ENV KEY:", "${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Loaded" : "Missing"}");
+                `,
+              }}
+            />
           </CartProvider>
         </AuthProvider>
       </body>
