@@ -1,18 +1,42 @@
 // app/products/daily-productivity-planner/page.tsx
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
+import { Dialog, DialogContent } from "@radix-ui/react-dialog";
 
 const previews = [
   {
     alt: "Daily Productivity Planner — Cover",
     src: "/images/daily-productivity-planner/cover.webp",
     thumb: "/images/daily-productivity-planner/thumbs/cover_thumb.webp",
-    w: 1600,
-    h: 2070, // safe ratio; Next will autosize fine if unknown
+  },
+  {
+    alt: "Daily Page Layout",
+    src: "/images/daily-productivity-planner/daily.webp",
+    thumb: "/images/daily-productivity-planner/thumbs/daily_thumb.webp",
+  },
+  {
+    alt: "Weekly Overview",
+    src: "/images/daily-productivity-planner/weekly.webp",
+    thumb: "/images/daily-productivity-planner/thumbs/weekly_thumb.webp",
+  },
+  {
+    alt: "Monthly Overview",
+    src: "/images/daily-productivity-planner/monthly.webp",
+    thumb: "/images/daily-productivity-planner/thumbs/monthly_thumb.webp",
+  },
+  {
+    alt: "Habit Tracker & Notes",
+    src: "/images/daily-productivity-planner/habits_notes.webp",
+    thumb: "/images/daily-productivity-planner/thumbs/habits_notes_thumb.webp",
   },
 ];
 
 export default function PlannerLanding() {
+  const [selected, setSelected] = useState<typeof previews[0] | null>(null);
+
   return (
     <main className="min-h-screen bg-white">
       {/* Hero */}
@@ -61,7 +85,7 @@ export default function PlannerLanding() {
           </ul>
         </div>
 
-        {/* Hero preview sheet (single image for speed) */}
+        {/* Hero preview sheet */}
         <div className="relative aspect-[4/3] rounded-2xl border border-gray-200 bg-teal-50/40 p-3">
           <Image
             src="/images/daily-productivity-planner/planner_preview_sheet.webp"
@@ -75,19 +99,20 @@ export default function PlannerLanding() {
       </section>
 
       {/* Preview Gallery */}
-      <section id="preview" className="mx-auto max-w-6xl px-4 sm:px-6 pb-20">
+      <section id="preview" className="mx-auto max-w-6xl px-4 sm:px-6 pb-16">
         <h2 className="text-2xl font-semibold text-gray-900">Inside the planner</h2>
         <p className="mt-2 text-gray-600">
           Optimized previews (WebP + lazy-loading) keep this page fast.
+          Click an image to enlarge it.
         </p>
 
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {previews.map((p) => (
-            <figure
+            <button
               key={p.src}
-              className="group overflow-hidden rounded-2xl border border-gray-200 bg-white"
+              onClick={() => setSelected(p)}
+              className="group overflow-hidden rounded-2xl border border-gray-200 bg-white focus:outline-none"
             >
-              {/* Use thumb as placeholder via blur-up technique */}
               <div className="relative aspect-[4/5]">
                 <Image
                   src={p.src}
@@ -97,13 +122,24 @@ export default function PlannerLanding() {
                   loading="lazy"
                   placeholder="blur"
                   blurDataURL={p.thumb}
-                  className="object-contain"
+                  className="object-contain transition group-hover:scale-105"
                 />
               </div>
               <figcaption className="px-4 py-3 text-sm text-gray-600">{p.alt}</figcaption>
-            </figure>
+            </button>
           ))}
         </div>
+      </section>
+
+      {/* Features */}
+      <section className="mx-auto max-w-6xl px-4 sm:px-6 py-12">
+        <h2 className="text-2xl font-semibold text-gray-900">What’s Inside</h2>
+        <ul className="mt-6 space-y-3 text-gray-700 text-lg">
+          <li>✅ Guided daily pages (priorities, tasks, notes)</li>
+          <li>✅ Weekly & monthly overviews</li>
+          <li>✅ Productivity tips & motivational quotes</li>
+          <li>✅ Bonus: Fillable digital version included at the end</li>
+        </ul>
       </section>
 
       {/* CTA */}
@@ -126,6 +162,22 @@ export default function PlannerLanding() {
           </div>
         </div>
       </section>
+
+      {/* Lightbox / Dialog */}
+      {selected && (
+        <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
+          <DialogContent className="fixed inset-0 flex items-center justify-center bg-black/80 p-4">
+            <div className="relative max-w-3xl w-full aspect-[3/4]">
+              <Image
+                src={selected.src}
+                alt={selected.alt}
+                fill
+                className="object-contain rounded-xl"
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </main>
   );
 }
