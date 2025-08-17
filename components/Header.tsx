@@ -15,7 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import Logo from '@/components/Logo'
+import Logo from '@/components/logo'
 
 export default function Header() {
   const router = useRouter()
