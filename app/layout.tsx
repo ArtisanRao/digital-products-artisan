@@ -1,3 +1,4 @@
+// app/layout.tsx
 import type React from "react";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
@@ -8,34 +9,32 @@ import { CartProvider } from "@/contexts/cart-context";
 import { AuthProvider } from "@/contexts/auth-context";
 import { Toaster } from "@/components/ui/toaster";
 import LiveChat from "@/components/live-chat";
+import dynamic from "next/dynamic";
 
 const inter = Inter({ subsets: ["latin"] });
 
+// Metadata for global layout
 export const metadata: Metadata = {
-  title: "InnovateSphere - Digital Solutions for Tomorrow's World",
+  title: "Digital Products Artisan | Premium Digital Downloads",
   description:
-    "Discover cutting-edge digital solutions—software, templates, and resources to power your innovation. Instant access, limitless potential.",
+    "Instantly download ebooks, templates, graphics, and more — created for creators.",
   keywords:
-    "digital solutions, software, templates, AI tools, digital downloads, innovation resources",
-  authors: [{ name: "InnovateSphere" }],
+    "digital downloads, ebooks, templates, graphics, creative resources",
+  authors: [{ name: "Digital Products Artisan" }],
   openGraph: {
-    title: "InnovateSphere - Digital Solutions",
-    description:
-      "Empowering innovation with a curated collection of digital tools for creators and entrepreneurs.",
+    title: "Digital Products Artisan",
+    description: "Premium digital downloads. Instant access. No fluff.",
     type: "website",
     locale: "en_US",
     url: "https://digitalproductsartisan.com",
-    siteName: "InnovateSphere",
+    siteName: "Digital Products Artisan",
   },
   twitter: {
     card: "summary_large_image",
-    title: "InnovateSphere",
-    description: "Digital solutions for creators and entrepreneurs",
+    title: "Digital Products Artisan",
+    description: "High-quality digital downloads at your fingertips.",
   },
-  robots: {
-    index: true,
-    follow: true,
-  },
+  robots: { index: true, follow: true },
   generator: "v0.dev",
   manifest: "/manifest.json",
   icons: {
@@ -48,11 +47,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+// Dynamically load Snipcart client loader
+const SnipcartLoader = dynamic(
+  () => import("@/components/SnipcartLoader"),
+  { ssr: false }
+);
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
@@ -62,8 +63,8 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="application-name" content="InnovateSphere" />
-        <meta name="apple-mobile-web-app-title" content="InnovateSphere" />
+        <meta name="application-name" content="Digital Products Artisan" />
+        <meta name="apple-mobile-web-app-title" content="Digital Products Artisan" />
 
         {/* Favicons */}
         <link rel="icon" href="/favicon.ico" />
@@ -81,12 +82,17 @@ export default function RootLayout({
         <AuthProvider>
           <CartProvider>
             <Header />
+
+            {/* Snipcart client loader */}
+            <SnipcartLoader />
+
             {children}
+
             <Footer />
             <LiveChat />
             <Toaster />
 
-            {/* Snipcart script and config */}
+            {/* Snipcart script and container */}
             <script
               async
               src="https://cdn.snipcart.com/themes/v3.4.1/default/snipcart.js"
