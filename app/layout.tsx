@@ -1,4 +1,3 @@
-// app/layout.tsx
 import type React from "react";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
@@ -50,6 +49,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
+        {/* Web manifest and PWA */}
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#ffffff" />
         <meta name="mobile-web-app-capable" content="yes" />
@@ -58,11 +58,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="application-name" content="Digital Products Artisan" />
         <meta name="apple-mobile-web-app-title" content="Digital Products Artisan" />
 
+        {/* Favicons */}
         <link rel="icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon.png" />
         <link rel="icon" type="image/png" sizes="192x192" href="/icon1.png" />
         <link rel="icon" type="image/svg+xml" href="/icon0.svg" />
 
+        {/* Snipcart CSS */}
         <link
           rel="stylesheet"
           href="https://cdn.snipcart.com/themes/v3.4.1/default/snipcart.css"
@@ -73,7 +75,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <CartProvider>
             <Header />
 
-            {/* Snipcart client loader */}
+            {/* Snipcart loader handles script & container internally */}
             <SnipcartLoaderClient />
 
             {children}
@@ -81,18 +83,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Footer />
             <LiveChat />
             <Toaster />
-
-            {/* Snipcart script and container */}
-            <script
-              async
-              src="https://cdn.snipcart.com/themes/v3.4.1/default/snipcart.js"
-            ></script>
-            <div
-              hidden
-              id="snipcart"
-              data-api-key="ZDgyODMyODgtMzdhZC00ZTI0LTkzZTUtYjRhMTM0MDg4ODM2NjM4ODg4NTc5NTI0NTk5MjQ4"
-              data-config-modal-style="side"
-            ></div>
           </CartProvider>
         </AuthProvider>
       </body>
