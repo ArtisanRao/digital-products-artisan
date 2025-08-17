@@ -1,3 +1,4 @@
+// app/layout.tsx
 import type React from "react";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
@@ -12,7 +13,6 @@ import SnipcartLoaderClient from "@/components/SnipcartLoaderClient"; // ✅ cli
 
 const inter = Inter({ subsets: ["latin"] });
 
-// Metadata for global layout
 export const metadata: Metadata = {
   title: "Digital Products Artisan | Premium Digital Downloads",
   description:
