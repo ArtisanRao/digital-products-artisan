@@ -19,7 +19,7 @@ export const metadata = {
     siteName: "Digital Products Artisan",
     images: [
       {
-        url: "/images/logo.png",
+        url: "/images/logo-new.png",
         width: 1200,
         height: 630,
         alt: "Digital Products Artisan",
