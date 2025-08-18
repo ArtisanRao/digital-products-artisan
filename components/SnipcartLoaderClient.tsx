@@ -6,7 +6,7 @@ interface SnipcartLoaderClientProps {
   apiKey: string;
 }
 
-// Extend Window interface
+// TypeScript fix for window.SnipcartSettings
 declare global {
   interface Window {
     SnipcartSettings?: {
@@ -22,13 +22,12 @@ export default function SnipcartLoaderClient({ apiKey }: SnipcartLoaderClientPro
     if (!window.SnipcartSettings) {
       window.SnipcartSettings = {
         publicApiKey: apiKey,
-        loadStrategy: "on-user-interaction", // optional: "on-user-interaction" or "immediate"
+        loadStrategy: "on-user-interaction", // optional: "immediate"
       };
     }
 
     // Inject Snipcart script
-    const existingScript = document.getElementById("snipcart-js");
-    if (!existingScript) {
+    if (!document.getElementById("snipcart-js")) {
       const script = document.createElement("script");
       script.id = "snipcart-js";
       script.src = "https://cdn.snipcart.com/themes/v3.4.1/default/snipcart.js";
@@ -37,9 +36,8 @@ export default function SnipcartLoaderClient({ apiKey }: SnipcartLoaderClientPro
     }
 
     // Inject Snipcart container
-    let container = document.getElementById("snipcart");
-    if (!container) {
-      container = document.createElement("div");
+    if (!document.getElementById("snipcart")) {
+      const container = document.createElement("div");
       container.id = "snipcart";
       container.setAttribute("hidden", "true");
       document.body.appendChild(container);
