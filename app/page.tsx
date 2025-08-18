@@ -1,13 +1,13 @@
-import { Suspense } from "react"
-import HeroSection from "@/components/hero-section"
-import FeaturedProducts from "@/components/featured-products"
-import ProductCategories from "@/components/product-categories"
-import AboutSection from "@/components/about-section"
-import TestimonialsSection from "@/components/testimonials-section"
-import NewsletterSection from "@/components/newsletter-section"
-import FAQSection from "@/components/faq-section"
-import LoadingSpinner from "@/components/loading-spinner"
-import BackToTopButton from "@/components/BackToTopButton"
+import { Suspense } from "react";
+import HeroSection from "@/components/hero-section";
+import FeaturedProducts from "@/components/featured-products";
+import ProductCategories from "@/components/product-categories";
+import AboutSection from "@/components/about-section";
+import TestimonialsSection from "@/components/testimonials-section";
+import NewsletterSection from "@/components/newsletter-section";
+import FAQSection from "@/components/faq-section";
+import LoadingSpinner from "@/components/loading-spinner";
+import BackToTopButton from "@/components/BackToTopButton";
 
 export const metadata = {
   title: "Digital Products Artisan | Premium Digital Downloads",
@@ -33,12 +33,12 @@ export const metadata = {
     description: "High-quality digital downloads at your fingertips.",
     images: ["/images/logo.png"],
   },
-}
+};
 
 export default function HomePage() {
   return (
     <main className="min-h-screen">
-      {/* Set exact spacing of 1cm between header and hero */}
+      {/* Header spacing */}
       <div className="mt-[38px]">
         <HeroSection />
       </div>
@@ -46,6 +46,7 @@ export default function HomePage() {
       <Suspense fallback={<LoadingSpinner />}>
         <FeaturedProducts />
       </Suspense>
+
       <ProductCategories />
       <AboutSection />
       <TestimonialsSection />
@@ -65,5 +66,5 @@ export default function HomePage() {
 
       <BackToTopButton />
     </main>
-  )
+  );
 }

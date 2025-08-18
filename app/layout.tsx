@@ -8,7 +8,7 @@ import { CartProvider } from "@/contexts/cart-context";
 import { AuthProvider } from "@/contexts/auth-context";
 import { Toaster } from "@/components/ui/toaster";
 import LiveChat from "@/components/live-chat";
-import SnipcartLoaderClient from "@/components/SnipcartLoaderClient"; // ✅ client component
+import { useEffect } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -45,6 +45,34 @@ export const metadata: Metadata = {
   },
 };
 
+// Snipcart loader directly integrated
+function SnipcartLoader() {
+  useEffect(() => {
+    // Create Snipcart div if not present
+    if (!document.getElementById("snipcart")) {
+      const snipcartDiv = document.createElement("div");
+      snipcartDiv.id = "snipcart";
+      snipcartDiv.setAttribute(
+        "data-api-key",
+        "ZDgyODMyODgtMzdhZC00ZTI0LTkzZTUtYjRhMTM0MDg4ODM2NjM4ODg4NTc5NTI0NTk5MjQ4"
+      ); // <-- your live key
+      snipcartDiv.hidden = true;
+      document.body.appendChild(snipcartDiv);
+    }
+
+    // Load Snipcart script if not already loaded
+    if (!document.getElementById("snipcart-script")) {
+      const script = document.createElement("script");
+      script.id = "snipcart-script";
+      script.src = "https://cdn.snipcart.com/themes/v3.4.1/default/snipcart.js";
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  }, []);
+
+  return null;
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
@@ -75,8 +103,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <CartProvider>
             <Header />
 
-            {/* Snipcart loader handles script & container internally */}
-            <SnipcartLoaderClient />
+            {/* Snipcart loader */}
+            <SnipcartLoader />
 
             {children}
 
