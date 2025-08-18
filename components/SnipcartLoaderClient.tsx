@@ -2,29 +2,32 @@
 
 import { useEffect } from "react";
 
-export default function SnipcartLoaderClient() {
-  useEffect(() => {
-    // Create the Snipcart container div if it doesn't exist
-    if (!document.getElementById("snipcart")) {
-      const snipcartDiv = document.createElement("div");
-      snipcartDiv.id = "snipcart";
-      snipcartDiv.setAttribute(
-        "data-api-key",
-        "ZDgyODMyODgtMzdhZC00ZTI0LTkzZTUtYjRhMTM0MDg4ODM2NjM4ODg4NTc5NTI0NTk5MjQ4"
-      ); // <-- your live public API key
-      snipcartDiv.hidden = true;
-      document.body.appendChild(snipcartDiv);
-    }
+interface SnipcartLoaderClientProps {
+  apiKey: string;
+}
 
-    // Load Snipcart script dynamically if not already loaded
-    if (!document.getElementById("snipcart-script")) {
+export default function SnipcartLoaderClient({ apiKey }: SnipcartLoaderClientProps) {
+  useEffect(() => {
+    // Inject Snipcart script
+    const existingScript = document.getElementById("snipcart-js");
+    if (!existingScript) {
       const script = document.createElement("script");
-      script.id = "snipcart-script";
+      script.id = "snipcart-js";
       script.src = "https://cdn.snipcart.com/themes/v3.4.1/default/snipcart.js";
       script.async = true;
       document.body.appendChild(script);
     }
-  }, []);
+
+    // Inject Snipcart container
+    let container = document.getElementById("snipcart");
+    if (!container) {
+      container = document.createElement("div");
+      container.id = "snipcart";
+      container.setAttribute("data-api-key", apiKey);
+      container.setAttribute("hidden", "true");
+      document.body.appendChild(container);
+    }
+  }, [apiKey]);
 
   return null;
 }

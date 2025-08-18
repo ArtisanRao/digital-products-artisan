@@ -1,3 +1,5 @@
+"use client"; // <-- Required for useEffect and Snipcart loader
+
 import type React from "react";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
@@ -45,7 +47,7 @@ export const metadata: Metadata = {
   },
 };
 
-// Snipcart loader directly integrated
+// Snipcart loader integrated as client effect
 function SnipcartLoader() {
   useEffect(() => {
     // Create Snipcart div if not present
@@ -55,7 +57,7 @@ function SnipcartLoader() {
       snipcartDiv.setAttribute(
         "data-api-key",
         "ZDgyODMyODgtMzdhZC00ZTI0LTkzZTUtYjRhMTM0MDg4ODM2NjM4ODg4NTc5NTI0NTk5MjQ4"
-      ); // <-- your live key
+      );
       snipcartDiv.hidden = true;
       document.body.appendChild(snipcartDiv);
     }

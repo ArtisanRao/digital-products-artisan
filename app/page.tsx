@@ -1,3 +1,5 @@
+"use client"; // Ensure Snipcart buttons work
+
 import { Suspense } from "react";
 import HeroSection from "@/components/hero-section";
 import FeaturedProducts from "@/components/featured-products";
@@ -38,7 +40,7 @@ export const metadata = {
 export default function HomePage() {
   return (
     <main className="min-h-screen">
-      {/* Header spacing */}
+      {/* Hero Section */}
       <div className="mt-[38px]">
         <HeroSection />
       </div>
@@ -47,7 +49,33 @@ export default function HomePage() {
         <FeaturedProducts />
       </Suspense>
 
+      {/* Product Categories */}
       <ProductCategories />
+
+      {/* Example Snipcart Product */}
+      <section className="my-12 text-center">
+        <h2 className="text-2xl font-semibold mb-6">Sample Product</h2>
+        <div className="inline-block border rounded-lg p-6 shadow-lg">
+          <img
+            src="/images/ebooks-cover.jpg"
+            alt="Sample eBook"
+            className="w-48 h-48 mx-auto mb-4 object-cover"
+          />
+          <h3 className="text-lg font-medium mb-2">Mastering Digital Art</h3>
+          <p className="mb-4 text-gray-600">A complete guide to creating stunning digital art.</p>
+          <button
+            className="snipcart-add-item bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
+            data-item-id="sample-ebook-1"
+            data-item-name="Mastering Digital Art"
+            data-item-price="19.99"
+            data-item-url="/"
+            data-item-description="A complete guide to creating stunning digital art."
+          >
+            Buy Now - $19.99
+          </button>
+        </div>
+      </section>
+
       <AboutSection />
       <TestimonialsSection />
       <FAQSection />
