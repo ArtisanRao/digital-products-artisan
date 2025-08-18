@@ -1,7 +1,5 @@
-"use client"; // <-- Required for useEffect and Snipcart loader
+"use client"; // This is a client component
 
-import type React from "react";
-import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
@@ -14,43 +12,9 @@ import { useEffect } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export const metadata: Metadata = {
-  title: "Digital Products Artisan | Premium Digital Downloads",
-  description:
-    "Instantly download ebooks, templates, graphics, and more — created for creators.",
-  keywords:
-    "digital downloads, ebooks, templates, graphics, creative resources",
-  authors: [{ name: "Digital Products Artisan" }],
-  openGraph: {
-    title: "Digital Products Artisan",
-    description: "Premium digital downloads. Instant access. No fluff.",
-    type: "website",
-    locale: "en_US",
-    url: "https://digitalproductsartisan.com",
-    siteName: "Digital Products Artisan",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Digital Products Artisan",
-    description: "High-quality digital downloads at your fingertips.",
-  },
-  robots: { index: true, follow: true },
-  generator: "v0.dev",
-  manifest: "/manifest.json",
-  icons: {
-    icon: [
-      { url: "/favicon.ico", sizes: "any" },
-      { url: "/icon1.png", sizes: "192x192", type: "image/png" },
-      { url: "/icon0.svg", type: "image/svg+xml" },
-    ],
-    apple: "/apple-icon.png",
-  },
-};
-
-// Snipcart loader integrated as client effect
+// Snipcart loader component
 function SnipcartLoader() {
   useEffect(() => {
-    // Create Snipcart div if not present
     if (!document.getElementById("snipcart")) {
       const snipcartDiv = document.createElement("div");
       snipcartDiv.id = "snipcart";
@@ -62,7 +26,6 @@ function SnipcartLoader() {
       document.body.appendChild(snipcartDiv);
     }
 
-    // Load Snipcart script if not already loaded
     if (!document.getElementById("snipcart-script")) {
       const script = document.createElement("script");
       script.id = "snipcart-script";
@@ -79,7 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
-        {/* Web manifest and PWA */}
+        {/* PWA & manifest */}
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#ffffff" />
         <meta name="mobile-web-app-capable" content="yes" />
@@ -104,12 +67,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AuthProvider>
           <CartProvider>
             <Header />
-
-            {/* Snipcart loader */}
             <SnipcartLoader />
-
             {children}
-
             <Footer />
             <LiveChat />
             <Toaster />
