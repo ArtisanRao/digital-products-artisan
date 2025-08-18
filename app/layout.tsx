@@ -15,18 +15,22 @@ const inter = Inter({ subsets: ["latin"] });
 // Snipcart loader component
 function SnipcartLoader() {
   useEffect(() => {
-    // Define Snipcart settings BEFORE loading script
-    if (!window.hasOwnProperty("SnipcartSettings")) {
-      (window as any).SnipcartSettings = {
-        publicApiKey:
-          "ZDgyODMyODgtMzdhZC00ZTI0LTkzZTUtYjRhMTM0MDg4ODM2NjM4ODg4NTc5NTI0NTk5MjQ4",
-        loadStrategy: "onload", // load script after window.onload
-        modalStyle: "side", // or "full" if you want
-        currency: "usd",
-      };
+    // Inject Snipcart settings before loading script
+    if (!document.getElementById("snipcart-settings")) {
+      const settingsScript = document.createElement("script");
+      settingsScript.id = "snipcart-settings";
+      settingsScript.type = "text/javascript";
+      settingsScript.innerHTML = `
+        window.SnipcartSettings = {
+          publicApiKey: "ZDgyODMyODgtMzdhZC00ZTI0LTkzZTUtYjRhMTM0MDg4ODM2NjM4ODg4NTc5NTI0NTk5MjQ4",
+          loadStrategy: "on-user-interaction",
+          modalStyle: "side"
+        };
+      `;
+      document.head.appendChild(settingsScript);
     }
 
-    // Inject hidden Snipcart div
+    // Add Snipcart div
     if (!document.getElementById("snipcart")) {
       const snipcartDiv = document.createElement("div");
       snipcartDiv.id = "snipcart";
@@ -34,7 +38,7 @@ function SnipcartLoader() {
       document.body.appendChild(snipcartDiv);
     }
 
-    // Inject Snipcart script
+    // Add Snipcart script
     if (!document.getElementById("snipcart-script")) {
       const script = document.createElement("script");
       script.id = "snipcart-script";
@@ -47,11 +51,7 @@ function SnipcartLoader() {
   return null;
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
@@ -62,10 +62,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="application-name" content="Digital Products Artisan" />
-        <meta
-          name="apple-mobile-web-app-title"
-          content="Digital Products Artisan"
-        />
+        <meta name="apple-mobile-web-app-title" content="Digital Products Artisan" />
 
         {/* Favicons */}
         <link rel="icon" href="/favicon.ico" />
