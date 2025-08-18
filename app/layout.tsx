@@ -55,6 +55,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
+        {/* Basic SEO */}
+        <title>Digital Products Artisan</title>
+        <meta
+          name="description"
+          content="Premium handcrafted digital downloads for creators and entrepreneurs."
+        />
+
         {/* PWA & manifest */}
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#ffffff" />
@@ -64,11 +71,49 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="application-name" content="Digital Products Artisan" />
         <meta name="apple-mobile-web-app-title" content="Digital Products Artisan" />
 
-        {/* Favicons */}
-        <link rel="icon" href="/favicon.ico" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon.png" />
-        <link rel="icon" type="image/png" sizes="192x192" href="/icon1.png" />
-        <link rel="icon" type="image/svg+xml" href="/icon0.svg" />
+        {/* Favicons updated with new logo */}
+        <link rel="icon" href="/logo-new.png" sizes="32x32" type="image/png" />
+        <link rel="icon" href="/logo-new.png" sizes="192x192" type="image/png" />
+        <link rel="apple-touch-icon" href="/logo-new.png" />
+
+        {/* Open Graph (Facebook, LinkedIn, etc.) */}
+        <meta property="og:title" content="Digital Products Artisan" />
+        <meta
+          property="og:description"
+          content="Premium handcrafted digital downloads for creators and entrepreneurs."
+        />
+        <meta
+          property="og:image"
+          content="https://digitalproductsartisan.com/logo-new.png"
+        />
+        <meta property="og:url" content="https://digitalproductsartisan.com" />
+        <meta property="og:type" content="website" />
+
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Digital Products Artisan" />
+        <meta
+          name="twitter:description"
+          content="Premium handcrafted digital downloads for creators and entrepreneurs."
+        />
+        <meta
+          name="twitter:image"
+          content="https://digitalproductsartisan.com/logo-new.png"
+        />
+
+        {/* Schema.org JSON-LD for Google */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "Digital Products Artisan",
+              url: "https://digitalproductsartisan.com",
+              logo: "https://digitalproductsartisan.com/logo-new.png",
+            }),
+          }}
+        />
 
         {/* Snipcart CSS */}
         <link
