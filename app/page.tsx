@@ -32,7 +32,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "Digital Products Artisan",
     description: "High-quality digital downloads at your fingertips.",
-    images: ["/images/logo.png"],
+    images: ["/images/logo-new.png"],
   },
 };
 
