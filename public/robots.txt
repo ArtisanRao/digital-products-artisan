@@ -1,14 +1,12 @@
-# Global rules
+# *
 User-agent: *
 Allow: /
 Disallow: /404
 Disallow: /500
 Disallow: /thank-you
+Disallow: /terms
+Disallow: /privacy-policy
 Disallow: /contact/success
-
-# Allow legal pages but not indexed as primary (use meta noindex in those pages instead if needed)
-# Disallowing here may block crawling; better to allow crawling for context
-# So I've removed Disallow for /terms and /privacy-policy
 
 # Host
 Host: https://digitalproductsartisan.com
