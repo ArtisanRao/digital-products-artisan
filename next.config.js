@@ -10,7 +10,7 @@ const nextConfig = withPWA({
   reactStrictMode: true,
 
   experimental: {
-    optimizeCss: true, // ✅ Helps with font preload consistency
+    optimizeCss: true, // Helps with font preload consistency
   },
 
   async redirects() {
