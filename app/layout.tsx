@@ -3,7 +3,7 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header"; // ✅ Corrected capitalization
-import Footer from "@/components/Footer"; // ✅ Corrected capitalization
+import Footer from "@/components/footer"; // ✅ Corrected capitalization
 import { CartProvider } from "@/contexts/cart-context";
 import { AuthProvider } from "@/contexts/auth-context";
 import { Toaster } from "@/components/ui/toaster";
