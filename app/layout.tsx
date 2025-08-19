@@ -1,8 +1,8 @@
-"use client"; // This is a client component
+"use client";
 
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Header from "@/components/Header";
+import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { CartProvider } from "@/contexts/cart-context";
 import { AuthProvider } from "@/contexts/auth-context";
@@ -12,10 +12,9 @@ import { useEffect } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 
-// Snipcart loader component
+// Snipcart loader
 function SnipcartLoader() {
   useEffect(() => {
-    // Inject Snipcart settings before loading script
     if (!document.getElementById("snipcart-settings")) {
       const settingsScript = document.createElement("script");
       settingsScript.id = "snipcart-settings";
@@ -30,7 +29,6 @@ function SnipcartLoader() {
       document.head.appendChild(settingsScript);
     }
 
-    // Add Snipcart div
     if (!document.getElementById("snipcart")) {
       const snipcartDiv = document.createElement("div");
       snipcartDiv.id = "snipcart";
@@ -38,7 +36,6 @@ function SnipcartLoader() {
       document.body.appendChild(snipcartDiv);
     }
 
-    // Add Snipcart script
     if (!document.getElementById("snipcart-script")) {
       const script = document.createElement("script");
       script.id = "snipcart-script";
@@ -55,14 +52,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
-        {/* Basic SEO */}
+        {/* SEO */}
         <title>Digital Products Artisan</title>
         <meta
           name="description"
           content="Premium handcrafted digital downloads for creators and entrepreneurs."
         />
 
-        {/* PWA & manifest */}
+        {/* PWA */}
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#ffffff" />
         <meta name="mobile-web-app-capable" content="yes" />
@@ -71,12 +68,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="application-name" content="Digital Products Artisan" />
         <meta name="apple-mobile-web-app-title" content="Digital Products Artisan" />
 
-        {/* Favicons updated with new logo */}
+        {/* Favicons */}
         <link rel="icon" href="/logo-new.png" sizes="32x32" type="image/png" />
         <link rel="icon" href="/logo-new.png" sizes="192x192" type="image/png" />
         <link rel="apple-touch-icon" href="/logo-new.png" />
 
-        {/* Open Graph (Facebook, LinkedIn, etc.) */}
+        {/* Open Graph */}
         <meta property="og:title" content="Digital Products Artisan" />
         <meta
           property="og:description"
@@ -101,7 +98,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           content="https://digitalproductsartisan.com/logo-new.png"
         />
 
-        {/* Schema.org JSON-LD for Google */}
+        {/* Schema.org JSON-LD */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
