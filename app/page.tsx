@@ -1,5 +1,3 @@
-"use client";
-
 import type { Metadata } from "next";
 import HeroSection from "@/components/hero-section";
 import FeaturedProducts from "@/components/featured-products";
@@ -8,14 +6,14 @@ import AboutSection from "@/components/about-section";
 import TestimonialsSection from "@/components/testimonials-section";
 import FAQSection from "@/components/faq-section";
 import NewsletterSection from "@/components/newsletter-section";
-import BackToTopButton from "@/components/back-to-top-button";
+import BackToTopButton from "@/components/BackToTopButton";
 import LoadingSpinner from "@/components/loading-spinner";
 import { Suspense } from "react";
 
+// ✅ Metadata can be exported in a server component
 export const metadata: Metadata = {
   title: "Digital Products Artisan | Premium Digital Downloads",
-  description:
-    "Instantly download ebooks, templates, graphics, and more — created for creators.",
+  description: "Instantly download ebooks, templates, graphics, and more — created for creators.",
   openGraph: {
     title: "Digital Products Artisan",
     description: "Premium digital downloads. Instant access. No fluff.",
@@ -30,7 +28,6 @@ export const metadata: Metadata = {
       },
     ],
     type: "website",
-    locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
@@ -60,15 +57,9 @@ export default function HomePage() {
       <footer className="text-center text-sm text-gray-500 py-6 space-y-2">
         <div>&copy; {new Date().getFullYear()} Digital Products Artisan. All rights reserved.</div>
         <div className="space-x-4">
-          <a href="/contact" className="hover:underline text-blue-600">
-            Contact
-          </a>
-          <a href="/privacy" className="hover:underline text-blue-600">
-            Privacy
-          </a>
-          <a href="/help" className="hover:underline text-blue-600">
-            Support
-          </a>
+          <a href="/contact" className="hover:underline text-blue-600">Contact</a>
+          <a href="/privacy" className="hover:underline text-blue-600">Privacy</a>
+          <a href="/help" className="hover:underline text-blue-600">Support</a>
         </div>
       </footer>
 

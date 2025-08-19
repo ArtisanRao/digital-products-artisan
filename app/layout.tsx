@@ -1,9 +1,9 @@
-"use client";
+"use client"; // layout can remain a client component for Snipcart, Auth, etc.
 
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Header from "@/components/header";
-import Footer from "@/components/footer";
+import Header from "@/components/Header"; // ✅ Corrected capitalization
+import Footer from "@/components/Footer"; // ✅ Corrected capitalization
 import { CartProvider } from "@/contexts/cart-context";
 import { AuthProvider } from "@/contexts/auth-context";
 import { Toaster } from "@/components/ui/toaster";
@@ -12,7 +12,7 @@ import { useEffect } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 
-// Snipcart loader
+// Snipcart loader component
 function SnipcartLoader() {
   useEffect(() => {
     if (!document.getElementById("snipcart-settings")) {
@@ -52,14 +52,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
-        {/* SEO */}
         <title>Digital Products Artisan</title>
         <meta
           name="description"
           content="Premium handcrafted digital downloads for creators and entrepreneurs."
         />
 
-        {/* PWA */}
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#ffffff" />
         <meta name="mobile-web-app-capable" content="yes" />
@@ -68,12 +66,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="application-name" content="Digital Products Artisan" />
         <meta name="apple-mobile-web-app-title" content="Digital Products Artisan" />
 
-        {/* Favicons */}
         <link rel="icon" href="/logo-new.png" sizes="32x32" type="image/png" />
         <link rel="icon" href="/logo-new.png" sizes="192x192" type="image/png" />
         <link rel="apple-touch-icon" href="/logo-new.png" />
 
-        {/* Open Graph */}
         <meta property="og:title" content="Digital Products Artisan" />
         <meta
           property="og:description"
@@ -86,7 +82,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta property="og:url" content="https://digitalproductsartisan.com" />
         <meta property="og:type" content="website" />
 
-        {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Digital Products Artisan" />
         <meta
@@ -98,7 +93,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           content="https://digitalproductsartisan.com/logo-new.png"
         />
 
-        {/* Schema.org JSON-LD */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -112,7 +106,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
 
-        {/* Snipcart CSS */}
         <link
           rel="stylesheet"
           href="https://cdn.snipcart.com/themes/v3.4.1/default/snipcart.css"
