@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import products from '@/lib/products.json';
 
+// Updated Stripe API version to match what the SDK expects
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-04-10",
+  apiVersion: "2025-08-27.basil", // ✅ Fixes build error
 });
 
 export async function POST(req: Request) {
@@ -35,4 +36,9 @@ export async function POST(req: Request) {
   });
 
   return NextResponse.json({ url: session.url });
+}
+
+// You may already have this function elsewhere in your codebase
+function findProduct(id: string) {
+  return products.find((p) => p.id === id);
 }
