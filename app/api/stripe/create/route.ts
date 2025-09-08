@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import products from '@/lib/products.json';
+import products from "@/lib/products.json";
 
-// Updated Stripe API version to match what the SDK expects
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-08-27.basil", // ✅ Fixes build error
-});
+// Helper to find product from JSON
+function findProduct(id: string) {
+  return products.find((p) => p.id === id);
+}
 
 export async function POST(req: Request) {
   const { productId } = await req.json();
@@ -19,26 +19,29 @@ export async function POST(req: Request) {
   let priceId: string | null = null;
 
   if (productId === "passive-income-ebook") {
-    priceId = "price_1S4qZbLRZXb99FYz8MhczfRW"; // 👈 your real Stripe Price ID
+    priceId = "price_1S4qZbLRZXb99FYz8MhczfRW"; // 👈 Replace with your actual price ID
   }
 
   if (!priceId) {
     return NextResponse.json({ error: "Price ID missing" }, { status: 400 });
   }
 
+  // ✅ Initialize Stripe here to avoid build-time crash on Vercel
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: "2025-08-27.basil",
+  });
+
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
     line_items: [{ price: priceId, quantity: 1 }],
-    automatic_tax: { enabled: true }, // let Stripe handle EU VAT
+    automatic_tax: { enabled: true },
     success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/success?pid=${productId}&sid={CHECKOUT_SESSION_ID}`,
     cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/product/${productId}`,
-    metadata: { productId, blobKey: p.blobKey },
+    metadata: {
+      productId,
+      blobKey: p.fileUrl, // ✅ Using fileUrl instead of blobKey
+    },
   });
 
   return NextResponse.json({ url: session.url });
-}
-
-// You may already have this function elsewhere in your codebase
-function findProduct(id: string) {
-  return products.find((p) => p.id === id);
 }
