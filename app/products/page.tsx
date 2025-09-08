@@ -11,8 +11,90 @@ import { Star, Download, Heart, Search, Filter, Grid, List } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 
-const products = [
-  // ... your products as before ...
+interface Product {
+  id: number
+  title: string
+  description: string
+  price: number
+  originalPrice: number
+  category: string
+  tags: string[]
+  rating: number
+  reviews: number
+  downloads: number
+  bestseller?: boolean
+  image?: string
+}
+
+const products: Product[] = [
+  {
+    id: 1,
+    title: "AI Prompt Pack",
+    description: "A set of creative AI prompts for designers and writers.",
+    price: 29,
+    originalPrice: 49,
+    category: "AI Prompts",
+    tags: ["AI", "Creativity", "Writing"],
+    rating: 4.7,
+    reviews: 112,
+    downloads: 1200,
+    bestseller: true,
+    image: "/images/ai-prompt-pack.jpg",
+  },
+  {
+    id: 2,
+    title: "Business Planner Template",
+    description: "Organize your business plans with this professional template.",
+    price: 15,
+    originalPrice: 25,
+    category: "Planners",
+    tags: ["Business", "Planning", "Productivity"],
+    rating: 4.3,
+    reviews: 85,
+    downloads: 750,
+    image: "/images/business-planner.jpg",
+  },
+  {
+    id: 3,
+    title: "Ebook: Marketing Secrets",
+    description: "Learn the secrets of marketing from industry experts.",
+    price: 12,
+    originalPrice: 20,
+    category: "Ebooks",
+    tags: ["Marketing", "Business", "Strategy"],
+    rating: 4.8,
+    reviews: 210,
+    downloads: 1500,
+    bestseller: true,
+    image: "/images/marketing-ebook.jpg",
+  },
+  {
+    id: 4,
+    title: "Template: Social Media Calendar",
+    description: "Keep your social media posts organized and timely.",
+    price: 10,
+    originalPrice: 18,
+    category: "Templates",
+    tags: ["Social Media", "Planning", "Productivity"],
+    rating: 4.2,
+    reviews: 55,
+    downloads: 600,
+    image: "/images/social-media-calendar.jpg",
+  },
+  {
+    id: 5,
+    title: "Course: Photoshop Mastery",
+    description: "Master Photoshop with this comprehensive online course.",
+    price: 59,
+    originalPrice: 99,
+    category: "Courses",
+    tags: ["Design", "Photoshop", "Creativity"],
+    rating: 4.9,
+    reviews: 320,
+    downloads: 900,
+    bestseller: true,
+    image: "/images/photoshop-course.jpg",
+  },
 ]
 
 const categories = ["All", "AI Prompts", "Templates", "Ebooks", "Planners", "Courses"]
@@ -267,129 +349,79 @@ export default function ProductsPage() {
                         priority
                       />
                       {product.bestseller && (
-                        <Badge className="absolute top-3 left-3 bg-gradient-to-r from-purple-600 to-pink-600">
+                        <Badge className="absolute top-3 left-3 bg-yellow-400 text-black font-semibold">
                           Bestseller
                         </Badge>
                       )}
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="absolute top-3 right-3 bg-white/80 hover:bg-white"
-                        aria-label={`Add ${product.title} to wishlist`}
-                      >
-                        <Heart className="w-4 h-4" />
-                      </Button>
                     </div>
                   </CardHeader>
                   <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <Badge variant="secondary">{product.category}</Badge>
-                      <div className="flex items-center space-x-1">
-                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        <span className="text-sm text-gray-600">{product.rating}</span>
-                        <span className="text-sm text-gray-400">({product.reviews})</span>
-                      </div>
-                    </div>
-                    <CardTitle className="text-lg mb-2 line-clamp-2">{product.title}</CardTitle>
-                    <p className="text-gray-600 text-sm mb-3 line-clamp-2">{product.description}</p>
-                    <div className="flex flex-wrap gap-1 mb-3">
-                      {product.tags.slice(0, 3).map((tag) => (
-                        <Badge key={tag} variant="outline" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-lg font-bold text-gray-900">${product.price}</span>
-                        <span className="text-sm text-gray-500 line-through">${product.originalPrice}</span>
-                      </div>
-                      <div className="flex items-center text-sm text-gray-500">
-                        <Download className="w-4 h-4 mr-1" />
-                        {product.downloads}
-                      </div>
+                    <CardTitle className="text-lg font-semibold">{product.title}</CardTitle>
+                    <p className="text-sm text-gray-600 line-clamp-3">{product.description}</p>
+                    <div className="mt-3 flex items-center space-x-2">
+                      <Star className="w-4 h-4 text-yellow-400" aria-hidden="true" />
+                      <span className="text-sm font-medium text-gray-800">{product.rating}</span>
+                      <span className="text-sm text-gray-500">({product.reviews})</span>
                     </div>
                   </CardContent>
-                  <CardFooter className="p-4 pt-0">
-                    <Button
-                      className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-                      asChild
-                    >
-                      <Link href={`/products/${product.id}`}>Add to Cart</Link>
+                  <CardFooter className="p-4 flex justify-between items-center">
+                    <div>
+                      <span className="text-lg font-semibold text-gray-900">${product.price}</span>
+                      {product.originalPrice > product.price && (
+                        <span className="line-through text-gray-400 ml-2">${product.originalPrice}</span>
+                      )}
+                    </div>
+                    <Button asChild size="sm" variant="outline" aria-label={`Download ${product.title}`}>
+                      <Link href={`/products/${product.id}`}>
+                        <Download className="w-4 h-4 mr-2" aria-hidden="true" />
+                        Download
+                      </Link>
                     </Button>
                   </CardFooter>
                 </Card>
               ))}
             </div>
           ) : (
-            <div className="space-y-4">
+            <ul className="space-y-4">
               {sortedProducts.map((product) => (
-                <Card
+                <li
                   key={product.id}
-                  className="group hover:shadow-lg transition-shadow duration-300"
+                  className="flex items-center space-x-4 p-4 border rounded-lg hover:shadow-md transition-shadow duration-300"
                   tabIndex={0}
                   aria-label={`Product: ${product.title}`}
                 >
-                  <CardContent className="p-6">
-                    <div className="flex flex-col md:flex-row gap-6">
-                      <div className="relative w-full md:w-48 h-32 overflow-hidden rounded-lg">
-                        <Image
-                          src={product.image || "/placeholder.svg"}
-                          alt={product.title}
-                          width={400}
-                          height={300}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          priority
-                        />
-                        {product.bestseller && (
-                          <Badge className="absolute top-2 left-2 bg-gradient-to-r from-purple-600 to-pink-600">
-                            Bestseller
-                          </Badge>
-                        )}
-                      </div>
-
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <div className="flex items-center space-x-2 mb-2">
-                              <Badge variant="secondary">{product.category}</Badge>
-                              <div className="flex items-center space-x-1">
-                                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                                <span className="text-sm text-gray-600">{product.rating}</span>
-                                <span className="text-sm text-gray-400">({product.reviews})</span>
-                              </div>
-                            </div>
-                            <h3 className="text-xl font-semibold text-gray-900 mb-2">{product.title}</h3>
-                            <p className="text-gray-600 mb-3">{product.description}</p>
-                            <div className="flex flex-wrap gap-2">
-                              {product.tags.map((tag) => (
-                                <Badge key={tag} variant="outline" className="text-xs">
-                                  {tag}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div className="flex flex-col items-end space-y-2">
-                            <span className="text-lg font-bold text-gray-900">${product.price}</span>
-                            <span className="text-sm text-gray-500 line-through">${product.originalPrice}</span>
-                            <Button
-                              size="sm"
-                              variant="default"
-                              asChild
-                              className="w-full"
-                              aria-label={`Add ${product.title} to cart`}
-                            >
-                              <Link href={`/products/${product.id}`}>Add to Cart</Link>
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
+                  <Image
+                    src={product.image || "/placeholder.svg"}
+                    alt={product.title}
+                    width={120}
+                    height={90}
+                    className="flex-shrink-0 rounded-md object-cover"
+                    priority
+                  />
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-semibold truncate">{product.title}</h3>
+                    <p className="text-sm text-gray-600 truncate">{product.description}</p>
+                    <div className="flex items-center space-x-2 mt-1">
+                      <Star className="w-4 h-4 text-yellow-400" aria-hidden="true" />
+                      <span className="text-sm font-medium text-gray-800">{product.rating}</span>
+                      <span className="text-sm text-gray-500">({product.reviews})</span>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                  <div className="flex flex-col items-end space-y-2">
+                    <span className="text-lg font-semibold text-gray-900">${product.price}</span>
+                    {product.originalPrice > product.price && (
+                      <span className="line-through text-gray-400">${product.originalPrice}</span>
+                    )}
+                    <Button asChild size="sm" variant="outline" aria-label={`Download ${product.title}`}>
+                      <Link href={`/products/${product.id}`}>
+                        <Download className="w-4 h-4 mr-2" aria-hidden="true" />
+                        Download
+                      </Link>
+                    </Button>
+                  </div>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
         </section>
       </div>
