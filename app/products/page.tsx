@@ -7,7 +7,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Star, Download, Heart, Search, Filter, Grid, List } from "lucide-react"
+import { Star, Download, Search, Filter, Grid, List } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 
@@ -33,7 +33,7 @@ const products: Product[] = [
     description: "A set of creative AI prompts for designers and writers.",
     price: 29,
     originalPrice: 49,
-    category: "AI Prompts",
+    category: "AI & ChatGPT Guides",
     tags: ["AI", "Creativity", "Writing"],
     rating: 4.7,
     reviews: 112,
@@ -47,7 +47,7 @@ const products: Product[] = [
     description: "Organize your business plans with this professional template.",
     price: 15,
     originalPrice: 25,
-    category: "Planners",
+    category: "Planners & Productivity",
     tags: ["Business", "Planning", "Productivity"],
     rating: 4.3,
     reviews: 85,
@@ -60,7 +60,7 @@ const products: Product[] = [
     description: "Learn the secrets of marketing from industry experts.",
     price: 12,
     originalPrice: 20,
-    category: "Ebooks",
+    category: "Ebooks (Miscellaneous)",
     tags: ["Marketing", "Business", "Strategy"],
     rating: 4.8,
     reviews: 210,
@@ -74,7 +74,7 @@ const products: Product[] = [
     description: "Keep your social media posts organized and timely.",
     price: 10,
     originalPrice: 18,
-    category: "Templates",
+    category: "Excel Templates & Guides",
     tags: ["Social Media", "Planning", "Productivity"],
     rating: 4.2,
     reviews: 55,
@@ -87,7 +87,7 @@ const products: Product[] = [
     description: "Master Photoshop with this comprehensive online course.",
     price: 59,
     originalPrice: 99,
-    category: "Courses",
+    category: "Video Courses & Training",
     tags: ["Design", "Photoshop", "Creativity"],
     rating: 4.9,
     reviews: 320,
@@ -97,7 +97,37 @@ const products: Product[] = [
   },
 ]
 
-const categories = ["All", "AI Prompts", "Templates", "Ebooks", "Planners", "Courses"]
+const baseCategories = [
+  "AI & ChatGPT Guides",
+  "Planners & Productivity",
+  "Passive Income & Side Hustles",
+  "Excel Templates & Guides",
+  "Cyber Security",
+  "Self-Help & How-To",
+  "PLR & MRR Bundles",
+  "Health & Fitness Ebooks",
+  "Video Courses & Training",
+  "Ebooks (Miscellaneous)",
+  "Complete Shop Packages",
+  "Keto & Diet Guides",
+  "Prompt Packs & AI Tools",
+]
+
+const categoriesWithCounts = (products: Product[]) => {
+  const counts: Record<string, number> = {}
+  baseCategories.forEach((cat) => (counts[cat] = 0))
+
+  products.forEach((p) => {
+    if (counts[p.category] !== undefined) {
+      counts[p.category] += 1
+    } else {
+      counts[p.category] = 1
+    }
+  })
+
+  return counts
+}
+
 const sortOptions = [
   { value: "popular", label: "Most Popular" },
   { value: "newest", label: "Newest First" },
@@ -115,6 +145,8 @@ export default function ProductsPage() {
   const [selectedTags, setSelectedTags] = useState<string[]>([])
 
   const allTags = useMemo(() => Array.from(new Set(products.flatMap((p) => p.tags))), [])
+
+  const categoryCounts = useMemo(() => categoriesWithCounts(products), [products])
 
   // Ensure min price <= max price
   const handleMinPriceChange = (value: number) => {
@@ -207,7 +239,23 @@ export default function ProductsPage() {
               <fieldset>
                 <legend className="text-sm font-medium text-gray-700 mb-2 block">Category</legend>
                 <div className="space-y-2">
-                  {categories.map((category) => (
+                  {/* All category */}
+                  <div key="All" className="flex items-center space-x-2">
+                    <input
+                      id="category-All"
+                      name="category"
+                      type="radio"
+                      checked={selectedCategory === "All"}
+                      onChange={() => setSelectedCategory("All")}
+                      className="checkbox"
+                    />
+                    <label htmlFor="category-All" className="text-sm text-gray-700 cursor-pointer">
+                      All ({products.length})
+                    </label>
+                  </div>
+
+                  {/* Dynamic categories with counts */}
+                  {baseCategories.map((category) => (
                     <div key={category} className="flex items-center space-x-2">
                       <input
                         id={`category-${category}`}
@@ -216,10 +264,9 @@ export default function ProductsPage() {
                         checked={selectedCategory === category}
                         onChange={() => setSelectedCategory(category)}
                         className="checkbox"
-                        aria-checked={selectedCategory === category}
                       />
                       <label htmlFor={`category-${category}`} className="text-sm text-gray-700 cursor-pointer">
-                        {category}
+                        {category} ({categoryCounts[category] || 0})
                       </label>
                     </div>
                   ))}
