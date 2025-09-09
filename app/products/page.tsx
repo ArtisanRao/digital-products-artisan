@@ -29,71 +29,83 @@ interface Product {
 const products: Product[] = [
   {
     id: 1,
-    title: "AI Prompt Pack",
-    description: "A set of creative AI prompts for designers and writers.",
-    price: 29,
-    originalPrice: 49,
-    category: "AI & ChatGPT Guides",
-    tags: ["AI", "Creativity", "Writing"],
-    rating: 4.7,
-    reviews: 112,
-    downloads: 1200,
-    bestseller: true,
-    image: "/images/ai-prompt-pack.jpg",
-  },
-  {
-    id: 2,
-    title: "Business Planner Template",
-    description: "Organize your business plans with this professional template.",
-    price: 15,
-    originalPrice: 25,
-    category: "Planners & Productivity",
-    tags: ["Business", "Planning", "Productivity"],
-    rating: 4.3,
-    reviews: 85,
-    downloads: 750,
-    image: "/images/business-planner.jpg",
-  },
-  {
-    id: 3,
-    title: "Ebook: Marketing Secrets",
-    description: "Learn the secrets of marketing from industry experts.",
-    price: 12,
-    originalPrice: 20,
-    category: "Ebooks (Miscellaneous)",
-    tags: ["Marketing", "Business", "Strategy"],
+    title:
+      "Buy This Complete Shop - PLR MRR Digital Product: Resell Ebooks, Courses, Prompts & More.",
+    description:
+      "Complete, rights-included digital shop bundle. Rebrand and resell ebooks, courses, prompts, templates, and more.",
+    price: 42.99,
+    originalPrice: 0,
+    category: "Complete Shop Packages",
+    tags: ["PLR", "MRR", "Bundle", "Resell Rights"],
     rating: 4.8,
     reviews: 210,
     downloads: 1500,
     bestseller: true,
-    image: "/images/marketing-ebook.jpg",
+    image: "/images/products/buy-this-complete-shop-cover.jpg",
+  },
+  {
+    id: 2,
+    title:
+      "Self-Help Ebook: The Art of Giving No F*cks - Minimalist Mindset (Digital Download).",
+    description:
+      "A practical guide to focus, freedom, and owning your life—minimalist mindset strategies with worksheets.",
+    price: 14.99,
+    originalPrice: 0,
+    category: "Self-Help & How-To",
+    tags: ["Mindset", "Self-Help", "Focus", "Minimalism"],
+    rating: 4.7,
+    reviews: 112,
+    downloads: 980,
+    bestseller: true,
+    image: "/images/products/the-art-of-giving-no-fucks-cover.jpg",
+  },
+  {
+    id: 3,
+    title:
+      "Digital Wealth – Ultimate Guide - This Order Includes A Free Extra Bonus.",
+    description:
+      "Step-by-step strategies for building digital income streams. Includes a surprise bonus resource.",
+    price: 28.99,
+    originalPrice: 0,
+    category: "Ebooks (Miscellaneous)",
+    tags: ["Wealth", "Business", "Strategy", "Guide"],
+    rating: 4.6,
+    reviews: 95,
+    downloads: 820,
+    bestseller: false,
+    image: "/images/products/digital-wealth-cover.jpg",
   },
   {
     id: 4,
-    title: "Template: Social Media Calendar",
-    description: "Keep your social media posts organized and timely.",
-    price: 10,
-    originalPrice: 18,
-    category: "Excel Templates & Guides",
-    tags: ["Social Media", "Planning", "Productivity"],
-    rating: 4.2,
-    reviews: 55,
-    downloads: 600,
-    image: "/images/social-media-calendar.jpg",
+    title:
+      "ChatGPT Side Hustles eBook: 12 AI Income Streams - Beginner's PDF Guide (Digital Download).",
+    description:
+      "Beginner-friendly guide to 12 ChatGPT-powered side hustles with actionable steps and tools.",
+    price: 2.99,
+    originalPrice: 0,
+    category: "AI & ChatGPT Guides",
+    tags: ["AI", "ChatGPT", "Side Hustle", "Beginner"],
+    rating: 4.5,
+    reviews: 78,
+    downloads: 640,
+    bestseller: false,
+    image: "/images/products/chatgpt-side-hustles-cover.jpg",
   },
   {
     id: 5,
-    title: "Course: Photoshop Mastery",
-    description: "Master Photoshop with this comprehensive online course.",
-    price: 59,
-    originalPrice: 99,
-    category: "Video Courses & Training",
-    tags: ["Design", "Photoshop", "Creativity"],
-    rating: 4.9,
-    reviews: 320,
-    downloads: 900,
-    bestseller: true,
-    image: "/images/photoshop-course.jpg",
+    title:
+      "Passive Income Ebook: Financial Freedom Guide (Digital Download)",
+    description:
+      "Learn foundational passive income strategies and systems to build long-term financial freedom.",
+    price: 2.99,
+    originalPrice: 0,
+    category: "Passive Income & Side Hustles",
+    tags: ["Passive Income", "Finance", "Freedom"],
+    rating: 4.4,
+    reviews: 66,
+    downloads: 590,
+    bestseller: false,
+    image: "/images/products/make-money-as-you-sleep-cover.jpg",
   },
 ]
 
@@ -116,15 +128,10 @@ const baseCategories = [
 const categoriesWithCounts = (products: Product[]) => {
   const counts: Record<string, number> = {}
   baseCategories.forEach((cat) => (counts[cat] = 0))
-
   products.forEach((p) => {
-    if (counts[p.category] !== undefined) {
-      counts[p.category] += 1
-    } else {
-      counts[p.category] = 1
-    }
+    if (counts[p.category] !== undefined) counts[p.category] += 1
+    else counts[p.category] = 1
   })
-
   return counts
 }
 
@@ -145,21 +152,14 @@ export default function ProductsPage() {
   const [selectedTags, setSelectedTags] = useState<string[]>([])
 
   const allTags = useMemo(() => Array.from(new Set(products.flatMap((p) => p.tags))), [])
-
   const categoryCounts = useMemo(() => categoriesWithCounts(products), [products])
 
   // Ensure min price <= max price
   const handleMinPriceChange = (value: number) => {
-    setPriceRange((prev) => ({
-      min: Math.min(value, prev.max),
-      max: prev.max,
-    }))
+    setPriceRange((prev) => ({ min: Math.min(value, prev.max), max: prev.max }))
   }
   const handleMaxPriceChange = (value: number) => {
-    setPriceRange((prev) => ({
-      min: prev.min,
-      max: Math.max(value, prev.min),
-    }))
+    setPriceRange((prev) => ({ min: prev.min, max: Math.max(value, prev.min) }))
   }
 
   const filteredProducts = useMemo(() => {
@@ -171,7 +171,6 @@ export default function ProductsPage() {
       const matchesPrice = product.price >= priceRange.min && product.price <= priceRange.max
       const matchesTags =
         selectedTags.length === 0 || selectedTags.some((tag) => product.tags.includes(tag))
-
       return matchesSearch && matchesCategory && matchesPrice && matchesTags
     })
   }, [searchQuery, selectedCategory, priceRange, selectedTags])
@@ -219,10 +218,7 @@ export default function ProductsPage() {
                   Search
                 </label>
                 <div className="relative">
-                  <Search
-                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4"
-                    aria-hidden="true"
-                  />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" aria-hidden="true" />
                   <Input
                     id="product-search"
                     type="search"
@@ -239,7 +235,6 @@ export default function ProductsPage() {
               <fieldset>
                 <legend className="text-sm font-medium text-gray-700 mb-2 block">Category</legend>
                 <div className="space-y-2">
-                  {/* All category */}
                   <div key="All" className="flex items-center space-x-2">
                     <input
                       id="category-All"
@@ -254,7 +249,6 @@ export default function ProductsPage() {
                     </label>
                   </div>
 
-                  {/* Dynamic categories with counts */}
                   {baseCategories.map((category) => (
                     <div key={category} className="flex items-center space-x-2">
                       <input
@@ -310,11 +304,8 @@ export default function ProductsPage() {
                         checked={selectedTags.includes(tag)}
                         onCheckedChange={(checked) => {
                           if (typeof checked !== "boolean") return
-                          if (checked) {
-                            setSelectedTags((prev) => [...prev, tag])
-                          } else {
-                            setSelectedTags((prev) => prev.filter((t) => t !== tag))
-                          }
+                          if (checked) setSelectedTags((prev) => [...prev, tag])
+                          else setSelectedTags((prev) => prev.filter((t) => t !== tag))
                         }}
                       />
                       <label htmlFor={`tag-${tag}`} className="text-sm text-gray-700 cursor-pointer">
