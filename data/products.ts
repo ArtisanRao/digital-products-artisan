@@ -15,7 +15,8 @@ export type Product = {
   downloads: number
   bestseller?: boolean
   image: string
-  images?: string[] // gallery images (auto from manifest when available)
+  images?: string[]            // gallery images (auto from manifest when available)
+  downloadPath?: string        // optional override for the file to deliver
 }
 
 // --- helpers ---------------------------------------------------------------
@@ -50,6 +51,7 @@ const base: Omit<Product, "images">[] = [
     downloads: 1500,
     bestseller: true,
     image: "/images/products/buy-this-complete-shop/cover.jpg",
+    downloadPath: "/files/buy-this-complete-shop.zip",
   },
   {
     id: 2,
@@ -67,6 +69,7 @@ const base: Omit<Product, "images">[] = [
     downloads: 980,
     bestseller: true,
     image: "/images/products/the-art-of-giving-no-fucks/cover.jpg",
+    downloadPath: "/files/the-art-of-giving-no-fucks.zip",
   },
   {
     id: 3,
@@ -84,6 +87,7 @@ const base: Omit<Product, "images">[] = [
     downloads: 820,
     bestseller: false,
     image: "/images/products/digital-wealth/cover.jpg",
+    downloadPath: "/files/digital-wealth.zip",
   },
   {
     id: 4,
@@ -101,6 +105,7 @@ const base: Omit<Product, "images">[] = [
     downloads: 640,
     bestseller: false,
     image: "/images/products/chatgpt-side-hustles/cover.jpg",
+    downloadPath: "/files/chatgpt-side-hustles.zip",
   },
   {
     id: 5,
@@ -117,6 +122,7 @@ const base: Omit<Product, "images">[] = [
     downloads: 590,
     bestseller: false,
     image: "/images/products/passive-income-financial-freedom/cover.jpg",
+    downloadPath: "/files/passive-income-financial-freedom.zip",
   },
 ]
 
@@ -132,5 +138,10 @@ export const products: Product[] = base.map((p) => {
 })
 
 // Useful lookups (optional exports)
-export const productsById = Object.fromEntries(products.map((p) => [p.id, p]))
-export const productsBySlug = Object.fromEntries(products.map((p) => [p.slug, p]))
+export const productsById = Object.fromEntries(
+  products.map((p) => [p.id, p])
+) as Record<number, Product>
+
+export const productsBySlug = Object.fromEntries(
+  products.map((p) => [p.slug, p])
+) as Record<string, Product>
