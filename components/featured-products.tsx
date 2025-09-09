@@ -77,7 +77,7 @@ const featuredProducts = [
     reviews: 66,
     downloads: 590,
     category: "Passive Income & Side Hustles",
-    image: "/images/products/make-money-as-you-sleep-cover.png",
+    image: "/images/products/make-money-as-you-sleep-cover.jpg",
     bestseller: false,
   },
 ]
