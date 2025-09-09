@@ -15,29 +15,24 @@ export type Product = {
   downloads: number
   bestseller?: boolean
   image: string
-  images?: string[]            // gallery images (auto from manifest when available)
-  downloadPath?: string        // optional override for the file to deliver
+  images?: string[]          // gallery images (from manifest)
+  downloadPath?: string      // what /api/download will serve (PDF here)
 }
 
-// --- helpers ---------------------------------------------------------------
-
-// Put any filename containing "cover" (case-insensitive) first, keep the rest in the same order.
+// Put any filename containing "cover" first
 function coverFirst(list: string[] | undefined): string[] | undefined {
-  if (!list || list.length === 0) return list
+  if (!list?.length) return list
   const covers: string[] = []
   const others: string[] = []
-  for (const p of list) {
-    if (/cover/i.test(p)) covers.push(p)
-    else others.push(p)
-  }
+  for (const p of list) (/cover/i.test(p) ? covers : others).push(p)
   return covers.length ? [...covers, ...others] : list
 }
 
-// --- base product data (image is a fallback if no manifest exists) ---------
+// Base product data (image is a fallback if no manifest)
 const base: Omit<Product, "images">[] = [
   {
     id: 1,
-    slug: "buy-this-complete-shop", // folder: public/images/products/buy-this-complete-shop/
+    slug: "buy-this-complete-shop",
     title:
       "Buy This Complete Shop - PLR MRR Digital Product: Resell Ebooks, Courses, Prompts & More.",
     description:
@@ -51,11 +46,12 @@ const base: Omit<Product, "images">[] = [
     downloads: 1500,
     bestseller: true,
     image: "/images/products/buy-this-complete-shop/cover.jpg",
-    downloadPath: "/files/buy-this-complete-shop.zip",
+    // ⬇️ update the filename to the real PDF you uploaded
+    downloadPath: "/images/products/buy-this-complete-shop/main.pdf",
   },
   {
     id: 2,
-    slug: "the-art-of-giving-no-fucks", // folder: public/images/products/the-art-of-giving-no-fucks/
+    slug: "the-art-of-giving-no-fucks",
     title:
       "Self-Help Ebook: The Art of Giving No F*cks - Minimalist Mindset (Digital Download).",
     description:
@@ -69,11 +65,11 @@ const base: Omit<Product, "images">[] = [
     downloads: 980,
     bestseller: true,
     image: "/images/products/the-art-of-giving-no-fucks/cover.jpg",
-    downloadPath: "/files/the-art-of-giving-no-fucks.zip",
+    downloadPath: "/images/products/the-art-of-giving-no-fucks/ebook.pdf",
   },
   {
     id: 3,
-    slug: "digital-wealth", // folder: public/images/products/digital-wealth/
+    slug: "digital-wealth",
     title:
       "Digital Wealth – Ultimate Guide - This Order Includes A Free Extra Bonus.",
     description:
@@ -87,11 +83,11 @@ const base: Omit<Product, "images">[] = [
     downloads: 820,
     bestseller: false,
     image: "/images/products/digital-wealth/cover.jpg",
-    downloadPath: "/files/digital-wealth.zip",
+    downloadPath: "/images/products/digital-wealth/guide.pdf",
   },
   {
     id: 4,
-    slug: "chatgpt-side-hustles", // folder: public/images/products/chatgpt-side-hustles/
+    slug: "chatgpt-side-hustles",
     title:
       "ChatGPT Side Hustles eBook: 12 AI Income Streams - Beginner's PDF Guide (Digital Download).",
     description:
@@ -105,12 +101,12 @@ const base: Omit<Product, "images">[] = [
     downloads: 640,
     bestseller: false,
     image: "/images/products/chatgpt-side-hustles/cover.jpg",
-    downloadPath: "/files/chatgpt-side-hustles.zip",
+    downloadPath: "/images/products/chatgpt-side-hustles/ebook.pdf",
   },
   {
     id: 5,
-    slug: "passive-income-financial-freedom", // folder: public/images/products/passive-income-financial-freedom/
-    title: "Passive Income Ebook: Financial Freedom Guide (Digital Download)",
+    slug: "passive-income-financial-freedom",
+    title: "Make Money As You Sleep": Financial Freedom Guide - Passive Income Ebook (Digital Download)",
     description:
       "Learn foundational passive income strategies and systems to build long-term financial freedom.",
     price: 2.99,
@@ -122,26 +118,20 @@ const base: Omit<Product, "images">[] = [
     downloads: 590,
     bestseller: false,
     image: "/images/products/passive-income-financial-freedom/cover.jpg",
-    downloadPath: "/files/passive-income-financial-freedom.zip",
+    downloadPath: "/images/products/passive-income-financial-freedom/book.pdf",
   },
 ]
 
-// --- attach manifest images & pick cover -----------------------------------
+// Attach manifest images & pick cover
 export const products: Product[] = base.map((p) => {
   const fromManifest = coverFirst(imageManifest[p.slug])
   const images = fromManifest?.length ? fromManifest : [p.image]
   return {
     ...p,
-    image: images[0], // ensure the first (cover) is used as primary
+    image: images[0],
     images,
   }
 })
 
-// Useful lookups (optional exports)
-export const productsById = Object.fromEntries(
-  products.map((p) => [p.id, p])
-) as Record<number, Product>
-
-export const productsBySlug = Object.fromEntries(
-  products.map((p) => [p.slug, p])
-) as Record<string, Product>
+export const productsById = Object.fromEntries(products.map((p) => [p.id, p])) as Record<number, Product>
+export const productsBySlug = Object.fromEntries(products.map((p) => [p.slug, p])) as Record<string, Product>
