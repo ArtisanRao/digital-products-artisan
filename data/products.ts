@@ -19,7 +19,7 @@ export type Product = {
   downloadPath?: string      // what /api/download will serve (PDF here)
 }
 
-// Put any filename containing "cover" first
+// Put any filename containing "cover" first, keep others in order
 function coverFirst(list: string[] | undefined): string[] | undefined {
   if (!list?.length) return list
   const covers: string[] = []
@@ -46,8 +46,8 @@ const base: Omit<Product, "images">[] = [
     downloads: 1500,
     bestseller: true,
     image: "/images/products/buy-this-complete-shop/cover.jpg",
-    // ⬇️ update the filename to the real PDF you uploaded
-    downloadPath: "/images/products/buy-this-complete-shop/main.pdf",
+    // ⬇️ update filename if your real PDF is different
+    downloadPath: "/files/buy-this-complete-shop/main.pdf",
   },
   {
     id: 2,
@@ -65,7 +65,7 @@ const base: Omit<Product, "images">[] = [
     downloads: 980,
     bestseller: true,
     image: "/images/products/the-art-of-giving-no-fucks/cover.jpg",
-    downloadPath: "/images/products/the-art-of-giving-no-fucks/ebook.pdf",
+    downloadPath: "/files/the-art-of-giving-no-fucks/ebook.pdf",
   },
   {
     id: 3,
@@ -83,7 +83,7 @@ const base: Omit<Product, "images">[] = [
     downloads: 820,
     bestseller: false,
     image: "/images/products/digital-wealth/cover.jpg",
-    downloadPath: "/images/products/digital-wealth/guide.pdf",
+    downloadPath: "/files/digital-wealth/guide.pdf",
   },
   {
     id: 4,
@@ -101,12 +101,13 @@ const base: Omit<Product, "images">[] = [
     downloads: 640,
     bestseller: false,
     image: "/images/products/chatgpt-side-hustles/cover.jpg",
-    downloadPath: "/images/products/chatgpt-side-hustles/ebook.pdf",
+    downloadPath: "/files/chatgpt-side-hustles/ebook.pdf",
   },
   {
     id: 5,
-    slug: "passive-income-financial-freedom",
-    title: "Make Money As You Sleep": Financial Freedom Guide - Passive Income Ebook (Digital Download)",
+    slug: "make-money-as-you-sleep",
+    title:
+      "Make Money As You Sleep – Financial Freedom Guide (Digital Download)",
     description:
       "Learn foundational passive income strategies and systems to build long-term financial freedom.",
     price: 2.99,
@@ -117,8 +118,8 @@ const base: Omit<Product, "images">[] = [
     reviews: 66,
     downloads: 590,
     bestseller: false,
-    image: "/images/products/passive-income-financial-freedom/cover.jpg",
-    downloadPath: "/images/products/passive-income-financial-freedom/book.pdf",
+    image: "/images/products/make-money-as-you-sleep/cover.jpg",
+    downloadPath: "/files/make-money-as-you-sleep/book.pdf",
   },
 ]
 
@@ -133,5 +134,10 @@ export const products: Product[] = base.map((p) => {
   }
 })
 
-export const productsById = Object.fromEntries(products.map((p) => [p.id, p])) as Record<number, Product>
-export const productsBySlug = Object.fromEntries(products.map((p) => [p.slug, p])) as Record<string, Product>
+export const productsById = Object.fromEntries(
+  products.map((p) => [p.id, p])
+) as Record<number, Product>
+
+export const productsBySlug = Object.fromEntries(
+  products.map((p) => [p.slug, p])
+) as Record<string, Product>
