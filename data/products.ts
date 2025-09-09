@@ -69,7 +69,7 @@ const base: Omit<Product, "images">[] = [
   },
   {
     id: 3,
-    slug: "digital-wealth",
+    slug: "digital-wealth-ultimate-guide",
     title:
       "Digital Wealth – Ultimate Guide - This Order Includes A Free Extra Bonus.",
     description:
@@ -82,8 +82,8 @@ const base: Omit<Product, "images">[] = [
     reviews: 95,
     downloads: 820,
     bestseller: false,
-    image: "/images/products/digital-wealth/cover.jpg",
-    downloadPath: "/files/digital-wealth/guide.pdf",
+    image: "/images/products/digital-wealth-ultimate-guide/cover.jpg",
+    downloadPath: "/files/digital-wealth-ultimate-guide/guide.pdf",
   },
   {
     id: 4,
