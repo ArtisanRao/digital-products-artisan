@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation"
-import Image from "next/image"
 import Link from "next/link"
 import { products } from "@/data/products"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Star, Download } from "lucide-react"
+import ProductGallery from "@/components/product-gallery"
 
 type Params = { id: string }
 
@@ -36,18 +36,12 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
 
       <div className="grid gap-8 md:grid-cols-2">
         <Card>
-          <CardContent className="p-0">
-            {/* Use object-contain so the entire cover is visible */}
-            <div className="relative aspect-[4/3] overflow-hidden rounded-md bg-white">
-              <Image
-                src={product.image}
-                alt={product.title}
-                fill
-                className="object-contain"
-                sizes="(min-width: 768px) 50vw, 100vw"
-                priority
-              />
-            </div>
+          <CardContent className="p-4">
+            {/* Full-cover visible + thumbnails */}
+            <ProductGallery
+              images={product.images ?? [product.image]}
+              alt={product.title}
+            />
           </CardContent>
         </Card>
 
@@ -66,12 +60,14 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
           <div className="mt-6 flex items-center space-x-3">
             <span className="text-2xl font-semibold">${product.price.toFixed(2)}</span>
             {product.originalPrice > product.price && (
-              <span className="text-gray-400 line-through">${product.originalPrice.toFixed(2)}</span>
+              <span className="text-gray-400 line-through">
+                ${product.originalPrice.toFixed(2)}
+              </span>
             )}
           </div>
 
           <div className="mt-6 flex gap-3">
-            {/* Point these to your real checkout flow */}
+            {/* Still linking to your checkout page for now */}
             <Button asChild className="bg-gradient-to-r from-blue-600 to-cyan-600">
               <Link href={`/checkout?product=${product.id}`}>Buy now</Link>
             </Button>
