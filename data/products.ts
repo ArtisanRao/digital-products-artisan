@@ -16,10 +16,10 @@ export type Product = {
   bestseller?: boolean
   image: string
   images?: string[]          // gallery images (from manifest)
-  downloadPath?: string      // what /api/download will serve (PDF here)
+  downloadPath?: string      // what /api/download will serve (PDF/ZIP here)
 }
 
-// Put any filename containing "cover" first, keep others in order
+// Put any filename containing "cover" first, keep others in order.
 function coverFirst(list: string[] | undefined): string[] | undefined {
   if (!list?.length) return list
   const covers: string[] = []
@@ -46,7 +46,6 @@ const base: Omit<Product, "images">[] = [
     downloads: 1500,
     bestseller: true,
     image: "/images/products/buy-this-complete-shop/cover.jpg",
-    // ⬇️ update filename if your real PDF is different
     downloadPath: "/files/buy-this-complete-shop/main.pdf",
   },
   {
