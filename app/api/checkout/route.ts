@@ -1,24 +1,24 @@
+// app/api/checkout/route.ts
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { products } from "@/data/products";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-06-20",
-});
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!); // ✅ let SDK use its pinned apiVersion
 
 export async function POST(req: Request) {
   try {
-    const { productId, qty = 1 } = await req.json();
+    const body = await req.json().catch(() => ({} as any));
+    const productId = Number(body.productId);
+    const qty = Math.max(1, Number(body.qty) || 1);
 
-    const product = products.find((p) => p.id === Number(productId));
+    const product = products.find((p) => p.id === productId);
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 400 });
     }
 
-    const baseUrl =
-      process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
 
-    // Make the image absolute for Stripe (recommended)
+    // Build absolute image URL for Stripe
     const firstImage = product.images?.[0] ?? product.image;
     const absoluteImage = firstImage.startsWith("http")
       ? firstImage
@@ -47,9 +47,16 @@ export async function POST(req: Request) {
       },
     });
 
+    if (!session.url) {
+      return NextResponse.json(
+        { error: "Unable to create checkout session" },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json({ url: session.url });
   } catch (err) {
-    console.error(err);
+    console.error("Checkout error:", err);
     return NextResponse.json({ error: "Checkout error" }, { status: 500 });
   }
 }
