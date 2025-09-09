@@ -6,22 +6,35 @@ import { signDownloadToken } from "@/lib/download-token"
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2024-06-20" })
+// Lazily create Stripe so type/version literals don't break builds
+let _stripe: Stripe | null = null
+function getStripe(): Stripe {
+  if (_stripe) return _stripe
+  const key = process.env.STRIPE_SECRET_KEY
+  if (!key) {
+    // Only throw when invoked (not at import/build time)
+    throw new Error("STRIPE_SECRET_KEY is not set")
+  }
+  _stripe = new Stripe(key) // <-- no apiVersion here
+  return _stripe
+}
 
 export async function POST(req: Request) {
   const signature = req.headers.get("stripe-signature")
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
+
   if (!signature || !webhookSecret) {
     return new NextResponse("Missing stripe-signature or STRIPE_WEBHOOK_SECRET", { status: 400 })
   }
 
+  // Raw body for signature verification
   const rawBody = await req.text()
 
   let event: Stripe.Event
   try {
-    event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret)
+    event = getStripe().webhooks.constructEvent(rawBody, signature, webhookSecret)
   } catch (err: any) {
-    console.error("Webhook signature verification failed.", err?.message)
+    console.error("Webhook signature verification failed:", err?.message)
     return new NextResponse("Invalid signature", { status: 400 })
   }
 
@@ -31,11 +44,11 @@ export async function POST(req: Request) {
     const email = session.customer_details?.email
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin
 
-    // 7-day link
+    // 7-day download link
     const token = signDownloadToken({ pid: productId, exp: Date.now() + 7 * 24 * 60 * 60 * 1000 })
     const downloadUrl = `${baseUrl}/api/download?token=${token}`
 
-    // Send email via your existing /api/send-email route (optional but handy)
+    // Optional: email the buyer a link
     if (email) {
       try {
         await fetch(`${baseUrl}/api/send-email`, {
