@@ -1,23 +1,24 @@
-import { notFound } from "next/navigation"
-import Link from "next/link"
-import { products } from "@/data/products"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Star, Download } from "lucide-react"
-import ProductGallery from "@/components/product-gallery"
+import { notFound } from "next/navigation";
+import Link from "next/link";
+import { products } from "@/data/products";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Star, Download } from "lucide-react";
+import ProductGallery from "@/components/product-gallery";
+import BuyNowButton from "@/components/buy-now-button";
 
-type Params = { id: string }
+type Params = { id: string };
 
 export async function generateStaticParams() {
-  return products.map((p) => ({ id: String(p.id) }))
+  return products.map((p) => ({ id: String(p.id) }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<Params> }) {
-  const { id } = await params
-  const p = products.find((x) => x.id === Number(id))
-  if (!p) return { title: "Product not found" }
+  const { id } = await params;
+  const p = products.find((x) => x.id === Number(id));
+  if (!p) return { title: "Product not found" };
 
-  const firstImage = p.images?.[0] ?? p.image
+  const firstImage = p.images?.[0] ?? p.image;
 
   return {
     title: `${p.title} | Digital Products Artisan`,
@@ -31,18 +32,49 @@ export async function generateMetadata({ params }: { params: Promise<Params> }) 
       description: p.description,
       images: [firstImage],
     },
-  }
+  };
 }
 
 export default async function ProductPage({ params }: { params: Promise<Params> }) {
-  const { id } = await params
-  const product = products.find((p) => p.id === Number(id))
-  if (!product) return notFound()
+  const { id } = await params;
+  const product = products.find((p) => p.id === Number(id));
+  if (!product) return notFound();
 
-  const galleryImages = product.images?.length ? product.images : [product.image]
+  const galleryImages = product.images?.length ? product.images : [product.image];
+
+  // ----- JSON-LD (SEO) -----
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  const imagesAbs = galleryImages.map((i) => (i.startsWith("http") ? i : `${siteUrl}${i}`));
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.title,
+    description: product.description,
+    image: imagesAbs,
+    sku: product.slug,
+    url: `${siteUrl}/products/${product.id}`,
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: product.rating,
+      reviewCount: product.reviews,
+    },
+    offers: {
+      "@type": "Offer",
+      price: product.price,
+      priceCurrency: "USD",
+      availability: "https://schema.org/InStock",
+      url: `${siteUrl}/products/${product.id}`,
+    },
+  };
 
   return (
     <main className="container mx-auto px-4 py-10">
+      {/* Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       <nav className="mb-6 text-sm text-gray-500">
         <Link href="/products" className="hover:underline">
           ← Back to all products
@@ -78,10 +110,10 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
           </div>
 
           <div className="mt-6 flex gap-3">
-            {/* Point to your real checkout flow */}
-            <Button asChild className="bg-gradient-to-r from-blue-600 to-cyan-600">
-              <Link href={`/checkout?product=${product.id}`}>Buy now</Link>
-            </Button>
+            {/* Buy with Stripe Checkout */}
+            <BuyNowButton productId={product.id} />
+
+            {/* Optional secondary CTA */}
             <Button variant="outline" asChild>
               <Link href={`/checkout?product=${product.id}`}>
                 <Download className="w-4 h-4 mr-2" />
@@ -92,5 +124,5 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
         </div>
       </div>
     </main>
-  )
+  );
 }
