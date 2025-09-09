@@ -18,7 +18,21 @@ export type Product = {
   images?: string[] // gallery images (auto from manifest when available)
 }
 
-// Base product data (keep image as a fallback)
+// --- helpers ---------------------------------------------------------------
+
+// Put any filename containing "cover" (case-insensitive) first, keep the rest in the same order.
+function coverFirst(list: string[] | undefined): string[] | undefined {
+  if (!list || list.length === 0) return list
+  const covers: string[] = []
+  const others: string[] = []
+  for (const p of list) {
+    if (/cover/i.test(p)) covers.push(p)
+    else others.push(p)
+  }
+  return covers.length ? [...covers, ...others] : list
+}
+
+// --- base product data (image is a fallback if no manifest exists) ---------
 const base: Omit<Product, "images">[] = [
   {
     id: 1,
@@ -106,12 +120,17 @@ const base: Omit<Product, "images">[] = [
   },
 ]
 
-// Attach images[] from the generated manifest and prefer its first image as the cover
+// --- attach manifest images & pick cover -----------------------------------
 export const products: Product[] = base.map((p) => {
-  const imgs = imageManifest[p.slug]
+  const fromManifest = coverFirst(imageManifest[p.slug])
+  const images = fromManifest?.length ? fromManifest : [p.image]
   return {
     ...p,
-    image: imgs?.[0] ?? p.image,
-    images: imgs ?? [p.image],
+    image: images[0], // ensure the first (cover) is used as primary
+    images,
   }
 })
+
+// Useful lookups (optional exports)
+export const productsById = Object.fromEntries(products.map((p) => [p.id, p]))
+export const productsBySlug = Object.fromEntries(products.map((p) => [p.slug, p]))
