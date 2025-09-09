@@ -6,14 +6,15 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Star, Download } from "lucide-react"
 
-type PageProps = { params: { id: string } }
+type Params = { id: string }
 
 export async function generateStaticParams() {
-  return products.map(p => ({ id: String(p.id) }))
+  return products.map((p) => ({ id: String(p.id) }))
 }
 
-export function generateMetadata({ params }: PageProps) {
-  const p = products.find(x => x.id === Number(params.id))
+export async function generateMetadata({ params }: { params: Promise<Params> }) {
+  const { id } = await params
+  const p = products.find((x) => x.id === Number(id))
   if (!p) return { title: "Product not found" }
   return {
     title: `${p.title} | Digital Products Artisan`,
@@ -22,8 +23,9 @@ export function generateMetadata({ params }: PageProps) {
   }
 }
 
-export default function ProductPage({ params }: PageProps) {
-  const product = products.find(p => p.id === Number(params.id))
+export default async function ProductPage({ params }: { params: Promise<Params> }) {
+  const { id } = await params
+  const product = products.find((p) => p.id === Number(id))
   if (!product) return notFound()
 
   return (
@@ -68,14 +70,10 @@ export default function ProductPage({ params }: PageProps) {
           </div>
 
           <div className="mt-6 flex gap-3">
-            {/* Adjust this to your real checkout flow */}
+            {/* Point these to your real checkout flow */}
             <Button asChild className="bg-gradient-to-r from-blue-600 to-cyan-600">
               <Link href={`/checkout?product=${product.id}`}>Buy now</Link>
             </Button>
-
-            {/* If you want this to download a file after purchase, route it accordingly.
-                For now, take users to the same detail page (no 404).
-            */}
             <Button variant="outline" asChild>
               <Link href={`/checkout?product=${product.id}`}>
                 <Download className="w-4 h-4 mr-2" />
