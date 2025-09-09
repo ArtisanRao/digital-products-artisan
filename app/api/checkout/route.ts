@@ -3,7 +3,21 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { products } from "@/data/products";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!); // ✅ let SDK use its pinned apiVersion
+// (Optional) ensure this endpoint is always dynamic
+export const dynamic = "force-dynamic";
+
+// Lazily create Stripe so build doesn't crash if env isn't present at import time
+let _stripe: Stripe | null = null;
+function getStripe(): Stripe {
+  if (_stripe) return _stripe;
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) {
+    // Throw only when the route is actually invoked, not at build/import time
+    throw new Error("STRIPE_SECRET_KEY is not set");
+  }
+  _stripe = new Stripe(key);
+  return _stripe;
+}
 
 export async function POST(req: Request) {
   try {
@@ -18,11 +32,13 @@ export async function POST(req: Request) {
 
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
 
-    // Build absolute image URL for Stripe
+    // Absolute image for Stripe
     const firstImage = product.images?.[0] ?? product.image;
     const absoluteImage = firstImage.startsWith("http")
       ? firstImage
       : `${baseUrl}${firstImage}`;
+
+    const stripe = getStripe();
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -55,8 +71,12 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ url: session.url });
-  } catch (err) {
+  } catch (err: any) {
     console.error("Checkout error:", err);
-    return NextResponse.json({ error: "Checkout error" }, { status: 500 });
+    const msg =
+      typeof err?.message === "string" && err.message.includes("STRIPE_SECRET_KEY")
+        ? "Server misconfigured (missing STRIPE_SECRET_KEY)"
+        : "Checkout error";
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
