@@ -100,20 +100,32 @@ export default function FeaturedProducts() {
             <Card key={product.id} className="group hover:shadow-lg transition-shadow duration-300">
               <CardHeader className="p-0">
                 <div className="relative overflow-hidden rounded-t-lg">
-                  <Image
-                    src={product.image || "/placeholder.svg"}
-                    alt={product.title}
-                    width={400}
-                    height={300}
-                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                    priority
-                  />
+                  <Link href={`/products/${product.id}`} aria-label={`View ${product.title}`}>
+                    <Image
+                      src={product.image || "/placeholder.svg"}
+                      alt={product.title}
+                      width={400}
+                      height={300}
+                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                      priority
+                    />
+                  </Link>
+
                   {product.bestseller && (
                     <Badge className="absolute top-3 left-3 bg-gradient-to-r from-blue-600 to-cyan-600">
                       Bestseller
                     </Badge>
                   )}
-                  <Button size="sm" variant="ghost" className="absolute top-3 right-3 bg-white/80 hover:bg-white">
+
+                  {/* keep Heart from hijacking clicks */}
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="absolute top-3 right-3 bg-white/80 hover:bg-white"
+                    onClick={(e) => e.stopPropagation()}
+                    aria-label="Add to favorites"
+                  >
                     <Heart className="w-4 h-4" />
                   </Button>
                 </div>
@@ -129,7 +141,13 @@ export default function FeaturedProducts() {
                   </div>
                 </div>
 
-                <CardTitle className="text-lg mb-2 line-clamp-2">{product.title}</CardTitle>
+                <Link
+                  href={`/products/${product.id}`}
+                  className="hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-sm"
+                >
+                  <CardTitle className="text-lg mb-2 line-clamp-2">{product.title}</CardTitle>
+                </Link>
+
                 <p className="text-gray-600 text-sm mb-3 line-clamp-2">{product.description}</p>
 
                 <div className="flex items-center justify-between">
@@ -153,7 +171,7 @@ export default function FeaturedProducts() {
                   className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
                   asChild
                 >
-                  <Link href={`/products/${product.id}`}>Add to Cart</Link>
+                  <Link href={`/products/${product.id}`}>View</Link>
                 </Button>
               </CardFooter>
             </Card>
