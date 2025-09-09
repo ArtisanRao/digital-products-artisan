@@ -46,8 +46,8 @@ const base: Omit<Product, "images">[] = [
     downloads: 1500,
     bestseller: true,
     image: "/images/products/buy-this-complete-shop/cover.jpg",
-    // ⬇️ update the filename to the real PDF you uploaded
-    downloadPath: "/images/products/buy-this-complete-shop/main.pdf",
+    // If you moved files to /public/files/, point here; otherwise keep /images/ path
+    downloadPath: "/files/buy-this-complete-shop/main.pdf",
   },
   {
     id: 2,
@@ -65,7 +65,7 @@ const base: Omit<Product, "images">[] = [
     downloads: 980,
     bestseller: true,
     image: "/images/products/the-art-of-giving-no-fucks/cover.jpg",
-    downloadPath: "/images/products/the-art-of-giving-no-fucks/ebook.pdf",
+    downloadPath: "/files/the-art-of-giving-no-fucks/ebook.pdf",
   },
   {
     id: 3,
@@ -83,7 +83,7 @@ const base: Omit<Product, "images">[] = [
     downloads: 820,
     bestseller: false,
     image: "/images/products/digital-wealth/cover.jpg",
-    downloadPath: "/images/products/digital-wealth/guide.pdf",
+    downloadPath: "/files/digital-wealth/guide.pdf",
   },
   {
     id: 4,
@@ -101,7 +101,7 @@ const base: Omit<Product, "images">[] = [
     downloads: 640,
     bestseller: false,
     image: "/images/products/chatgpt-side-hustles/cover.jpg",
-    downloadPath: "/images/products/chatgpt-side-hustles/ebook.pdf",
+    downloadPath: "/files/chatgpt-side-hustles/ebook.pdf",
   },
   {
     id: 5,
