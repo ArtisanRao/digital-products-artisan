@@ -12,6 +12,7 @@ export type Product = {
   downloads: number
   bestseller?: boolean
   image: string
+  images?: string[]      // ✅ extra gallery images (thumbnails use this)
 }
 
 export const products: Product[] = [
@@ -30,6 +31,11 @@ export const products: Product[] = [
     downloads: 1500,
     bestseller: true,
     image: "/images/products/buy-this-complete-shop-cover.jpg",
+    images: [
+      "/images/products/buy-this-complete-shop-cover.jpg",
+      // Add more: "/images/products/buy-this-complete-shop-cover-2.jpg",
+      //           "/images/products/buy-this-complete-shop-mockup.jpg",
+    ],
   },
   {
     id: 2,
@@ -46,6 +52,10 @@ export const products: Product[] = [
     downloads: 980,
     bestseller: true,
     image: "/images/products/the-art-of-giving-no-fucks-cover.jpg",
+    images: [
+      "/images/products/the-art-of-giving-no-fucks-cover.jpg",
+      // "/images/products/the-art-of-giving-no-fucks-mockup.jpg",
+    ],
   },
   {
     id: 3,
@@ -62,6 +72,10 @@ export const products: Product[] = [
     downloads: 820,
     bestseller: false,
     image: "/images/products/digital-wealth-cover.jpg",
+    images: [
+      "/images/products/digital-wealth-cover.jpg",
+      // "/images/products/digital-wealth-mockup.jpg",
+    ],
   },
   {
     id: 4,
@@ -78,6 +92,10 @@ export const products: Product[] = [
     downloads: 640,
     bestseller: false,
     image: "/images/products/chatgpt-side-hustles-cover.jpg",
+    images: [
+      "/images/products/chatgpt-side-hustles-cover.jpg",
+      // "/images/products/chatgpt-side-hustles-mockup.jpg",
+    ],
   },
   {
     id: 5,
@@ -94,5 +112,9 @@ export const products: Product[] = [
     downloads: 590,
     bestseller: false,
     image: "/images/products/make-money-as-you-sleep-cover.jpg",
+    images: [
+      "/images/products/make-money-as-you-sleep-cover.jpg",
+      // "/images/products/make-money-as-you-sleep-mockup.jpg",
+    ],
   },
 ]
