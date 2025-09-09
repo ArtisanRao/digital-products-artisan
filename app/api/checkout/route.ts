@@ -3,8 +3,8 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { products } from "@/data/products";
 
-// (Optional) ensure this endpoint is always dynamic
-export const dynamic = "force-dynamic";
+export const runtime = "nodejs";           // ✅ ensure Node runtime (Stripe SDK needs Node)
+export const dynamic = "force-dynamic";    // optional, but avoids static optimization
 
 // Lazily create Stripe so build doesn't crash if env isn't present at import time
 let _stripe: Stripe | null = null;
@@ -15,7 +15,7 @@ function getStripe(): Stripe {
     // Throw only when the route is actually invoked, not at build/import time
     throw new Error("STRIPE_SECRET_KEY is not set");
   }
-  _stripe = new Stripe(key);
+  _stripe = new Stripe(key); // no apiVersion literal to avoid TS mismatch
   return _stripe;
 }
 
@@ -61,6 +61,7 @@ export async function POST(req: Request) {
         productId: String(product.id),
         slug: product.slug,
       },
+      billing_address_collection: "auto",
     });
 
     if (!session.url) {
