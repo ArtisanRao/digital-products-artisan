@@ -276,14 +276,17 @@ export default function ProductsPage() {
                   <CardHeader className="p-0">
                     <div className="relative overflow-hidden rounded-t-lg">
                       <Link href={`/products/${product.id}`} aria-label={`View ${product.title}`}>
-                        <Image
-                          src={product.image || "/placeholder.svg"}
-                          alt={product.title}
-                          width={400}
-                          height={300}
-                          className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                          priority
-                        />
+                        {/* Full-cover visible: contain inside fixed-height box */}
+                        <div className="relative w-full h-48 md:h-56 bg-white">
+                          <Image
+                            src={product.image || "/placeholder.svg"}
+                            alt={product.title}
+                            fill
+                            className="object-contain"
+                            sizes="(min-width:1280px) 33vw, (min-width:768px) 50vw, 100vw"
+                            priority
+                          />
+                        </div>
                       </Link>
                       {product.bestseller && (
                         <Badge className="absolute top-3 left-3 bg-yellow-400 text-black font-semibold">
@@ -293,7 +296,10 @@ export default function ProductsPage() {
                     </div>
                   </CardHeader>
                   <CardContent className="p-4">
-                    <Link href={`/products/${product.id}`} className="hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-sm">
+                    <Link
+                      href={`/products/${product.id}`}
+                      className="hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-sm"
+                    >
                       <CardTitle className="text-lg font-semibold line-clamp-2">{product.title}</CardTitle>
                     </Link>
                     <p className="text-sm text-gray-600 line-clamp-3">{product.description}</p>
@@ -325,14 +331,17 @@ export default function ProductsPage() {
               {sortedProducts.map((product) => (
                 <li key={product.id} className="flex items-center space-x-4 p-4 border rounded-lg hover:shadow-md transition-shadow duration-300" tabIndex={0}>
                   <Link href={`/products/${product.id}`} className="flex-shrink-0">
-                    <Image
-                      src={product.image || "/placeholder.svg"}
-                      alt={product.title}
-                      width={120}
-                      height={90}
-                      className="rounded-md object-cover"
-                      priority
-                    />
+                    {/* Thumbnail: contain inside fixed box */}
+                    <div className="relative w-[120px] h-[90px] bg-white rounded-md">
+                      <Image
+                        src={product.image || "/placeholder.svg"}
+                        alt={product.title}
+                        fill
+                        className="object-contain"
+                        sizes="120px"
+                        priority
+                      />
+                    </div>
                   </Link>
                   <div className="flex-1 min-w-0">
                     <Link href={`/products/${product.id}`} className="hover:underline">

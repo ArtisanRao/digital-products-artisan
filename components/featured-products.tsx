@@ -103,14 +103,17 @@ export default function FeaturedProducts() {
               <CardHeader className="p-0">
                 <div className="relative overflow-hidden rounded-t-lg">
                   <Link href={`/products/${product.id}`} aria-label={`View ${product.title}`}>
-                    <Image
-                      src={product.image || "/placeholder.svg"}
-                      alt={product.title}
-                      width={400}
-                      height={300}
-                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                      priority
-                    />
+                    {/* Wrapper ensures full image fits without cropping */}
+                    <div className="relative w-full h-48 md:h-56 bg-white">
+                      <Image
+                        src={product.image || "/placeholder.svg"}
+                        alt={product.title}
+                        fill
+                        className="object-contain"
+                        sizes="(min-width:1024px) 25vw, (min-width:768px) 50vw, 100vw"
+                        priority
+                      />
+                    </div>
                   </Link>
 
                   {product.bestseller && (

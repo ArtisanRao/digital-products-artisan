@@ -37,12 +37,13 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
       <div className="grid gap-8 md:grid-cols-2">
         <Card>
           <CardContent className="p-0">
-            <div className="relative aspect-[4/3] overflow-hidden rounded-md">
+            {/* Use object-contain so the entire cover is visible */}
+            <div className="relative aspect-[4/3] overflow-hidden rounded-md bg-white">
               <Image
                 src={product.image}
                 alt={product.title}
                 fill
-                className="object-cover"
+                className="object-contain"
                 sizes="(min-width: 768px) 50vw, 100vw"
                 priority
               />
