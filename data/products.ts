@@ -1,6 +1,9 @@
 // data/products.ts
+import { imageManifest } from "./image-manifest"
+
 export type Product = {
   id: number
+  slug: string
   title: string
   description: string
   price: number
@@ -12,12 +15,14 @@ export type Product = {
   downloads: number
   bestseller?: boolean
   image: string
-  images?: string[] // gallery images (thumbnails use this)
+  images?: string[] // gallery images (auto from manifest when available)
 }
 
-export const products: Product[] = [
+// Base product data (keep image as a fallback)
+const base: Omit<Product, "images">[] = [
   {
     id: 1,
+    slug: "buy-this-complete-shop", // folder: public/images/products/buy-this-complete-shop/
     title:
       "Buy This Complete Shop - PLR MRR Digital Product: Resell Ebooks, Courses, Prompts & More.",
     description:
@@ -31,21 +36,10 @@ export const products: Product[] = [
     downloads: 1500,
     bestseller: true,
     image: "/images/products/buy-this-complete-shop-cover.jpg",
-    images: [
-      "/images/products/buy-this-complete-shop-cover.jpg",
-      "/images/products/buy-this-complete-shop-mockup-1.jpg",
-      "/images/products/buy-this-complete-shop-mockup-2.jpg",
-      "/images/products/buy-this-complete-shop-mockup-3.jpg",
-      "/images/products/buy-this-complete-shop-mockup-4.jpg",
-      "/images/products/buy-this-complete-shop-mockup-5.jpg",
-      "/images/products/buy-this-complete-shop-mockup-6.jpg",
-      "/images/products/buy-this-complete-shop-mockup-7.jpg",
-      "/images/products/buy-this-complete-shop-mockup-8.jpg",
-      "/images/products/buy-this-complete-shop-mockup-9.jpg",
-    ],
   },
   {
     id: 2,
+    slug: "the-art-of-giving-no-fucks", // folder: public/images/products/the-art-of-giving-no-fucks/
     title:
       "Self-Help Ebook: The Art of Giving No F*cks - Minimalist Mindset (Digital Download).",
     description:
@@ -59,12 +53,10 @@ export const products: Product[] = [
     downloads: 980,
     bestseller: true,
     image: "/images/products/the-art-of-giving-no-fucks-cover.jpg",
-    images: [
-      "/images/products/the-art-of-giving-no-fucks-cover.jpg",
-    ],
   },
   {
     id: 3,
+    slug: "digital-wealth", // folder: public/images/products/digital-wealth/
     title:
       "Digital Wealth – Ultimate Guide - This Order Includes A Free Extra Bonus.",
     description:
@@ -78,12 +70,10 @@ export const products: Product[] = [
     downloads: 820,
     bestseller: false,
     image: "/images/products/digital-wealth-cover.jpg",
-    images: [
-      "/images/products/digital-wealth-cover.jpg",
-    ],
   },
   {
     id: 4,
+    slug: "chatgpt-side-hustles", // folder: public/images/products/chatgpt-side-hustles/
     title:
       "ChatGPT Side Hustles eBook: 12 AI Income Streams - Beginner's PDF Guide (Digital Download).",
     description:
@@ -97,14 +87,11 @@ export const products: Product[] = [
     downloads: 640,
     bestseller: false,
     image: "/images/products/chatgpt-side-hustles-cover.jpg",
-    images: [
-      "/images/products/chatgpt-side-hustles-cover.jpg",
-    ],
   },
   {
     id: 5,
-    title:
-      "Passive Income Ebook: Financial Freedom Guide (Digital Download)",
+    slug: "passive-income-financial-freedom", // folder: public/images/products/passive-income-financial-freedom/
+    title: "Passive Income Ebook: Financial Freedom Guide (Digital Download)",
     description:
       "Learn foundational passive income strategies and systems to build long-term financial freedom.",
     price: 2.99,
@@ -116,8 +103,15 @@ export const products: Product[] = [
     downloads: 590,
     bestseller: false,
     image: "/images/products/make-money-as-you-sleep-cover.jpg",
-    images: [
-      "/images/products/make-money-as-you-sleep-cover.jpg",
-    ],
   },
 ]
+
+// Attach images[] from the generated manifest and prefer its first image as the cover
+export const products: Product[] = base.map((p) => {
+  const imgs = imageManifest[p.slug]
+  return {
+    ...p,
+    image: imgs?.[0] ?? p.image,
+    images: imgs ?? [p.image],
+  }
+})

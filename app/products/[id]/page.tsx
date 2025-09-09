@@ -16,10 +16,21 @@ export async function generateMetadata({ params }: { params: Promise<Params> }) 
   const { id } = await params
   const p = products.find((x) => x.id === Number(id))
   if (!p) return { title: "Product not found" }
+
+  const firstImage = p.images?.[0] ?? p.image
+
   return {
     title: `${p.title} | Digital Products Artisan`,
     description: p.description,
-    openGraph: { images: [{ url: p.image }] },
+    openGraph: {
+      images: [{ url: firstImage }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: p.title,
+      description: p.description,
+      images: [firstImage],
+    },
   }
 }
 
@@ -28,20 +39,20 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
   const product = products.find((p) => p.id === Number(id))
   if (!product) return notFound()
 
+  const galleryImages = product.images?.length ? product.images : [product.image]
+
   return (
     <main className="container mx-auto px-4 py-10">
       <nav className="mb-6 text-sm text-gray-500">
-        <Link href="/products" className="hover:underline">← Back to all products</Link>
+        <Link href="/products" className="hover:underline">
+          ← Back to all products
+        </Link>
       </nav>
 
       <div className="grid gap-8 md:grid-cols-2">
         <Card>
           <CardContent className="p-4">
-            {/* Full-cover visible + thumbnails */}
-            <ProductGallery
-              images={product.images ?? [product.image]}
-              alt={product.title}
-            />
+            <ProductGallery images={galleryImages} alt={product.title} />
           </CardContent>
         </Card>
 
@@ -67,7 +78,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
           </div>
 
           <div className="mt-6 flex gap-3">
-            {/* Still linking to your checkout page for now */}
+            {/* Point to your real checkout flow */}
             <Button asChild className="bg-gradient-to-r from-blue-600 to-cyan-600">
               <Link href={`/checkout?product=${product.id}`}>Buy now</Link>
             </Button>
