@@ -49,7 +49,7 @@ const base: Omit<Product, "images">[] = [
     reviews: 210,
     downloads: 1500,
     bestseller: true,
-    image: "/images/products/buy-this-complete-shop-cover.jpg",
+    image: "/images/products/buy-this-complete-shop/cover.jpg",
   },
   {
     id: 2,
@@ -66,7 +66,7 @@ const base: Omit<Product, "images">[] = [
     reviews: 112,
     downloads: 980,
     bestseller: true,
-    image: "/images/products/the-art-of-giving-no-fucks-cover.jpg",
+    image: "/images/products/the-art-of-giving-no-fucks/cover.jpg",
   },
   {
     id: 3,
@@ -83,7 +83,7 @@ const base: Omit<Product, "images">[] = [
     reviews: 95,
     downloads: 820,
     bestseller: false,
-    image: "/images/products/digital-wealth-cover.jpg",
+    image: "/images/products/digital-wealth/cover.jpg",
   },
   {
     id: 4,
@@ -100,7 +100,7 @@ const base: Omit<Product, "images">[] = [
     reviews: 78,
     downloads: 640,
     bestseller: false,
-    image: "/images/products/chatgpt-side-hustles-cover.jpg",
+    image: "/images/products/chatgpt-side-hustles/cover.jpg",
   },
   {
     id: 5,
@@ -116,7 +116,7 @@ const base: Omit<Product, "images">[] = [
     reviews: 66,
     downloads: 590,
     bestseller: false,
-    image: "/images/products/make-money-as-you-sleep-cover.jpg",
+    image: "/images/products/passive-income-financial-freedom/cover.jpg",
   },
 ]
 
