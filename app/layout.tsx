@@ -29,9 +29,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="application-name" content="Digital Products Artisan" />
         <meta name="apple-mobile-web-app-title" content="Digital Products Artisan" />
-        <link rel="icon" href="/logo-new.png" sizes="32x32" type="image/png" />
-        <link rel="icon" href="/logo-new.png" sizes="192x192" type="image/png" />
-        <link rel="apple-touch-icon" href="/logo-new.png" />
+        <link rel="icon" href="/images/logo-new.png" sizes="32x32" type="image/png" />
+        <link rel="icon" href="/images/logo-new.png" sizes="192x192" type="image/png" />
+        <link rel="apple-touch-icon" href="/images/logo-new.png" />
 
         {/* Social */}
         <meta property="og:title" content="Digital Products Artisan" />
@@ -39,7 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           property="og:description"
           content="Premium handcrafted digital downloads for creators and entrepreneurs."
         />
-        <meta property="og:image" content="https://digitalproductsartisan.com/logo-new.png" />
+        <meta property="og:image" content="https://digitalproductsartisan.com/images/logo-new.png" />
         <meta property="og:url" content="https://digitalproductsartisan.com" />
         <meta property="og:type" content="website" />
         <meta name="twitter:card" content="summary_large_image" />
@@ -48,7 +48,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           name="twitter:description"
           content="Premium handcrafted digital downloads for creators and entrepreneurs."
         />
-        <meta name="twitter:image" content="https://digitalproductsartisan.com/logo-new.png" />
+        <meta name="twitter:image" content="https://digitalproductsartisan.com/images/logo-new.png" />
 
         {/* JSON-LD */}
         <script
@@ -59,18 +59,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               "@type": "Organization",
               name: "Digital Products Artisan",
               url: "https://digitalproductsartisan.com",
-              logo: "https://digitalproductsartisan.com/logo-new.png",
+              logo: "https://digitalproductsartisan.com/images/logo-new.png",
             }),
           }}
         />
-        {/* ⛔️ Snipcart stylesheet removed to avoid CORS/402 & checkout clashes */}
+        {/* Snipcart assets removed; Stripe handles checkout */}
       </head>
 
       <body className={inter.className}>
         <AuthProvider>
           <CartProvider>
             <Header />
-            {/* ⛔️ SnipcartLoader removed. Stripe checkout handles purchases now. */}
             {children}
             <Footer />
             <LiveChat />
