@@ -7,107 +7,10 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Star, Download, Search, Filter, Grid, List } from "lucide-react"
+import { Star, Search, Filter, Grid, List, Eye } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
-
-interface Product {
-  id: number
-  title: string
-  description: string
-  price: number
-  originalPrice: number
-  category: string
-  tags: string[]
-  rating: number
-  reviews: number
-  downloads: number
-  bestseller?: boolean
-  image?: string
-}
-
-const products: Product[] = [
-  {
-    id: 1,
-    title:
-      "Buy This Complete Shop - PLR MRR Digital Product: Resell Ebooks, Courses, Prompts & More.",
-    description:
-      "Complete, rights-included digital shop bundle. Rebrand and resell ebooks, courses, prompts, templates, and more.",
-    price: 42.99,
-    originalPrice: 0,
-    category: "Complete Shop Packages",
-    tags: ["PLR", "MRR", "Bundle", "Resell Rights"],
-    rating: 4.8,
-    reviews: 210,
-    downloads: 1500,
-    bestseller: true,
-    image: "/images/products/buy-this-complete-shop-cover.jpg",
-  },
-  {
-    id: 2,
-    title:
-      "Self-Help Ebook: The Art of Giving No F*cks - Minimalist Mindset (Digital Download).",
-    description:
-      "A practical guide to focus, freedom, and owning your life—minimalist mindset strategies with worksheets.",
-    price: 14.99,
-    originalPrice: 0,
-    category: "Self-Help & How-To",
-    tags: ["Mindset", "Self-Help", "Focus", "Minimalism"],
-    rating: 4.7,
-    reviews: 112,
-    downloads: 980,
-    bestseller: true,
-    image: "/images/products/the-art-of-giving-no-fucks-cover.jpg",
-  },
-  {
-    id: 3,
-    title:
-      "Digital Wealth – Ultimate Guide - This Order Includes A Free Extra Bonus.",
-    description:
-      "Step-by-step strategies for building digital income streams. Includes a surprise bonus resource.",
-    price: 28.99,
-    originalPrice: 0,
-    category: "Ebooks (Miscellaneous)",
-    tags: ["Wealth", "Business", "Strategy", "Guide"],
-    rating: 4.6,
-    reviews: 95,
-    downloads: 820,
-    bestseller: false,
-    image: "/images/products/digital-wealth-cover.jpg",
-  },
-  {
-    id: 4,
-    title:
-      "ChatGPT Side Hustles eBook: 12 AI Income Streams - Beginner's PDF Guide (Digital Download).",
-    description:
-      "Beginner-friendly guide to 12 ChatGPT-powered side hustles with actionable steps and tools.",
-    price: 2.99,
-    originalPrice: 0,
-    category: "AI & ChatGPT Guides",
-    tags: ["AI", "ChatGPT", "Side Hustle", "Beginner"],
-    rating: 4.5,
-    reviews: 78,
-    downloads: 640,
-    bestseller: false,
-    image: "/images/products/chatgpt-side-hustles-cover.jpg",
-  },
-  {
-    id: 5,
-    title:
-      "Passive Income Ebook: Financial Freedom Guide (Digital Download)",
-    description:
-      "Learn foundational passive income strategies and systems to build long-term financial freedom.",
-    price: 2.99,
-    originalPrice: 0,
-    category: "Passive Income & Side Hustles",
-    tags: ["Passive Income", "Finance", "Freedom"],
-    rating: 4.4,
-    reviews: 66,
-    downloads: 590,
-    bestseller: false,
-    image: "/images/products/make-money-as-you-sleep-cover.jpg",
-  },
-]
+import { products, type Product } from "@/data/products"
 
 const baseCategories = [
   "AI & ChatGPT Guides",
@@ -152,9 +55,8 @@ export default function ProductsPage() {
   const [selectedTags, setSelectedTags] = useState<string[]>([])
 
   const allTags = useMemo(() => Array.from(new Set(products.flatMap((p) => p.tags))), [])
-  const categoryCounts = useMemo(() => categoriesWithCounts(products), [products])
+  const categoryCounts = useMemo(() => categoriesWithCounts(products), [])
 
-  // Ensure min price <= max price
   const handleMinPriceChange = (value: number) => {
     setPriceRange((prev) => ({ min: Math.min(value, prev.max), max: prev.max }))
   }
@@ -218,7 +120,7 @@ export default function ProductsPage() {
                   Search
                 </label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" aria-hidden="true" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" aria-hidden="true" />
                   <Input
                     id="product-search"
                     type="search"
@@ -231,11 +133,11 @@ export default function ProductsPage() {
                 </div>
               </div>
 
-              {/* Categories (radio buttons for single select) */}
+              {/* Categories */}
               <fieldset>
                 <legend className="text-sm font-medium text-gray-700 mb-2 block">Category</legend>
                 <div className="space-y-2">
-                  <div key="All" className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2">
                     <input
                       id="category-All"
                       name="category"
@@ -370,22 +272,19 @@ export default function ProductsPage() {
           {viewMode === "grid" ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {sortedProducts.map((product) => (
-                <Card
-                  key={product.id}
-                  className="group hover:shadow-lg transition-shadow duration-300"
-                  tabIndex={0}
-                  aria-label={`Product: ${product.title}`}
-                >
+                <Card key={product.id} className="group hover:shadow-lg transition-shadow duration-300" tabIndex={0}>
                   <CardHeader className="p-0">
                     <div className="relative overflow-hidden rounded-t-lg">
-                      <Image
-                        src={product.image || "/placeholder.svg"}
-                        alt={product.title}
-                        width={400}
-                        height={300}
-                        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                        priority
-                      />
+                      <Link href={`/products/${product.id}`} aria-label={`View ${product.title}`}>
+                        <Image
+                          src={product.image || "/placeholder.svg"}
+                          alt={product.title}
+                          width={400}
+                          height={300}
+                          className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                          priority
+                        />
+                      </Link>
                       {product.bestseller && (
                         <Badge className="absolute top-3 left-3 bg-yellow-400 text-black font-semibold">
                           Bestseller
@@ -394,7 +293,9 @@ export default function ProductsPage() {
                     </div>
                   </CardHeader>
                   <CardContent className="p-4">
-                    <CardTitle className="text-lg font-semibold">{product.title}</CardTitle>
+                    <Link href={`/products/${product.id}`} className="hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-sm">
+                      <CardTitle className="text-lg font-semibold line-clamp-2">{product.title}</CardTitle>
+                    </Link>
                     <p className="text-sm text-gray-600 line-clamp-3">{product.description}</p>
                     <div className="mt-3 flex items-center space-x-2">
                       <Star className="w-4 h-4 text-yellow-400" aria-hidden="true" />
@@ -404,15 +305,15 @@ export default function ProductsPage() {
                   </CardContent>
                   <CardFooter className="p-4 flex justify-between items-center">
                     <div>
-                      <span className="text-lg font-semibold text-gray-900">${product.price}</span>
+                      <span className="text-lg font-semibold text-gray-900">${product.price.toFixed(2)}</span>
                       {product.originalPrice > product.price && (
-                        <span className="line-through text-gray-400 ml-2">${product.originalPrice}</span>
+                        <span className="line-through text-gray-400 ml-2">${product.originalPrice.toFixed(2)}</span>
                       )}
                     </div>
-                    <Button asChild size="sm" variant="outline" aria-label={`Download ${product.title}`}>
+                    <Button asChild size="sm" variant="outline" aria-label={`View ${product.title}`}>
                       <Link href={`/products/${product.id}`}>
-                        <Download className="w-4 h-4 mr-2" aria-hidden="true" />
-                        Download
+                        <Eye className="w-4 h-4 mr-2" aria-hidden="true" />
+                        View
                       </Link>
                     </Button>
                   </CardFooter>
@@ -422,22 +323,21 @@ export default function ProductsPage() {
           ) : (
             <ul className="space-y-4">
               {sortedProducts.map((product) => (
-                <li
-                  key={product.id}
-                  className="flex items-center space-x-4 p-4 border rounded-lg hover:shadow-md transition-shadow duration-300"
-                  tabIndex={0}
-                  aria-label={`Product: ${product.title}`}
-                >
-                  <Image
-                    src={product.image || "/placeholder.svg"}
-                    alt={product.title}
-                    width={120}
-                    height={90}
-                    className="flex-shrink-0 rounded-md object-cover"
-                    priority
-                  />
+                <li key={product.id} className="flex items-center space-x-4 p-4 border rounded-lg hover:shadow-md transition-shadow duration-300" tabIndex={0}>
+                  <Link href={`/products/${product.id}`} className="flex-shrink-0">
+                    <Image
+                      src={product.image || "/placeholder.svg"}
+                      alt={product.title}
+                      width={120}
+                      height={90}
+                      className="rounded-md object-cover"
+                      priority
+                    />
+                  </Link>
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold truncate">{product.title}</h3>
+                    <Link href={`/products/${product.id}`} className="hover:underline">
+                      <h3 className="text-lg font-semibold truncate">{product.title}</h3>
+                    </Link>
                     <p className="text-sm text-gray-600 truncate">{product.description}</p>
                     <div className="flex items-center space-x-2 mt-1">
                       <Star className="w-4 h-4 text-yellow-400" aria-hidden="true" />
@@ -446,14 +346,14 @@ export default function ProductsPage() {
                     </div>
                   </div>
                   <div className="flex flex-col items-end space-y-2">
-                    <span className="text-lg font-semibold text-gray-900">${product.price}</span>
+                    <span className="text-lg font-semibold text-gray-900">${product.price.toFixed(2)}</span>
                     {product.originalPrice > product.price && (
-                      <span className="line-through text-gray-400">${product.originalPrice}</span>
+                      <span className="line-through text-gray-400">${product.originalPrice.toFixed(2)}</span>
                     )}
-                    <Button asChild size="sm" variant="outline" aria-label={`Download ${product.title}`}>
+                    <Button asChild size="sm" variant="outline" aria-label={`View ${product.title}`}>
                       <Link href={`/products/${product.id}`}>
-                        <Download className="w-4 h-4 mr-2" aria-hidden="true" />
-                        Download
+                        <Eye className="w-4 h-4 mr-2" aria-hidden="true" />
+                        View
                       </Link>
                     </Button>
                   </div>
