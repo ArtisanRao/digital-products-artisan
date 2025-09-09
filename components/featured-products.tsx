@@ -1,3 +1,5 @@
+"use client"
+
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -117,7 +119,6 @@ export default function FeaturedProducts() {
                     </Badge>
                   )}
 
-                  {/* keep Heart from hijacking clicks */}
                   <Button
                     type="button"
                     size="sm"
