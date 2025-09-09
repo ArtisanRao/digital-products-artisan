@@ -12,7 +12,7 @@ export type Product = {
   downloads: number
   bestseller?: boolean
   image: string
-  images?: string[]      // ✅ extra gallery images (thumbnails use this)
+  images?: string[] // gallery images (thumbnails use this)
 }
 
 export const products: Product[] = [
@@ -33,8 +33,15 @@ export const products: Product[] = [
     image: "/images/products/buy-this-complete-shop-cover.jpg",
     images: [
       "/images/products/buy-this-complete-shop-cover.jpg",
-      // Add more: "/images/products/buy-this-complete-shop-cover-2.jpg",
-      //           "/images/products/buy-this-complete-shop-mockup.jpg",
+      "/images/products/buy-this-complete-shop-mockup-1.jpg",
+      "/images/products/buy-this-complete-shop-mockup-2.jpg",
+      "/images/products/buy-this-complete-shop-mockup-3.jpg",
+      "/images/products/buy-this-complete-shop-mockup-4.jpg",
+      "/images/products/buy-this-complete-shop-mockup-5.jpg",
+      "/images/products/buy-this-complete-shop-mockup-6.jpg",
+      "/images/products/buy-this-complete-shop-mockup-7.jpg",
+      "/images/products/buy-this-complete-shop-mockup-8.jpg",
+      "/images/products/buy-this-complete-shop-mockup-9.jpg",
     ],
   },
   {
@@ -54,7 +61,6 @@ export const products: Product[] = [
     image: "/images/products/the-art-of-giving-no-fucks-cover.jpg",
     images: [
       "/images/products/the-art-of-giving-no-fucks-cover.jpg",
-      // "/images/products/the-art-of-giving-no-fucks-mockup.jpg",
     ],
   },
   {
@@ -74,7 +80,6 @@ export const products: Product[] = [
     image: "/images/products/digital-wealth-cover.jpg",
     images: [
       "/images/products/digital-wealth-cover.jpg",
-      // "/images/products/digital-wealth-mockup.jpg",
     ],
   },
   {
@@ -94,7 +99,6 @@ export const products: Product[] = [
     image: "/images/products/chatgpt-side-hustles-cover.jpg",
     images: [
       "/images/products/chatgpt-side-hustles-cover.jpg",
-      // "/images/products/chatgpt-side-hustles-mockup.jpg",
     ],
   },
   {
@@ -114,7 +118,6 @@ export const products: Product[] = [
     image: "/images/products/make-money-as-you-sleep-cover.jpg",
     images: [
       "/images/products/make-money-as-you-sleep-cover.jpg",
-      // "/images/products/make-money-as-you-sleep-mockup.jpg",
     ],
   },
 ]
