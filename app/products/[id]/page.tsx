@@ -1,3 +1,4 @@
+// app/products/[id]/page.tsx
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { products } from "@/data/products";
@@ -18,19 +19,26 @@ export async function generateMetadata({ params }: { params: Promise<Params> }) 
   const p = products.find((x) => x.id === Number(id));
   if (!p) return { title: "Product not found" };
 
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://digitalproductsartisan.com";
   const firstImage = p.images?.[0] ?? p.image;
+  const ogImage = firstImage.startsWith("http") ? firstImage : `${siteUrl}${firstImage}`;
 
   return {
     title: `${p.title} | Digital Products Artisan`,
     description: p.description,
     openGraph: {
-      images: [{ url: firstImage }],
+      url: `${siteUrl}/products/${p.id}`,
+      title: p.title,
+      description: p.description,
+      images: [{ url: ogImage }],
+      type: "product",
     },
     twitter: {
       card: "summary_large_image",
       title: p.title,
       description: p.description,
-      images: [firstImage],
+      images: [ogImage],
     },
   };
 }
@@ -43,14 +51,15 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
   const galleryImages = product.images?.length ? product.images : [product.image];
 
   // ----- JSON-LD (SEO) -----
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
-  const imagesAbs = galleryImages.map((i) => (i.startsWith("http") ? i : `${siteUrl}${i}`));
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://digitalproductsartisan.com";
+  const abs = (p: string) => (p.startsWith("http") ? p : `${siteUrl}${p}`);
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.title,
     description: product.description,
-    image: imagesAbs,
+    image: galleryImages.map(abs),
     sku: product.slug,
     url: `${siteUrl}/products/${product.id}`,
     aggregateRating: {
@@ -110,7 +119,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
           </div>
 
           <div className="mt-6 flex gap-3">
-            {/* Buy with Stripe Checkout */}
+            {/* Buy with Stripe Checkout (client component) */}
             <BuyNowButton productId={product.id} />
 
             {/* Optional secondary CTA */}
