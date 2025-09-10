@@ -24,11 +24,11 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Missing token" }, { status: 400 });
     }
 
-    // Verify token -> { pid, exp, ... }
+    // Verify token -> { pid, exp }
     let payload: any;
     try {
       payload = verifyDownloadToken(token);
-    } catch (e: any) {
+    } catch {
       return NextResponse.json({ error: "Invalid or expired token" }, { status: 401 });
     }
 
@@ -38,7 +38,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "No file for this product" }, { status: 404 });
     }
 
-    // Files live under /private (not /public)
+    // Files are stored under /private (not /public)
     const relative = product.downloadPath.replace(/^\//, ""); // strip leading slash
     const absPath = path.join(process.cwd(), "private", relative);
 
@@ -47,19 +47,19 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Not a file" }, { status: 404 });
     }
 
-    const file = await fs.readFile(absPath); // Node Buffer
-    // Convert Node Buffer -> ArrayBuffer (BodyInit) to satisfy NextResponse
-    const body = file.buffer.slice(file.byteOffset, file.byteOffset + file.byteLength);
+    // Read as Node Buffer, then wrap in a Blob (BodyInit-safe)
+    const file = await fs.readFile(absPath);
+    const mime = guessMime(absPath);
+    const blob = new Blob([file], { type: mime });
 
     const headers = new Headers({
-      "Content-Type": guessMime(absPath),
-      "Content-Length": String(file.length),
-      // Force download with a friendly filename
+      "Content-Type": mime,
+      // Friendly filename + force download
       "Content-Disposition": `attachment; filename="${path.basename(absPath)}"`,
       "Cache-Control": "no-store",
     });
 
-    return new NextResponse(body, { headers });
+    return new NextResponse(blob, { headers });
   } catch (err: any) {
     console.error("Download error:", err?.message ?? err);
     return NextResponse.json({ error: "Download error" }, { status: 500 });
