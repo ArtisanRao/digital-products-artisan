@@ -16,7 +16,7 @@ export type Product = {
   bestseller?: boolean
   image: string
   images?: string[]          // gallery images (from manifest)
-  downloadPath?: string      // what /api/download will serve (PDF here)
+  downloadPath?: string      // repo-relative path under /private (e.g. "private/slug/file.pdf")
 }
 
 // Put any filename containing "cover" first
@@ -46,8 +46,8 @@ const base: Omit<Product, "images">[] = [
     downloads: 1500,
     bestseller: true,
     image: "/images/products/buy-this-complete-shop/cover.jpg",
-    // If you moved files to /public/files/, point here; otherwise keep /images/ path
-    downloadPath: "/files/buy-this-complete-shop/main.pdf",
+    // Secure file served via /api/download
+    downloadPath: "private/buy-this-complete-shop/main.pdf",
   },
   {
     id: 2,
@@ -65,7 +65,7 @@ const base: Omit<Product, "images">[] = [
     downloads: 980,
     bestseller: true,
     image: "/images/products/the-art-of-giving-no-fucks/cover.jpg",
-    downloadPath: "/files/the-art-of-giving-no-fucks/ebook.pdf",
+    downloadPath: "private/the-art-of-giving-no-fucks/ebook.pdf",
   },
   {
     id: 3,
@@ -83,7 +83,7 @@ const base: Omit<Product, "images">[] = [
     downloads: 820,
     bestseller: false,
     image: "/images/products/digital-wealth-ultimate-guide/cover.jpg",
-    downloadPath: "/files/digital-wealth-ultimate-guide/guide.pdf",
+    downloadPath: "private/digital-wealth-ultimate-guide/guide.pdf",
   },
   {
     id: 4,
@@ -101,7 +101,7 @@ const base: Omit<Product, "images">[] = [
     downloads: 640,
     bestseller: false,
     image: "/images/products/chatgpt-side-hustles/cover.jpg",
-    downloadPath: "/files/chatgpt-side-hustles/ebook.pdf",
+    downloadPath: "private/chatgpt-side-hustles/ebook.pdf",
   },
   {
     id: 5,
@@ -119,7 +119,7 @@ const base: Omit<Product, "images">[] = [
     downloads: 590,
     bestseller: false,
     image: "/images/products/make-money-as-you-sleep/cover.jpg",
-    downloadPath: "/files/make-money-as-you-sleep/book.pdf",
+    downloadPath: "private/make-money-as-you-sleep/book.pdf",
   },
 ]
 
