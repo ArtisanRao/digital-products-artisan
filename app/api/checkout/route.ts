@@ -3,15 +3,16 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { products } from "@/data/products";
 
-export const runtime = "nodejs";         // <-- ensure Node runtime on Vercel
-export const dynamic = "force-dynamic";  // optional, keep route server-side
+export const runtime = "nodejs";         // Ensure Node runtime on Vercel
+export const dynamic = "force-dynamic";  // Keep route server-side / dynamic
 
+// Lazily init Stripe so missing envs don't crash build
 let _stripe: Stripe | null = null;
 function getStripe(): Stripe {
   if (_stripe) return _stripe;
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) throw new Error("STRIPE_SECRET_KEY is not set");
-  _stripe = new Stripe(key); // no apiVersion so it matches installed SDK
+  _stripe = new Stripe(key); // no apiVersion param => matches installed SDK types
   return _stripe;
 }
 
@@ -26,6 +27,7 @@ export async function POST(req: Request) {
 
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
 
+    // Ensure absolute image URL for Stripe
     const firstImage = product.images?.[0] ?? product.image;
     const absoluteImage = firstImage.startsWith("http")
       ? firstImage
@@ -65,7 +67,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ url: session.url });
   } catch (err: any) {
-    // These logs show up in the Vercel function logs for this route
+    // Visible in Vercel → Logs
     console.error("Checkout error:", {
       message: err?.message,
       name: err?.name,
@@ -80,7 +82,7 @@ export async function POST(req: Request) {
   }
 }
 
+// Helpful 405 for accidental GETs
 export async function GET() {
-  // Helpful 405 for accidental GETs
   return NextResponse.json({ error: "Method Not Allowed" }, { status: 405 });
 }
