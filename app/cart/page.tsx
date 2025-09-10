@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 
 interface CartItem {
-  id: string
+  id: string            // expects product.id as a string (e.g. "1")
   name: string
   price: number
   quantity: number
@@ -18,9 +18,14 @@ export default function CartPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Load from localStorage on mount
   useEffect(() => {
-    const storedCart = localStorage.getItem('cart')
-    if (storedCart) setCartItems(JSON.parse(storedCart))
+    try {
+      const stored = localStorage.getItem('cart')
+      if (stored) setCartItems(JSON.parse(stored))
+    } catch {
+      // ignore parse errors
+    }
   }, [])
 
   const updateCart = (items: CartItem[]) => {
@@ -31,34 +36,39 @@ export default function CartPage() {
 
   const handleQuantityChange = (id: string, quantity: number) => {
     if (quantity < 1) return
-    const updated = cartItems.map(item =>
-      item.id === id ? { ...item, quantity } : item
-    )
-    updateCart(updated)
+    updateCart(cartItems.map(item => (item.id === id ? { ...item, quantity } : item)))
   }
 
   const handleRemove = (id: string) => {
-    const filtered = cartItems.filter(item => item.id !== id)
-    updateCart(filtered)
+    updateCart(cartItems.filter(item => item.id !== id))
   }
 
-  const handleClear = () => {
-    updateCart([])
-  }
+  const handleClear = () => updateCart([])
 
-  const totalPrice = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
+  const totalPrice = useMemo(
+    () => cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
+    [cartItems]
   )
 
+  // 🚀 Stripe Checkout (multi-item) via /api/checkout
   const handleCheckout = async () => {
     if (!cartItems.length) {
       setError('Your cart is empty!')
       return
     }
 
-    if (typeof window === 'undefined' || !window.Snipcart?.api?.items) {
-      setError('Snipcart is not loaded yet. Please try again in a moment.')
+    // Convert string ids -> numeric productIds expected by /api/checkout
+    const lineItems = cartItems
+      .map(ci => {
+        const productId = Number.parseInt(ci.id as string, 10)
+        return Number.isFinite(productId)
+          ? { productId, qty: Math.max(1, Number(ci.quantity) || 1) }
+          : null
+      })
+      .filter(Boolean) as { productId: number; qty: number }[]
+
+    if (!lineItems.length) {
+      setError('Could not resolve product IDs in your cart.')
       return
     }
 
@@ -66,34 +76,38 @@ export default function CartPage() {
     setError(null)
 
     try {
-      await window.Snipcart.api.items.clear()
-
-      cartItems.forEach(item => {
-        window.Snipcart!.api.items.add({
-          id: item.id,
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity,
-          url: item.url || window.location.href,
-          ...(item.fileGuid && { fileGuid: item.fileGuid }),
-        })
+      const resp = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cart: lineItems }),
       })
 
-      window.Snipcart.api.cart.open() // ✅ Corrected line
-    } catch {
-      setError('Failed to start checkout. Please try again.')
+      const data = await resp.json()
+      if (!resp.ok || !data?.url) {
+        console.error('Checkout error:', data)
+        setError(data?.error || 'Sorry—couldn’t start checkout.')
+        setLoading(false)
+        return
+      }
+
+      // Redirect to Stripe Checkout
+      window.location.href = data.url as string
+    } catch (e) {
+      console.error(e)
+      setError('Network error starting checkout.')
     } finally {
-      setLoading(false)
+      // keep loading state until redirect or error
     }
   }
 
-  if (!cartItems.length)
+  if (!cartItems.length) {
     return (
       <main className="container mx-auto p-6 text-center">
         <h1 className="text-4xl font-bold mb-4">Your Cart is Empty</h1>
         <p className="text-gray-600">Browse products and add them to your cart.</p>
       </main>
     )
+  }
 
   return (
     <main className="container mx-auto p-6 max-w-4xl">
@@ -126,9 +140,7 @@ export default function CartPage() {
                   type="number"
                   min={1}
                   value={quantity}
-                  onChange={(e) =>
-                    handleQuantityChange(id, Number(e.target.value))
-                  }
+                  onChange={(e) => handleQuantityChange(id, Number(e.target.value))}
                   className="w-16 p-1 border rounded text-center"
                 />
               </div>
@@ -164,7 +176,7 @@ export default function CartPage() {
             disabled={loading}
             className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
-            {loading ? 'Processing...' : 'Checkout'}
+            {loading ? 'Redirecting…' : 'Checkout'}
           </button>
         </div>
       </div>

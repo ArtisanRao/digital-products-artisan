@@ -1,7 +1,7 @@
 // app/api/checkout/route.ts
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { products } from "@/data/products";
+import { products, productsById } from "@/data/products";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,44 +15,90 @@ function getStripe(): Stripe {
   return _stripe;
 }
 
+type BodySingle = { productId: number | string; qty?: number };
+type BodyCart = { cart: Array<{ productId: number | string; qty?: number }> };
+type Body = BodySingle | BodyCart;
+
+function toInt(n: any, fallback = 1) {
+  const v = Number(n);
+  return Number.isFinite(v) && v > 0 ? Math.floor(v) : fallback;
+}
+
 export async function POST(req: Request) {
   try {
-    const { productId, qty = 1 } = await req.json();
+    const body = (await req.json()) as Body;
 
-    const product = products.find((p) => p.id === Number(productId));
-    if (!product) {
-      return NextResponse.json({ error: "Product not found" }, { status: 400 });
+    // Normalize to an array of items
+    const items: Array<{ productId: number; qty: number }> = Array.isArray(
+      (body as BodyCart).cart
+    )
+      ? (body as BodyCart).cart.map((it) => ({
+          productId: toInt(it.productId),
+          qty: toInt(it.qty, 1),
+        }))
+      : [
+          {
+            productId: toInt((body as BodySingle).productId),
+            qty: toInt((body as BodySingle).qty, 1),
+          },
+        ];
+
+    // Validate & map to products
+    const chosen = items
+      .map(({ productId, qty }) => {
+        const p = productsById[productId] || products.find((x) => x.id === productId);
+        return p ? { p, qty } : null;
+      })
+      .filter(Boolean) as Array<{ p: (typeof products)[number]; qty: number }>;
+
+    if (!chosen.length) {
+      return NextResponse.json(
+        { error: "No valid products in request." },
+        { status: 400 }
+      );
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
-    const firstImage = product.images?.[0] ?? product.image;
-    const absoluteImage = firstImage.startsWith("http")
-      ? firstImage
-      : `${baseUrl}${firstImage}`;
+    const baseUrl =
+      process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
 
     const stripe = getStripe();
 
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      line_items: [
-        {
-          quantity: Math.max(1, Number(qty) || 1),
+    // Build Stripe line_items (inline price_data so amount comes from your catalog)
+    const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = chosen.map(
+      ({ p, qty }) => {
+        const firstImage = p.images?.[0] ?? p.image;
+        const absoluteImage = firstImage.startsWith("http")
+          ? firstImage
+          : `${baseUrl}${firstImage}`;
+
+        return {
+          quantity: qty,
           price_data: {
             currency: "usd",
-            unit_amount: Math.round(product.price * 100),
+            unit_amount: Math.round(p.price * 100),
             product_data: {
-              name: product.title,
+              name: p.title,
               images: [absoluteImage],
+              // ⬇️ This metadata is what the confirmation page uses to
+              // map back to your local product & create the download link
+              metadata: {
+                slug: p.slug,
+                productId: String(p.id),
+              },
             },
           },
-        },
-      ],
+        };
+      }
+    );
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      line_items,
       success_url: `${baseUrl}/order-confirmation?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/products/${product.id}`,
-      metadata: {
-        productId: String(product.id),
-        slug: product.slug,
-      },
+      cancel_url:
+        chosen.length === 1
+          ? `${baseUrl}/products/${chosen[0].p.id}`
+          : `${baseUrl}/products`,
     });
 
     if (!session.url) {
