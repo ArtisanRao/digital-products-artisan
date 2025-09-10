@@ -1,113 +1,73 @@
 // app/order-confirmation/page.tsx
-import Link from "next/link"
-import { notFound } from "next/navigation"
-import Stripe from "stripe"
-import { Button } from "@/components/ui/button"
-import { signDownloadToken } from "@/lib/download-token"
+import Stripe from "stripe";
 
-export const dynamic = "force-dynamic"
+export const runtime = "nodejs"; // ensure Node runtime (stripe SDK works here)
 
-type Search = { session_id?: string }
+type Search = { session_id?: string };
 
-function getStripe(): Stripe {
-  const key = process.env.STRIPE_SECRET_KEY
-  if (!key) {
-    // Guard so we fail only at request time if misconfigured
-    throw new Error("Missing STRIPE_SECRET_KEY")
+let _stripe: Stripe | null = null;
+function getStripe(): Stripe | null {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) return null;
+  if (_stripe) return _stripe;
+  _stripe = new Stripe(key); // no apiVersion => uses SDK's default
+  return _stripe;
+}
+
+async function getSession(session_id: string) {
+  const stripe = getStripe();
+  if (!stripe) return null;
+  try {
+    return await stripe.checkout.sessions.retrieve(session_id, {
+      expand: ["line_items", "payment_intent"],
+    });
+  } catch (err: any) {
+    console.error("order-confirmation: retrieve session failed", {
+      message: err?.message,
+      type: err?.type,
+      stack: err?.stack,
+    });
+    return null;
   }
-  // No apiVersion here -> fixes the type error during build
-  return new Stripe(key)
 }
 
 export default async function OrderConfirmation({
   searchParams,
 }: {
-  searchParams: Promise<Search>
+  searchParams: Promise<Search>;
 }) {
-  const { session_id } = await searchParams
-  if (!session_id) return notFound()
+  const { session_id } = await searchParams;
+  const session = session_id ? await getSession(session_id) : null;
 
-  let productId: number | undefined
-  let slug: string | undefined
-  let amountTotal: number | null = null
-  let currency: string | null = null
-
-  try {
-    const stripe = getStripe()
-    const session = await stripe.checkout.sessions.retrieve(session_id, {
-      expand: ["line_items"],
-    })
-    productId = session.metadata?.productId ? Number(session.metadata.productId) : undefined
-    slug = session.metadata?.slug ?? undefined
-    amountTotal = session.amount_total
-    currency = session.currency
-  } catch (e) {
-    // Render a friendly fallback if the session lookup fails
-    return (
-      <main className="container mx-auto px-4 py-10">
-        <h1 className="text-2xl md:text-3xl font-bold mb-4">Order confirmation</h1>
-        <p className="text-gray-700 mb-6">
-          We received your order, but we couldn’t load the Stripe session details just now.
-          If you paid successfully, you’ll also receive a download link by email.
-        </p>
-        <div className="flex gap-3">
-          <Button asChild><Link href="/products">Continue shopping</Link></Button>
-          <Button asChild variant="outline"><Link href="/">Go home</Link></Button>
-        </div>
-      </main>
-    )
-  }
-
-  // Build a 7-day download link if we have the productId
-  const token =
-    typeof productId === "number"
-      ? signDownloadToken({ pid: productId, exp: Date.now() + 7 * 24 * 60 * 60 * 1000 })
-      : null
-  const downloadHref = token ? `/api/download?token=${token}` : null
+  const amount =
+    typeof session?.amount_total === "number"
+      ? (session.amount_total / 100).toFixed(2)
+      : null;
+  const email = session?.customer_details?.email ?? null;
 
   return (
     <main className="container mx-auto px-4 py-10">
-      <h1 className="text-2xl md:text-3xl font-bold mb-2">Thank you—your order is confirmed!</h1>
-      <p className="text-gray-700 mb-6">
-        We’ve also emailed your receipt and download link. Save this page for your records.
-      </p>
+      <h1 className="text-2xl font-bold">Thank you!</h1>
 
-      <div className="mb-6 text-sm text-gray-600 space-y-1">
-        {amountTotal !== null && currency ? (
-          <div>
-            <span className="font-medium">Total paid: </span>
-            <span>
-              {(amountTotal / 100).toLocaleString(undefined, {
-                style: "currency",
-                currency: currency.toUpperCase(),
-              })}
-            </span>
-          </div>
-        ) : null}
-        <div><span className="font-medium">Stripe session:</span> {session_id}</div>
-        {typeof productId === "number" && (
-          <div><span className="font-medium">Product ID:</span> {productId}</div>
-        )}
-        {slug && (
-          <div><span className="font-medium">Product slug:</span> {slug}</div>
-        )}
-      </div>
+      {session ? (
+        <p className="mt-2">
+          We received your order{amount ? ` of $${amount}` : ""}.
+          {email ? ` A receipt was sent to ${email}.` : ""}
+        </p>
+      ) : (
+        <p className="mt-2">
+          We couldn’t load your checkout details. If you completed payment,
+          you’ll receive a receipt by email shortly. Otherwise please{" "}
+          <a className="underline" href="/support">
+            contact support
+          </a>
+          .
+        </p>
+      )}
 
-      <div className="flex flex-wrap gap-3">
-        {downloadHref && (
-          <Button asChild className="bg-gradient-to-r from-blue-600 to-cyan-600">
-            <Link href={downloadHref}>Download now</Link>
-          </Button>
-        )}
-        {typeof productId === "number" && (
-          <Button asChild variant="outline">
-            <Link href={`/products/${productId}`}>View product</Link>
-          </Button>
-        )}
-        <Button asChild variant="ghost">
-          <Link href="/products">Continue shopping</Link>
-        </Button>
-      </div>
+      <a className="mt-6 inline-block underline" href="/products">
+        Back to products
+      </a>
     </main>
-  )
+  );
 }
