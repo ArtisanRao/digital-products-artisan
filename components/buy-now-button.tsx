@@ -1,22 +1,19 @@
 // components/buy-now-button.tsx
 "use client";
-
 import * as React from "react";
 import { Button } from "@/components/ui/button";
-
-type Props = {
-  productId: number;
-  qty?: number;
-  className?: string;
-  children?: React.ReactNode;
-};
 
 export default function BuyNowButton({
   productId,
   qty = 1,
   className,
   children,
-}: Props) {
+}: {
+  productId: number;
+  qty?: number;
+  className?: string;
+  children?: React.ReactNode;
+}) {
   const [loading, setLoading] = React.useState(false);
 
   async function handleClick() {
@@ -28,17 +25,16 @@ export default function BuyNowButton({
         body: JSON.stringify({ productId, qty }),
       });
 
-      // Try to parse a JSON body even on error to surface a helpful message
-      const data = await res.json().catch(() => ({}));
+      // Try to get the most useful message back
+      const text = await res.text();
+      let data: any = {};
+      try { data = JSON.parse(text); } catch { /* keep text */ }
 
       if (!res.ok || !data?.url) {
-        const message =
-          (data && data.error) ||
-          `Checkout failed (status ${res.status})`;
+        const message = data?.error || text || `Checkout failed (HTTP ${res.status})`;
         throw new Error(message);
       }
 
-      // Stripe Checkout URL – redirect the browser
       window.location.href = data.url as string;
     } catch (err: any) {
       console.error("BuyNowButton error:", err);
