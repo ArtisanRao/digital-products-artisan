@@ -1,60 +1,81 @@
 // app/api/paypal/capture-order/route.ts
-import { NextResponse } from "next/server"
-import checkoutNodeJssdk from "@paypal/checkout-server-sdk"
-import { productsById } from "@/data/products"
-import { signDownloadToken } from "@/lib/download-token"
+import { NextResponse } from "next/server";
+import { core, orders } from "@paypal/paypal-server-sdk";
+import { productsBySlug, products } from "@/data/products";
+import { signDownloadToken } from "@/lib/download-token";
 
-export const runtime = "nodejs"
-export const dynamic = "force-dynamic"
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 function getPayPalClient() {
-  const clientId = process.env.PAYPAL_CLIENT_ID
-  const clientSecret = process.env.PAYPAL_CLIENT_SECRET
-  if (!clientId || !clientSecret) throw new Error("Missing PayPal credentials")
+  const id = process.env.PAYPAL_CLIENT_ID;
+  const secret = process.env.PAYPAL_CLIENT_SECRET;
+  if (!id || !secret) throw new Error("Missing PAYPAL_CLIENT_ID / PAYPAL_CLIENT_SECRET");
+
   const env =
-    process.env.PAYPAL_ENV === "live"
-      ? new checkoutNodeJssdk.core.LiveEnvironment(clientId, clientSecret)
-      : new checkoutNodeJssdk.core.SandboxEnvironment(clientId, clientSecret)
-  return new checkoutNodeJssdk.core.PayPalHttpClient(env)
+    process.env.NODE_ENV === "production"
+      ? new core.LiveEnvironment(id, secret)
+      : new core.SandboxEnvironment(id, secret);
+
+  return new core.PayPalHttpClient(env);
 }
 
+/**
+ * Expected JSON body:
+ * { "orderID": "<paypal-order-id>" }
+ */
 export async function POST(req: Request) {
   try {
-    const { orderId } = (await req.json()) as { orderId?: string }
-    if (!orderId) return NextResponse.json({ error: "Missing orderId" }, { status: 400 })
-
-    const client = getPayPalClient()
-    const request = new checkoutNodeJssdk.orders.OrdersCaptureRequest(orderId)
-    request.requestBody({})
-
-    const { result } = await client.execute(request)
-    const status = result?.status
-    const payerEmail = result?.payer?.email_address || null
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin
-
-    const links: Array<{ id: number; title: string; qty: number; unit: number; url: string }> = []
-
-    if (status === "COMPLETED") {
-      const exp = Date.now() + 7 * 24 * 60 * 60 * 1000
-      const items = result?.purchase_units?.[0]?.items || []
-      for (const it of items) {
-        const id = Number(it?.sku)
-        const p = productsById[id]
-        if (!p?.downloadPath) continue
-        const token = signDownloadToken({ p: p.downloadPath, exp })
-        links.push({
-          id,
-          title: p.title,
-          qty: Number(it?.quantity || 1),
-          unit: Number(it?.unit_amount?.value || p.price),
-          url: `${baseUrl}/api/download?token=${token}`,
-        })
-      }
+    const { orderID } = await req.json().catch(() => ({}));
+    if (!orderID) {
+      return NextResponse.json({ error: "Missing orderID" }, { status: 400 });
     }
 
-    return NextResponse.json({ status, payerEmail, links })
+    const client = getPayPalClient();
+
+    // 1) Capture the order
+    const capReq = new orders.OrdersCaptureRequest(orderID);
+    capReq.requestBody({});
+    const capRes = await client.execute(capReq);
+
+    // 2) Read full order (for line items)
+    const getRes = await client.execute(new orders.OrdersGetRequest(orderID));
+    const unit = (getRes.result.purchase_units && getRes.result.purchase_units[0]) || {};
+    const purchasedItems: any[] = unit.items || [];
+
+    const secret = process.env.DOWNLOAD_SECRET;
+    const exp = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
+
+    // Build per-item download links using SKU (slug) you sent in create-order
+    const downloads = purchasedItems.map((it: any) => {
+      const slug: string | undefined = it?.sku;
+      const local =
+        (slug ? productsBySlug[slug] : undefined) ||
+        products.find((p) => p.title === it?.name);
+
+      let href: string | undefined;
+      if (local?.downloadPath && secret) {
+        const token = signDownloadToken({ p: local.downloadPath, exp }, secret);
+        href = `/api/download?token=${encodeURIComponent(token)}`;
+      }
+
+      return {
+        name: it?.name,
+        quantity: Number(it?.quantity ?? 1),
+        unit: Number(it?.unit_amount?.value ?? 0),
+        slug: local?.slug,
+        href,
+      };
+    });
+
+    return NextResponse.json({
+      ok: true,
+      orderID,
+      status: capRes.result?.status,
+      downloads,
+    });
   } catch (err: any) {
-    console.error("PayPal capture-order error:", err?.message || err)
-    return NextResponse.json({ error: "PayPal capture-order failed" }, { status: 500 })
+    console.error("PayPal capture-order error:", err?.message ?? err);
+    return NextResponse.json({ error: "PayPal capture order failed" }, { status: 500 });
   }
 }
