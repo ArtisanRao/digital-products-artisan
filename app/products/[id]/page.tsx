@@ -8,37 +8,28 @@ import { Star, Download } from "lucide-react";
 import ProductGallery from "@/components/product-gallery";
 import BuyNowButton from "@/components/buy-now-button";
 
+export const dynamic = "force-dynamic";  // ⬅️ do not pre-render
+export const revalidate = 0;             // ⬅️ no ISR
+
 type Params = { id: string };
 
-export async function generateStaticParams() {
-  return products.map((p) => ({ id: String(p.id) }));
-}
-
+// keep metadata generation (it’s cheap & safe)
 export async function generateMetadata({ params }: { params: Promise<Params> }) {
   const { id } = await params;
   const p = products.find((x) => x.id === Number(id));
   if (!p) return { title: "Product not found" };
 
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL || "https://digitalproductsartisan.com";
   const firstImage = p.images?.[0] ?? p.image;
-  const ogImage = firstImage.startsWith("http") ? firstImage : `${siteUrl}${firstImage}`;
 
   return {
     title: `${p.title} | Digital Products Artisan`,
     description: p.description,
-    openGraph: {
-      url: `${siteUrl}/products/${p.id}`,
-      title: p.title,
-      description: p.description,
-      images: [{ url: ogImage }],
-      type: "product",
-    },
+    openGraph: { images: [{ url: firstImage }] },
     twitter: {
       card: "summary_large_image",
       title: p.title,
       description: p.description,
-      images: [ogImage],
+      images: [firstImage],
     },
   };
 }
@@ -51,15 +42,14 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
   const galleryImages = product.images?.length ? product.images : [product.image];
 
   // ----- JSON-LD (SEO) -----
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL || "https://digitalproductsartisan.com";
-  const abs = (p: string) => (p.startsWith("http") ? p : `${siteUrl}${p}`);
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  const imagesAbs = galleryImages.map((i) => (i.startsWith("http") ? i : `${siteUrl}${i}`));
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.title,
     description: product.description,
-    image: galleryImages.map(abs),
+    image: imagesAbs,
     sku: product.slug,
     url: `${siteUrl}/products/${product.id}`,
     aggregateRating: {
@@ -78,16 +68,9 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
 
   return (
     <main className="container mx-auto px-4 py-10">
-      {/* Structured Data */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <nav className="mb-6 text-sm text-gray-500">
-        <Link href="/products" className="hover:underline">
-          ← Back to all products
-        </Link>
+        <Link href="/products" className="hover:underline">← Back to all products</Link>
       </nav>
 
       <div className="grid gap-8 md:grid-cols-2">
@@ -112,17 +95,12 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
           <div className="mt-6 flex items-center space-x-3">
             <span className="text-2xl font-semibold">${product.price.toFixed(2)}</span>
             {product.originalPrice > product.price && (
-              <span className="text-gray-400 line-through">
-                ${product.originalPrice.toFixed(2)}
-              </span>
+              <span className="text-gray-400 line-through">${product.originalPrice.toFixed(2)}</span>
             )}
           </div>
 
           <div className="mt-6 flex gap-3">
-            {/* Buy with Stripe Checkout (client component) */}
             <BuyNowButton productId={product.id} />
-
-            {/* Optional secondary CTA */}
             <Button variant="outline" asChild>
               <Link href={`/checkout?product=${product.id}`}>
                 <Download className="w-4 h-4 mr-2" />
