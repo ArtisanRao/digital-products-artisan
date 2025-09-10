@@ -1,95 +1,156 @@
 // app/api/paypal/create-order/route.ts
 import { NextResponse } from "next/server";
-import { core, orders } from "@paypal/paypal-server-sdk";
-import { productsById, productsBySlug } from "@/data/products";
+import { productsBySlug, productsById } from "@/data/products";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function getPayPalClient() {
-  const id = process.env.PAYPAL_CLIENT_ID;
-  const secret = process.env.PAYPAL_CLIENT_SECRET;
-  if (!id || !secret) throw new Error("Missing PAYPAL_CLIENT_ID / PAYPAL_CLIENT_SECRET");
+type CartItemIn = { slug?: string; id?: number; qty?: number };
+type Body =
+  | { items: CartItemIn[] }
+  | { slug: string; qty?: number }
+  | { id: number; qty?: number };
 
-  const env =
-    process.env.NODE_ENV === "production"
-      ? new core.LiveEnvironment(id, secret)
-      : new core.SandboxEnvironment(id, secret);
-
-  return new core.PayPalHttpClient(env);
+function baseUrlForPayPal() {
+  const env = (process.env.PAYPAL_ENV || "sandbox").toLowerCase();
+  return env === "live"
+    ? "https://api-m.paypal.com"
+    : "https://api-m.sandbox.paypal.com";
 }
 
-/**
- * Expected JSON body:
- * {
- *   "items": [
- *     { "productId": 3, "quantity": 2 }    // preferred
- *     // or { "slug": "digital-wealth-ultimate-guide", "quantity": 1 }
- *   ]
- * }
- */
+async function getAccessToken() {
+  const cid = process.env.PAYPAL_CLIENT_ID;
+  const secret = process.env.PAYPAL_CLIENT_SECRET;
+  if (!cid || !secret) throw new Error("Missing PAYPAL_CLIENT_ID/SECRET");
+
+  const res = await fetch(`${baseUrlForPayPal()}/v1/oauth2/token`, {
+    method: "POST",
+    headers: {
+      Authorization:
+        "Basic " + Buffer.from(`${cid}:${secret}`).toString("base64"),
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: "grant_type=client_credentials",
+  });
+
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`PayPal token error: ${res.status} ${txt}`);
+  }
+  const json = await res.json();
+  return json.access_token as string;
+}
+
 export async function POST(req: Request) {
   try {
-    const { items } = await req.json().catch(() => ({ items: [] as any[] }));
-    if (!Array.isArray(items) || items.length === 0) {
-      return NextResponse.json({ error: "No items supplied" }, { status: 400 });
-    }
+    const body = (await req.json()) as Body;
 
-    // Build PayPal line items from your catalog
-    const ppItems: any[] = [];
-    let total = 0;
+    // Normalize to an array of local products with qty
+    const wanted: { slug: string; title: string; price: number; qty: number }[] =
+      [];
 
-    for (const raw of items) {
-      const qty = Math.max(1, Number(raw.quantity) || 1);
-      const product =
-        typeof raw.productId !== "undefined"
-          ? productsById[Number(raw.productId)]
-          : typeof raw.slug === "string"
-          ? productsBySlug[raw.slug]
-          : undefined;
-
-      if (!product) continue;
-
-      const unit = Number(product.price.toFixed(2));
-      total += unit * qty;
-
-      ppItems.push({
-        name: product.title.slice(0, 120),
-        quantity: String(qty),
-        sku: product.slug, // we’ll use this later to generate download links
-        unit_amount: { currency_code: "USD", value: unit.toFixed(2) },
+    if ("items" in body && Array.isArray(body.items)) {
+      for (const it of body.items) {
+        const local =
+          (it.slug && productsBySlug[it.slug]) ||
+          (typeof it.id === "number" && productsById[it.id]);
+        if (!local) continue;
+        wanted.push({
+          slug: local.slug,
+          title: local.title,
+          price: local.price,
+          qty: Math.max(1, Number(it.qty) || 1),
+        });
+      }
+    } else if ("slug" in body && body.slug) {
+      const local = productsBySlug[body.slug];
+      if (!local) throw new Error("Unknown product slug");
+      wanted.push({
+        slug: local.slug,
+        title: local.title,
+        price: local.price,
+        qty: Math.max(1, Number(body.qty) || 1),
       });
+    } else if ("id" in body && typeof body.id === "number") {
+      const local = productsById[body.id];
+      if (!local) throw new Error("Unknown product id");
+      wanted.push({
+        slug: local.slug,
+        title: local.title,
+        price: local.price,
+        qty: Math.max(1, Number(body.qty) || 1),
+      });
+    } else {
+      throw new Error("Invalid request body");
     }
 
-    if (ppItems.length === 0) {
-      return NextResponse.json({ error: "No valid products found" }, { status: 400 });
+    if (!wanted.length) {
+      return NextResponse.json(
+        { error: "No valid items in cart" },
+        { status: 400 }
+      );
     }
 
-    const body = {
-      intent: "CAPTURE",
-      purchase_units: [
-        {
-          amount: {
-            currency_code: "USD",
-            value: total.toFixed(2),
-            breakdown: {
-              item_total: { currency_code: "USD", value: total.toFixed(2) },
-            },
-          },
-          items: ppItems,
-        },
-      ],
+    // Build PayPal order payload
+    const currency = "USD";
+    const items = wanted.map((w) => ({
+      name: w.title,
+      sku: w.slug, // we'll read this back after capture
+      quantity: String(w.qty),
+      unit_amount: { currency_code: currency, value: w.price.toFixed(2) },
+      category: "DIGITAL_GOODS" as const,
+    }));
+
+    const total = wanted.reduce((s, w) => s + w.price * w.qty, 0);
+    const amount = {
+      currency_code: currency,
+      value: total.toFixed(2),
+      breakdown: {
+        item_total: { currency_code: currency, value: total.toFixed(2) },
+      },
     };
 
-    const client = getPayPalClient();
-    const reqCreate = new orders.OrdersCreateRequest();
-    reqCreate.prefer("return=representation");
-    reqCreate.requestBody(body);
+    const token = await getAccessToken();
 
-    const resCreate = await client.execute(reqCreate);
-    return NextResponse.json({ id: resCreate.result.id });
+    const res = await fetch(`${baseUrlForPayPal()}/v2/checkout/orders`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "PayPal-Request-Id": crypto.randomUUID(),
+      },
+      body: JSON.stringify({
+        intent: "CAPTURE",
+        purchase_units: [
+          {
+            amount,
+            items,
+            // custom_id is handy if you want to carry any small metadata
+            // custom_id: wanted.map(w => w.slug).join(",").slice(0,127),
+          },
+        ],
+        application_context: {
+          shipping_preference: "NO_SHIPPING",
+          user_action: "PAY_NOW",
+        },
+      }),
+    });
+
+    const json = await res.json();
+    if (!res.ok) {
+      return NextResponse.json(
+        { error: "PayPal create order failed", details: json },
+        { status: 500 }
+      );
+    }
+
+    // Return the order id for the client-side PayPal Buttons to approve
+    return NextResponse.json({ id: json.id });
   } catch (err: any) {
-    console.error("PayPal create-order error:", err?.message ?? err);
-    return NextResponse.json({ error: "PayPal create order failed" }, { status: 500 });
+    console.error("paypal create-order error:", err?.message || err);
+    return NextResponse.json(
+      { error: "Create order error", details: err?.message || String(err) },
+      { status: 500 }
+    );
   }
 }
