@@ -5,7 +5,8 @@ export const runtime = "nodejs"
 export async function GET() {
   return NextResponse.json({
     runtime: (process as any).env?.NEXT_RUNTIME ?? "unknown",
+  // booleans only; no secrets leaked
     stripeEnvSet: !!process.env.STRIPE_SECRET_KEY,
-    siteUrlSet: !!process.env.NEXT_PUBLIC_SITE_URL,
+    siteUrlSet:   !!process.env.NEXT_PUBLIC_SITE_URL,
   })
 }
