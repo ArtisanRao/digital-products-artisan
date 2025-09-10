@@ -1,11 +1,20 @@
 // app/api/download/route.ts
 import { NextResponse } from "next/server";
-import { verifyDownloadToken } from "@/lib/download-token";
 import { productsById } from "@/data/products";
-import path from "path";
-import fs from "fs/promises";
+import { verifyDownloadToken } from "@/lib/download-token";
+import * as fs from "node:fs/promises";
+import * as path from "node:path";
 
 export const runtime = "nodejs";
+
+function guessMime(p: string) {
+  const ext = path.extname(p).toLowerCase();
+  if (ext === ".pdf") return "application/pdf";
+  if (ext === ".zip") return "application/zip";
+  if (ext === ".docx") return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  if (ext === ".doc") return "application/msword";
+  return "application/octet-stream";
+}
 
 export async function GET(req: Request) {
   try {
@@ -15,29 +24,42 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Missing token" }, { status: 400 });
     }
 
-    const payload = verifyDownloadToken(token);
-    if (!payload) {
+    // Verify token -> { pid, exp, ... }
+    let payload: any;
+    try {
+      payload = verifyDownloadToken(token);
+    } catch (e: any) {
       return NextResponse.json({ error: "Invalid or expired token" }, { status: 401 });
     }
 
-    const product = productsById[payload.pid];
+    const pid = Number(payload?.pid);
+    const product = productsById[pid];
     if (!product?.downloadPath) {
-      return NextResponse.json({ error: "File not found" }, { status: 404 });
+      return NextResponse.json({ error: "No file for this product" }, { status: 404 });
     }
 
-    // resolve repo-relative path safely
-    const filePath = path.join(process.cwd(), product.downloadPath);
-    const file = await fs.readFile(filePath);
+    // Files live under /private (not /public)
+    const relative = product.downloadPath.replace(/^\//, ""); // strip leading slash
+    const absPath = path.join(process.cwd(), "private", relative);
 
-    // Basic content-type inference (PDF in your case)
-    const filename = path.basename(filePath);
+    const stat = await fs.stat(absPath);
+    if (!stat.isFile()) {
+      return NextResponse.json({ error: "Not a file" }, { status: 404 });
+    }
+
+    const file = await fs.readFile(absPath); // Node Buffer
+    // Convert Node Buffer -> ArrayBuffer (BodyInit) to satisfy NextResponse
+    const body = file.buffer.slice(file.byteOffset, file.byteOffset + file.byteLength);
+
     const headers = new Headers({
-      "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="${filename}"`,
-      "Cache-Control": "private, no-store",
+      "Content-Type": guessMime(absPath),
+      "Content-Length": String(file.length),
+      // Force download with a friendly filename
+      "Content-Disposition": `attachment; filename="${path.basename(absPath)}"`,
+      "Cache-Control": "no-store",
     });
 
-    return new NextResponse(file, { headers });
+    return new NextResponse(body, { headers });
   } catch (err: any) {
     console.error("Download error:", err?.message ?? err);
     return NextResponse.json({ error: "Download error" }, { status: 500 });
