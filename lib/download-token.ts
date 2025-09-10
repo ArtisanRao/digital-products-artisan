@@ -1,25 +1,48 @@
 // lib/download-token.ts
-import crypto from "crypto";
+import crypto from "crypto"
 
-const SECRET = process.env.DOWNLOAD_SECRET;
-
-type Payload = { pid: number; exp: number };
-
-export function signDownloadToken(payload: Payload) {
-  if (!SECRET) throw new Error("[download-token] Missing env DOWNLOAD_SECRET");
-  const data = Buffer.from(JSON.stringify(payload)).toString("base64url");
-  const sig = crypto.createHmac("sha256", SECRET).update(data).digest("base64url");
-  return `${data}.${sig}`;
+export type TokenPayload = {
+  /** path to the file under /public or wherever your download route expects */
+  p: string
+  /** absolute unix ms timestamp when the token expires */
+  exp: number
 }
 
-export function verifyDownloadToken(token: string): Payload | null {
-  if (!SECRET) throw new Error("[download-token] Missing env DOWNLOAD_SECRET");
-  const [data, sig] = token.split(".");
-  if (!data || !sig) return null;
-  const expected = crypto.createHmac("sha256", SECRET).update(data).digest("base64url");
-  // timing-safe compare
-  if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return null;
-  const payload = JSON.parse(Buffer.from(data, "base64url").toString("utf8")) as Payload;
-  if (Date.now() > payload.exp) return null;
-  return payload;
+/** Resolve the secret from an explicit argument or env var */
+function resolveSecret(explicit?: string) {
+  const s = explicit ?? process.env.DOWNLOAD_SECRET
+  if (!s) throw new Error("Missing DOWNLOAD_SECRET")
+  return s
+}
+
+/**
+ * Create a signed, expiring token. Accepts an optional `secret` so callers
+ * can supply one explicitly (e.g., read once from env) or fall back to env.
+ */
+export function signDownloadToken(payload: TokenPayload, secret?: string): string {
+  const key = resolveSecret(secret)
+  const json = JSON.stringify(payload)
+  const sig = crypto.createHmac("sha256", key).update(json).digest("base64url")
+  const body = Buffer.from(json, "utf8").toString("base64url")
+  return `${body}.${sig}`
+}
+
+/** Verify and parse a token. Returns null if invalid/expired. */
+export function verifyDownloadToken(token: string, secret?: string): TokenPayload | null {
+  try {
+    const key = resolveSecret(secret)
+    const [body, sig] = token.split(".")
+    if (!body || !sig) return null
+
+    const json = Buffer.from(body, "base64url").toString("utf8")
+    const expected = crypto.createHmac("sha256", key).update(json).digest("base64url")
+    // timing-safe compare
+    if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return null
+
+    const payload = JSON.parse(json) as TokenPayload
+    if (Date.now() > payload.exp) return null
+    return payload
+  } catch {
+    return null
+  }
 }
