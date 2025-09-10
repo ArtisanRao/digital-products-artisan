@@ -3,7 +3,7 @@ import { verifyDownloadToken } from "@/lib/download-token";
 import fs from "node:fs/promises";
 import path from "node:path";
 
-export const runtime = "nodejs"; // ensure Node runtime
+export const runtime = "nodejs"; // ensure Node runtime on Vercel
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -37,7 +37,6 @@ export async function GET(req: Request) {
     const token = url.searchParams.get("token");
     if (!token) return json({ error: "Missing token" }, 400);
 
-    // Verify HMAC token (requires DOWNLOAD_SECRET env)
     const payload = verifyDownloadToken(token); // throws on failure
     const pid = Number((payload as any).pid);
     const relPath =
@@ -47,8 +46,7 @@ export async function GET(req: Request) {
       return json({ error: "Invalid token payload" }, 400);
     }
 
-    // If the token contains a specific relative path, prefer that.
-    // Otherwise, look up by product id using your products table.
+    // Prefer explicit path from token; otherwise look up by product id.
     let relative = relPath as string | null;
 
     if (!relative) {
@@ -60,7 +58,7 @@ export async function GET(req: Request) {
       relative = product.downloadPath;
     }
 
-    // We expect downloadPath like "/files/...". Files live under /private, not /public.
+    // Files live under /private, not /public
     const FILE_ROOT = path.join(process.cwd(), "private");
     const safeRel = relative.replace(/^\/+/, ""); // strip leading slash
     const absPath = path.join(FILE_ROOT, safeRel);
@@ -71,21 +69,23 @@ export async function GET(req: Request) {
       return json({ error: "Invalid path" }, 400);
     }
 
-    // Read file as Buffer and convert to Uint8Array for Response body
+    // Read file as Buffer
     const buf = await fs.readFile(resolved);
-    const body = new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
+
+    // Convert to a *plain ArrayBuffer* (works with stricter BodyInit typings)
+    const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
 
     const filename = path.basename(resolved);
     const mime = guessMime(resolved);
 
     const headers = new Headers({
       "Content-Type": mime,
-      "Content-Length": String(body.byteLength),
+      "Content-Length": String(buf.byteLength),
       "Content-Disposition": `attachment; filename="${filename}"`,
       "Cache-Control": "private, max-age=0, must-revalidate",
     });
 
-    return new Response(body, { headers });
+    return new Response(ab, { headers });
   } catch (err: any) {
     console.error("Download error:", err?.message ?? err);
     return json({ error: "Download error" }, 500);
