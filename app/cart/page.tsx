@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import { getPreferredCurrency } from '@/lib/currency'
 
 interface CartItem {
-  id: string            // expects product.id as a string (e.g. "1")
+  id: string
   name: string
   price: number
   quantity: number
@@ -17,15 +18,25 @@ export default function CartPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [currency, setCurrency] = useState<string>('usd')
+
+  // currency bootstrap + live updates from picker
+  useEffect(() => {
+    setCurrency(getPreferredCurrency())
+    const onChange = (e: Event) => {
+      const detail = (e as CustomEvent).detail as string | undefined
+      setCurrency((detail || getPreferredCurrency()).toLowerCase())
+    }
+    window.addEventListener('currency:change', onChange as EventListener)
+    return () => window.removeEventListener('currency:change', onChange as EventListener)
+  }, [])
 
   // Load from localStorage on mount
   useEffect(() => {
     try {
       const stored = localStorage.getItem('cart')
       if (stored) setCartItems(JSON.parse(stored))
-    } catch {
-      // ignore parse errors
-    }
+    } catch {}
   }, [])
 
   const updateCart = (items: CartItem[]) => {
@@ -39,10 +50,7 @@ export default function CartPage() {
     updateCart(cartItems.map(item => (item.id === id ? { ...item, quantity } : item)))
   }
 
-  const handleRemove = (id: string) => {
-    updateCart(cartItems.filter(item => item.id !== id))
-  }
-
+  const handleRemove = (id: string) => updateCart(cartItems.filter(item => item.id !== id))
   const handleClear = () => updateCart([])
 
   const totalPrice = useMemo(
@@ -50,14 +58,16 @@ export default function CartPage() {
     [cartItems]
   )
 
-  // 🚀 Stripe Checkout (multi-item) via /api/checkout
+  const formatMoney = (n: number) =>
+    new Intl.NumberFormat(undefined, { style: 'currency', currency: currency.toUpperCase() }).format(n)
+
+  // 🚀 Stripe Checkout (multi-item) via /api/checkout — send chosen currency
   const handleCheckout = async () => {
     if (!cartItems.length) {
       setError('Your cart is empty!')
       return
     }
 
-    // Convert string ids -> numeric productIds expected by /api/checkout
     const lineItems = cartItems
       .map(ci => {
         const productId = Number.parseInt(ci.id as string, 10)
@@ -79,7 +89,7 @@ export default function CartPage() {
       const resp = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cart: lineItems }),
+        body: JSON.stringify({ cart: lineItems, currency }), // 👈 pass currency
       })
 
       const data = await resp.json()
@@ -90,13 +100,10 @@ export default function CartPage() {
         return
       }
 
-      // Redirect to Stripe Checkout
       window.location.href = data.url as string
     } catch (e) {
       console.error(e)
       setError('Network error starting checkout.')
-    } finally {
-      // keep loading state until redirect or error
     }
   }
 
@@ -130,7 +137,7 @@ export default function CartPage() {
             )}
             <div className="flex-grow">
               <h2 className="text-xl font-semibold">{name}</h2>
-              <p className="text-gray-700 mt-1">${price.toFixed(2)} each</p>
+              <p className="text-gray-700 mt-1">{formatMoney(price)} each</p>
               <div className="mt-2 flex items-center space-x-2">
                 <label htmlFor={`qty-${id}`} className="mr-2 font-medium">
                   Quantity:
@@ -147,7 +154,7 @@ export default function CartPage() {
             </div>
             <div className="ml-6 flex flex-col items-end">
               <p className="text-lg font-bold mb-4">
-                ${(price * quantity).toFixed(2)}
+                {formatMoney(price * quantity)}
               </p>
               <button
                 onClick={() => handleRemove(id)}
@@ -162,7 +169,7 @@ export default function CartPage() {
       </ul>
 
       <div className="flex justify-between items-center border-t border-gray-300 pt-6">
-        <p className="text-2xl font-bold">Total: ${totalPrice.toFixed(2)}</p>
+        <p className="text-2xl font-bold">Total: {formatMoney(totalPrice)}</p>
         <div className="space-x-4">
           <button
             onClick={handleClear}

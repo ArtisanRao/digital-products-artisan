@@ -1,7 +1,7 @@
-// components/buy-now-button.tsx
 "use client";
 import * as React from "react";
 import { Button } from "@/components/ui/button";
+import { getPreferredCurrency } from "@/lib/ccurrency"; // <-- FIX PATH below to "@/lib/currency"
 
 export default function BuyNowButton({
   productId,
@@ -19,16 +19,16 @@ export default function BuyNowButton({
   async function handleClick() {
     setLoading(true);
     try {
+      const currency = getPreferredCurrency(); // 👈 read from localStorage
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId, qty }),
+        body: JSON.stringify({ productId, qty, currency }), // 👈 pass to server
       });
 
-      // Try to get the most useful message back
       const text = await res.text();
       let data: any = {};
-      try { data = JSON.parse(text); } catch { /* keep text */ }
+      try { data = JSON.parse(text); } catch {}
 
       if (!res.ok || !data?.url) {
         const message = data?.error || text || `Checkout failed (HTTP ${res.status})`;
