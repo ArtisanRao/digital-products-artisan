@@ -28,7 +28,7 @@ export async function POST(req: Request) {
   try {
     const body = (await req.json()) as Body;
 
-    // Normalize to an array of items
+    // Normalize request → items[]
     const items: Array<{ productId: number; qty: number }> = Array.isArray(
       (body as BodyCart).cart
     )
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
           },
         ];
 
-    // Validate & map to products
+    // Validate & map to catalog
     const chosen = items
       .map(({ productId, qty }) => {
         const p =
@@ -64,7 +64,7 @@ export async function POST(req: Request) {
 
     const stripe = getStripe();
 
-    // Build Stripe line_items (inline price_data so amount comes from your catalog)
+    // Build line_items from your catalog (trusted prices)
     const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = chosen.map(
       ({ p, qty }) => {
         const firstImage = p.images?.[0] ?? p.image;
@@ -80,7 +80,6 @@ export async function POST(req: Request) {
             product_data: {
               name: p.title,
               images: [absoluteImage],
-              // Used by the confirmation page to create download links
               metadata: {
                 slug: p.slug,
                 productId: String(p.id),
@@ -91,40 +90,33 @@ export async function POST(req: Request) {
       }
     );
 
-    // If STRIPE_FORCE_PM_TYPES=1, explicitly allow card + PayPal + Klarna
     const forcePM = process.env.STRIPE_FORCE_PM_TYPES === "1";
 
-    // Use `any` for this param object to avoid TS friction with newer fields.
+    // Build params loosely (avoid TS conflicts on older Stripe types)
     const params: any = {
       mode: "payment",
       line_items,
+      // Let Stripe pick the eligible methods (card, Klarna, PayPal, etc.)
+      automatic_payment_methods: { enabled: true },
+      // These help Stripe determine eligibility by region (Klarna/PayPal)
+      billing_address_collection: "auto",
+      phone_number_collection: { enabled: false },
       success_url: `${baseUrl}/order-confirmation?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url:
         chosen.length === 1
           ? `${baseUrl}/products/${chosen[0].p.id}`
           : `${baseUrl}/products`,
-
-      // ✅ Improve alternative payment method eligibility and UX
-      billing_address_collection: "required",
-      phone_number_collection: { enabled: true },
-      customer_creation: "always",
-      customer_update: { address: "auto", name: "auto", shipping: "never" },
-
-      // ✅ Localize the Checkout UI for the buyer’s region
-      locale: "auto",
     };
 
+    // Only force if explicitly requested via env (useful for testing)
     if (forcePM) {
-      // Keep PayPal & Klarna visible alongside cards when forced
       params.payment_method_types = ["card", "paypal", "klarna"];
     }
-    // Else, omit to let Stripe show eligible methods you enabled in Dashboard.
 
-    const session = await stripe.checkout.sessions.create(
-      params as Stripe.Checkout.SessionCreateParams
-    );
+    // Call with loose typing to avoid build errors on older @types
+    const session = await (stripe.checkout.sessions.create as any)(params);
 
-    if (!session.url) {
+    if (!session?.url) {
       return NextResponse.json(
         { error: "Unable to create checkout session (no URL)" },
         { status: 500 }
@@ -148,7 +140,6 @@ export async function POST(req: Request) {
 }
 
 export async function GET(req: Request) {
-  // Diagnostics when visiting /api/checkout?diag=1
   const url = new URL(req.url);
   if (url.searchParams.get("diag") === "1") {
     return NextResponse.json({
