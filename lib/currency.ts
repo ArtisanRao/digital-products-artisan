@@ -1,20 +1,16 @@
-export type Currency = "usd" | "eur";
+// lib/currency.ts
+const KEY = "preferredCurrency"; // "usd" | "eur"
 
-const KEY = "currency";
-
-export function getPreferredCurrency(): Currency {
+export function getPreferredCurrency(): "usd" | "eur" {
   if (typeof window === "undefined") return "usd";
-  const v = (localStorage.getItem(KEY) || "").toLowerCase();
+  const v = (localStorage.getItem(KEY) || "usd").toLowerCase();
   return v === "eur" ? "eur" : "usd";
 }
 
-export function setPreferredCurrency(c: string) {
-  try {
-    const v = (c || "").toLowerCase();
-    localStorage.setItem(KEY, v === "eur" ? "eur" : "usd");
-  } catch {}
+export function setPreferredCurrency(v: string) {
+  if (typeof window === "undefined") return;
+  const val = (v || "").toLowerCase() === "eur" ? "eur" : "usd";
+  localStorage.setItem(KEY, val);
+  // let listeners (cart, buy-now button) react immediately
+  window.dispatchEvent(new CustomEvent("currency:change", { detail: val }));
 }
-
-// Back-compat aliases
-export const readSelectedCurrency = getPreferredCurrency;
-export const getSelectedCurrency = getPreferredCurrency;

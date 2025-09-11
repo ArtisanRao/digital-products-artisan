@@ -24,43 +24,36 @@ function toInt(n: any, fallback = 1) {
   return Number.isFinite(v) && v > 0 ? Math.floor(v) : fallback;
 }
 
-// --- Currency helpers -------------------------------------------------------
-const EU_COUNTRIES = new Set([
+// minimal EU list for Klarna
+const EU = new Set([
   "AT","BE","BG","HR","CY","CZ","DK","EE","FI","FR","DE","GR","HU","IE","IT",
-  "LV","LT","LU","MT","NL","PL","PT","RO","SK","SI","ES","SE",
-  // EEA-ish we still map to EUR for your catalog:
-  "IS","LI","NO"
+  "LV","LT","LU","MT","NL","PL","PT","RO","SK","SI","ES","SE"
 ]);
-const EU_LANG_HINT = /(de|fr|it|es|pt|nl|sv|da|fi|no|is|cs|sk|sl|hr|pl|ro|bg|hu|el|et|lv|lt|ga|mt|eu)(-|,|;|$)/i;
 
-function normalizeCurrency(c?: string) {
-  const v = String(c || "").toLowerCase();
-  return v === "eur" ? "eur" : "usd"; // only supporting USD/EUR in this shop
-}
+function decideCurrency(request: Request, bodyCurrency?: string): "usd" | "eur" {
+  // 1) client override from picker
+  const v = String(bodyCurrency || "").toLowerCase();
+  if (v === "eur") return "eur";
+  if (v === "usd") return "usd";
 
-function pickCurrencyFromRequest(req: Request, bodyCurrency?: string) {
-  // 1) explicit body wins (picker)
-  if (bodyCurrency) return normalizeCurrency(bodyCurrency);
+  // 2) geo fallback (works on Vercel)
+  const country =
+    request.headers.get("x-vercel-ip-country") ||
+    request.headers.get("cf-ipcountry") ||
+    "";
 
-  // 2) Vercel geo header (WORKS on Vercel Edge/Node)
-  const cc = req.headers.get("x-vercel-ip-country")?.toUpperCase();
-  if (cc && EU_COUNTRIES.has(cc)) return "eur";
+  if (EU.has(country.toUpperCase())) return "eur";
 
-  // 3) Accept-Language as a soft hint
-  const al = req.headers.get("accept-language") || "";
-  if (EU_LANG_HINT.test(al)) return "eur";
-
-  // 4) default
+  // 3) default
   return "usd";
 }
-// ---------------------------------------------------------------------------
 
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as Body;
 
-    // Decide currency (picker > geo > language > default)
-    const currency = pickCurrencyFromRequest(req, (body as any).currency);
+    // 👇 currency decided from picker or EU geo
+    const currency = decideCurrency(req, (body as any).currency);
 
     // Normalize to an array of items
     const items: Array<{ productId: number; qty: number }> = Array.isArray(
@@ -80,66 +73,57 @@ export async function POST(req: Request) {
     // Validate & map to products
     const chosen = items
       .map(({ productId, qty }) => {
-        const p =
-          productsById[productId] || products.find((x) => x.id === productId);
+        const p = productsById[productId] || products.find((x) => x.id === productId);
         return p ? { p, qty } : null;
       })
       .filter(Boolean) as Array<{ p: (typeof products)[number]; qty: number }>;
 
     if (!chosen.length) {
-      return NextResponse.json(
-        { error: "No valid products in request." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "No valid products in request." }, { status: 400 });
     }
 
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
     const stripe = getStripe();
 
-    // line_items from your catalog
     const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = chosen.map(
       ({ p, qty }) => {
         const firstImage = p.images?.[0] ?? p.image;
-        const absoluteImage = firstImage.startsWith("http")
-          ? firstImage
-          : `${baseUrl}${firstImage}`;
+        const absoluteImage = firstImage.startsWith("http") ? firstImage : `${baseUrl}${firstImage}`;
 
         return {
           quantity: qty,
           price_data: {
-            currency, // 👈 USD or EUR (EUR enables Klarna in supported regions)
-            unit_amount: Math.round(p.price * 100),
+            currency,                                 // 👈 USD or EUR
+            unit_amount: Math.round(p.price * 100),   // same numeric price in chosen currency
             product_data: {
               name: p.title,
               images: [absoluteImage],
-              metadata: {
-                slug: p.slug,
-                productId: String(p.id),
-              },
+              metadata: { slug: p.slug, productId: String(p.id) },
             },
           },
         };
       }
     );
 
-    // If STRIPE_FORCE_PM_TYPES=1 → explicitly surface Card + PayPal + Klarna
     const forcePM = process.env.STRIPE_FORCE_PM_TYPES === "1";
 
     const params: any = {
       mode: "payment",
       line_items,
       success_url: `${baseUrl}/order-confirmation?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url:
-        chosen.length === 1
-          ? `${baseUrl}/products/${chosen[0].p.id}`
-          : `${baseUrl}/products`,
-      // Klarna likes having an address & a clear locale
+      cancel_url: chosen.length === 1 ? `${baseUrl}/products/${chosen[0].p.id}` : `${baseUrl}/products`,
+      // Helpful for Klarna
       billing_address_collection: "required",
       locale: "auto",
+      // add a little context you can see in the dashboard/webhooks
+      metadata: { currencyChosen: currency }
     };
 
+    // If you force, request Klarna when using EUR, otherwise let Stripe auto-pick.
     if (forcePM) {
-      params.payment_method_types = ["card", "paypal", "klarna"];
+      params.payment_method_types = currency === "eur"
+        ? ["card", "paypal", "klarna"]
+        : ["card", "paypal"];
     }
 
     const session = await stripe.checkout.sessions.create(
@@ -147,19 +131,13 @@ export async function POST(req: Request) {
     );
 
     if (!session.url) {
-      return NextResponse.json(
-        { error: "Unable to create checkout session (no URL)" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "Unable to create checkout session (no URL)" }, { status: 500 });
     }
 
-    return NextResponse.json({ url: session.url });
+    return NextResponse.json({ url: session.url, currencyUsed: currency });
   } catch (err: any) {
     console.error("Checkout error:", {
-      message: err?.message,
-      name: err?.name,
-      type: err?.type,
-      stack: err?.stack,
+      message: err?.message, name: err?.name, type: err?.type, stack: err?.stack,
     });
 
     const msg = err?.message?.includes("STRIPE_SECRET_KEY")
@@ -178,6 +156,7 @@ export async function GET(req: Request) {
       stripeEnvSet: !!process.env.STRIPE_SECRET_KEY,
       siteUrlSet: !!process.env.NEXT_PUBLIC_SITE_URL,
       pmForced: process.env.STRIPE_FORCE_PM_TYPES === "1",
+      seenCountry: req.headers.get("x-vercel-ip-country") || req.headers.get("cf-ipcountry") || null,
     });
   }
   return NextResponse.json({ error: "Method Not Allowed" }, { status: 405 });

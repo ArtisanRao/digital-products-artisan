@@ -1,32 +1,21 @@
 "use client";
-
-import * as React from "react";
+import { useEffect, useState } from "react";
 import { getPreferredCurrency, setPreferredCurrency } from "@/lib/currency";
 
-const LABEL: Record<string, string> = { usd: "USD $", eur: "EUR €", gbp: "GBP £" };
-
 export default function CurrencyPicker({ className }: { className?: string }) {
-  const [cur, setCur] = React.useState<string>(() => getPreferredCurrency());
+  const [cur, setCur] = useState<"usd"|"eur">("usd");
 
-  React.useEffect(() => {
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail as string | undefined;
-      setCur(detail || getPreferredCurrency());
-    };
-    window.addEventListener("currency:change", handler as EventListener);
-    return () => window.removeEventListener("currency:change", handler as EventListener);
-  }, []);
+  useEffect(() => setCur(getPreferredCurrency()), []);
 
   return (
     <select
-      className={className || "border rounded px-2 py-1 text-sm bg-white"}
+      aria-label="Currency"
       value={cur}
-      onChange={(e) => setPreferredCurrency(e.target.value as any)}
-      aria-label="Choose currency"
+      onChange={(e) => { const v = e.target.value as "usd"|"eur"; setCur(v); setPreferredCurrency(v); }}
+      className={className ?? "border rounded px-2 py-1 text-sm"}
     >
-      <option value="usd">{LABEL.usd}</option>
-      <option value="eur">{LABEL.eur}</option>
-      <option value="gbp">{LABEL.gbp}</option>
+      <option value="usd">USD $</option>
+      <option value="eur">EUR €</option>
     </select>
   );
 }
