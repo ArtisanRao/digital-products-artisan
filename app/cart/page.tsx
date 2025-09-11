@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { getPreferredCurrency } from '@/lib/currency';
+import { Button } from '@/components/ui/button';
 
 interface CartItem {
   id: string;       // product.id as string
@@ -47,10 +48,29 @@ export default function CartPage() {
       const stored = localStorage.getItem('cart');
       const items = stored ? (JSON.parse(stored) as CartItem[]) : [];
       setCartItems(items);
-      persistAndBroadcast(items); // ensure header is in sync on page load
+      // ensure header is in sync on page load
+      persistAndBroadcast(items);
     } catch {
       /* ignore parse errors */
     }
+  }, []);
+
+  // Stay in sync if other parts of the app update the cart
+  useEffect(() => {
+    const onCartUpdated = (e: Event) => {
+      const detail = (e as CustomEvent<{ items?: CartItem[] }>).detail;
+      if (detail?.items) {
+        setCartItems(detail.items);
+      } else {
+        // fallback: read from storage
+        try {
+          const raw = localStorage.getItem('cart');
+          setCartItems(raw ? (JSON.parse(raw) as CartItem[]) : []);
+        } catch {}
+      }
+    };
+    window.addEventListener('cart:updated', onCartUpdated as EventListener);
+    return () => window.removeEventListener('cart:updated', onCartUpdated as EventListener);
   }, []);
 
   const updateCart = (items: CartItem[]) => {
@@ -192,21 +212,23 @@ export default function CartPage() {
         <p className="text-2xl font-bold">Total: {formatMoney(totalPrice)}</p>
         <div className="flex gap-3 justify-end">
           {/* Hide Clear Cart on mobile */}
-          <button
+          <Button
             onClick={handleClear}
             disabled={loading}
-            className="hidden sm:inline-flex clear-cart-btn px-4 py-2 border border-gray-400 rounded hover:bg-gray-100"
+            className="hidden sm:inline-flex clear-cart-btn"
+            variant="secondary"
             data-action="clear-cart"
           >
             Clear Cart
-          </button>
-          <button
+          </Button>
+
+          <Button
             onClick={handleCheckout}
             disabled={loading}
-            className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 hover-lift w-full sm:w-auto"
+            className="bg-blue-600 text-white hover:bg-blue-700 w-full sm:w-auto"
           >
             {loading ? 'Redirecting…' : 'Checkout'}
-          </button>
+          </Button>
         </div>
       </div>
     </main>

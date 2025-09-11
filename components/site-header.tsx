@@ -12,15 +12,13 @@ export function SiteHeader() {
       try {
         const raw = localStorage.getItem("cart")
         const items = raw ? JSON.parse(raw) : []
-        const c = Array.isArray(items)
-          ? items.reduce((n: number, i: any) => n + Number(i?.quantity || 1), 0)
-          : 0
+        const c = Array.isArray(items) ? items.reduce((n: number, i: any) => n + Number(i?.quantity || 1), 0) : 0
         setCount(c)
         localStorage.setItem("cartCount", String(c))
       } catch {}
     }
+    read()
 
-    read() // on mount
     const onUpdate = (e: Event) => {
       const d = (e as CustomEvent<{ count?: number; items?: any[] }>).detail
       if (d?.count != null) setCount(d.count)
@@ -33,8 +31,7 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 bg-white/70 backdrop-blur border-b">
       <div className="mx-auto max-w-7xl px-4 h-16 flex items-center justify-between">
-        {/* left side ... */}
-
+        {/* ...left nav... */}
         <Link href="/cart" className="relative inline-flex items-center">
           <ShoppingCart className="h-6 w-6" />
           <span

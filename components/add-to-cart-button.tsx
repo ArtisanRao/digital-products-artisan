@@ -21,7 +21,6 @@ export default function AddToCartButton({
   const [adding, setAdding] = React.useState(false);
 
   const add = React.useCallback(() => {
-    // read current cart
     const raw = typeof window !== "undefined" ? localStorage.getItem("cart") : "[]";
     let cart: Array<any> = [];
     try { cart = raw ? JSON.parse(raw) : []; } catch { cart = []; }
@@ -46,26 +45,19 @@ export default function AddToCartButton({
       });
     }
 
-    // persist + compute count
     localStorage.setItem("cart", JSON.stringify(cart));
     const count = cart.reduce((n, i) => n + Number(i.quantity || 1), 0);
     localStorage.setItem("cartCount", String(count));
 
-    // notify listeners (header badge)
     try {
       window.dispatchEvent(new CustomEvent("cart:updated", { detail: { count, items: cart } }));
       navigator?.vibrate?.(10);
     } catch {}
-
   }, [productId]);
 
   const handleClick = async () => {
     setAdding(true);
-    try {
-      add();
-    } finally {
-      setAdding(false);
-    }
+    try { add(); } finally { setAdding(false); }
   };
 
   return (
