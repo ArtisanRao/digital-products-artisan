@@ -11,6 +11,7 @@ import { Star, Search, Filter, Grid, List, Eye } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { products, type Product } from "@/data/products"
+import AddToCartButton from "@/components/add-to-cart-button" // ⬅️ NEW
 
 const baseCategories = [
   "AI & ChatGPT Guides",
@@ -309,19 +310,37 @@ export default function ProductsPage() {
                       <span className="text-sm text-gray-500">({product.reviews})</span>
                     </div>
                   </CardContent>
-                  <CardFooter className="p-4 flex justify-between items-center">
+
+                  {/* Footer: price left, View + Add to cart right */}
+                  <CardFooter className="p-4 flex items-center justify-between gap-3">
                     <div>
-                      <span className="text-lg font-semibold text-gray-900">${product.price.toFixed(2)}</span>
+                      <span className="text-lg font-semibold text-gray-900">
+                        ${product.price.toFixed(2)}
+                      </span>
                       {product.originalPrice > product.price && (
-                        <span className="line-through text-gray-400 ml-2">${product.originalPrice.toFixed(2)}</span>
+                        <span className="line-through text-gray-400 ml-2">
+                          ${product.originalPrice.toFixed(2)}
+                        </span>
                       )}
                     </div>
-                    <Button asChild size="sm" variant="outline" aria-label={`View ${product.title}`}>
-                      <Link href={`/products/${product.id}`}>
-                        <Eye className="w-4 h-4 mr-2" aria-hidden="true" />
-                        View
-                      </Link>
-                    </Button>
+
+                    <div className="flex items-center gap-2">
+                      <Button asChild size="sm" variant="outline" aria-label={`View ${product.title}`}>
+                        <Link href={`/products/${product.id}`}>
+                          <Eye className="w-4 h-4 mr-2" aria-hidden="true" />
+                          View
+                        </Link>
+                      </Button>
+
+                      {/* NEW: Add to cart (next to View) */}
+                      <AddToCartButton
+                        id={product.id}
+                        title={product.title}
+                        price={product.price}
+                        image={product.images?.[0] ?? product.image}
+                        size="sm"
+                      />
+                    </div>
                   </CardFooter>
                 </Card>
               ))}
@@ -329,9 +348,13 @@ export default function ProductsPage() {
           ) : (
             <ul className="space-y-4">
               {sortedProducts.map((product) => (
-                <li key={product.id} className="flex items-center space-x-4 p-4 border rounded-lg hover:shadow-md transition-shadow duration-300" tabIndex={0}>
+                <li
+                  key={product.id}
+                  className="flex items-center space-x-4 p-4 border rounded-lg hover:shadow-md transition-shadow duration-300"
+                  tabIndex={0}
+                >
                   <Link href={`/products/${product.id}`} className="flex-shrink-0">
-                    {/* Thumbnail: contain inside fixed box */}
+                    {/* Thumbnail */}
                     <div className="relative w-[120px] h-[90px] bg-white rounded-md">
                       <Image
                         src={product.image || "/placeholder.svg"}
@@ -343,6 +366,7 @@ export default function ProductsPage() {
                       />
                     </div>
                   </Link>
+
                   <div className="flex-1 min-w-0">
                     <Link href={`/products/${product.id}`} className="hover:underline">
                       <h3 className="text-lg font-semibold truncate">{product.title}</h3>
@@ -354,11 +378,26 @@ export default function ProductsPage() {
                       <span className="text-sm text-gray-500">({product.reviews})</span>
                     </div>
                   </div>
+
                   <div className="flex flex-col items-end space-y-2">
-                    <span className="text-lg font-semibold text-gray-900">${product.price.toFixed(2)}</span>
+                    <span className="text-lg font-semibold text-gray-900">
+                      ${product.price.toFixed(2)}
+                    </span>
                     {product.originalPrice > product.price && (
-                      <span className="line-through text-gray-400">${product.originalPrice.toFixed(2)}</span>
+                      <span className="line-through text-gray-400">
+                        ${product.originalPrice.toFixed(2)}
+                      </span>
                     )}
+
+                    {/* NEW: Add to cart right after the price */}
+                    <AddToCartButton
+                      id={product.id}
+                      title={product.title}
+                      price={product.price}
+                      image={product.images?.[0] ?? product.image}
+                      size="sm"
+                    />
+
                     <Button asChild size="sm" variant="outline" aria-label={`View ${product.title}`}>
                       <Link href={`/products/${product.id}`}>
                         <Eye className="w-4 h-4 mr-2" aria-hidden="true" />

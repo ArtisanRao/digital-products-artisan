@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Star, Download } from "lucide-react";
 import ProductGallery from "@/components/product-gallery";
 import BuyNowButton from "@/components/buy-now-button";
+import AddToCartButton from "@/components/add-to-cart-button"; // ⬅️ NEW
 
 export const dynamic = "force-dynamic";  // do not pre-render
 export const revalidate = 0;             // no ISR
@@ -91,11 +92,21 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
             <span>{product.downloads} downloads</span>
           </div>
 
-          <div className="mt-6 flex items-center space-x-3">
+          {/* Price row + Add to cart */}
+          <div className="mt-6 flex flex-wrap items-center gap-3">
             <span className="text-2xl font-semibold">${product.price.toFixed(2)}</span>
             {product.originalPrice > product.price && (
               <span className="text-gray-400 line-through">${product.originalPrice.toFixed(2)}</span>
             )}
+
+            {/* NEW: Add to cart right after the price */}
+            <AddToCartButton
+              id={product.id}
+              title={product.title}
+              price={product.price}
+              image={product.images?.[0] ?? product.image}
+              size="sm"
+            />
           </div>
 
           {/* Stripe only (PayPal via Stripe if enabled there) */}
