@@ -8,6 +8,7 @@ import { CartProvider } from "@/contexts/cart-context";
 import { AuthProvider } from "@/contexts/auth-context";
 import { Toaster } from "@/components/ui/toaster";
 import LiveChat from "@/components/live-chat";
+import CurrencyPicker from "@/components/currency-picker";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -69,6 +70,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={inter.className}>
         <AuthProvider>
           <CartProvider>
+            {/* Currency picker bar (visible on every page) */}
+            <div className="border-b bg-gray-50">
+              <div className="container mx-auto flex items-center justify-end px-4 py-2">
+                <CurrencyPicker />
+              </div>
+            </div>
+
             <Header />
             {children}
             <Footer />
