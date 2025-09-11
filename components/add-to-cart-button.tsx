@@ -9,7 +9,7 @@ type Size = "sm" | "default" | "lg";
 
 export default function AddToCartButton({
   productId,
-  size = "default",           // ↩ match context: "default" on PDP, "sm" on grid/list cards
+  size = "default",
   className = "",
   children,
 }: {
@@ -21,44 +21,45 @@ export default function AddToCartButton({
   const [adding, setAdding] = React.useState(false);
 
   const add = React.useCallback(() => {
-    try {
-      const p = productsById[productId] || products.find(x => x.id === productId);
-      if (!p) return;
+    const raw = typeof window !== "undefined" ? localStorage.getItem("cart") : "[]";
+    let cart: Array<any> = [];
+    try { cart = raw ? JSON.parse(raw) : []; } catch { cart = []; }
 
-      const raw = localStorage.getItem("cart");
-      const cart: Array<any> = raw ? JSON.parse(raw) : [];
+    const p = productsById[productId] || products.find((x) => x.id === productId);
+    if (!p) return;
 
-      const idStr = String(p.id);
-      const found = cart.find((i) => i.id === idStr);
-      if (found) found.quantity = Math.max(1, Number(found.quantity || 1)) + 1;
-      else {
-        cart.push({
-          id: idStr,
-          name: p.title,
-          price: p.price,
-          quantity: 1,
-          image: p.images?.[0] ?? p.image,
-          url: `/products/${p.id}`,
-          description: p.description,
-        });
-      }
-
-      localStorage.setItem("cart", JSON.stringify(cart));
-    } catch (e) {
-      console.error("Failed to add to cart", e);
+    const idStr = String(p.id);
+    const found = cart.find((i) => i.id === idStr);
+    if (found) {
+      const currentQty = Math.max(1, Number(found.quantity || 1));
+      found.quantity = currentQty + 1;
+    } else {
+      cart.push({
+        id: idStr,
+        name: p.title,
+        price: p.price,
+        quantity: 1,
+        image: p.images?.[0] ?? p.image,
+        url: `/products/${p.id}`,
+        description: p.description,
+      });
     }
+
+    localStorage.setItem("cart", JSON.stringify(cart));
+    const count = cart.reduce((n, i) => n + Number(i.quantity || 1), 0);
+    localStorage.setItem("cartCount", String(count));
+
+    try {
+      window.dispatchEvent(new CustomEvent("cart:updated", { detail: { count, items: cart } }));
+      navigator?.vibrate?.(10);
+    } catch {}
   }, [productId]);
 
   const handleClick = async () => {
     setAdding(true);
-    try {
-      add();
-    } finally {
-      setAdding(false);
-    }
+    try { add(); } finally { setAdding(false); }
   };
 
-  // icon size normalized to w-4 h-4 to match other buttons
   return (
     <Button
       onClick={handleClick}

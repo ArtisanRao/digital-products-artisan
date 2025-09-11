@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { getPreferredCurrency } from '@/lib/currency';
+import { Button } from '@/components/ui/button';
 
 interface CartItem {
   id: string;       // product.id as string
@@ -31,19 +32,50 @@ export default function CartPage() {
     return () => window.removeEventListener('currency:change', onChange as EventListener);
   }, []);
 
+  // Helper to persist + broadcast
+  const persistAndBroadcast = (items: CartItem[]) => {
+    localStorage.setItem('cart', JSON.stringify(items));
+    const count = items.reduce((n, i) => n + Number(i.quantity || 1), 0);
+    localStorage.setItem('cartCount', String(count));
+    try {
+      window.dispatchEvent(new CustomEvent('cart:updated', { detail: { count, items } }));
+    } catch {}
+  };
+
   // Load cart from localStorage
   useEffect(() => {
     try {
       const stored = localStorage.getItem('cart');
-      if (stored) setCartItems(JSON.parse(stored));
+      const items = stored ? (JSON.parse(stored) as CartItem[]) : [];
+      setCartItems(items);
+      // ensure header is in sync on page load
+      persistAndBroadcast(items);
     } catch {
       /* ignore parse errors */
     }
   }, []);
 
+  // Stay in sync if other parts of the app update the cart
+  useEffect(() => {
+    const onCartUpdated = (e: Event) => {
+      const detail = (e as CustomEvent<{ items?: CartItem[] }>).detail;
+      if (detail?.items) {
+        setCartItems(detail.items);
+      } else {
+        // fallback: read from storage
+        try {
+          const raw = localStorage.getItem('cart');
+          setCartItems(raw ? (JSON.parse(raw) as CartItem[]) : []);
+        } catch {}
+      }
+    };
+    window.addEventListener('cart:updated', onCartUpdated as EventListener);
+    return () => window.removeEventListener('cart:updated', onCartUpdated as EventListener);
+  }, []);
+
   const updateCart = (items: CartItem[]) => {
     setCartItems(items);
-    localStorage.setItem('cart', JSON.stringify(items));
+    persistAndBroadcast(items);
     setError(null);
   };
 
@@ -95,7 +127,7 @@ export default function CartPage() {
       const resp = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cart: lineItems, currency }), // 👈 pass currency to server
+        body: JSON.stringify({ cart: lineItems, currency }),
       });
 
       const data = await resp.json();
@@ -110,6 +142,7 @@ export default function CartPage() {
     } catch (e) {
       console.error(e);
       setError('Network error starting checkout.');
+      setLoading(false);
     }
   };
 
@@ -126,7 +159,11 @@ export default function CartPage() {
     <main className="container mx-auto p-6 max-w-4xl">
       <h1 className="text-4xl font-bold mb-8">Your Cart</h1>
 
-      {error && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">{error}</div>}
+      {error && (
+        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded" aria-live="polite">
+          {error}
+        </div>
+      )}
 
       <ul className="divide-y divide-gray-200 mb-8">
         {cartItems.map(({ id, name, price, quantity, image }) => (
@@ -171,23 +208,27 @@ export default function CartPage() {
         ))}
       </ul>
 
-      <div className="flex justify-between items-center border-t border-gray-300 pt-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-t border-gray-300 pt-6">
         <p className="text-2xl font-bold">Total: {formatMoney(totalPrice)}</p>
-        <div className="space-x-4">
-          <button
+        <div className="flex gap-3 justify-end">
+          {/* Hide Clear Cart on mobile */}
+          <Button
             onClick={handleClear}
             disabled={loading}
-            className="px-4 py-2 border border-gray-400 rounded hover:bg-gray-100"
+            className="hidden sm:inline-flex clear-cart-btn"
+            variant="secondary"
+            data-action="clear-cart"
           >
             Clear Cart
-          </button>
-          <button
+          </Button>
+
+          <Button
             onClick={handleCheckout}
             disabled={loading}
-            className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="bg-blue-600 text-white hover:bg-blue-700 w-full sm:w-auto"
           >
             {loading ? 'Redirecting…' : 'Checkout'}
-          </button>
+          </Button>
         </div>
       </div>
     </main>

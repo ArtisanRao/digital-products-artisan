@@ -4,29 +4,56 @@
 
 /* ===== Custom Utilities ===== */
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+  .text-balance { text-wrap: balance; }
 
   /* Custom cm-based spacing utilities */
-  .mt-1cm {
-    margin-top: 1cm;
-  }
-
-  .mb-1cm {
-    margin-bottom: 1cm;
-  }
+  .mt-1cm { margin-top: 1cm; }
+  .mb-1cm { margin-bottom: 1cm; }
 
   /* Reduced gap spacing from 1cm to 1rem (16px) */
-  .gap-1cm {
-    gap: 1rem;
-  }
+  .gap-1cm { gap: 1rem; }
 
   /* Desktop-only gap utility */
   @media (min-width: 1024px) {
-    .desktop-gap-1cm {
-      gap: 1rem;
-    }
+    .desktop-gap-1cm { gap: 1rem; }
+  }
+
+  /* Generic hover/press lift (for links or any element) */
+  .hover-lift {
+    transition:
+      transform .2s ease,
+      box-shadow .2s ease,
+      background-color .2s ease,
+      color .2s ease;
+    will-change: transform, box-shadow;
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / .10),
+                0  4px  6px -4px rgb(0 0 0 / .08);
+  }
+  .hover-lift:active {
+    transform: translateY(0);
+    box-shadow: 0 6px 10px -4px rgb(0 0 0 / .08);
+  }
+
+  /* Cart count badge helper (use instead of many inline classes if you want) */
+  .cart-badge {
+    position: absolute;
+    top: -0.4rem;
+    right: -0.4rem;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 .25rem;
+    border-radius: 9999px;
+    background: rgb(37 99 235); /* blue-600 */
+    color: #fff;
+    font-size: .75rem;
+    font-weight: 700;
+    line-height: 1.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   /* Mobile-specific utilities */
@@ -37,12 +64,10 @@
       display: inline-flex;
       align-items: center;
       text-decoration: none;
-      color: #374151; /* Tailwind gray-700 */
+      color: #374151; /* gray-700 */
       transition: color 0.2s;
     }
-    .mobile-link:hover {
-      color: #2563eb; /* Tailwind blue-700 */
-    }
+    .mobile-link:hover { color: #2563eb; } /* blue-700 */
 
     .mobile-header-fit {
       display: flex;
@@ -68,32 +93,25 @@
       margin-right: 0.25rem;
       font-size: 0.875rem;
     }
-    nav.flex.md\\:hidden.items-center.space-x-2 {
-      gap: 0.5rem;
+    nav.flex.md\\:hidden.items-center.space-x-2 { gap: 0.5rem; }
+  }
+
+  /* Hide Clear Cart on mobile (fallback if component didn't add responsive classes) */
+  @media (max-width: 639px) {
+    .clear-cart-btn,
+    [data-action="clear-cart"] {
+      display: none !important;
     }
   }
 
   /* ===== Smooth Fade-In Animation (iOS-friendly) ===== */
   @keyframes fadeInSmooth {
-    0% {
-      opacity: 0;
-      transform: translateY(-10px) scale(0.98);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
+    0% { opacity: 0; transform: translateY(-10px) scale(0.98); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
   }
-
   @keyframes fadeInSmoothIOS {
-    0% {
-      opacity: 0;
-      transform: translate3d(0, -10px, 0) scale(0.98);
-    }
-    100% {
-      opacity: 1;
-      transform: translate3d(0, 0, 0) scale(1);
-    }
+    0% { opacity: 0; transform: translate3d(0,-10px,0) scale(0.98); }
+    100% { opacity: 1; transform: translate3d(0,0,0) scale(1); }
   }
 
   .animate-fadeIn {
@@ -101,23 +119,31 @@
     will-change: transform, opacity;
     backface-visibility: hidden;
   }
-
   .animate-fadeIn-ios {
     animation: fadeInSmoothIOS 0.25s ease-out forwards;
     will-change: transform, opacity;
     backface-visibility: hidden;
     -webkit-font-smoothing: antialiased; /* helps reduce flicker on iOS */
-    transform-style: preserve-3d; /* forces GPU acceleration */
-    transform: translateZ(0); /* iOS GPU acceleration */
+    transform-style: preserve-3d;       /* forces GPU acceleration */
+    transform: translateZ(0);           /* iOS GPU acceleration */
+  }
+
+  /* Respect reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .hover-lift,
+    .animate-fadeIn,
+    .animate-fadeIn-ios {
+      transition: none !important;
+      animation: none !important;
+      transform: none !important;
+      box-shadow: none !important;
+    }
   }
 }
 
 /* ===== Header & Navigation Safeguards ===== */
 @layer components {
-  html, body {
-    margin: 0;
-    padding: 0;
-  }
+  html, body { margin: 0; padding: 0; }
 
   .nav-link {
     @apply text-gray-700 hover:text-blue-700 transition-colors duration-200 font-medium;
