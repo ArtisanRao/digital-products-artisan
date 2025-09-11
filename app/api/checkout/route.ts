@@ -24,23 +24,43 @@ function toInt(n: any, fallback = 1) {
   return Number.isFinite(v) && v > 0 ? Math.floor(v) : fallback;
 }
 
-// Choose currency: client value > env default > USD
-function pickCurrency(c?: string) {
-  const envDefault =
-    (process.env.NEXT_PUBLIC_DEFAULT_CURRENCY ||
-      process.env.STRIPE_DEFAULT_CURRENCY ||
-      "usd").toLowerCase();
+// --- Currency helpers -------------------------------------------------------
+const EU_COUNTRIES = new Set([
+  "AT","BE","BG","HR","CY","CZ","DK","EE","FI","FR","DE","GR","HU","IE","IT",
+  "LV","LT","LU","MT","NL","PL","PT","RO","SK","SI","ES","SE",
+  // EEA-ish we still map to EUR for your catalog:
+  "IS","LI","NO"
+]);
+const EU_LANG_HINT = /(de|fr|it|es|pt|nl|sv|da|fi|no|is|cs|sk|sl|hr|pl|ro|bg|hu|el|et|lv|lt|ga|mt|eu)(-|,|;|$)/i;
 
-  const v = String(c ?? envDefault).toLowerCase();
-  return v === "eur" ? "eur" : "usd"; // allow-list; extend if you add more
+function normalizeCurrency(c?: string) {
+  const v = String(c || "").toLowerCase();
+  return v === "eur" ? "eur" : "usd"; // only supporting USD/EUR in this shop
 }
+
+function pickCurrencyFromRequest(req: Request, bodyCurrency?: string) {
+  // 1) explicit body wins (picker)
+  if (bodyCurrency) return normalizeCurrency(bodyCurrency);
+
+  // 2) Vercel geo header (WORKS on Vercel Edge/Node)
+  const cc = req.headers.get("x-vercel-ip-country")?.toUpperCase();
+  if (cc && EU_COUNTRIES.has(cc)) return "eur";
+
+  // 3) Accept-Language as a soft hint
+  const al = req.headers.get("accept-language") || "";
+  if (EU_LANG_HINT.test(al)) return "eur";
+
+  // 4) default
+  return "usd";
+}
+// ---------------------------------------------------------------------------
 
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as Body;
 
-    // Optional currency override (helps Klarna eligibility for EU)
-    const currency = pickCurrency((body as any).currency);
+    // Decide currency (picker > geo > language > default)
+    const currency = pickCurrencyFromRequest(req, (body as any).currency);
 
     // Normalize to an array of items
     const items: Array<{ productId: number; qty: number }> = Array.isArray(
@@ -76,7 +96,7 @@ export async function POST(req: Request) {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
     const stripe = getStripe();
 
-    // Build Stripe line_items (inline price_data so amount comes from your catalog)
+    // line_items from your catalog
     const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = chosen.map(
       ({ p, qty }) => {
         const firstImage = p.images?.[0] ?? p.image;
@@ -87,8 +107,8 @@ export async function POST(req: Request) {
         return {
           quantity: qty,
           price_data: {
-            currency, // 👈 USD by default, or EUR when requested/env-defaulted
-            unit_amount: Math.round(p.price * 100), // if EUR, charges €sameNumber
+            currency, // 👈 USD or EUR (EUR enables Klarna in supported regions)
+            unit_amount: Math.round(p.price * 100),
             product_data: {
               name: p.title,
               images: [absoluteImage],
@@ -102,7 +122,7 @@ export async function POST(req: Request) {
       }
     );
 
-    // If STRIPE_FORCE_PM_TYPES=1, explicitly allow card + PayPal + Klarna
+    // If STRIPE_FORCE_PM_TYPES=1 → explicitly surface Card + PayPal + Klarna
     const forcePM = process.env.STRIPE_FORCE_PM_TYPES === "1";
 
     const params: any = {
@@ -113,7 +133,7 @@ export async function POST(req: Request) {
         chosen.length === 1
           ? `${baseUrl}/products/${chosen[0].p.id}`
           : `${baseUrl}/products`,
-      // Help Klarna eligibility:
+      // Klarna likes having an address & a clear locale
       billing_address_collection: "required",
       locale: "auto",
     };
@@ -121,7 +141,6 @@ export async function POST(req: Request) {
     if (forcePM) {
       params.payment_method_types = ["card", "paypal", "klarna"];
     }
-    // Else, omit to let Stripe auto-select based on eligibility.
 
     const session = await stripe.checkout.sessions.create(
       params as Stripe.Checkout.SessionCreateParams
@@ -159,10 +178,6 @@ export async function GET(req: Request) {
       stripeEnvSet: !!process.env.STRIPE_SECRET_KEY,
       siteUrlSet: !!process.env.NEXT_PUBLIC_SITE_URL,
       pmForced: process.env.STRIPE_FORCE_PM_TYPES === "1",
-      defaultCurrency:
-        process.env.NEXT_PUBLIC_DEFAULT_CURRENCY ||
-        process.env.STRIPE_DEFAULT_CURRENCY ||
-        "usd",
     });
   }
   return NextResponse.json({ error: "Method Not Allowed" }, { status: 405 });
