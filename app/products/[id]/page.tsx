@@ -1,4 +1,3 @@
-// app/products/[id]/page.tsx
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { products } from "@/data/products";
@@ -7,14 +6,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Star, Download } from "lucide-react";
 import ProductGallery from "@/components/product-gallery";
 import BuyNowButton from "@/components/buy-now-button";
-import PayPalSingleButton from "@/components/paypal/PayPalSingleButton";
 
-export const dynamic = "force-dynamic";  // ⬅️ do not pre-render
-export const revalidate = 0;             // ⬅️ no ISR
+export const dynamic = "force-dynamic";  // do not pre-render
+export const revalidate = 0;             // no ISR
 
 type Params = { id: string };
 
-// keep metadata generation (it’s cheap & safe)
+// keep metadata generation (cheap & safe)
 export async function generateMetadata({ params }: { params: Promise<Params> }) {
   const { id } = await params;
   const p = products.find((x) => x.id === Number(id));
@@ -100,16 +98,9 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
             )}
           </div>
 
-          <div className="mt-6 flex flex-col sm:flex-row gap-3 sm:items-start">
-            {/* Stripe (card) */}
+          {/* Stripe only (PayPal via Stripe if enabled there) */}
+          <div className="mt-6 flex gap-3">
             <BuyNowButton productId={product.id} />
-
-            {/* PayPal */}
-            <div className="min-w-[250px]">
-              <PayPalSingleButton productId={product.id} />
-            </div>
-
-            {/* Optional secondary CTA */}
             <Button variant="outline" asChild>
               <Link href={`/checkout?product=${product.id}`}>
                 <Download className="w-4 h-4 mr-2" />
