@@ -1,97 +1,111 @@
 // components/paypal-button.tsx
-"use client"
+"use client";
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react";
 
-type LineItem = { productId: number; qty?: number }
-
-declare global {
-  interface Window {
-    paypal?: any
-  }
-}
+type LineItem = { productId: number; qty?: number };
 
 export default function PayPalButton({
   items,
   className,
 }: {
-  items: LineItem[]
-  className?: string
+  items: LineItem[];
+  className?: string;
 }) {
-  const [ready, setReady] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID
+  const [ready, setReady] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID;
 
+  // Normalize the payload we send to our server routes
   const payload = useMemo(
-    () => ({ items: items.map((i) => ({ productId: i.productId, qty: i.qty ?? 1 })) }),
+    () => ({
+      items: items.map((i) => ({ productId: i.productId, qty: i.qty ?? 1 })),
+    }),
     [items]
-  )
+  );
 
+  // Load PayPal JS SDK once
   useEffect(() => {
-    if (!clientId) return
-    if (window.paypal) {
-      setReady(true)
-      return
+    if (!clientId) return;
+
+    // If script already there, mark ready
+    const existing = document.getElementById("paypal-sdk") as HTMLScriptElement | null;
+    if (existing && (window as any).paypal) {
+      setReady(true);
+      return;
     }
+
+    // Inject script
     const src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(
       clientId
-    )}&currency=USD&intent=capture&components=buttons`
-    const s = document.createElement("script")
-    s.src = src
-    s.async = true
-    s.onload = () => setReady(true)
-    s.onerror = () => setReady(false)
-    document.body.appendChild(s)
-  }, [clientId])
+    )}&currency=USD&intent=CAPTURE&components=buttons`;
 
+    const s = document.createElement("script");
+    s.id = "paypal-sdk";
+    s.src = src;
+    s.async = true;
+    s.onload = () => setReady(true);
+    s.onerror = () => setReady(false);
+    document.body.appendChild(s);
+
+    return () => {
+      // do not remove the script on unmount; it can be reused across pages
+    };
+  }, [clientId]);
+
+  // Render the PayPal button (re-render when items change)
   useEffect(() => {
-    if (!ready || !window.paypal || !containerRef.current) return
+    const paypal = (window as any).paypal;
+    const el = containerRef.current;
+    if (!ready || !paypal || !el) return;
 
-    window.paypal
+    // Clear previous button instance if any
+    el.innerHTML = "";
+
+    paypal
       .Buttons({
         style: { layout: "vertical", shape: "rect", label: "paypal" },
 
-        // Create order on our server (trusted prices)
+        // Create order on our server so prices/IDs are trusted
         createOrder: async () => {
           const res = await fetch("/api/paypal/create-order", {
             method: "POST",
             headers: { "content-type": "application/json" },
             body: JSON.stringify(payload),
-          })
-          const data = await res.json()
-          if (!res.ok) throw new Error(data?.error || "Unable to create order")
-          return data.id
+          });
+          const data = await res.json();
+          if (!res.ok || !data?.id) throw new Error(data?.error || "Unable to create order");
+          return data.id;
         },
 
-        // Capture on our server, then redirect to confirmation
+        // Capture the order on our server, then send user to confirmation
         onApprove: async (data: any) => {
           const res = await fetch("/api/paypal/capture-order", {
             method: "POST",
             headers: { "content-type": "application/json" },
             body: JSON.stringify({ orderId: data.orderID }),
-          })
-          const out = await res.json()
-          if (out?.status !== "COMPLETED") {
-            throw new Error("Payment not completed")
-          }
-          // Reuse your existing confirmation route
-          const url = new URL(window.location.origin + "/order-confirmation")
-          url.searchParams.set("provider", "paypal")
-          url.searchParams.set("order_id", data.orderID)
-          // Optional: pass quick summary so the page can show instantly
+          });
+          const out = await res.json();
+          if (out?.status !== "COMPLETED") throw new Error("Payment not completed");
+
+          // Optional: stash quick links for the confirmation page to read
           if (Array.isArray(out.links)) {
-            sessionStorage.setItem("paypal_links_" + data.orderID, JSON.stringify(out.links))
+            sessionStorage.setItem("paypal_links_" + data.orderID, JSON.stringify(out.links));
           }
-          window.location.assign(url.toString())
+
+          const url = new URL(window.location.origin + "/order-confirmation");
+          url.searchParams.set("provider", "paypal");
+          url.searchParams.set("order_id", data.orderID);
+          window.location.assign(url.toString());
         },
 
         onError: (err: any) => {
-          console.error("PayPal error:", err)
-          alert("PayPal checkout failed. Please try again.")
+          console.error("PayPal error:", err);
+          alert("PayPal checkout failed. Please try again.");
         },
       })
-      .render(containerRef.current)
-  }, [ready, payload])
+      .render(el);
+  }, [ready, payload]);
 
   if (!clientId) {
     return (
@@ -104,8 +118,8 @@ export default function PayPalButton({
           PayPal (not configured)
         </button>
       </div>
-    )
+    );
   }
 
-  return <div ref={containerRef} className={className} />
+  return <div ref={containerRef} className={className} />;
 }
