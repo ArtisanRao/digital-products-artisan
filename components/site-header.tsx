@@ -1,22 +1,33 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import CurrencyPicker from "@/components/currency-picker";
+import Link from "next/link"
+import { ShoppingCart } from "lucide-react"
+import { useCart, type CartState } from "@/lib/cart-store"
 
-export default function SiteHeader() {
+export function SiteHeader() {
+  const count = useCart((s: CartState) => s.count())
+
   return (
-    <header className="border-b">
-      <div className="container mx-auto flex items-center justify-between gap-4 px-4 py-3">
-        <Link href="/" className="font-semibold">Digital Products Artisan</Link>
+    <header className="sticky top-0 z-50 bg-white/70 backdrop-blur border-b">
+      <div className="mx-auto max-w-7xl px-4 h-16 flex items-center justify-between">
+        {/* ... your left nav ... */}
 
-        <nav className="flex items-center gap-4">
-          <Link href="/products" className="hover:underline">Products</Link>
-          <Link href="/cart" className="hover:underline">Cart</Link>
-        </nav>
-
-        {/* 👇 Add the picker on the right */}
-        <CurrencyPicker className="ml-auto" />
+        <Link href="/cart" className="relative inline-flex items-center">
+          <ShoppingCart className="h-6 w-6" />
+          <span
+            className={[
+              "absolute -right-2 -top-2 min-w-[1.25rem] h-5 px-1",
+              "rounded-full bg-blue-600 text-white text-xs font-semibold",
+              "flex items-center justify-center",
+              count === 0 ? "hidden" : "",
+            ].join(" ")}
+            aria-label={`${count} items in cart`}
+          >
+            {count > 99 ? "99+" : count}
+          </span>
+          <span className="sr-only">Cart</span>
+        </Link>
       </div>
     </header>
-  );
+  )
 }
