@@ -15,32 +15,27 @@ function getStripe(): Stripe {
   return _stripe;
 }
 
-type BodySingle = { productId: number | string; qty?: number };
-type BodyCart = { cart: Array<{ productId: number | string; qty?: number }> };
-type Body = BodySingle | BodyCart;
+type BodySingle = { productId: number | string; qty?: number; currency?: string };
+type BodyCart   = { cart: Array<{ productId: number | string; qty?: number }>; currency?: string };
+type Body       = BodySingle | BodyCart;
 
 function toInt(n: any, fallback = 1) {
   const v = Number(n);
   return Number.isFinite(v) && v > 0 ? Math.floor(v) : fallback;
 }
 
-// Only include error details in responses if this flag is set
-const isDebug = process.env.DEBUG_CHECKOUT === "1";
-function safeStripeError(err: any) {
-  return {
-    message: err?.message,
-    type: err?.type ?? err?.name,
-    code: err?.raw?.code,
-    decline_code: err?.raw?.decline_code,
-    param: err?.raw?.param,
-    payment_intent: err?.raw?.payment_intent?.id,
-    requestId: err?.raw?.requestId ?? err?.requestId,
-  };
+function pickCurrency(c?: string) {
+  const v = String(c || "").toLowerCase();
+  // Allow-list the currencies you want to sell in. Default USD.
+  return v === "eur" ? "eur" : "usd";
 }
 
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as Body;
+
+    // Optional currency override (helps Klarna eligibility for EU)
+    const currency = pickCurrency((body as any).currency);
 
     // Normalize to an array of items
     const items: Array<{ productId: number; qty: number }> = Array.isArray(
@@ -73,9 +68,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const baseUrl =
-      process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
-
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
     const stripe = getStripe();
 
     // Build Stripe line_items (inline price_data so amount comes from your catalog)
@@ -89,12 +82,11 @@ export async function POST(req: Request) {
         return {
           quantity: qty,
           price_data: {
-            currency: "usd",
-            unit_amount: Math.round(p.price * 100),
+            currency, // <- USD by default, or EUR when requested
+            unit_amount: Math.round(p.price * 100), // if using EUR, this will charge €sameNumber
             product_data: {
               name: p.title,
               images: [absoluteImage],
-              // Used by the confirmation page to create download links
               metadata: {
                 slug: p.slug,
                 productId: String(p.id),
@@ -108,7 +100,6 @@ export async function POST(req: Request) {
     // If STRIPE_FORCE_PM_TYPES=1, explicitly allow card + PayPal + Klarna
     const forcePM = process.env.STRIPE_FORCE_PM_TYPES === "1";
 
-    // Use any to allow newer PMs without TS friction
     const params: any = {
       mode: "payment",
       line_items,
@@ -117,11 +108,15 @@ export async function POST(req: Request) {
         chosen.length === 1
           ? `${baseUrl}/products/${chosen[0].p.id}`
           : `${baseUrl}/products`,
+      // Help Klarna eligibility:
+      billing_address_collection: "required",
+      locale: "auto",
     };
 
     if (forcePM) {
       params.payment_method_types = ["card", "paypal", "klarna"];
     }
+    // Else, omit to let Stripe decide automatically based on eligibility.
 
     const session = await stripe.checkout.sessions.create(
       params as Stripe.Checkout.SessionCreateParams
@@ -136,35 +131,21 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ url: session.url });
   } catch (err: any) {
-    // Full details in logs
     console.error("Checkout error:", {
       message: err?.message,
       name: err?.name,
       type: err?.type,
-      code: err?.raw?.code,
-      decline_code: err?.raw?.decline_code,
-      param: err?.raw?.param,
-      requestId: err?.raw?.requestId ?? err?.requestId,
       stack: err?.stack,
     });
 
     const msg = err?.message?.includes("STRIPE_SECRET_KEY")
       ? "Server misconfigured (missing STRIPE_SECRET_KEY)"
       : "Checkout error";
-
-    // Only expose details to the client if DEBUG_CHECKOUT=1
-    return NextResponse.json(
-      {
-        error: msg,
-        ...(isDebug ? { debug: safeStripeError(err) } : {}),
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
 
 export async function GET(req: Request) {
-  // Diagnostics when visiting /api/checkout?diag=1
   const url = new URL(req.url);
   if (url.searchParams.get("diag") === "1") {
     return NextResponse.json({
@@ -173,7 +154,6 @@ export async function GET(req: Request) {
       stripeEnvSet: !!process.env.STRIPE_SECRET_KEY,
       siteUrlSet: !!process.env.NEXT_PUBLIC_SITE_URL,
       pmForced: process.env.STRIPE_FORCE_PM_TYPES === "1",
-      debugCheckout: process.env.DEBUG_CHECKOUT === "1",
     });
   }
   return NextResponse.json({ error: "Method Not Allowed" }, { status: 405 });
