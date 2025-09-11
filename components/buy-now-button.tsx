@@ -1,7 +1,7 @@
 "use client";
 import * as React from "react";
 import { Button } from "@/components/ui/button";
-import { getPreferredCurrency } from "@/lib/ccurrency"; // <-- FIX PATH below to "@/lib/currency"
+import { getSelectedCurrency } from "@/lib/currency"; // <-- FIX PATH below to "@/lib/currency"
 
 export default function BuyNowButton({
   productId,
