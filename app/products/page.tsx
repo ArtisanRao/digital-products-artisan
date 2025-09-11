@@ -11,7 +11,7 @@ import { Star, Search, Filter, Grid, List, Eye } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { products, type Product } from "@/data/products"
-import AddToCartButton from "@/components/add-to-cart-button" // ⬅️ NEW
+import AddToCartButton from "@/components/add-to-cart-button"
 
 const baseCategories = [
   "AI & ChatGPT Guides",
@@ -329,6 +329,7 @@ export default function ProductsPage() {
                         asChild
                         className="bg-black text-white hover:bg-black/90"
                         aria-label={`View ${product.title}`}
+                        size="sm"
                       >
                         <Link href={`/products/${product.id}`}>
                           <Eye className="w-4 h-4 mr-2" aria-hidden="true" />
@@ -337,12 +338,7 @@ export default function ProductsPage() {
                       </Button>
 
                       {/* Add to cart (next to View) */}
-                      <AddToCartButton
-                        id={product.id}
-                        title={product.title}
-                        price={product.price}
-                        image={product.images?.[0] ?? product.image}
-                      />
+                      <AddToCartButton productId={product.id} size="sm" className="bg-black text-white hover:bg-black/90" />
                     </div>
                   </CardFooter>
                 </Card>
@@ -393,17 +389,13 @@ export default function ProductsPage() {
                     )}
 
                     {/* Add to cart right after the price */}
-                    <AddToCartButton
-                      id={product.id}
-                      title={product.title}
-                      price={product.price}
-                      image={product.images?.[0] ?? product.image}
-                    />
+                    <AddToCartButton productId={product.id} size="sm" className="bg-black text-white hover:bg-black/90" />
 
                     <Button
                       asChild
                       className="bg-black text-white hover:bg-black/90"
                       aria-label={`View ${product.title}`}
+                      size="sm"
                     >
                       <Link href={`/products/${product.id}`}>
                         <Eye className="w-4 h-4 mr-2" aria-hidden="true" />
