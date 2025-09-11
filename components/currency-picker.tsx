@@ -1,17 +1,49 @@
-// components/currency-picker.tsx
 "use client";
 
-import { useEffect } from "react";
-import { getPreferredCurrency, setPreferredCurrency } from "@/lib/currency";
+import { useEffect, useState } from "react";
+import {
+  getPreferredCurrency,
+  setPreferredCurrency,
+} from "@/lib/currency";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
-/**
- * Invisible placeholder. Keeps backward compatibility if Header still renders <CurrencyPicker />.
- * We ensure a stored currency exists, but render no UI.
- */
-export default function CurrencyPicker() {
+type Props = {
+  className?: string;   // <-- allow className from callers
+  hidden?: boolean;     // optional: render nothing but keep API flexible
+};
+
+export default function CurrencyPicker({ className, hidden }: Props) {
+  const [value, setValue] = useState<"usd" | "eur">("usd");
+
   useEffect(() => {
-    const v = getPreferredCurrency();
-    if (!v) setPreferredCurrency("usd");
+    setValue(getPreferredCurrency());
   }, []);
-  return null; // 👈 no visible control
+
+  const onChange = (v: string) => {
+    const next = v === "eur" ? "eur" : "usd";
+    setValue(next);
+    setPreferredCurrency(next);
+  };
+
+  if (hidden) return null;
+
+  return (
+    <div className={className}>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger className="w-[110px]" aria-label="Select currency">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="usd">USD $</SelectItem>
+          <SelectItem value="eur">EUR €</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  );
 }
