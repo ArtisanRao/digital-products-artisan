@@ -1,111 +1,117 @@
-'use client'
+'use client';
 
-import { useState, useEffect, useMemo } from 'react'
-import { getPreferredCurrency } from '@/lib/currency'
+import { useState, useEffect, useMemo } from 'react';
+import { getPreferredCurrency } from '@/lib/currency';
 
 interface CartItem {
-  id: string
-  name: string
-  price: number
-  quantity: number
-  image?: string
-  url?: string
-  description?: string
-  fileGuid?: string
+  id: string;       // product.id as string
+  name: string;
+  price: number;    // base number; rendered/charged in selected currency
+  quantity: number;
+  image?: string;
+  url?: string;
+  description?: string;
+  fileGuid?: string;
 }
 
 export default function CartPage() {
-  const [cartItems, setCartItems] = useState<CartItem[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [currency, setCurrency] = useState<string>('usd')
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [currency, setCurrency] = useState<string>('usd');
 
-  // currency bootstrap + live updates from picker
+  // Currency bootstrap + live updates from header picker
   useEffect(() => {
-    setCurrency(getPreferredCurrency())
+    setCurrency(getPreferredCurrency());
     const onChange = (e: Event) => {
-      const detail = (e as CustomEvent).detail as string | undefined
-      setCurrency((detail || getPreferredCurrency()).toLowerCase())
-    }
-    window.addEventListener('currency:change', onChange as EventListener)
-    return () => window.removeEventListener('currency:change', onChange as EventListener)
-  }, [])
+      const detail = (e as CustomEvent<string | undefined>).detail;
+      setCurrency((detail || getPreferredCurrency()).toLowerCase());
+    };
+    window.addEventListener('currency:change', onChange as EventListener);
+    return () => window.removeEventListener('currency:change', onChange as EventListener);
+  }, []);
 
-  // Load from localStorage on mount
+  // Load cart from localStorage
   useEffect(() => {
     try {
-      const stored = localStorage.getItem('cart')
-      if (stored) setCartItems(JSON.parse(stored))
-    } catch {}
-  }, [])
+      const stored = localStorage.getItem('cart');
+      if (stored) setCartItems(JSON.parse(stored));
+    } catch {
+      /* ignore parse errors */
+    }
+  }, []);
 
   const updateCart = (items: CartItem[]) => {
-    setCartItems(items)
-    localStorage.setItem('cart', JSON.stringify(items))
-    setError(null)
-  }
+    setCartItems(items);
+    localStorage.setItem('cart', JSON.stringify(items));
+    setError(null);
+  };
 
   const handleQuantityChange = (id: string, quantity: number) => {
-    if (quantity < 1) return
-    updateCart(cartItems.map(item => (item.id === id ? { ...item, quantity } : item)))
-  }
+    if (quantity < 1) return;
+    updateCart(cartItems.map((item) => (item.id === id ? { ...item, quantity } : item)));
+  };
 
-  const handleRemove = (id: string) => updateCart(cartItems.filter(item => item.id !== id))
-  const handleClear = () => updateCart([])
+  const handleRemove = (id: string) => updateCart(cartItems.filter((item) => item.id !== id));
+  const handleClear = () => updateCart([]);
 
   const totalPrice = useMemo(
     () => cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
     [cartItems]
-  )
+  );
 
   const formatMoney = (n: number) =>
-    new Intl.NumberFormat(undefined, { style: 'currency', currency: currency.toUpperCase() }).format(n)
+    new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency: currency.toUpperCase(),
+      maximumFractionDigits: 2,
+    }).format(n);
 
-  // 🚀 Stripe Checkout (multi-item) via /api/checkout — send chosen currency
+  // Stripe Checkout (multi-item) via /api/checkout — send chosen currency
   const handleCheckout = async () => {
     if (!cartItems.length) {
-      setError('Your cart is empty!')
-      return
+      setError('Your cart is empty!');
+      return;
     }
 
     const lineItems = cartItems
-      .map(ci => {
-        const productId = Number.parseInt(ci.id as string, 10)
+      .map((ci) => {
+        const productId = Number.parseInt(ci.id, 10);
         return Number.isFinite(productId)
           ? { productId, qty: Math.max(1, Number(ci.quantity) || 1) }
-          : null
+          : null;
       })
-      .filter(Boolean) as { productId: number; qty: number }[]
+      .filter(Boolean) as { productId: number; qty: number }[];
 
     if (!lineItems.length) {
-      setError('Could not resolve product IDs in your cart.')
-      return
+      setError('Could not resolve product IDs in your cart.');
+      return;
     }
 
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
 
     try {
       const resp = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cart: lineItems, currency }), // 👈 pass currency
-      })
+        body: JSON.stringify({ cart: lineItems, currency }), // 👈 pass currency to server
+      });
 
-      const data = await resp.json()
+      const data = await resp.json();
       if (!resp.ok || !data?.url) {
-        console.error('Checkout error:', data)
-        setError(data?.error || 'Sorry—couldn’t start checkout.')
-        setLoading(false)
-        return
+        console.error('Checkout error:', data);
+        setError(data?.error || 'Sorry—couldn’t start checkout.');
+        setLoading(false);
+        return;
       }
 
-      window.location.href = data.url as string
+      window.location.href = data.url as string;
     } catch (e) {
-      console.error(e)
-      setError('Network error starting checkout.')
+      console.error(e);
+      setError('Network error starting checkout.');
     }
-  }
+  };
 
   if (!cartItems.length) {
     return (
@@ -113,21 +119,20 @@ export default function CartPage() {
         <h1 className="text-4xl font-bold mb-4">Your Cart is Empty</h1>
         <p className="text-gray-600">Browse products and add them to your cart.</p>
       </main>
-    )
+    );
   }
 
   return (
     <main className="container mx-auto p-6 max-w-4xl">
       <h1 className="text-4xl font-bold mb-8">Your Cart</h1>
 
-      {error && (
-        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">{error}</div>
-      )}
+      {error && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">{error}</div>}
 
       <ul className="divide-y divide-gray-200 mb-8">
         {cartItems.map(({ id, name, price, quantity, image }) => (
           <li key={id} className="flex items-center py-6">
             {image && (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={image}
                 alt={name}
@@ -153,9 +158,7 @@ export default function CartPage() {
               </div>
             </div>
             <div className="ml-6 flex flex-col items-end">
-              <p className="text-lg font-bold mb-4">
-                {formatMoney(price * quantity)}
-              </p>
+              <p className="text-lg font-bold mb-4">{formatMoney(price * quantity)}</p>
               <button
                 onClick={() => handleRemove(id)}
                 className="text-red-600 hover:text-red-800 font-semibold"
@@ -188,5 +191,5 @@ export default function CartPage() {
         </div>
       </div>
     </main>
-  )
+  );
 }

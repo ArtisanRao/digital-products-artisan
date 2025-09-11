@@ -24,10 +24,15 @@ function toInt(n: any, fallback = 1) {
   return Number.isFinite(v) && v > 0 ? Math.floor(v) : fallback;
 }
 
+// Choose currency: client value > env default > USD
 function pickCurrency(c?: string) {
-  const v = String(c || "").toLowerCase();
-  // Allow-list the currencies you want to sell in. Default USD.
-  return v === "eur" ? "eur" : "usd";
+  const envDefault =
+    (process.env.NEXT_PUBLIC_DEFAULT_CURRENCY ||
+      process.env.STRIPE_DEFAULT_CURRENCY ||
+      "usd").toLowerCase();
+
+  const v = String(c ?? envDefault).toLowerCase();
+  return v === "eur" ? "eur" : "usd"; // allow-list; extend if you add more
 }
 
 export async function POST(req: Request) {
@@ -82,8 +87,8 @@ export async function POST(req: Request) {
         return {
           quantity: qty,
           price_data: {
-            currency, // <- USD by default, or EUR when requested
-            unit_amount: Math.round(p.price * 100), // if using EUR, this will charge €sameNumber
+            currency, // 👈 USD by default, or EUR when requested/env-defaulted
+            unit_amount: Math.round(p.price * 100), // if EUR, charges €sameNumber
             product_data: {
               name: p.title,
               images: [absoluteImage],
@@ -116,7 +121,7 @@ export async function POST(req: Request) {
     if (forcePM) {
       params.payment_method_types = ["card", "paypal", "klarna"];
     }
-    // Else, omit to let Stripe decide automatically based on eligibility.
+    // Else, omit to let Stripe auto-select based on eligibility.
 
     const session = await stripe.checkout.sessions.create(
       params as Stripe.Checkout.SessionCreateParams
@@ -154,6 +159,10 @@ export async function GET(req: Request) {
       stripeEnvSet: !!process.env.STRIPE_SECRET_KEY,
       siteUrlSet: !!process.env.NEXT_PUBLIC_SITE_URL,
       pmForced: process.env.STRIPE_FORCE_PM_TYPES === "1",
+      defaultCurrency:
+        process.env.NEXT_PUBLIC_DEFAULT_CURRENCY ||
+        process.env.STRIPE_DEFAULT_CURRENCY ||
+        "usd",
     });
   }
   return NextResponse.json({ error: "Method Not Allowed" }, { status: 405 });
