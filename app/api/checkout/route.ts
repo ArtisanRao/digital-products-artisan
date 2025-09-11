@@ -46,8 +46,7 @@ export async function POST(req: Request) {
     // Validate & map to products
     const chosen = items
       .map(({ productId, qty }) => {
-        const p =
-          productsById[productId] || products.find((x) => x.id === productId);
+        const p = productsById[productId] || products.find((x) => x.id === productId);
         return p ? { p, qty } : null;
       })
       .filter(Boolean) as Array<{ p: (typeof products)[number]; qty: number }>;
@@ -59,8 +58,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const baseUrl =
-      process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
 
     const stripe = getStripe();
 
@@ -80,6 +78,7 @@ export async function POST(req: Request) {
             product_data: {
               name: p.title,
               images: [absoluteImage],
+              // Used by confirmation page to build download links
               metadata: {
                 slug: p.slug,
                 productId: String(p.id),
@@ -90,7 +89,7 @@ export async function POST(req: Request) {
       }
     );
 
-    // Let Stripe show all eligible methods (incl. PayPal, if enabled in Dashboard)
+    // 🔧 Optional: force PayPal to show (if your Stripe account has PayPal enabled)
     const forcePM = process.env.STRIPE_FORCE_PM_TYPES === "1";
 
     const session = await stripe.checkout.sessions.create({
@@ -98,13 +97,9 @@ export async function POST(req: Request) {
       line_items,
       automatic_payment_methods: { enabled: true },
 
-      // Optional: explicitly include PayPal for older type defs or if you want to force it
-      // Remove this block later if you prefer only automatic_payment_methods.
+      // Explicitly include PayPal only when enabled via env var
       ...(forcePM
-        ? ({
-            // @ts-expect-error - allow newer payment method in type list
-            payment_method_types: ["card", "paypal"],
-          } as any)
+        ? ({ payment_method_types: ["card", "paypal"] } as Record<string, unknown>)
         : {}),
 
       success_url: `${baseUrl}/order-confirmation?session_id={CHECKOUT_SESSION_ID}`,
@@ -146,7 +141,7 @@ export async function GET(req: Request) {
       node: process.version,
       stripeEnvSet: !!process.env.STRIPE_SECRET_KEY,
       siteUrlSet: !!process.env.NEXT_PUBLIC_SITE_URL,
-      forcePMTypes: process.env.STRIPE_FORCE_PM_TYPES === "1",
+      forcePM: process.env.STRIPE_FORCE_PM_TYPES === "1",
     });
   }
   return NextResponse.json({ error: "Method Not Allowed" }, { status: 405 });
