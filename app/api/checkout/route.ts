@@ -46,7 +46,8 @@ export async function POST(req: Request) {
     // Validate & map to products
     const chosen = items
       .map(({ productId, qty }) => {
-        const p = productsById[productId] || products.find((x) => x.id === productId);
+        const p =
+          productsById[productId] || products.find((x) => x.id === productId);
         return p ? { p, qty } : null;
       })
       .filter(Boolean) as Array<{ p: (typeof products)[number]; qty: number }>;
@@ -58,10 +59,12 @@ export async function POST(req: Request) {
       );
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
+    const baseUrl =
+      process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
+
     const stripe = getStripe();
 
-    // Build Stripe line_items from your catalog
+    // Build Stripe line_items (inline price_data so amount comes from your catalog)
     const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = chosen.map(
       ({ p, qty }) => {
         const firstImage = p.images?.[0] ?? p.image;
@@ -77,6 +80,7 @@ export async function POST(req: Request) {
             product_data: {
               name: p.title,
               images: [absoluteImage],
+              // Used by the confirmation page to create download links
               metadata: {
                 slug: p.slug,
                 productId: String(p.id),
@@ -87,10 +91,11 @@ export async function POST(req: Request) {
       }
     );
 
+    // If STRIPE_FORCE_PM_TYPES=1, explicitly allow card + PayPal + Klarna
     const forcePM = process.env.STRIPE_FORCE_PM_TYPES === "1";
 
-    // Build params separately to avoid TS issues on optional fields
-    const params: Stripe.Checkout.SessionCreateParams = {
+    // Use `any` for this param object to avoid TS friction with newer fields.
+    const params: any = {
       mode: "payment",
       line_items,
       success_url: `${baseUrl}/order-confirmation?session_id={CHECKOUT_SESSION_ID}`,
@@ -98,14 +103,26 @@ export async function POST(req: Request) {
         chosen.length === 1
           ? `${baseUrl}/products/${chosen[0].p.id}`
           : `${baseUrl}/products`,
+
+      // ✅ Improve alternative payment method eligibility and UX
+      billing_address_collection: "required",
+      phone_number_collection: { enabled: true },
+      customer_creation: "always",
+      customer_update: { address: "auto", name: "auto", shipping: "never" },
+
+      // ✅ Localize the Checkout UI for the buyer’s region
+      locale: "auto",
     };
 
-    // Only set this when you explicitly want to force PayPal to show up
     if (forcePM) {
-      (params as any).payment_method_types = ["card", "paypal"];
+      // Keep PayPal & Klarna visible alongside cards when forced
+      params.payment_method_types = ["card", "paypal", "klarna"];
     }
+    // Else, omit to let Stripe show eligible methods you enabled in Dashboard.
 
-    const session = await stripe.checkout.sessions.create(params);
+    const session = await stripe.checkout.sessions.create(
+      params as Stripe.Checkout.SessionCreateParams
+    );
 
     if (!session.url) {
       return NextResponse.json(
@@ -139,7 +156,7 @@ export async function GET(req: Request) {
       node: process.version,
       stripeEnvSet: !!process.env.STRIPE_SECRET_KEY,
       siteUrlSet: !!process.env.NEXT_PUBLIC_SITE_URL,
-      forcePM: process.env.STRIPE_FORCE_PM_TYPES === "1",
+      pmForced: process.env.STRIPE_FORCE_PM_TYPES === "1",
     });
   }
   return NextResponse.json({ error: "Method Not Allowed" }, { status: 405 });
