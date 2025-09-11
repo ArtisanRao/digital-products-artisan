@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import Logo from '@/components/Logo'
 
-// Safely read current cart count (prefers localStorage `cartCount`, falls back to summing cart)
+// Prefer localStorage cartCount, fallback to summing cart (quantity/qty)
 function getCartCountSafe(): number {
   try {
     const rawCount = localStorage.getItem('cartCount')
@@ -49,23 +49,23 @@ export default function Header() {
   const { items } = useCart()
   const { user, logout } = useAuth()
 
-  // Context count (fallback)
+  // Fallback count from context
   const itemCountContext =
     Array.isArray(items) ? items.reduce((sum, item: any) => sum + Number(item?.quantity ?? item?.qty ?? 1), 0) : 0
 
-  // Canonical badge count (from localStorage/events), falling back to context
+  // Canonical badge count (events + storage), fallback to context
   const [badgeCount, setBadgeCount] = useState<number>(0)
   useEffect(() => {
     const read = () => setBadgeCount(getCartCountSafe())
-    read() // on mount
+    read()
 
     const onCartUpdated = (e: Event) => {
       const d = (e as CustomEvent<{ count?: number }>).detail
       if (d && typeof d.count === 'number') setBadgeCount(d.count)
       else read()
     }
-    const onStorage = () => read()            // other tabs/windows
-    const onFocus = () => read()              // when tab regains focus
+    const onStorage = () => read()
+    const onFocus = () => read()
     const onVis = () => { if (document.visibilityState === 'visible') read() }
 
     window.addEventListener('cart:updated', onCartUpdated as EventListener)
@@ -81,9 +81,7 @@ export default function Header() {
     }
   }, [])
 
-  // Prefer badgeCount; fallback to context if badge is 0 and context has items (helps first paint)
   const itemCount = badgeCount || itemCountContext
-
   const clearSearch = () => setSearchTerm('')
 
   const routeMap: Record<string, string> = {
@@ -111,7 +109,7 @@ export default function Header() {
       <div className="container mx-auto px-4 !py-0 max-w-full">
         <div className="flex flex-wrap items-center justify-center h-16 gap-2">
 
-          {/* Mobile Header Nav */}
+          {/* Mobile Header Nav (unchanged) */}
           <nav className="flex md:hidden items-center justify-center gap-3 flex-shrink-0 overflow-x-auto no-scrollbar">
             <Logo size="md" className="flex-shrink-0" />
             <Link href="/products" className="nav-link whitespace-nowrap">Products</Link>
@@ -181,7 +179,7 @@ export default function Header() {
               </DropdownMenu>
             </nav>
 
-            {/* Search bar - responsive - wrapped in form */}
+            {/* Search bar */}
             <form
               onSubmit={handleSearchSubmit}
               className="flex items-center space-x-2 relative flex-grow min-w-[120px] max-w-[300px] w-full"
@@ -219,66 +217,26 @@ export default function Header() {
               </div>
             ) : null}
 
-            {/* Menu button */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="hover:bg-blue-50">
-                  <Menu className="w-5 h-5 text-blue-600" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="border-blue-200">
-                <DropdownMenuItem asChild>
-                  <Link href="/cart" className="flex items-center gap-2">
-                    <ShoppingCart className="w-5 h-5 text-blue-600" />
-                    <span>Cart</span>
-                    {itemCount > 0 && (
-                      <span className="bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold shadow-lg">
-                        {itemCount > 99 ? '99+' : itemCount}
-                      </span>
-                    )}
-                  </Link>
-                </DropdownMenuItem>
-
-                {/* Search inside dropdown (desktop menu button) */}
-                <DropdownMenuItem asChild>
-                  <form onSubmit={handleSearchSubmit} className="w-full px-1">
-                    <div className="relative w-full">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 w-4 h-4" />
-                      <Input
-                        type="search"
-                        placeholder="Search..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 w-full border-blue-200 focus:border-blue-500 focus:ring-blue-500/20 focus:ring-1 rounded-md"
-                      />
-                    </div>
-                  </form>
-                </DropdownMenuItem>
-
-                {user ? (
-                  <>
-                    <DropdownMenuItem asChild><Link href="/dashboard">Dashboard</Link></DropdownMenuItem>
-                    <DropdownMenuItem asChild><Link href="/orders">My Orders</Link></DropdownMenuItem>
-                    <DropdownMenuItem asChild><Link href="/subscriptions">Subscriptions</Link></DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={logout}
-                      className="hover:bg-red-50 hover:text-red-700 cursor-pointer"
-                    >
-                      Logout
-                    </DropdownMenuItem>
-                  </>
-                ) : (
-                  <>
-                    <DropdownMenuItem asChild><Link href="/login">Login</Link></DropdownMenuItem>
-                    <DropdownMenuItem asChild><Link href="/signup">Sign Up</Link></DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* DESKTOP RIGHT: Cart (replaces the three-line menu icon) */}
+            <Link href="/cart" className="relative inline-flex items-center hover-lift">
+              <ShoppingCart className="h-6 w-6 text-blue-600" />
+              <span
+                className={[
+                  "absolute -right-2 -top-2 min-w-[1.25rem] h-5 px-1",
+                  "rounded-full bg-blue-600 text-white text-xs font-semibold",
+                  "flex items-center justify-center",
+                  itemCount === 0 ? "hidden" : "",
+                ].join(" ")}
+                aria-label={`${itemCount} items in cart`}
+              >
+                {itemCount > 99 ? '99+' : itemCount}
+              </span>
+              <span className="sr-only">Cart</span>
+            </Link>
           </div>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Mobile Menu (unchanged) */}
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-blue-100 bg-blue-50/50 animate-fadeIn overflow-x-hidden">
             <nav className="flex flex-col space-y-4 max-w-full">
