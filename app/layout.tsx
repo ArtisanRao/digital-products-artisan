@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import "./globals.css"
 import { Inter } from "next/font/google";
@@ -24,16 +24,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
 
         {/* PWA / icons */}
-        <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#ffffff" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="application-name" content="Digital Products Artisan" />
         <meta name="apple-mobile-web-app-title" content="Digital Products Artisan" />
-        <link rel="icon" href="/images/logo-new.png" sizes="32x32" type="image/png" />
-        <link rel="icon" href="/images/logo-new.png" sizes="192x192" type="image/png" />
-        <link rel="apple-touch-icon" href="/images/logo-new.png" />
+
+        {/* FAVICONS — use assets in /public */}
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/web-app-manifest-192x192.png" />
+        <link rel="icon" type="image/png" sizes="512x512" href="/web-app-manifest-512x512.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        <link rel="manifest" href="/site.webmanifest" />
 
         {/* Social */}
         <meta property="og:title" content="Digital Products Artisan" />
