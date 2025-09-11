@@ -9,7 +9,7 @@ type Size = "sm" | "default" | "lg";
 
 export default function AddToCartButton({
   productId,
-  size = "default", // "default" on PDP, "sm" on grid/list cards
+  size = "default",
   className = "",
   children,
 }: {
@@ -21,21 +21,16 @@ export default function AddToCartButton({
   const [adding, setAdding] = React.useState(false);
 
   const add = React.useCallback(() => {
+    // read current cart
     const raw = typeof window !== "undefined" ? localStorage.getItem("cart") : "[]";
     let cart: Array<any> = [];
-
-    try {
-      cart = raw ? JSON.parse(raw) : [];
-    } catch {
-      cart = [];
-    }
+    try { cart = raw ? JSON.parse(raw) : []; } catch { cart = []; }
 
     const p = productsById[productId] || products.find((x) => x.id === productId);
     if (!p) return;
 
     const idStr = String(p.id);
     const found = cart.find((i) => i.id === idStr);
-
     if (found) {
       const currentQty = Math.max(1, Number(found.quantity || 1));
       found.quantity = currentQty + 1;
@@ -51,25 +46,23 @@ export default function AddToCartButton({
       });
     }
 
-    // Persist cart
+    // persist + compute count
     localStorage.setItem("cart", JSON.stringify(cart));
-
-    // Compute total count and broadcast to header badge
     const count = cart.reduce((n, i) => n + Number(i.quantity || 1), 0);
     localStorage.setItem("cartCount", String(count));
-    if (typeof window !== "undefined") {
+
+    // notify listeners (header badge)
+    try {
       window.dispatchEvent(new CustomEvent("cart:updated", { detail: { count, items: cart } }));
-      // light haptic on supported mobiles (optional, non-blocking)
-      try { navigator?.vibrate?.(10); } catch {}
-    }
+      navigator?.vibrate?.(10);
+    } catch {}
+
   }, [productId]);
 
   const handleClick = async () => {
     setAdding(true);
     try {
       add();
-    } catch (e) {
-      console.error("Failed to add to cart", e);
     } finally {
       setAdding(false);
     }
@@ -77,11 +70,10 @@ export default function AddToCartButton({
 
   return (
     <Button
-      variant="cart"
-      size={size}
       onClick={handleClick}
       disabled={adding}
-      className={className}
+      size={size}
+      className={`bg-black text-white hover:bg-black/90 ${className}`}
       aria-label="Add to cart"
     >
       <ShoppingCart className="w-4 h-4 mr-2" />

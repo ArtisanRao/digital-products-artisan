@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { getPreferredCurrency } from '@/lib/currency';
-import { Button } from '@/components/ui/button';
 
 interface CartItem {
   id: string;       // product.id as string
@@ -21,24 +20,6 @@ export default function CartPage() {
   const [error, setError] = useState<string | null>(null);
   const [currency, setCurrency] = useState<string>('usd');
 
-  // --- helpers --------------------------------------------------------------
-  const broadcastCart = (items: CartItem[]) => {
-    const count = items.reduce((n, i) => n + Number(i.quantity || 1), 0);
-    localStorage.setItem('cart', JSON.stringify(items));
-    localStorage.setItem('cartCount', String(count));
-    try {
-      window.dispatchEvent(
-        new CustomEvent('cart:updated', { detail: { count, items } })
-      );
-    } catch {}
-  };
-
-  const updateCart = (items: CartItem[]) => {
-    setCartItems(items);
-    broadcastCart(items);
-    setError(null);
-  };
-
   // Currency bootstrap + live updates from header picker
   useEffect(() => {
     setCurrency(getPreferredCurrency());
@@ -50,30 +31,33 @@ export default function CartPage() {
     return () => window.removeEventListener('currency:change', onChange as EventListener);
   }, []);
 
-  // Load cart from localStorage and sync count on mount
+  // Helper to persist + broadcast
+  const persistAndBroadcast = (items: CartItem[]) => {
+    localStorage.setItem('cart', JSON.stringify(items));
+    const count = items.reduce((n, i) => n + Number(i.quantity || 1), 0);
+    localStorage.setItem('cartCount', String(count));
+    try {
+      window.dispatchEvent(new CustomEvent('cart:updated', { detail: { count, items } }));
+    } catch {}
+  };
+
+  // Load cart from localStorage
   useEffect(() => {
     try {
       const stored = localStorage.getItem('cart');
       const items = stored ? (JSON.parse(stored) as CartItem[]) : [];
       setCartItems(items);
-      // ensure header badge is in sync even on hard refresh
-      const count = items.reduce((n, i) => n + Number(i.quantity || 1), 0);
-      localStorage.setItem('cartCount', String(count));
-      window.dispatchEvent(new CustomEvent('cart:updated', { detail: { count, items } }));
+      persistAndBroadcast(items); // ensure header is in sync on page load
     } catch {
       /* ignore parse errors */
     }
   }, []);
 
-  // React to cart updates fired elsewhere (e.g., AddToCartButton)
-  useEffect(() => {
-    const onCartUpdated = (e: Event) => {
-      const detail = (e as CustomEvent<{ items?: CartItem[] }>).detail;
-      if (detail?.items) setCartItems(detail.items);
-    };
-    window.addEventListener('cart:updated', onCartUpdated as EventListener);
-    return () => window.removeEventListener('cart:updated', onCartUpdated as EventListener);
-  }, []);
+  const updateCart = (items: CartItem[]) => {
+    setCartItems(items);
+    persistAndBroadcast(items);
+    setError(null);
+  };
 
   const handleQuantityChange = (id: string, quantity: number) => {
     if (quantity < 1) return;
@@ -123,7 +107,7 @@ export default function CartPage() {
       const resp = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cart: lineItems, currency }), // 👈 pass currency to server
+        body: JSON.stringify({ cart: lineItems, currency }),
       });
 
       const data = await resp.json();
@@ -204,28 +188,25 @@ export default function CartPage() {
         ))}
       </ul>
 
-      {/* Footer actions: Clear hidden on mobile, Checkout prominent */}
-      <div className="border-t border-gray-300 pt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-t border-gray-300 pt-6">
         <p className="text-2xl font-bold">Total: {formatMoney(totalPrice)}</p>
         <div className="flex gap-3 justify-end">
-          {/* Hide these on mobile */}
-          <Button
-            variant="secondary"
+          {/* Hide Clear Cart on mobile */}
+          <button
             onClick={handleClear}
             disabled={loading}
-            className="hidden sm:inline-flex"
+            className="hidden sm:inline-flex clear-cart-btn px-4 py-2 border border-gray-400 rounded hover:bg-gray-100"
+            data-action="clear-cart"
           >
             Clear Cart
-          </Button>
-
-          <Button
-            variant="brand"
+          </button>
+          <button
             onClick={handleCheckout}
             disabled={loading}
-            className="w-full sm:w-auto"
+            className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 hover-lift w-full sm:w-auto"
           >
             {loading ? 'Redirecting…' : 'Checkout'}
-          </Button>
+          </button>
         </div>
       </div>
     </main>
