@@ -1,7 +1,7 @@
 "use client";
 import * as React from "react";
 import { Button } from "@/components/ui/button";
-import { getSelectedCurrency } from "@/lib/currency"; // <-- FIX PATH below to "@/lib/currency"
+import { getPreferredCurrency } from "@/lib/currency"; // ← add this
 
 export default function BuyNowButton({
   productId,
@@ -23,7 +23,7 @@ export default function BuyNowButton({
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId, qty, currency }), // 👈 pass to server
+        body: JSON.stringify({ productId, qty, currency }),
       });
 
       const text = await res.text();

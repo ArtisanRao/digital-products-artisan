@@ -1,22 +1,20 @@
-// lib/currency.ts
-export type CurrencyCode = "usd" | "eur" | "gbp";
-const KEY = "preferred_currency";
+export type Currency = "usd" | "eur";
 
-const ALLOWED: CurrencyCode[] = ["usd", "eur", "gbp"];
+const KEY = "currency";
 
-export function getPreferredCurrency(): CurrencyCode {
+export function getPreferredCurrency(): Currency {
   if (typeof window === "undefined") return "usd";
   const v = (localStorage.getItem(KEY) || "").toLowerCase();
-  return (ALLOWED.includes(v as CurrencyCode) ? v : "usd") as CurrencyCode;
+  return v === "eur" ? "eur" : "usd";
 }
 
-export function setPreferredCurrency(code: CurrencyCode) {
-  if (typeof window === "undefined") return;
-  const norm = (code || "usd").toLowerCase();
-  const safe = (ALLOWED.includes(norm as CurrencyCode) ? norm : "usd") as CurrencyCode;
-  localStorage.setItem(KEY, safe);
-  // notify listeners so UIs can refresh
-  window.dispatchEvent(new CustomEvent("currency:change", { detail: safe }));
+export function setPreferredCurrency(c: string) {
+  try {
+    const v = (c || "").toLowerCase();
+    localStorage.setItem(KEY, v === "eur" ? "eur" : "usd");
+  } catch {}
 }
-// lib/currency.ts
-export const getSelectedCurrency = readSelectedCurrency;
+
+// Back-compat aliases
+export const readSelectedCurrency = getPreferredCurrency;
+export const getSelectedCurrency = getPreferredCurrency;
