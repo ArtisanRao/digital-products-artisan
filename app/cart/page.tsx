@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { getPreferredCurrency } from '@/lib/currency';
+import { Button } from '@/components/ui/button';
 
 interface CartItem {
   id: string;       // product.id as string
@@ -20,6 +21,24 @@ export default function CartPage() {
   const [error, setError] = useState<string | null>(null);
   const [currency, setCurrency] = useState<string>('usd');
 
+  // --- helpers --------------------------------------------------------------
+  const broadcastCart = (items: CartItem[]) => {
+    const count = items.reduce((n, i) => n + Number(i.quantity || 1), 0);
+    localStorage.setItem('cart', JSON.stringify(items));
+    localStorage.setItem('cartCount', String(count));
+    try {
+      window.dispatchEvent(
+        new CustomEvent('cart:updated', { detail: { count, items } })
+      );
+    } catch {}
+  };
+
+  const updateCart = (items: CartItem[]) => {
+    setCartItems(items);
+    broadcastCart(items);
+    setError(null);
+  };
+
   // Currency bootstrap + live updates from header picker
   useEffect(() => {
     setCurrency(getPreferredCurrency());
@@ -31,21 +50,30 @@ export default function CartPage() {
     return () => window.removeEventListener('currency:change', onChange as EventListener);
   }, []);
 
-  // Load cart from localStorage
+  // Load cart from localStorage and sync count on mount
   useEffect(() => {
     try {
       const stored = localStorage.getItem('cart');
-      if (stored) setCartItems(JSON.parse(stored));
+      const items = stored ? (JSON.parse(stored) as CartItem[]) : [];
+      setCartItems(items);
+      // ensure header badge is in sync even on hard refresh
+      const count = items.reduce((n, i) => n + Number(i.quantity || 1), 0);
+      localStorage.setItem('cartCount', String(count));
+      window.dispatchEvent(new CustomEvent('cart:updated', { detail: { count, items } }));
     } catch {
       /* ignore parse errors */
     }
   }, []);
 
-  const updateCart = (items: CartItem[]) => {
-    setCartItems(items);
-    localStorage.setItem('cart', JSON.stringify(items));
-    setError(null);
-  };
+  // React to cart updates fired elsewhere (e.g., AddToCartButton)
+  useEffect(() => {
+    const onCartUpdated = (e: Event) => {
+      const detail = (e as CustomEvent<{ items?: CartItem[] }>).detail;
+      if (detail?.items) setCartItems(detail.items);
+    };
+    window.addEventListener('cart:updated', onCartUpdated as EventListener);
+    return () => window.removeEventListener('cart:updated', onCartUpdated as EventListener);
+  }, []);
 
   const handleQuantityChange = (id: string, quantity: number) => {
     if (quantity < 1) return;
@@ -110,6 +138,7 @@ export default function CartPage() {
     } catch (e) {
       console.error(e);
       setError('Network error starting checkout.');
+      setLoading(false);
     }
   };
 
@@ -126,7 +155,11 @@ export default function CartPage() {
     <main className="container mx-auto p-6 max-w-4xl">
       <h1 className="text-4xl font-bold mb-8">Your Cart</h1>
 
-      {error && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">{error}</div>}
+      {error && (
+        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded" aria-live="polite">
+          {error}
+        </div>
+      )}
 
       <ul className="divide-y divide-gray-200 mb-8">
         {cartItems.map(({ id, name, price, quantity, image }) => (
@@ -171,23 +204,28 @@ export default function CartPage() {
         ))}
       </ul>
 
-      <div className="flex justify-between items-center border-t border-gray-300 pt-6">
+      {/* Footer actions: Clear hidden on mobile, Checkout prominent */}
+      <div className="border-t border-gray-300 pt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-2xl font-bold">Total: {formatMoney(totalPrice)}</p>
-        <div className="space-x-4">
-          <button
+        <div className="flex gap-3 justify-end">
+          {/* Hide these on mobile */}
+          <Button
+            variant="secondary"
             onClick={handleClear}
             disabled={loading}
-            className="px-4 py-2 border border-gray-400 rounded hover:bg-gray-100"
+            className="hidden sm:inline-flex"
           >
             Clear Cart
-          </button>
-          <button
+          </Button>
+
+          <Button
+            variant="brand"
             onClick={handleCheckout}
             disabled={loading}
-            className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="w-full sm:w-auto"
           >
             {loading ? 'Redirecting…' : 'Checkout'}
-          </button>
+          </Button>
         </div>
       </div>
     </main>

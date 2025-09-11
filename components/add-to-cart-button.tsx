@@ -9,7 +9,7 @@ type Size = "sm" | "default" | "lg";
 
 export default function AddToCartButton({
   productId,
-  size = "default",           // ↩ match context: "default" on PDP, "sm" on grid/list cards
+  size = "default", // "default" on PDP, "sm" on grid/list cards
   className = "",
   children,
 }: {
@@ -21,31 +21,46 @@ export default function AddToCartButton({
   const [adding, setAdding] = React.useState(false);
 
   const add = React.useCallback(() => {
+    const raw = typeof window !== "undefined" ? localStorage.getItem("cart") : "[]";
+    let cart: Array<any> = [];
+
     try {
-      const p = productsById[productId] || products.find(x => x.id === productId);
-      if (!p) return;
+      cart = raw ? JSON.parse(raw) : [];
+    } catch {
+      cart = [];
+    }
 
-      const raw = localStorage.getItem("cart");
-      const cart: Array<any> = raw ? JSON.parse(raw) : [];
+    const p = productsById[productId] || products.find((x) => x.id === productId);
+    if (!p) return;
 
-      const idStr = String(p.id);
-      const found = cart.find((i) => i.id === idStr);
-      if (found) found.quantity = Math.max(1, Number(found.quantity || 1)) + 1;
-      else {
-        cart.push({
-          id: idStr,
-          name: p.title,
-          price: p.price,
-          quantity: 1,
-          image: p.images?.[0] ?? p.image,
-          url: `/products/${p.id}`,
-          description: p.description,
-        });
-      }
+    const idStr = String(p.id);
+    const found = cart.find((i) => i.id === idStr);
 
-      localStorage.setItem("cart", JSON.stringify(cart));
-    } catch (e) {
-      console.error("Failed to add to cart", e);
+    if (found) {
+      const currentQty = Math.max(1, Number(found.quantity || 1));
+      found.quantity = currentQty + 1;
+    } else {
+      cart.push({
+        id: idStr,
+        name: p.title,
+        price: p.price,
+        quantity: 1,
+        image: p.images?.[0] ?? p.image,
+        url: `/products/${p.id}`,
+        description: p.description,
+      });
+    }
+
+    // Persist cart
+    localStorage.setItem("cart", JSON.stringify(cart));
+
+    // Compute total count and broadcast to header badge
+    const count = cart.reduce((n, i) => n + Number(i.quantity || 1), 0);
+    localStorage.setItem("cartCount", String(count));
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("cart:updated", { detail: { count, items: cart } }));
+      // light haptic on supported mobiles (optional, non-blocking)
+      try { navigator?.vibrate?.(10); } catch {}
     }
   }, [productId]);
 
@@ -53,18 +68,20 @@ export default function AddToCartButton({
     setAdding(true);
     try {
       add();
+    } catch (e) {
+      console.error("Failed to add to cart", e);
     } finally {
       setAdding(false);
     }
   };
 
-  // icon size normalized to w-4 h-4 to match other buttons
   return (
     <Button
+      variant="cart"
+      size={size}
       onClick={handleClick}
       disabled={adding}
-      size={size}
-      className={`bg-black text-white hover:bg-black/90 ${className}`}
+      className={className}
       aria-label="Add to cart"
     >
       <ShoppingCart className="w-4 h-4 mr-2" />
