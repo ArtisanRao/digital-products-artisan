@@ -325,20 +325,23 @@ export default function ProductsPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <Button asChild size="sm" variant="outline" aria-label={`View ${product.title}`}>
+                      <Button
+                        asChild
+                        className="bg-black text-white hover:bg-black/90"
+                        aria-label={`View ${product.title}`}
+                      >
                         <Link href={`/products/${product.id}`}>
                           <Eye className="w-4 h-4 mr-2" aria-hidden="true" />
                           View
                         </Link>
                       </Button>
 
-                      {/* NEW: Add to cart (next to View) */}
+                      {/* Add to cart (next to View) */}
                       <AddToCartButton
                         id={product.id}
                         title={product.title}
                         price={product.price}
                         image={product.images?.[0] ?? product.image}
-                        size="sm"
                       />
                     </div>
                   </CardFooter>
@@ -389,16 +392,19 @@ export default function ProductsPage() {
                       </span>
                     )}
 
-                    {/* NEW: Add to cart right after the price */}
+                    {/* Add to cart right after the price */}
                     <AddToCartButton
                       id={product.id}
                       title={product.title}
                       price={product.price}
                       image={product.images?.[0] ?? product.image}
-                      size="sm"
                     />
 
-                    <Button asChild size="sm" variant="outline" aria-label={`View ${product.title}`}>
+                    <Button
+                      asChild
+                      className="bg-black text-white hover:bg-black/90"
+                      aria-label={`View ${product.title}`}
+                    >
                       <Link href={`/products/${product.id}`}>
                         <Eye className="w-4 h-4 mr-2" aria-hidden="true" />
                         View

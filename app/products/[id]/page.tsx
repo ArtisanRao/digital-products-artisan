@@ -1,3 +1,4 @@
+// app/products/[id]/page.tsx
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { products } from "@/data/products";
@@ -6,31 +7,24 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Star, Download } from "lucide-react";
 import ProductGallery from "@/components/product-gallery";
 import BuyNowButton from "@/components/buy-now-button";
-import AddToCartButton from "@/components/add-to-cart-button"; // ⬅️ NEW
+import AddToCartButton from "@/components/add-to-cart-button";
 
-export const dynamic = "force-dynamic";  // do not pre-render
-export const revalidate = 0;             // no ISR
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 type Params = { id: string };
 
-// keep metadata generation (cheap & safe)
 export async function generateMetadata({ params }: { params: Promise<Params> }) {
   const { id } = await params;
   const p = products.find((x) => x.id === Number(id));
   if (!p) return { title: "Product not found" };
 
   const firstImage = p.images?.[0] ?? p.image;
-
   return {
     title: `${p.title} | Digital Products Artisan`,
     description: p.description,
     openGraph: { images: [{ url: firstImage }] },
-    twitter: {
-      card: "summary_large_image",
-      title: p.title,
-      description: p.description,
-      images: [firstImage],
-    },
+    twitter: { card: "summary_large_image", title: p.title, description: p.description, images: [firstImage] },
   };
 }
 
@@ -41,7 +35,6 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
 
   const galleryImages = product.images?.length ? product.images : [product.image];
 
-  // ----- JSON-LD (SEO) -----
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
   const imagesAbs = galleryImages.map((i) => (i.startsWith("http") ? i : `${siteUrl}${i}`));
   const jsonLd = {
@@ -52,18 +45,8 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
     image: imagesAbs,
     sku: product.slug,
     url: `${siteUrl}/products/${product.id}`,
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: product.rating,
-      reviewCount: product.reviews,
-    },
-    offers: {
-      "@type": "Offer",
-      price: product.price,
-      priceCurrency: "USD",
-      availability: "https://schema.org/InStock",
-      url: `${siteUrl}/products/${product.id}`,
-    },
+    aggregateRating: { "@type": "AggregateRating", ratingValue: product.rating, reviewCount: product.reviews },
+    offers: { "@type": "Offer", price: product.price, priceCurrency: "USD", availability: "https://schema.org/InStock", url: `${siteUrl}/products/${product.id}` },
   };
 
   return (
@@ -92,26 +75,22 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
             <span>{product.downloads} downloads</span>
           </div>
 
-          {/* Price row + Add to cart */}
-          <div className="mt-6 flex flex-wrap items-center gap-3">
+          <div className="mt-6 flex items-center space-x-3">
             <span className="text-2xl font-semibold">${product.price.toFixed(2)}</span>
             {product.originalPrice > product.price && (
               <span className="text-gray-400 line-through">${product.originalPrice.toFixed(2)}</span>
             )}
+          </div>
 
-            {/* NEW: Add to cart right after the price */}
+          {/* Actions */}
+          <div className="mt-6 flex flex-wrap gap-3">
+            <BuyNowButton productId={product.id} />
             <AddToCartButton
               id={product.id}
               title={product.title}
               price={product.price}
               image={product.images?.[0] ?? product.image}
-              size="sm"
             />
-          </div>
-
-          {/* Stripe only (PayPal via Stripe if enabled there) */}
-          <div className="mt-6 flex gap-3">
-            <BuyNowButton productId={product.id} />
             <Button variant="outline" asChild>
               <Link href={`/checkout?product=${product.id}`}>
                 <Download className="w-4 h-4 mr-2" />

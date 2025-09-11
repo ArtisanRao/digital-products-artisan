@@ -1,75 +1,74 @@
-// components/add-to-cart-button.tsx
 "use client";
 
-import { useState } from "react";
+import * as React from "react";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Check } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
+import { productsById, products } from "@/data/products";
 
-type AddToCartProps = {
-  id: number;
-  title: string;
-  price: number;
-  image?: string;
-  quantity?: number;
-  className?: string;
-  size?: "sm" | "default" | "lg" | "icon";
-  children?: React.ReactNode; // optional custom label
-};
+type Size = "sm" | "default" | "lg";
 
 export default function AddToCartButton({
-  id,
-  title,
-  price,
-  image,
-  quantity = 1,
-  className,
-  size = "sm",
+  productId,
+  size = "default",           // ↩ match context: "default" on PDP, "sm" on grid/list cards
+  className = "",
   children,
-}: AddToCartProps) {
-  const [added, setAdded] = useState(false);
+}: {
+  productId: number;
+  size?: Size;
+  className?: string;
+  children?: React.ReactNode;
+}) {
+  const [adding, setAdding] = React.useState(false);
 
-  function addToCart() {
+  const add = React.useCallback(() => {
     try {
-      const raw = typeof window !== "undefined" ? localStorage.getItem("cart") : "[]";
-      const cart: any[] = raw ? JSON.parse(raw) : [];
+      const p = productsById[productId] || products.find(x => x.id === productId);
+      if (!p) return;
 
-      const idx = cart.findIndex((x) => x?.id === String(id));
-      if (idx >= 0) {
-        cart[idx].quantity = Math.max(1, Number(cart[idx].quantity || 1) + quantity);
-      } else {
+      const raw = localStorage.getItem("cart");
+      const cart: Array<any> = raw ? JSON.parse(raw) : [];
+
+      const idStr = String(p.id);
+      const found = cart.find((i) => i.id === idStr);
+      if (found) found.quantity = Math.max(1, Number(found.quantity || 1)) + 1;
+      else {
         cart.push({
-          id: String(id),
-          name: title,
-          price: Number(price),
-          quantity: Math.max(1, Number(quantity) || 1),
-          image,
-          url: `/products/${id}`,
+          id: idStr,
+          name: p.title,
+          price: p.price,
+          quantity: 1,
+          image: p.images?.[0] ?? p.image,
+          url: `/products/${p.id}`,
+          description: p.description,
         });
       }
 
       localStorage.setItem("cart", JSON.stringify(cart));
-      // let any listeners update (cart icon, etc.)
-      window.dispatchEvent(new CustomEvent("cart:change", { detail: cart }));
-
-      setAdded(true);
-      setTimeout(() => setAdded(false), 1500);
     } catch (e) {
-      console.error("add-to-cart failed", e);
-      alert("Couldn’t add to cart. Please try again.");
+      console.error("Failed to add to cart", e);
     }
-  }
+  }, [productId]);
 
+  const handleClick = async () => {
+    setAdding(true);
+    try {
+      add();
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  // icon size normalized to w-4 h-4 to match other buttons
   return (
-    <Button onClick={addToCart} className={className} size={size} variant={added ? "secondary" : "default"}>
-      {added ? (
-        <>
-          <Check className="mr-2 h-4 w-4" /> Added
-        </>
-      ) : (
-        <>
-          <ShoppingCart className="mr-2 h-4 w-4" /> {children ?? "Add to cart"}
-        </>
-      )}
+    <Button
+      onClick={handleClick}
+      disabled={adding}
+      size={size}
+      className={`bg-black text-white hover:bg-black/90 ${className}`}
+      aria-label="Add to cart"
+    >
+      <ShoppingCart className="w-4 h-4 mr-2" />
+      {adding ? "Adding…" : children ?? "Add to cart"}
     </Button>
   );
 }
