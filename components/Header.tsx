@@ -1,8 +1,7 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
-// Changed this import from 'next/router' to 'next/navigation'
 import { useRouter } from 'next/navigation'
 import { ShoppingCart, Search, Menu, X, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -17,6 +16,27 @@ import {
 } from '@/components/ui/dropdown-menu'
 import Logo from '@/components/Logo'
 
+// Safely read current cart count (prefers localStorage `cartCount`, falls back to summing cart)
+function getCartCountSafe(): number {
+  try {
+    const rawCount = localStorage.getItem('cartCount')
+    if (rawCount != null && rawCount !== '') {
+      const n = Number(rawCount)
+      if (!Number.isNaN(n) && n >= 0) return n
+    }
+    const raw = localStorage.getItem('cart')
+    const items = raw ? JSON.parse(raw) : []
+    if (!Array.isArray(items)) return 0
+    return items.reduce((sum: number, it: any) => {
+      const q = it?.quantity ?? it?.qty ?? 1
+      const v = Number(q)
+      return sum + (Number.isFinite(v) && v > 0 ? v : 1)
+    }, 0)
+  } catch {
+    return 0
+  }
+}
+
 export default function Header() {
   const router = useRouter()
 
@@ -29,10 +49,43 @@ export default function Header() {
   const { items } = useCart()
   const { user, logout } = useAuth()
 
-  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
+  // Context count (fallback)
+  const itemCountContext =
+    Array.isArray(items) ? items.reduce((sum, item: any) => sum + Number(item?.quantity ?? item?.qty ?? 1), 0) : 0
+
+  // Canonical badge count (from localStorage/events), falling back to context
+  const [badgeCount, setBadgeCount] = useState<number>(0)
+  useEffect(() => {
+    const read = () => setBadgeCount(getCartCountSafe())
+    read() // on mount
+
+    const onCartUpdated = (e: Event) => {
+      const d = (e as CustomEvent<{ count?: number }>).detail
+      if (d && typeof d.count === 'number') setBadgeCount(d.count)
+      else read()
+    }
+    const onStorage = () => read()            // other tabs/windows
+    const onFocus = () => read()              // when tab regains focus
+    const onVis = () => { if (document.visibilityState === 'visible') read() }
+
+    window.addEventListener('cart:updated', onCartUpdated as EventListener)
+    window.addEventListener('storage', onStorage)
+    window.addEventListener('focus', onFocus as EventListener)
+    document.addEventListener('visibilitychange', onVis)
+
+    return () => {
+      window.removeEventListener('cart:updated', onCartUpdated as EventListener)
+      window.removeEventListener('storage', onStorage)
+      window.removeEventListener('focus', onFocus as EventListener)
+      document.removeEventListener('visibilitychange', onVis)
+    }
+  }, [])
+
+  // Prefer badgeCount; fallback to context if badge is 0 and context has items (helps first paint)
+  const itemCount = badgeCount || itemCountContext
+
   const clearSearch = () => setSearchTerm('')
 
-  // Map keywords to routes
   const routeMap: Record<string, string> = {
     about: '/about',
     bundles: '/bundles',
@@ -50,7 +103,7 @@ export default function Header() {
       router.push(`/search?q=${encodeURIComponent(term)}`)
     }
     clearSearch()
-    setIsMenuOpen(false) // close mobile menu if open
+    setIsMenuOpen(false)
   }
 
   return (
@@ -180,7 +233,7 @@ export default function Header() {
                     <span>Cart</span>
                     {itemCount > 0 && (
                       <span className="bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold shadow-lg">
-                        {itemCount}
+                        {itemCount > 99 ? '99+' : itemCount}
                       </span>
                     )}
                   </Link>
@@ -273,7 +326,7 @@ export default function Header() {
                 <span>Cart</span>
                 {itemCount > 0 && (
                   <span className="bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold shadow-lg">
-                    {itemCount}
+                    {itemCount > 99 ? '99+' : itemCount}
                   </span>
                 )}
               </Link>
@@ -298,4 +351,3 @@ export default function Header() {
     </header>
   )
 }
- 
