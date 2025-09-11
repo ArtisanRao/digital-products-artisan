@@ -18,3 +18,5 @@ export function setPreferredCurrency(code: CurrencyCode) {
   // notify listeners so UIs can refresh
   window.dispatchEvent(new CustomEvent("currency:change", { detail: safe }));
 }
+// lib/currency.ts
+export const getSelectedCurrency = readSelectedCurrency;
