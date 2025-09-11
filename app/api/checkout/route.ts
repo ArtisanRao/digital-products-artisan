@@ -24,11 +24,25 @@ function toInt(n: any, fallback = 1) {
   return Number.isFinite(v) && v > 0 ? Math.floor(v) : fallback;
 }
 
+// Only include error details in responses if this flag is set
+const isDebug = process.env.DEBUG_CHECKOUT === "1";
+function safeStripeError(err: any) {
+  return {
+    message: err?.message,
+    type: err?.type ?? err?.name,
+    code: err?.raw?.code,
+    decline_code: err?.raw?.decline_code,
+    param: err?.raw?.param,
+    payment_intent: err?.raw?.payment_intent?.id,
+    requestId: err?.raw?.requestId ?? err?.requestId,
+  };
+}
+
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as Body;
 
-    // Normalize request → items[]
+    // Normalize to an array of items
     const items: Array<{ productId: number; qty: number }> = Array.isArray(
       (body as BodyCart).cart
     )
@@ -43,7 +57,7 @@ export async function POST(req: Request) {
           },
         ];
 
-    // Validate & map to catalog
+    // Validate & map to products
     const chosen = items
       .map(({ productId, qty }) => {
         const p =
@@ -64,7 +78,7 @@ export async function POST(req: Request) {
 
     const stripe = getStripe();
 
-    // Build line_items from your catalog (trusted prices)
+    // Build Stripe line_items (inline price_data so amount comes from your catalog)
     const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = chosen.map(
       ({ p, qty }) => {
         const firstImage = p.images?.[0] ?? p.image;
@@ -80,6 +94,7 @@ export async function POST(req: Request) {
             product_data: {
               name: p.title,
               images: [absoluteImage],
+              // Used by the confirmation page to create download links
               metadata: {
                 slug: p.slug,
                 productId: String(p.id),
@@ -90,17 +105,13 @@ export async function POST(req: Request) {
       }
     );
 
+    // If STRIPE_FORCE_PM_TYPES=1, explicitly allow card + PayPal + Klarna
     const forcePM = process.env.STRIPE_FORCE_PM_TYPES === "1";
 
-    // Build params loosely (avoid TS conflicts on older Stripe types)
+    // Use any to allow newer PMs without TS friction
     const params: any = {
       mode: "payment",
       line_items,
-      // Let Stripe pick the eligible methods (card, Klarna, PayPal, etc.)
-      automatic_payment_methods: { enabled: true },
-      // These help Stripe determine eligibility by region (Klarna/PayPal)
-      billing_address_collection: "auto",
-      phone_number_collection: { enabled: false },
       success_url: `${baseUrl}/order-confirmation?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url:
         chosen.length === 1
@@ -108,15 +119,15 @@ export async function POST(req: Request) {
           : `${baseUrl}/products`,
     };
 
-    // Only force if explicitly requested via env (useful for testing)
     if (forcePM) {
       params.payment_method_types = ["card", "paypal", "klarna"];
     }
 
-    // Call with loose typing to avoid build errors on older @types
-    const session = await (stripe.checkout.sessions.create as any)(params);
+    const session = await stripe.checkout.sessions.create(
+      params as Stripe.Checkout.SessionCreateParams
+    );
 
-    if (!session?.url) {
+    if (!session.url) {
       return NextResponse.json(
         { error: "Unable to create checkout session (no URL)" },
         { status: 500 }
@@ -125,21 +136,35 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ url: session.url });
   } catch (err: any) {
+    // Full details in logs
     console.error("Checkout error:", {
       message: err?.message,
       name: err?.name,
       type: err?.type,
+      code: err?.raw?.code,
+      decline_code: err?.raw?.decline_code,
+      param: err?.raw?.param,
+      requestId: err?.raw?.requestId ?? err?.requestId,
       stack: err?.stack,
     });
 
     const msg = err?.message?.includes("STRIPE_SECRET_KEY")
       ? "Server misconfigured (missing STRIPE_SECRET_KEY)"
       : "Checkout error";
-    return NextResponse.json({ error: msg }, { status: 500 });
+
+    // Only expose details to the client if DEBUG_CHECKOUT=1
+    return NextResponse.json(
+      {
+        error: msg,
+        ...(isDebug ? { debug: safeStripeError(err) } : {}),
+      },
+      { status: 500 }
+    );
   }
 }
 
 export async function GET(req: Request) {
+  // Diagnostics when visiting /api/checkout?diag=1
   const url = new URL(req.url);
   if (url.searchParams.get("diag") === "1") {
     return NextResponse.json({
@@ -148,6 +173,7 @@ export async function GET(req: Request) {
       stripeEnvSet: !!process.env.STRIPE_SECRET_KEY,
       siteUrlSet: !!process.env.NEXT_PUBLIC_SITE_URL,
       pmForced: process.env.STRIPE_FORCE_PM_TYPES === "1",
+      debugCheckout: process.env.DEBUG_CHECKOUT === "1",
     });
   }
   return NextResponse.json({ error: "Method Not Allowed" }, { status: 405 });
