@@ -27,7 +27,7 @@ export default function ProductGallery({ images, alt = 'Product image' }: Props)
     setIndex((i) => (i + 1) % images.length);
   }, [images.length]);
 
-  // Close on Esc when fullscreen
+  // Close on Esc / arrows when fullscreen
   React.useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -61,7 +61,6 @@ export default function ProductGallery({ images, alt = 'Product image' }: Props)
                 ].join(' ')}
                 aria-label={`Show image ${i + 1}`}
               >
-                {/* next/image for perf; falls back to <img> if needed */}
                 <Image
                   src={src}
                   alt={`${alt} thumbnail ${i + 1}`}
@@ -85,19 +84,19 @@ export default function ProductGallery({ images, alt = 'Product image' }: Props)
             <Maximize2 className="w-5 h-5" />
           </button>
 
-          {/* Prev / Next on PAGE (always above the image) */}
+          {/* Prev / Next on PAGE (dark ash) */}
           {images.length > 1 && (
             <>
               <button
                 onClick={prev}
-                className="absolute left-3 top-1/2 -translate-y-1/2 z-30 inline-flex items-center justify-center rounded-full w-11 h-11 bg-blue-600 text-white shadow-md hover:bg-blue-700 focus:outline-none"
+                className="absolute left-3 top-1/2 -translate-y-1/2 z-30 inline-flex items-center justify-center rounded-full w-11 h-11 text-white bg-neutral-800/90 hover:bg-neutral-900 ring-1 ring-white/15 shadow-md backdrop-blur focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
                 aria-label="Previous image"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
               <button
                 onClick={next}
-                className="absolute right-3 top-1/2 -translate-y-1/2 z-30 inline-flex items-center justify-center rounded-full w-11 h-11 bg-blue-600 text-white shadow-md hover:bg-blue-700 focus:outline-none"
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-30 inline-flex items-center justify-center rounded-full w-11 h-11 text-white bg-neutral-800/90 hover:bg-neutral-900 ring-1 ring-white/15 shadow-md backdrop-blur focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
                 aria-label="Next image"
               >
                 <ChevronRight className="w-5 h-5" />
@@ -138,19 +137,19 @@ export default function ProductGallery({ images, alt = 'Product image' }: Props)
               <X className="w-7 h-7" />
             </button>
 
-            {/* Prev / Next in fullscreen */}
+            {/* Prev / Next in fullscreen (dark ash) */}
             {images.length > 1 && (
               <>
                 <button
                   onClick={prev}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 z-[120] inline-flex items-center justify-center rounded-full w-12 h-12 bg-blue-600 text-white shadow-lg hover:bg-blue-700 focus:outline-none"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-[120] inline-flex items-center justify-center rounded-full w-12 h-12 text-white bg-neutral-800/90 hover:bg-neutral-900 ring-1 ring-white/15 shadow-lg backdrop-blur focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
                   aria-label="Previous image"
                 >
                   <ChevronLeft className="w-6 h-6" />
                 </button>
                 <button
                   onClick={next}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 z-[120] inline-flex items-center justify-center rounded-full w-12 h-12 bg-blue-600 text-white shadow-lg hover:bg-blue-700 focus:outline-none"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-[120] inline-flex items-center justify-center rounded-full w-12 h-12 text-white bg-neutral-800/90 hover:bg-neutral-900 ring-1 ring-white/15 shadow-lg backdrop-blur focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
                   aria-label="Next image"
                 >
                   <ChevronRight className="w-6 h-6" />
