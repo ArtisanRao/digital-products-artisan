@@ -23,53 +23,34 @@ function toInt(n: any, fallback = 1) {
   return Number.isFinite(v) && v > 0 ? Math.floor(v) : fallback;
 }
 
-// Minimal EU list for Klarna logic
+// Minimal EU list for Klarna + EUR defaulting
 const EU = new Set([
   "AT","BE","BG","HR","CY","CZ","DK","EE","FI","FR","DE","GR","HU","IE","IT",
   "LV","LT","LU","MT","NL","PL","PT","RO","SK","SI","ES","SE"
 ]);
 
-/** Decide currency from client body, else IP-country header, else default USD */
-function decideCurrency(request: Request, bodyCurrency?: string): "usd" | "eur" {
+function pickCurrency(req: Request, bodyCurrency?: string): "usd" | "eur" {
   const v = String(bodyCurrency || "").toLowerCase();
   if (v === "eur") return "eur";
   if (v === "usd") return "usd";
-
-  const country =
-    request.headers.get("x-vercel-ip-country") ||
-    request.headers.get("cf-ipcountry") ||
-    "";
-
-  if (EU.has(country.toUpperCase())) return "eur";
-  return "usd";
+  const country = (req.headers.get("x-vercel-ip-country") || req.headers.get("cf-ipcountry") || "").toUpperCase();
+  return EU.has(country) ? "eur" : "usd";
 }
 
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as Body;
+    const currency = pickCurrency(req, (body as any).currency);
 
-    // Currency chosen by client/localStorage or geo fallback
-    const currency = decideCurrency(req, (body as any).currency);
+    // Normalize to an array of items
+    const items: Array<{ productId: number; qty: number }> = Array.isArray((body as BodyCart).cart)
+      ? (body as BodyCart).cart.map(it => ({ productId: toInt(it.productId), qty: toInt(it.qty, 1) }))
+      : [{ productId: toInt((body as BodySingle).productId), qty: toInt((body as BodySingle).qty, 1) }];
 
-    // Normalize to array
-    const items: Array<{ productId: number; qty: number }> = Array.isArray(
-      (body as BodyCart).cart
-    )
-      ? (body as BodyCart).cart.map((it) => ({
-          productId: toInt(it.productId),
-          qty: toInt(it.qty, 1),
-        }))
-      : [
-          {
-            productId: toInt((body as BodySingle).productId),
-            qty: toInt((body as BodySingle).qty, 1),
-          },
-        ];
-
-    // Validate & map
+    // Validate & map to products
     const chosen = items
       .map(({ productId, qty }) => {
-        const p = productsById[productId] || products.find((x) => x.id === productId);
+        const p = productsById[productId] || products.find(x => x.id === productId);
         return p ? { p, qty } : null;
       })
       .filter(Boolean) as Array<{ p: (typeof products)[number]; qty: number }>;
@@ -81,15 +62,14 @@ export async function POST(req: Request) {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
     const stripe = getStripe();
 
-    // Build line items with chosen currency
     const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = chosen.map(({ p, qty }) => {
       const firstImage = p.images?.[0] ?? p.image;
-      const absoluteImage = firstImage?.startsWith("http") ? firstImage : `${baseUrl}${firstImage || ""}`;
+      const absoluteImage = firstImage?.startsWith("http") ? firstImage : `${baseUrl}${firstImage}`;
       return {
         quantity: qty,
         price_data: {
-          currency,                            // 👈 USD or EUR
-          unit_amount: Math.round(p.price * 100),
+          currency,                                // <- EUR for EU or when requested, else USD
+          unit_amount: Math.round(p.price * 100),   // same numeric amount in the chosen currency
           product_data: {
             name: p.title,
             images: absoluteImage ? [absoluteImage] : [],
@@ -99,36 +79,32 @@ export async function POST(req: Request) {
       };
     });
 
-    // Decide payment methods:
-    // - "card" → Apple Pay & Google Pay appear automatically on Stripe Checkout
-    // - "klarna" only with EUR (and when eligible)
-    // - "paypal" if you set env STRIPE_ENABLE_PAYPAL=1 and have PayPal enabled in Stripe
-    const pmTypes: string[] = ["card"];
-    if (currency === "eur") pmTypes.push("klarna");
-    if (process.env.STRIPE_ENABLE_PAYPAL === "1") pmTypes.push("paypal");
+    // Explicitly pick payment methods so Stripe DOESN'T auto-add Link.
+    // Apple Pay / Google Pay appear under "Card" automatically if enabled in Dashboard
+    // and supported on the device.
+    const pmTypes =
+      currency === "eur"
+        ? (["card", "paypal", "klarna"] as const)
+        : (["card", "paypal"] as const);
 
-    // Create Checkout Session
-    const params: any = {
+    const params: Stripe.Checkout.SessionCreateParams = {
       mode: "payment",
       line_items,
+      payment_method_types: pmTypes as any, // keep compat with older stripe typings
+      billing_address_collection: "required",
+      locale: "auto",
       success_url: `${baseUrl}/order-confirmation?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: chosen.length === 1 ? `${baseUrl}/products/${chosen[0].p.id}` : `${baseUrl}/products`,
-      payment_method_types: pmTypes,
-      billing_address_collection: "required", // helps Klarna eligibility
-      locale: "auto",
-      phone_number_collection: { enabled: true }, // optional but can help certain PMs
       metadata: { currencyChosen: currency },
     };
 
-    const session = await stripe.checkout.sessions.create(
-      params as Stripe.Checkout.SessionCreateParams
-    );
+    const session = await stripe.checkout.sessions.create(params as any);
 
     if (!session.url) {
       return NextResponse.json({ error: "Unable to create checkout session (no URL)" }, { status: 500 });
     }
 
-    return NextResponse.json({ url: session.url, currencyUsed: currency, pmTypes });
+    return NextResponse.json({ url: session.url, currencyUsed: currency });
   } catch (err: any) {
     console.error("Checkout error:", {
       message: err?.message, name: err?.name, type: err?.type, stack: err?.stack,
@@ -149,7 +125,6 @@ export async function GET(req: Request) {
       node: process.version,
       stripeEnvSet: !!process.env.STRIPE_SECRET_KEY,
       siteUrlSet: !!process.env.NEXT_PUBLIC_SITE_URL,
-      enablePaypal: process.env.STRIPE_ENABLE_PAYPAL === "1",
       seenCountry: req.headers.get("x-vercel-ip-country") || req.headers.get("cf-ipcountry") || null,
     });
   }
