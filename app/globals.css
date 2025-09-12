@@ -19,25 +19,17 @@
   }
 
   /* Hide horizontal scrollbar for overflow-x-auto rails */
-  .no-scrollbar {
-    -ms-overflow-style: none;       /* IE/Edge */
-    scrollbar-width: none;          /* Firefox */
-  }
-  .no-scrollbar::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
 
-  /* Generic hover/press lift (for links or any element) */
+  /* Generic hover/press lift */
   .hover-lift {
-    transition:
-      transform .2s ease,
-      box-shadow .2s ease,
-      background-color .2s ease,
-      color .2s ease;
+    transition: transform .2s ease, box-shadow .2s ease, background-color .2s ease, color .2s ease;
     will-change: transform, box-shadow;
   }
   .hover-lift:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 15px -3px rgb(0 0 0 / .10),
-                0  4px  6px -4px rgb(0 0 0 / .08);
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / .10), 0 4px 6px -4px rgb(0 0 0 / .08);
   }
   .hover-lift:active {
     transform: translateY(0);
@@ -46,104 +38,52 @@
 
   /* Cart count badge helper */
   .cart-badge {
-    position: absolute;
-    top: -0.4rem;
-    right: -0.4rem;
-    min-width: 1.25rem;
-    height: 1.25rem;
-    padding: 0 .25rem;
-    border-radius: 9999px;
-    background: rgb(37 99 235); /* blue-600 */
-    color: #fff;
-    font-size: .75rem;
-    font-weight: 700;
-    line-height: 1.25rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    position: absolute; top: -.4rem; right: -.4rem;
+    min-width: 1.25rem; height: 1.25rem; padding: 0 .25rem;
+    border-radius: 9999px; background: rgb(37 99 235); color: #fff;
+    font-size: .75rem; font-weight: 700; line-height: 1.25rem;
+    display: inline-flex; align-items: center; justify-content: center;
   }
 
   /* Mobile-specific utilities */
   @media (max-width: 1023px) {
     .mobile-link {
-      margin-left: 0.75rem;
-      margin-right: 0.75rem;
-      display: inline-flex;
-      align-items: center;
-      text-decoration: none;
-      color: #374151; /* gray-700 */
-      transition: color 0.2s;
+      margin-left: .75rem; margin-right: .75rem;
+      display: inline-flex; align-items: center; text-decoration: none;
+      color: #374151; transition: color .2s;
     }
-    .mobile-link:hover { color: #2563eb; } /* blue-700 */
+    .mobile-link:hover { color: #2563eb; }
 
-    .mobile-header-fit {
-      display: flex;
-      gap: 1rem;
-      padding-left: 1rem;
-      padding-right: 1rem;
-      align-items: center;
-    }
+    .mobile-header-fit { display: flex; gap: 1rem; padding-left: 1rem; padding-right: 1rem; align-items: center; }
 
-    header img {
-      max-width: 60px;
-      max-height: 30px;
-      height: auto;
-      object-fit: contain;
-      display: block;
-    }
+    header img { max-width: 60px; max-height: 30px; height: auto; object-fit: contain; display: block; }
   }
 
   /* Extra-small mobile spacing tweaks */
   @media (max-width: 767px) {
-    nav.flex.md\:hidden.items-center.space-x-2 > a.mobile-link {
-      margin-left: 0.25rem;
-      margin-right: 0.25rem;
-      font-size: 0.875rem;
-    }
-    nav.flex.md\:hidden.items-center.space-x-2 { gap: 0.5rem; }
+    nav.flex.md\:hidden.items-center.space-x-2 > a.mobile-link { margin-left: .25rem; margin-right: .25rem; font-size: .875rem; }
+    nav.flex.md\:hidden.items-center.space-x-2 { gap: .5rem; }
   }
 
   /* Hide Clear Cart on mobile (fallback if component didn't add responsive classes) */
   @media (max-width: 639px) {
-    .clear-cart-btn,
-    [data-action="clear-cart"] {
-      display: none !important;
-    }
+    .clear-cart-btn, [data-action="clear-cart"] { display: none !important; }
   }
 
   /* ===== Smooth Fade-In Animation (iOS-friendly) ===== */
-  @keyframes fadeInSmooth {
-    0% { opacity: 0; transform: translateY(-10px) scale(0.98); }
-    100% { opacity: 1; transform: translateY(0) scale(1); }
-  }
-  @keyframes fadeInSmoothIOS {
-    0% { opacity: 0; transform: translate3d(0,-10px,0) scale(0.98); }
-    100% { opacity: 1; transform: translate3d(0,0,0) scale(1); }
-  }
+  @keyframes fadeInSmooth { 0%{opacity:0;transform:translateY(-10px) scale(.98)} 100%{opacity:1;transform:translateY(0) scale(1)} }
+  @keyframes fadeInSmoothIOS { 0%{opacity:0;transform:translate3d(0,-10px,0) scale(.98)} 100%{opacity:1;transform:translate3d(0,0,0) scale(1)} }
 
-  .animate-fadeIn {
-    animation: fadeInSmooth 0.25s ease-out forwards;
-    will-change: transform, opacity;
-    backface-visibility: hidden;
-  }
+  .animate-fadeIn { animation: fadeInSmooth .25s ease-out forwards; will-change: transform,opacity; backface-visibility: hidden; }
   .animate-fadeIn-ios {
-    animation: fadeInSmoothIOS 0.25s ease-out forwards;
-    will-change: transform, opacity;
-    backface-visibility: hidden;
-    -webkit-font-smoothing: antialiased; /* helps reduce flicker on iOS */
-    transform-style: preserve-3d;       /* forces GPU acceleration */
-    transform: translateZ(0);           /* iOS GPU acceleration */
+    animation: fadeInSmoothIOS .25s ease-out forwards; will-change: transform,opacity; backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased; transform-style: preserve-3d; transform: translateZ(0);
   }
 
   /* Respect reduced motion */
   @media (prefers-reduced-motion: reduce) {
-    .hover-lift,
-    .animate-fadeIn,
-    .animate-fadeIn-ios {
-      transition: none !important;
-      animation: none !important;
-      transform: none !important;
-      box-shadow: none !important;
+    .hover-lift, .animate-fadeIn, .animate-fadeIn-ios {
+      transition: none !important; animation: none !important; transform: none !important; box-shadow: none !important;
     }
   }
 }
@@ -152,24 +92,15 @@
 @layer components {
   html, body { margin: 0; padding: 0; }
 
-  .nav-link {
-    @apply text-gray-700 hover:text-blue-700 transition-colors duration-200 font-medium;
-  }
+  .nav-link { @apply text-gray-700 hover:text-blue-700 transition-colors duration-200 font-medium; }
+  .mobile-link { @apply text-gray-700 hover:text-blue-700 transition-colors duration-200 block; }
 
-  .mobile-link {
-    @apply text-gray-700 hover:text-blue-700 transition-colors duration-200 block;
-  }
+  [data-radix-popper-content-wrapper] { @apply bg-white shadow-lg rounded-md; }
 
-  [data-radix-popper-content-wrapper] {
-    @apply bg-white shadow-lg rounded-md;
-  }
-
-  header input[type="search"] {
-    @apply border border-blue-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 rounded-md;
-  }
+  header input[type="search"] { @apply border border-blue-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 rounded-md; }
 }
 
-/* ===== Theme Variables & Mobile Fit Defaults ===== */
+/* ===== Theme & Mobile-Fit Defaults ===== */
 @layer base {
   /* Mobile-fit & responsive media defaults */
   *, *::before, *::after { box-sizing: border-box; }
@@ -178,10 +109,29 @@
   img, video, canvas, svg, picture { max-width: 100%; height: auto; }
   iframe { max-width: 100%; }
 
-  /* Product/gallery media containers (helps on small screens) */
-  .product-media,
-  .product-media img,
-  .product-media picture {
+  /* Guard against full-bleed widths on phones */
+  @media (max-width: 768px) {
+    /* Neutralize w-screen inside padded containers (prevents overshoot) */
+    .w-screen { width: 100% !important; }
+
+    /* Clip accidental horizontal overflow on common wrappers */
+    body > header, body > main, body > footer,
+    .container, main, section, .prose, .content, .wrapper, .card {
+      max-width: 100%;
+      overflow-x: clip;
+    }
+
+    /* Keep popular sliders within viewport */
+    .swiper, .swiper-wrapper, .swiper-slide,
+    .embla, .embla__container, .embla__slide,
+    .keen-slider, .keen-slider__slide {
+      max-width: 100% !important;
+      overflow: hidden;
+    }
+  }
+
+  /* Optional helper if you wrap product media */
+  .product-media, .product-media img, .product-media picture {
     max-width: 100%;
     width: 100%;
     height: auto;
