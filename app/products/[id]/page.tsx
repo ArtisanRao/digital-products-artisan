@@ -7,14 +7,13 @@ import { Star, Download } from "lucide-react";
 import ProductGallery from "@/components/product-gallery";
 import BuyNowButton from "@/components/buy-now-button";
 import AddToCartButton from "@/components/add-to-cart-button";
-import ProductPageFlag from "@/components/ProductPageFlag"; // ⬅️ adds body.product-page while mounted
+import ProductPageFlag from "@/components/ProductPageFlag"; // ⬅️ keep scoped CSS active
 
-export const dynamic = "force-dynamic";  // do not pre-render
-export const revalidate = 0;             // no ISR
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 type Params = { id: string };
 
-// keep metadata generation (cheap & safe)
 export async function generateMetadata({ params }: { params: Promise<Params> }) {
   const { id } = await params;
   const p = products.find((x) => x.id === Number(id));
@@ -42,7 +41,6 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
 
   const galleryImages = product.images?.length ? product.images : [product.image];
 
-  // ----- JSON-LD (SEO) -----
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
   const imagesAbs = galleryImages.map((i) => (i.startsWith("http") ? i : `${siteUrl}${i}`));
   const jsonLd = {
@@ -69,32 +67,35 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
 
   return (
     <>
-      {/* Adds body.product-page while this page is mounted (scopes your CSS fix) */}
       <ProductPageFlag />
 
       <main
-        className="product-page container mx-auto px-4 py-10"
+        className="product-page container mx-auto px-4 py-10 max-w-[100vw] overflow-x-hidden"
         data-page="product"
       >
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+
         <nav className="mb-6 text-sm text-gray-500">
-          <Link href="/products" className="hover:underline">← Back to all products</Link>
+          <Link href="/products" className="hover:underline">
+            ← Back to all products
+          </Link>
         </nav>
 
-        <div className="grid gap-8 md:grid-cols-2">
-          <Card>
-            <CardContent className="p-4">
-              {/* Wrap gallery so mobile guards apply cleanly */}
-              <div className="product-media">
+        <div className="grid gap-8 md:grid-cols-2 max-w-full">
+          <Card className="w-full max-w-full overflow-hidden">
+            <CardContent className="p-4 w-full max-w-full overflow-hidden">
+              {/* Wrapper ensures media never exceeds viewport width */}
+              <div className="product-media w-full max-w-full overflow-hidden">
                 <ProductGallery images={galleryImages} alt={product.title} />
               </div>
             </CardContent>
           </Card>
 
-          <div>
+          {/* min-w-0 prevents long text from forcing overflow */}
+          <div className="min-w-0">
             <h1 className="text-2xl md:text-3xl font-bold">{product.title}</h1>
             <p className="mt-3 text-gray-600">{product.description}</p>
 
@@ -109,12 +110,13 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
             <div className="mt-6 flex items-center space-x-3">
               <span className="text-2xl font-semibold">${product.price.toFixed(2)}</span>
               {product.originalPrice > product.price && (
-                <span className="text-gray-400 line-through">${product.originalPrice.toFixed(2)}</span>
+                <span className="text-gray-400 line-through">
+                  ${product.originalPrice.toFixed(2)}
+                </span>
               )}
             </div>
 
-            {/* Stripe only (PayPal/Klarna via Stripe if enabled there) */}
-            <div className="mt-6 flex gap-3">
+            <div className="mt-6 flex flex-wrap gap-3">
               <BuyNowButton productId={product.id} />
               <AddToCartButton productId={product.id} />
               <Button variant="outline" asChild>
