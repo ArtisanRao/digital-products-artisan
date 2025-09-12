@@ -1,40 +1,77 @@
 /** @type {import('next-sitemap').IConfig} */
+const siteUrl = 'https://digitalproductsartisan.com';
+
 module.exports = {
-  siteUrl: 'https://digitalproductsartisan.com',
+  siteUrl,
   generateRobotsTxt: true,
   sitemapSize: 7000,
+  trailingSlash: false,
+
+  // Defaults (overridden per-path in transform)
   changefreq: 'weekly',
   priority: 0.7,
-  trailingSlash: false,
+
+  // Exclude non-indexable routes, old aliases, and assets
   exclude: [
     '/404',
     '/500',
-    '/thank-you',
-    '/terms',
-    '/privacy-policy',
     '/contact/success',
-    '/sitemap.xml', // ✅ Prevent sitemap index from referencing itself
+    '/thank-you',
+    '/api/*',
+    '/cart',
+    '/checkout',
+    '/best-sellers',      // old alias (redirects)
+    '/bestsellers',       // old alias (redirects)
+    '/manifest.json',
+    '/site.webmanifest',
+    '/favicon.ico',
+    '/sw.js',
+    '/workbox-*.js',
+    '/fallback-*.js',
+    '/sitemap.xml',       // prevent self-reference
   ],
+
+  // Fine-tune per-URL values
+  transform: async (config, path) => {
+    const priority =
+      path === '/' ? 1.0 :
+      path === '/products/best-sellers' ? 0.8 : 0.7;
+
+    return {
+      loc: path,
+      changefreq: 'weekly',
+      priority,
+      lastmod: new Date().toISOString(),
+    };
+  },
+
+  // Ensure key canonicals are always present
+  additionalPaths: async (config) => {
+    const paths = [
+      '/',
+      '/products',
+      '/products/best-sellers',
+      '/terms-of-service',
+      '/privacy-policy',
+    ];
+    return Promise.all(paths.map((p) => config.transform(config, p)));
+  },
+
   robotsTxtOptions: {
     policies: [
       {
         userAgent: '*',
         allow: '/',
         disallow: [
-          '/404',
-          '/500',
+          '/api/*',
+          '/cart',
+          '/checkout',
           '/thank-you',
-          '/terms',
-          '/privacy-policy',
-          '/contact/success',
         ],
       },
     ],
-    // ✅ Remove additionalSitemaps pointing to sitemap.xml
     additionalSitemaps: [
-      // If you ever generate additional sitemaps manually (e.g. blog sitemap), list them here
-      // Example:
-      // 'https://digitalproductsartisan.com/blog-sitemap.xml',
+      // Add more sitemap URLs here later if you split by section (e.g., blog)
     ],
   },
 };
