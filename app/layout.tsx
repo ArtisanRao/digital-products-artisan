@@ -1,5 +1,3 @@
-'use client';
-
 import './globals.css';
 import { Inter } from 'next/font/google';
 import Header from '@/components/Header';
@@ -24,13 +22,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className="h-full">
       <head>
-        <title>Digital Products Artisan</title>
-
-        {/* ✅ Make mobile render at device width */}
+        {/* Fallback meta (harmless alongside the viewport export) */}
         <meta
           name="viewport"
           content="width=device-width, initial-scale=1, viewport-fit=cover, shrink-to-fit=no"
         />
+        <title>Digital Products Artisan</title>
 
         <meta
           name="description"
@@ -45,7 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="application-name" content="Digital Products Artisan" />
         <meta name="apple-mobile-web-app-title" content="Digital Products Artisan" />
 
-        {/* FAVICONS — use assets in /public */}
+        {/* FAVICONS — assets in /public */}
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
@@ -85,15 +82,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             }),
           }}
         />
-        {/* Snipcart assets removed; Stripe handles checkout */}
       </head>
 
       <body className={`${inter.className} min-h-screen`}>
         <AuthProvider>
           <CartProvider>
-            {/* Invisible currency auto-detect (no visible picker) */}
             <CurrencyBootstrap />
-
             <Header />
             {children}
             <Footer />
