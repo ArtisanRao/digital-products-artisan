@@ -1,99 +1,195 @@
-"use client"
+'use client';
 
-import Image from "next/image"
-import { useState, useCallback } from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import * as React from 'react';
+import Image from 'next/image';
+import { ChevronLeft, ChevronRight, Maximize2, X } from 'lucide-react';
 
-export default function ProductGallery({
-  images,
-  alt,
-}: {
-  images: string[]
-  alt: string
-}) {
-  const safeImages = images?.length ? images : ["/placeholder.svg"]
-  const [index, setIndex] = useState(0)
+type Props = {
+  images: string[];
+  alt?: string;
+};
 
-  const prev = useCallback(
-    () => setIndex((i) => (i - 1 + safeImages.length) % safeImages.length),
-    [safeImages.length]
-  )
-  const next = useCallback(
-    () => setIndex((i) => (i + 1) % safeImages.length),
-    [safeImages.length]
-  )
+export default function ProductGallery({ images, alt = 'Product image' }: Props) {
+  const pics = images?.length ? images : ['/placeholder.svg'];
+  const [index, setIndex] = React.useState(0);
+  const [open, setOpen] = React.useState(false);
+
+  const prev = React.useCallback(
+    () => setIndex((i) => (i - 1 + pics.length) % pics.length),
+    [pics.length]
+  );
+  const next = React.useCallback(
+    () => setIndex((i) => (i + 1) % pics.length),
+    [pics.length]
+  );
+
+  // Disable body scroll when lightbox is open
+  React.useEffect(() => {
+    if (!open) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [open]);
+
+  // Keyboard controls inside lightbox
+  React.useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+      if (e.key === 'ArrowLeft') prev();
+      if (e.key === 'ArrowRight') next();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, prev, next]);
+
+  // Basic swipe support in lightbox
+  const touch = React.useRef<{ x: number; y: number } | null>(null);
+  const onTouchStart = (e: React.TouchEvent) => {
+    const t = e.changedTouches[0];
+    touch.current = { x: t.clientX, y: t.clientY };
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (!touch.current) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - touch.current.x;
+    if (Math.abs(dx) > 40) (dx > 0 ? prev : next)();
+    touch.current = null;
+  };
 
   return (
-    <div className="flex gap-4">
-      {/* Thumbnails (left) */}
-      <div className="flex flex-col gap-3 max-h-[420px] overflow-y-auto pr-1">
-        {safeImages.map((src, i) => (
-          <button
-            key={src + i}
-            type="button"
-            onClick={() => setIndex(i)} // open in main preview only
-            className={`relative w-16 h-16 rounded-md border transition-all ${
-              i === index
-                ? "border-blue-600 ring-2 ring-blue-200"
-                : "border-gray-200 hover:border-gray-300"
-            } hover:shadow`}
-            aria-label={`View image ${i + 1}`}
-          >
+    <>
+      {/* Gallery layout: thumbnails (left) + main image */}
+      <div className="grid grid-cols-[76px_1fr] gap-3">
+        {/* Thumbnails */}
+        <div className="flex flex-col gap-3 overflow-y-auto no-scrollbar pr-1">
+          {pics.map((src, i) => {
+            const selected = i === index;
+            return (
+              <button
+                key={src + i}
+                onClick={() => setIndex(i)}
+                className={`relative w-[72px] h-[72px] rounded-md overflow-hidden bg-white ring-1 ring-gray-200 hover:ring-blue-300 ${
+                  selected ? 'ring-2 ring-blue-500' : ''
+                }`}
+                aria-label={`Show image ${i + 1}`}
+              >
+                <Image
+                  src={src}
+                  alt={alt}
+                  fill
+                  sizes="72px"
+                  className="object-cover"
+                  draggable={false}
+                />
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Main image */}
+        <div className="relative w-full max-w-full overflow-hidden rounded-lg bg-white">
+          <div className="relative aspect-[4/3] w-full">
             <Image
-              src={src}
-              alt={`${alt} - preview ${i + 1}`}
+              src={pics[index]}
+              alt={alt}
               fill
-              sizes="64px"
-              className="object-contain rounded-md bg-white transition-transform duration-300 hover:scale-110"
+              sizes="(max-width: 768px) 100vw, 50vw"
+              className="object-contain select-none"
+              priority
+              draggable={false}
             />
-          </button>
-        ))}
+            {/* Expand button (also clicking the image will open) */}
+            <button
+              onClick={() => setOpen(true)}
+              aria-label="Expand image"
+              className="absolute right-3 top-3 inline-flex items-center justify-center rounded-md bg-black/50 p-2 text-white hover:bg-black/60 focus:outline-none focus:ring-2 focus:ring-white/40 cursor-zoom-in"
+              title="View larger"
+            >
+              <Maximize2 className="w-4 h-4" />
+            </button>
+
+            {/* Prev/Next controls (desktop & mobile) */}
+            <button
+              onClick={prev}
+              aria-label="Previous image"
+              className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white hover:bg-black/60 focus:outline-none focus:ring-2 focus:ring-white/40"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button
+              onClick={next}
+              aria-label="Next image"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white hover:bg-black/60 focus:outline-none focus:ring-2 focus:ring-white/40"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+
+            {/* Click main image area to open too */}
+            <button
+              onClick={() => setOpen(true)}
+              aria-label="Open full-screen preview"
+              className="absolute inset-0 cursor-zoom-in"
+            />
+          </div>
+        </div>
       </div>
 
-      {/* Main preview (with stronger hover + prev/next controls) */}
-      <div
-        className="group relative flex-1 aspect-[4/3] overflow-hidden rounded-md bg-white"
-        tabIndex={0}
-        role="group"
-        aria-label="Product image gallery"
-        onKeyDown={(e) => {
-          if (e.key === "ArrowLeft") prev()
-          if (e.key === "ArrowRight") next()
-        }}
-      >
-        <Image
-          src={safeImages[index]}
-          alt={alt}
-          fill
-          sizes="(min-width:768px) 50vw, 100vw"
-          className="object-contain transition-transform duration-500 ease-out group-hover:scale-[1.08]"
-          priority
-        />
-
-        {/* Prev */}
-        {safeImages.length > 1 && (
+      {/* Lightbox / Full-screen viewer */}
+      {open && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm"
+          onClick={() => setOpen(false)}
+        >
           <button
-            type="button"
-            aria-label="Previous image"
-            onClick={prev}
-            className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/40 hover:bg-black/60 text-white p-2 opacity-90 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onClick={() => setOpen(false)}
+            aria-label="Close"
+            className="absolute right-4 top-4 rounded-md bg-white/10 p-2 text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/40"
           >
-            <ChevronLeft className="w-6 h-6" />
+            <X className="w-5 h-5" />
           </button>
-        )}
 
-        {/* Next */}
-        {safeImages.length > 1 && (
-          <button
-            type="button"
-            aria-label="Next image"
-            onClick={next}
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/40 hover:bg-black/60 text-white p-2 opacity-90 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          {/* Centered stage */}
+          <div
+            className="flex h-full w-full items-center justify-center p-4"
+            onClick={(e) => e.stopPropagation()}
+            onTouchStart={onTouchStart}
+            onTouchEnd={onTouchEnd}
           >
-            <ChevronRight className="w-6 h-6" />
-          </button>
-        )}
-      </div>
-    </div>
-  )
+            <div className="relative h-full w-full">
+              <Image
+                src={pics[index]}
+                alt={alt}
+                fill
+                sizes="100vw"
+                className="object-contain select-none"
+                priority
+                draggable={false}
+              />
+
+              {/* Nav in lightbox */}
+              <button
+                onClick={prev}
+                aria-label="Previous image"
+                className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/40"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+              <button
+                onClick={next}
+                aria-label="Next image"
+                className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/40"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
 }
