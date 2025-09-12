@@ -1,56 +1,39 @@
-import './globals.css';
-import { Inter } from 'next/font/google';
-import Header from '@/components/Header';
-import Footer from '@/components/footer';
-import { CartProvider } from '@/contexts/cart-context';
-import { AuthProvider } from '@/contexts/auth-context';
-import { Toaster } from '@/components/ui/toaster';
-import LiveChat from '@/components/live-chat';
-import CurrencyBootstrap from '@/components/currency-bootstrap';
-import type { Viewport } from 'next';
+"use client";
 
-export const viewport: Viewport = {
-  width: 'device-width',
-  initialScale: 1,
-  maximumScale: 5,
-  viewportFit: 'cover',
-};
+import { Inter } from "next/font/google";
+import "./globals.css";
+import Header from "@/components/Header";
+import Footer from "@/components/footer";
+import { CartProvider } from "@/contexts/cart-context";
+import { AuthProvider } from "@/contexts/auth-context";
+import { Toaster } from "@/components/ui/toaster";
+import LiveChat from "@/components/live-chat";
+import AutoCurrency from "@/components/auto-currency"; // ⬅️ NEW
+// import CurrencyPicker from "@/components/currency-picker"; // (optional) keep hidden if you want
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ["latin"] });
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="h-full">
+    <html lang="en">
       <head>
-        {/* Fallback meta (harmless alongside the viewport export) */}
-        <meta
-          name="viewport"
-          content="width=device-width, initial-scale=1, viewport-fit=cover, shrink-to-fit=no"
-        />
         <title>Digital Products Artisan</title>
-
         <meta
           name="description"
           content="Premium handcrafted digital downloads for creators and entrepreneurs."
         />
 
         {/* PWA / icons */}
+        <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#ffffff" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="application-name" content="Digital Products Artisan" />
         <meta name="apple-mobile-web-app-title" content="Digital Products Artisan" />
-
-        {/* FAVICONS — assets in /public */}
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
-        <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
-        <link rel="icon" type="image/png" sizes="192x192" href="/web-app-manifest-192x192.png" />
-        <link rel="icon" type="image/png" sizes="512x512" href="/web-app-manifest-512x512.png" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-        <link rel="manifest" href="/site.webmanifest" />
+        <link rel="icon" href="/images/logo-new.png" sizes="32x32" type="image/png" />
+        <link rel="icon" href="/images/logo-new.png" sizes="192x192" type="image/png" />
+        <link rel="apple-touch-icon" href="/images/logo-new.png" />
 
         {/* Social */}
         <meta property="og:title" content="Digital Products Artisan" />
@@ -74,20 +57,28 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
-              '@context': 'https://schema.org',
-              '@type': 'Organization',
-              name: 'Digital Products Artisan',
-              url: 'https://digitalproductsartisan.com',
-              logo: 'https://digitalproductsartisan.com/images/logo-new.png',
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "Digital Products Artisan",
+              url: "https://digitalproductsartisan.com",
+              logo: "https://digitalproductsartisan.com/images/logo-new.png",
             }),
           }}
         />
       </head>
 
-      <body className={`${inter.className} min-h-screen`}>
+      <body className={inter.className}>
         <AuthProvider>
           <CartProvider>
-            <CurrencyBootstrap />
+            {/* Auto-detect & store currency, no UI */}
+            <AutoCurrency />
+
+            {/* If you still want a manual override, render the picker but keep it hidden:
+            <div className="hidden">
+              <CurrencyPicker />
+            </div>
+            */}
+
             <Header />
             {children}
             <Footer />
