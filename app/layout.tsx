@@ -1,26 +1,36 @@
 'use client';
 
-import "./globals.css"
-import { Inter } from "next/font/google";
-import "./globals.css";
-import Header from "@/components/Header";
-import Footer from "@/components/footer";
-import { CartProvider } from "@/contexts/cart-context";
-import { AuthProvider } from "@/contexts/auth-context";
-import { Toaster } from "@/components/ui/toaster";
-import LiveChat from "@/components/live-chat";
-import CurrencyBootstrap from "@/components/currency-bootstrap"; // ⬅️ invisible auto-detect
+import './globals.css';
+import { Inter } from 'next/font/google';
+import Header from '@/components/Header';
+import Footer from '@/components/footer';
+import { CartProvider } from '@/contexts/cart-context';
+import { AuthProvider } from '@/contexts/auth-context';
+import { Toaster } from '@/components/ui/toaster';
+import LiveChat from '@/components/live-chat';
+import CurrencyBootstrap from '@/components/currency-bootstrap';
+import type { Viewport } from 'next';
 
-const inter = Inter({ subsets: ["latin"] });
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: 'cover',
+};
+
+const inter = Inter({ subsets: ['latin'] });
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className="h-full">
       <head>
         <title>Digital Products Artisan</title>
 
         {/* ✅ Make mobile render at device width */}
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, viewport-fit=cover, shrink-to-fit=no"
+        />
 
         <meta
           name="description"
@@ -67,18 +77,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "Organization",
-              name: "Digital Products Artisan",
-              url: "https://digitalproductsartisan.com",
-              logo: "https://digitalproductsartisan.com/images/logo-new.png",
+              '@context': 'https://schema.org',
+              '@type': 'Organization',
+              name: 'Digital Products Artisan',
+              url: 'https://digitalproductsartisan.com',
+              logo: 'https://digitalproductsartisan.com/images/logo-new.png',
             }),
           }}
         />
         {/* Snipcart assets removed; Stripe handles checkout */}
       </head>
 
-      <body className={inter.className}>
+      <body className={`${inter.className} min-h-screen`}>
         <AuthProvider>
           <CartProvider>
             {/* Invisible currency auto-detect (no visible picker) */}
