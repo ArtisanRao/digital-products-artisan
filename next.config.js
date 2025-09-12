@@ -78,9 +78,17 @@ const nextConfig = withPWA({
 
   async redirects() {
     return [
+      // Keep your existing helpful redirects
       { source: '/help-center', destination: '/help', permanent: true },
       { source: '/contact-us', destination: '/contact', permanent: true },
-      { source: '/best-sellers', destination: '/bestsellers', permanent: true },
+
+      // ✅ Canonicalize "best sellers" to the single indexable URL
+      { source: '/best-sellers', destination: '/products/best-sellers', permanent: true },
+      { source: '/bestsellers', destination: '/products/best-sellers', permanent: true },
+
+      // ✅ Canonicalize "products" (remove trailing slash & legacy alias)
+      { source: '/products/', destination: '/products', permanent: true },
+      { source: '/shop', destination: '/products', permanent: true },
     ];
   },
 });
