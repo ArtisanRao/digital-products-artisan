@@ -1,7 +1,7 @@
 "use client";
 import * as React from "react";
 import { Button } from "@/components/ui/button";
-import { getPreferredCurrency } from "@/lib/currency"; // ← add this
+import { getPreferredCurrency } from "@/lib/currency";
 
 export default function BuyNowButton({
   productId,
@@ -19,7 +19,9 @@ export default function BuyNowButton({
   async function handleClick() {
     setLoading(true);
     try {
-      const currency = getPreferredCurrency(); // 👈 read from localStorage
+      // 👇 Always include the chosen/auto currency (EUR enables Klarna)
+      const currency = getPreferredCurrency();
+
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

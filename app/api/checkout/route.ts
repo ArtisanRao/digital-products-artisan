@@ -1,4 +1,3 @@
-// app/api/checkout/route.ts
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { products, productsById } from "@/data/products";
@@ -24,23 +23,19 @@ function toInt(n: any, fallback = 1) {
   return Number.isFinite(v) && v > 0 ? Math.floor(v) : fallback;
 }
 
-// EU list for Klarna eligibility fallback
+// Minimal EU list for Klarna eligibility
 const EU = new Set([
   "AT","BE","BG","HR","CY","CZ","DK","EE","FI","FR","DE","GR","HU","IE","IT",
   "LV","LT","LU","MT","NL","PL","PT","RO","SK","SI","ES","SE"
 ]);
 
 function decideCurrency(request: Request, bodyCurrency?: string): "usd" | "eur" {
-  // 0) test override: /api/checkout?force=eur or ?force=usd
-  const forced = new URL(request.url).searchParams.get("force");
-  if (forced === "eur" || forced === "usd") return forced;
-
-  // 1) client override from picker (request body)
+  // 1) client override from picker
   const v = String(bodyCurrency || "").toLowerCase();
   if (v === "eur") return "eur";
   if (v === "usd") return "usd";
 
-  // 2) geo fallback (Vercel/Cloudflare headers)
+  // 2) geo fallback (Vercel/CF headers)
   const country =
     request.headers.get("x-vercel-ip-country") ||
     request.headers.get("cf-ipcountry") ||
@@ -55,10 +50,10 @@ export async function POST(req: Request) {
   try {
     const body = (await req.json()) as Body;
 
-    // Decide currency from picker, geo, or ?force flag
+    // 👇 currency decided from client override or EU geo
     const currency = decideCurrency(req, (body as any).currency);
 
-    // Normalize to array of items
+    // Normalize to an array of items
     const items: Array<{ productId: number; qty: number }> = Array.isArray(
       (body as BodyCart).cart
     )
@@ -88,22 +83,20 @@ export async function POST(req: Request) {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
     const stripe = getStripe();
 
-    // Build Stripe line_items (inline price_data so amounts come from your catalog)
+    // Build Stripe line_items
     const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = chosen.map(
       ({ p, qty }) => {
         const firstImage = p.images?.[0] ?? p.image;
-        const absoluteImage = firstImage?.startsWith("http")
-          ? firstImage
-          : `${baseUrl}${firstImage}`;
+        const absoluteImage = firstImage.startsWith("http") ? firstImage : `${baseUrl}${firstImage}`;
 
         return {
           quantity: qty,
           price_data: {
-            currency,                               // USD or EUR
-            unit_amount: Math.round(p.price * 100), // same numeric price in chosen currency
+            currency,                               // 👈 USD or EUR
+            unit_amount: Math.round(p.price * 100), // same numeric amount in chosen currency
             product_data: {
               name: p.title,
-              images: absoluteImage ? [absoluteImage] : undefined,
+              images: [absoluteImage],
               metadata: { slug: p.slug, productId: String(p.id) },
             },
           },
@@ -111,36 +104,27 @@ export async function POST(req: Request) {
       }
     );
 
-    const forcePM = process.env.STRIPE_FORCE_PM_TYPES === "1";
-
     const params: any = {
       mode: "payment",
       line_items,
       success_url: `${baseUrl}/order-confirmation?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: chosen.length === 1
-        ? `${baseUrl}/products/${chosen[0].p.id}`
-        : `${baseUrl}/products`,
-      // Helpful for Klarna:
+      cancel_url: chosen.length === 1 ? `${baseUrl}/products/${chosen[0].p.id}` : `${baseUrl}/products`,
+      // Helpful for Klarna + better UX
       billing_address_collection: "required",
       locale: "auto",
       metadata: { currencyChosen: currency },
     };
 
-    // When forced, ask Stripe for Klarna if we’re in EUR; otherwise let Stripe auto-pick
-    if (forcePM) {
-      params.payment_method_types =
-        currency === "eur" ? ["card", "paypal", "klarna"] : ["card", "paypal"];
-    }
+    // ✅ Force what Checkout shows based on currency
+    params.payment_method_types =
+      currency === "eur" ? ["card", "paypal", "klarna"] : ["card", "paypal"];
 
     const session = await stripe.checkout.sessions.create(
       params as Stripe.Checkout.SessionCreateParams
     );
 
     if (!session.url) {
-      return NextResponse.json(
-        { error: "Unable to create checkout session (no URL)" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "Unable to create checkout session (no URL)" }, { status: 500 });
     }
 
     return NextResponse.json({ url: session.url, currencyUsed: currency });
@@ -164,11 +148,7 @@ export async function GET(req: Request) {
       node: process.version,
       stripeEnvSet: !!process.env.STRIPE_SECRET_KEY,
       siteUrlSet: !!process.env.NEXT_PUBLIC_SITE_URL,
-      pmForced: process.env.STRIPE_FORCE_PM_TYPES === "1",
-      seenCountry:
-        req.headers.get("x-vercel-ip-country") ||
-        req.headers.get("cf-ipcountry") ||
-        null,
+      seenCountry: req.headers.get("x-vercel-ip-country") || req.headers.get("cf-ipcountry") || null,
     });
   }
   return NextResponse.json({ error: "Method Not Allowed" }, { status: 405 });
