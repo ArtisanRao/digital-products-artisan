@@ -1,99 +1,110 @@
-"use client"
+'use client';
 
-import { useState, useMemo } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Star, Search, Filter, Grid, List, Eye } from "lucide-react"
-import Link from "next/link"
-import Image from "next/image"
-import { products, type Product } from "@/data/products"
-import AddToCartButton from "@/components/add-to-cart-button"
+import { useState, useMemo } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Star, Search, Filter, Grid, List, Eye } from 'lucide-react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { products, type Product } from '@/data/products';
+import AddToCartButton from '@/components/add-to-cart-button';
 
 const baseCategories = [
-  "AI & ChatGPT Guides",
-  "Planners & Productivity",
-  "Passive Income & Side Hustles",
-  "Excel Templates & Guides",
-  "Cyber Security",
-  "Self-Help & How-To",
-  "PLR & MRR Bundles",
-  "Health & Fitness Ebooks",
-  "Video Courses & Training",
-  "Ebooks (Miscellaneous)",
-  "Complete Shop Packages",
-  "Keto & Diet Guides",
-  "Prompt Packs & AI Tools",
-]
+  'AI & ChatGPT Guides',
+  'Planners & Productivity',
+  'Passive Income & Side Hustles',
+  'Excel Templates & Guides',
+  'Cyber Security',
+  'Self-Help & How-To',
+  'PLR & MRR Bundles',
+  'Health & Fitness Ebooks',
+  'Video Courses & Training',
+  'Ebooks (Miscellaneous)',
+  'Complete Shop Packages',
+  'Keto & Diet Guides',
+  'Prompt Packs & AI Tools',
+];
 
 const categoriesWithCounts = (products: Product[]) => {
-  const counts: Record<string, number> = {}
-  baseCategories.forEach((cat) => (counts[cat] = 0))
+  const counts: Record<string, number> = {};
+  baseCategories.forEach((cat) => (counts[cat] = 0));
   products.forEach((p) => {
-    if (counts[p.category] !== undefined) counts[p.category] += 1
-    else counts[p.category] = 1
-  })
-  return counts
-}
+    if (counts[p.category] !== undefined) counts[p.category] += 1;
+    else counts[p.category] = 1;
+  });
+  return counts;
+};
 
 const sortOptions = [
-  { value: "popular", label: "Most Popular" },
-  { value: "newest", label: "Newest First" },
-  { value: "price-low", label: "Price: Low to High" },
-  { value: "price-high", label: "Price: High to Low" },
-  { value: "rating", label: "Highest Rated" },
-]
+  { value: 'popular', label: 'Most Popular' },
+  { value: 'newest', label: 'Newest First' },
+  { value: 'price-low', label: 'Price: Low to High' },
+  { value: 'price-high', label: 'Price: High to Low' },
+  { value: 'rating', label: 'Highest Rated' },
+];
+
+// --- helpers ---
+const formatPrice = (value: number, currency: string = 'EUR', locale: string = 'de-DE') =>
+  new Intl.NumberFormat(locale, { style: 'currency', currency }).format(value);
+
+const slugify = (s: string) =>
+  s
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9\-]/g, '')
+    .replace(/\-+/g, '-');
 
 export default function ProductsPage() {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState("All")
-  const [sortBy, setSortBy] = useState("popular")
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
-  const [priceRange, setPriceRange] = useState({ min: 0, max: 100 })
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [sortBy, setSortBy] = useState('popular');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [priceRange, setPriceRange] = useState({ min: 0, max: 100 });
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
-  const allTags = useMemo(() => Array.from(new Set(products.flatMap((p) => p.tags))), [])
-  const categoryCounts = useMemo(() => categoriesWithCounts(products), [])
+  const allTags = useMemo(() => Array.from(new Set(products.flatMap((p) => p.tags))), []);
+  const categoryCounts = useMemo(() => categoriesWithCounts(products), []);
 
   const handleMinPriceChange = (value: number) => {
-    setPriceRange((prev) => ({ min: Math.min(value, prev.max), max: prev.max }))
-  }
+    setPriceRange((prev) => ({ min: Math.min(value, prev.max), max: prev.max }));
+  };
   const handleMaxPriceChange = (value: number) => {
-    setPriceRange((prev) => ({ min: prev.min, max: Math.max(value, prev.min) }))
-  }
+    setPriceRange((prev) => ({ min: prev.min, max: Math.max(value, prev.min) }));
+  };
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
+      const q = searchQuery.toLowerCase();
       const matchesSearch =
-        product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesCategory = selectedCategory === "All" || product.category === selectedCategory
-      const matchesPrice = product.price >= priceRange.min && product.price <= priceRange.max
+        product.title.toLowerCase().includes(q) || product.description.toLowerCase().includes(q);
+      const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
+      const matchesPrice = product.price >= priceRange.min && product.price <= priceRange.max;
       const matchesTags =
-        selectedTags.length === 0 || selectedTags.some((tag) => product.tags.includes(tag))
-      return matchesSearch && matchesCategory && matchesPrice && matchesTags
-    })
-  }, [searchQuery, selectedCategory, priceRange, selectedTags])
+        selectedTags.length === 0 || selectedTags.some((tag) => product.tags.includes(tag));
+      return matchesSearch && matchesCategory && matchesPrice && matchesTags;
+    });
+  }, [searchQuery, selectedCategory, priceRange, selectedTags]);
 
   const sortedProducts = useMemo(() => {
     return [...filteredProducts].sort((a, b) => {
       switch (sortBy) {
-        case "newest":
-          return b.id - a.id
-        case "price-low":
-          return a.price - b.price
-        case "price-high":
-          return b.price - a.price
-        case "rating":
-          return b.rating - a.rating
+        case 'newest':
+          return b.id - a.id;
+        case 'price-low':
+          return a.price - b.price;
+        case 'price-high':
+          return b.price - a.price;
+        case 'rating':
+          return b.rating - a.rating;
         default:
-          return b.downloads - a.downloads
+          return b.downloads - a.downloads;
       }
-    })
-  }, [filteredProducts, sortBy])
+    });
+  }, [filteredProducts, sortBy]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -110,7 +121,7 @@ export default function ProductsPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Filter className="w-5 h-5 mr-2" aria-hidden="true" />
+                <Filter className="w-5 h-5 mr-2" aria-hidden />
                 Filters
               </CardTitle>
             </CardHeader>
@@ -121,7 +132,7 @@ export default function ProductsPage() {
                   Search
                 </label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" aria-hidden="true" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" aria-hidden />
                   <Input
                     id="product-search"
                     type="search"
@@ -140,33 +151,36 @@ export default function ProductsPage() {
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <input
-                      id="category-All"
+                      id="category-all"
                       name="category"
                       type="radio"
-                      checked={selectedCategory === "All"}
-                      onChange={() => setSelectedCategory("All")}
-                      className="checkbox"
+                      checked={selectedCategory === 'All'}
+                      onChange={() => setSelectedCategory('All')}
+                      className="h-4 w-4"
                     />
-                    <label htmlFor="category-All" className="text-sm text-gray-700 cursor-pointer">
+                    <label htmlFor="category-all" className="text-sm text-gray-700 cursor-pointer">
                       All ({products.length})
                     </label>
                   </div>
 
-                  {baseCategories.map((category) => (
-                    <div key={category} className="flex items-center space-x-2">
-                      <input
-                        id={`category-${category}`}
-                        name="category"
-                        type="radio"
-                        checked={selectedCategory === category}
-                        onChange={() => setSelectedCategory(category)}
-                        className="checkbox"
-                      />
-                      <label htmlFor={`category-${category}`} className="text-sm text-gray-700 cursor-pointer">
-                        {category} ({categoryCounts[category] || 0})
-                      </label>
-                    </div>
-                  ))}
+                  {baseCategories.map((category) => {
+                    const id = `category-${slugify(category)}`;
+                    return (
+                      <div key={category} className="flex items-center space-x-2">
+                        <input
+                          id={id}
+                          name="category"
+                          type="radio"
+                          checked={selectedCategory === category}
+                          onChange={() => setSelectedCategory(category)}
+                          className="h-4 w-4"
+                        />
+                        <label htmlFor={id} className="text-sm text-gray-700 cursor-pointer">
+                          {category} ({categoryCounts[category] || 0})
+                        </label>
+                      </div>
+                    );
+                  })}
                 </div>
               </fieldset>
 
@@ -200,22 +214,25 @@ export default function ProductsPage() {
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">Tags</label>
                 <div className="space-y-2 max-h-40 overflow-y-auto" role="group" aria-label="Filter by tags">
-                  {allTags.map((tag) => (
-                    <div key={tag} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`tag-${tag}`}
-                        checked={selectedTags.includes(tag)}
-                        onCheckedChange={(checked) => {
-                          if (typeof checked !== "boolean") return
-                          if (checked) setSelectedTags((prev) => [...prev, tag])
-                          else setSelectedTags((prev) => prev.filter((t) => t !== tag))
-                        }}
-                      />
-                      <label htmlFor={`tag-${tag}`} className="text-sm text-gray-700 cursor-pointer">
-                        {tag}
-                      </label>
-                    </div>
-                  ))}
+                  {allTags.map((tag) => {
+                    const id = `tag-${slugify(tag)}`;
+                    const checked = selectedTags.includes(tag);
+                    return (
+                      <div key={tag} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={id}
+                          checked={checked}
+                          onCheckedChange={(v) => {
+                            if (typeof v !== 'boolean') return;
+                            setSelectedTags((prev) => (v ? [...prev, tag] : prev.filter((t) => t !== tag)));
+                          }}
+                        />
+                        <label htmlFor={id} className="text-sm text-gray-700 cursor-pointer">
+                          {tag}
+                        </label>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </CardContent>
@@ -233,7 +250,7 @@ export default function ProductsPage() {
             <div className="flex items-center space-x-4">
               <Select value={sortBy} onValueChange={setSortBy} aria-label="Sort products">
                 <SelectTrigger className="w-48">
-                  <SelectValue />
+                  <SelectValue placeholder="Sort" />
                 </SelectTrigger>
                 <SelectContent>
                   {sortOptions.map((option) => (
@@ -246,21 +263,21 @@ export default function ProductsPage() {
 
               <div className="flex border rounded-lg" role="group" aria-label="Toggle view mode">
                 <Button
-                  variant={viewMode === "grid" ? "default" : "ghost"}
+                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
                   size="sm"
-                  onClick={() => setViewMode("grid")}
+                  onClick={() => setViewMode('grid')}
                   className="rounded-r-none"
-                  aria-pressed={viewMode === "grid"}
+                  aria-pressed={viewMode === 'grid'}
                   aria-label="Grid view"
                 >
                   <Grid className="w-4 h-4" />
                 </Button>
                 <Button
-                  variant={viewMode === "list" ? "default" : "ghost"}
+                  variant={viewMode === 'list' ? 'default' : 'ghost'}
                   size="sm"
-                  onClick={() => setViewMode("list")}
+                  onClick={() => setViewMode('list')}
                   className="rounded-l-none"
-                  aria-pressed={viewMode === "list"}
+                  aria-pressed={viewMode === 'list'}
                   aria-label="List view"
                 >
                   <List className="w-4 h-4" />
@@ -270,22 +287,21 @@ export default function ProductsPage() {
           </div>
 
           {/* Products List */}
-          {viewMode === "grid" ? (
+          {viewMode === 'grid' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {sortedProducts.map((product) => (
+              {sortedProducts.map((product, idx) => (
                 <Card key={product.id} className="group hover:shadow-lg transition-shadow duration-300" tabIndex={0}>
                   <CardHeader className="p-0">
                     <div className="relative overflow-hidden rounded-t-lg">
                       <Link href={`/products/${product.id}`} aria-label={`View ${product.title}`}>
-                        {/* Full-cover visible: contain inside fixed-height box */}
                         <div className="relative w-full h-48 md:h-56 bg-white">
                           <Image
-                            src={product.image || "/placeholder.svg"}
+                            src={product.image || '/placeholder.svg'}
                             alt={product.title}
                             fill
                             className="object-contain"
                             sizes="(min-width:1280px) 33vw, (min-width:768px) 50vw, 100vw"
-                            priority
+                            priority={idx < 3}
                           />
                         </div>
                       </Link>
@@ -296,6 +312,7 @@ export default function ProductsPage() {
                       )}
                     </div>
                   </CardHeader>
+
                   <CardContent className="p-4">
                     <Link
                       href={`/products/${product.id}`}
@@ -305,21 +322,20 @@ export default function ProductsPage() {
                     </Link>
                     <p className="text-sm text-gray-600 line-clamp-3">{product.description}</p>
                     <div className="mt-3 flex items-center space-x-2">
-                      <Star className="w-4 h-4 text-yellow-400" aria-hidden="true" />
+                      <Star className="w-4 h-4 text-yellow-400" aria-hidden />
                       <span className="text-sm font-medium text-gray-800">{product.rating}</span>
                       <span className="text-sm text-gray-500">({product.reviews})</span>
                     </div>
                   </CardContent>
 
-                  {/* Footer: price left, View + Add to cart right */}
                   <CardFooter className="p-4 flex items-center justify-between gap-3">
                     <div>
                       <span className="text-lg font-semibold text-gray-900">
-                        ${product.price.toFixed(2)}
+                        {formatPrice(product.price)}
                       </span>
                       {product.originalPrice > product.price && (
                         <span className="line-through text-gray-400 ml-2">
-                          ${product.originalPrice.toFixed(2)}
+                          {formatPrice(product.originalPrice)}
                         </span>
                       )}
                     </div>
@@ -332,13 +348,16 @@ export default function ProductsPage() {
                         size="sm"
                       >
                         <Link href={`/products/${product.id}`}>
-                          <Eye className="w-4 h-4 mr-2" aria-hidden="true" />
+                          <Eye className="w-4 h-4 mr-2" aria-hidden />
                           View
                         </Link>
                       </Button>
 
-                      {/* Add to cart (next to View) */}
-                      <AddToCartButton productId={product.id} size="sm" className="bg-black text-white hover:bg-black/90" />
+                      <AddToCartButton
+                        productId={product.id}
+                        size="sm"
+                        className="bg-black text-white hover:bg-black/90"
+                      />
                     </div>
                   </CardFooter>
                 </Card>
@@ -346,22 +365,21 @@ export default function ProductsPage() {
             </div>
           ) : (
             <ul className="space-y-4">
-              {sortedProducts.map((product) => (
+              {sortedProducts.map((product, idx) => (
                 <li
                   key={product.id}
                   className="flex items-center space-x-4 p-4 border rounded-lg hover:shadow-md transition-shadow duration-300"
                   tabIndex={0}
                 >
-                  <Link href={`/products/${product.id}`} className="flex-shrink-0">
-                    {/* Thumbnail */}
+                  <Link href={`/products/${product.id}`} className="flex-shrink-0" aria-label={`View ${product.title}`}>
                     <div className="relative w-[120px] h-[90px] bg-white rounded-md">
                       <Image
-                        src={product.image || "/placeholder.svg"}
+                        src={product.image || '/placeholder.svg'}
                         alt={product.title}
                         fill
                         className="object-contain"
                         sizes="120px"
-                        priority
+                        priority={idx < 3}
                       />
                     </div>
                   </Link>
@@ -372,7 +390,7 @@ export default function ProductsPage() {
                     </Link>
                     <p className="text-sm text-gray-600 truncate">{product.description}</p>
                     <div className="flex items-center space-x-2 mt-1">
-                      <Star className="w-4 h-4 text-yellow-400" aria-hidden="true" />
+                      <Star className="w-4 h-4 text-yellow-400" aria-hidden />
                       <span className="text-sm font-medium text-gray-800">{product.rating}</span>
                       <span className="text-sm text-gray-500">({product.reviews})</span>
                     </div>
@@ -380,16 +398,19 @@ export default function ProductsPage() {
 
                   <div className="flex flex-col items-end space-y-2">
                     <span className="text-lg font-semibold text-gray-900">
-                      ${product.price.toFixed(2)}
+                      {formatPrice(product.price)}
                     </span>
                     {product.originalPrice > product.price && (
                       <span className="line-through text-gray-400">
-                        ${product.originalPrice.toFixed(2)}
+                        {formatPrice(product.originalPrice)}
                       </span>
                     )}
 
-                    {/* Add to cart right after the price */}
-                    <AddToCartButton productId={product.id} size="sm" className="bg-black text-white hover:bg-black/90" />
+                    <AddToCartButton
+                      productId={product.id}
+                      size="sm"
+                      className="bg-black text-white hover:bg-black/90"
+                    />
 
                     <Button
                       asChild
@@ -398,7 +419,7 @@ export default function ProductsPage() {
                       size="sm"
                     >
                       <Link href={`/products/${product.id}`}>
-                        <Eye className="w-4 h-4 mr-2" aria-hidden="true" />
+                        <Eye className="w-4 h-4 mr-2" aria-hidden />
                         View
                       </Link>
                     </Button>
@@ -410,5 +431,5 @@ export default function ProductsPage() {
         </section>
       </div>
     </div>
-  )
+  );
 }
