@@ -18,6 +18,13 @@
     .desktop-gap-1cm { gap: 1rem; }
   }
 
+  /* Hide horizontal scrollbar for overflow-x-auto rails */
+  .no-scrollbar {
+    -ms-overflow-style: none;       /* IE/Edge */
+    scrollbar-width: none;          /* Firefox */
+  }
+  .no-scrollbar::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+
   /* Generic hover/press lift (for links or any element) */
   .hover-lift {
     transition:
@@ -37,7 +44,7 @@
     box-shadow: 0 6px 10px -4px rgb(0 0 0 / .08);
   }
 
-  /* Cart count badge helper (use instead of many inline classes if you want) */
+  /* Cart count badge helper */
   .cart-badge {
     position: absolute;
     top: -0.4rem;
@@ -88,12 +95,12 @@
 
   /* Extra-small mobile spacing tweaks */
   @media (max-width: 767px) {
-    nav.flex.md\\:hidden.items-center.space-x-2 > a.mobile-link {
+    nav.flex.md\:hidden.items-center.space-x-2 > a.mobile-link {
       margin-left: 0.25rem;
       margin-right: 0.25rem;
       font-size: 0.875rem;
     }
-    nav.flex.md\\:hidden.items-center.space-x-2 { gap: 0.5rem; }
+    nav.flex.md\:hidden.items-center.space-x-2 { gap: 0.5rem; }
   }
 
   /* Hide Clear Cart on mobile (fallback if component didn't add responsive classes) */
@@ -162,8 +169,25 @@
   }
 }
 
-/* ===== Theme Variables ===== */
+/* ===== Theme Variables & Mobile Fit Defaults ===== */
 @layer base {
+  /* Mobile-fit & responsive media defaults */
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { width: 100%; overflow-x: hidden; }
+  img, video, canvas, svg, picture { max-width: 100%; height: auto; }
+  iframe { max-width: 100%; }
+
+  /* Product/gallery media containers (helps on small screens) */
+  .product-media,
+  .product-media img,
+  .product-media picture {
+    max-width: 100%;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+  }
+
   :root {
     --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;
