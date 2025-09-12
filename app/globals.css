@@ -14,9 +14,7 @@
   .gap-1cm { gap: 1rem; }
 
   /* Desktop-only gap utility */
-  @media (min-width: 1024px) {
-    .desktop-gap-1cm { gap: 1rem; }
-  }
+  @media (min-width: 1024px) { .desktop-gap-1cm { gap: 1rem; } }
 
   /* Hide horizontal scrollbar for overflow-x-auto rails */
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -61,7 +59,9 @@
 
   /* Extra-small mobile spacing tweaks */
   @media (max-width: 767px) {
-    nav.flex.md\:hidden.items-center.space-x-2 > a.mobile-link { margin-left: .25rem; margin-right: .25rem; font-size: .875rem; }
+    nav.flex.md\:hidden.items-center.space-x-2 > a.mobile-link {
+      margin-left: .25rem; margin-right: .25rem; font-size: .875rem;
+    }
     nav.flex.md\:hidden.items-center.space-x-2 { gap: .5rem; }
   }
 
@@ -97,53 +97,21 @@
 
   [data-radix-popper-content-wrapper] { @apply bg-white shadow-lg rounded-md; }
 
-  header input[type="search"] { @apply border border-blue-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 rounded-md; }
+  header input[type="search"] {
+    @apply border border-blue-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 rounded-md;
+  }
 }
 
-/* ===== Theme & Mobile-Fit Defaults ===== */
+/* ===== Theme & Base Defaults ===== */
 @layer base {
-  /* Mobile-fit & responsive media defaults */
+  /* Keep media responsive, avoid global layout shifts */
   *, *::before, *::after { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   html, body { width: 100%; overflow-x: hidden; }
   img, video, canvas, svg, picture { max-width: 100%; height: auto; }
   iframe { max-width: 100%; }
 
-  /* Guard against full-bleed widths on phones */
-  @media (max-width: 768px) {
-    /* Neutralize 100vw patterns inside padded containers */
-    .w-screen { width: 100% !important; }
-    [class*="w-\\[100vw\\]"] { width: 100% !important; }
-
-    /* Neutralize horizontal negative margins */
-    [class*="-mx-"], [class*="mx-\\[-"] {
-      margin-left: 0 !important;
-      margin-right: 0 !important;
-    }
-
-    /* Clip accidental horizontal overflow on common wrappers */
-    body > header, body > main, body > footer,
-    .container, main, section, article, .page, .prose, .content, .wrapper, .card {
-      max-width: 100% !important;
-      overflow-x: clip !important;
-    }
-
-    /* Keep popular sliders within viewport */
-    .swiper, .swiper-wrapper, .swiper-slide,
-    .embla, .embla__container, .embla__slide,
-    .keen-slider, .keen-slider__slide {
-      max-width: 100% !important;
-      overflow: hidden !important;
-    }
-
-    /* Media can never bleed */
-    img, video, canvas, svg, picture {
-      max-width: 100% !important;
-      height: auto !important;
-    }
-  }
-
-  /* Optional helper if you wrap product media */
+  /* Optional helper for any explicit media wrapper you add */
   .product-media, .product-media img, .product-media picture {
     max-width: 100%;
     width: 100%;
@@ -183,5 +151,50 @@
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-secondary: 240 5.3% 34.1%;
     --sidebar-secondary-foreground: 240 5.3% 26.1%;
+  }
+}
+
+/* === SCOPED mobile fix for the PRODUCT DETAIL page only ===
+   Apply to a wrapper element with class "product-page"
+   or set <body class="product-page"> or <main data-page="product">
+*/
+@media (max-width: 768px) {
+  body.product-page .w-screen,
+  body.product-page [class*="w-\\[100vw\\]"],
+  .product-page .w-screen,
+  .product-page [class*="w-\\[100vw\\]"],
+  main[data-page="product"] .w-screen,
+  main[data-page="product"] [class*="w-\\[100vw\\]"] {
+    width: 100% !important;
+  }
+
+  body.product-page [class*="-mx-"],
+  body.product-page [class*="mx-\\[-"],
+  .product-page [class*="-mx-"],
+  .product-page [class*="mx-\\[-"],
+  main[data-page="product"] [class*="-mx-"],
+  main[data-page="product"] [class*="mx-\\[-"] {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  body.product-page .swiper, body.product-page .swiper-wrapper, body.product-page .swiper-slide,
+  body.product-page .embla,  body.product-page .embla__container, body.product-page .embla__slide,
+  body.product-page .keen-slider, body.product-page .keen-slider__slide,
+  .product-page .swiper, .product-page .swiper-wrapper, .product-page .swiper-slide,
+  .product-page .embla,  .product-page .embla__container, .product-page .embla__slide,
+  .product-page .keen-slider, .product-page .keen-slider__slide,
+  main[data-page="product"] .swiper, main[data-page="product"] .swiper-wrapper, main[data-page="product"] .swiper-slide,
+  main[data-page="product"] .embla,  main[data-page="product"] .embla__container, main[data-page="product"] .embla__slide,
+  main[data-page="product"] .keen-slider, main[data-page="product"] .keen-slider__slide {
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  body.product-page img, body.product-page video, body.product-page canvas, body.product-page picture,
+  .product-page img, .product-page video, .product-page canvas, .product-page picture,
+  main[data-page="product"] img, main[data-page="product"] video, main[data-page="product"] canvas, main[data-page="product"] picture {
+    max-width: 100% !important;
+    height: auto !important;
   }
 }
