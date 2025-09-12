@@ -111,14 +111,21 @@
 
   /* Guard against full-bleed widths on phones */
   @media (max-width: 768px) {
-    /* Neutralize w-screen inside padded containers (prevents overshoot) */
+    /* Neutralize 100vw patterns inside padded containers */
     .w-screen { width: 100% !important; }
+    [class*="w-\\[100vw\\]"] { width: 100% !important; }
+
+    /* Neutralize horizontal negative margins */
+    [class*="-mx-"], [class*="mx-\\[-"] {
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+    }
 
     /* Clip accidental horizontal overflow on common wrappers */
     body > header, body > main, body > footer,
-    .container, main, section, .prose, .content, .wrapper, .card {
-      max-width: 100%;
-      overflow-x: clip;
+    .container, main, section, article, .page, .prose, .content, .wrapper, .card {
+      max-width: 100% !important;
+      overflow-x: clip !important;
     }
 
     /* Keep popular sliders within viewport */
@@ -126,7 +133,13 @@
     .embla, .embla__container, .embla__slide,
     .keen-slider, .keen-slider__slide {
       max-width: 100% !important;
-      overflow: hidden;
+      overflow: hidden !important;
+    }
+
+    /* Media can never bleed */
+    img, video, canvas, svg, picture {
+      max-width: 100% !important;
+      height: auto !important;
     }
   }
 
