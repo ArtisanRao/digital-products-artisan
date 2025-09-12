@@ -1,5 +1,6 @@
 // app/products/best-sellers/page.tsx
 import type { Metadata } from 'next';
+import Image from 'next/image';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://digitalproductsartisan.com'),
@@ -11,9 +12,20 @@ export const metadata: Metadata = {
     title: 'Best-Selling Digital Products | Digital Products Artisan',
     url: 'https://digitalproductsartisan.com/products/best-sellers',
     type: 'website',
+    images: [
+      { url: 'https://digitalproductsartisan.com/products/chatgpt-guide.jpg' },
+      { url: 'https://digitalproductsartisan.com/products/canva-pack.jpg' },
+      { url: 'https://digitalproductsartisan.com/products/excel-tracker.jpg' },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Best-Selling Digital Products | Digital Products Artisan',
   },
   robots: { index: true, follow: true },
 };
+
+export const revalidate = 3600; // static page; re-gen hourly
 
 const CANONICAL_URL = 'https://digitalproductsartisan.com/products/best-sellers';
 
@@ -91,15 +103,17 @@ export default function BestSellersPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         {/* Product 1 */}
         <div id="chatgpt-business" className="border rounded-xl p-4 shadow-md">
-          <img
-            src="/products/chatgpt-guide.jpg"
-            alt="Mastering ChatGPT for Business ebook cover"
-            className="rounded mb-4"
-            loading="lazy"
-          />
-          <h2 className="text-xl font-semibold mb-1">
-            Mastering ChatGPT for Business
-          </h2>
+          <div className="relative w-full h-56 mb-4 bg-white rounded">
+            <Image
+              src="/products/chatgpt-guide.jpg"
+              alt="Mastering ChatGPT for Business ebook cover"
+              fill
+              className="object-contain rounded"
+              sizes="(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw"
+              priority
+            />
+          </div>
+          <h2 className="text-xl font-semibold mb-1">Mastering ChatGPT for Business</h2>
           <p className="text-gray-600 mb-2">
             A detailed PDF guide to unlock AI productivity.
           </p>
@@ -120,15 +134,16 @@ export default function BestSellersPage() {
 
         {/* Product 2 */}
         <div id="canva-pack" className="border rounded-xl p-4 shadow-md">
-          <img
-            src="/products/canva-pack.jpg"
-            alt="Canva Templates Mega Pack preview"
-            className="rounded mb-4"
-            loading="lazy"
-          />
-          <h2 className="text-xl font-semibold mb-1">
-            Canva Templates Mega Pack
-          </h2>
+          <div className="relative w-full h-56 mb-4 bg-white rounded">
+            <Image
+              src="/products/canva-pack.jpg"
+              alt="Canva Templates Mega Pack preview"
+              fill
+              className="object-contain rounded"
+              sizes="(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw"
+            />
+          </div>
+          <h2 className="text-xl font-semibold mb-1">Canva Templates Mega Pack</h2>
           <p className="text-gray-600 mb-2">
             100+ drag-and-drop templates for social media.
           </p>
@@ -149,12 +164,15 @@ export default function BestSellersPage() {
 
         {/* Product 3 */}
         <div id="excel-tracker" className="border rounded-xl p-4 shadow-md">
-          <img
-            src="/products/excel-tracker.jpg"
-            alt="Excel Tracker Pro spreadsheet layouts"
-            className="rounded mb-4"
-            loading="lazy"
-          />
+          <div className="relative w-full h-56 mb-4 bg-white rounded">
+            <Image
+              src="/products/excel-tracker.jpg"
+              alt="Excel Tracker Pro spreadsheet layouts"
+              fill
+              className="object-contain rounded"
+              sizes="(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw"
+            />
+          </div>
           <h2 className="text-xl font-semibold mb-1">Excel Tracker Pro</h2>
           <p className="text-gray-600 mb-2">
             Track expenses, projects, and habits like a pro.

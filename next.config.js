@@ -29,6 +29,9 @@ const securityHeaders = [
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   // Disable Topics/FLoC + powerful device APIs by default
   { key: 'Permissions-Policy', value: "accelerometer=(), autoplay=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=(), interest-cohort=()" },
+  // (Optional hardening)
+  { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains; preload' },
+  { key: 'Origin-Agent-Cluster', value: '?1' },
 ];
 
 /** Non-HTML assets we never want indexed */
@@ -56,6 +59,12 @@ const assetNoIndexHeaders = [
   { source: '/sw.js', headers: [{ key: 'X-Robots-Tag', value: 'noindex' }, { key: 'Cache-Control', value: 'no-cache' }] },
   { source: '/workbox-:hash.js', headers: [{ key: 'X-Robots-Tag', value: 'noindex' }] },
   { source: '/fallback-:hash.js', headers: [{ key: 'X-Robots-Tag', value: 'noindex' }] },
+
+  // Pages that should not be indexed
+  { source: '/api/:path*', headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }] },
+  { source: '/cart', headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }] },
+  { source: '/checkout', headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }] },
+  { source: '/thank-you', headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }] },
 ];
 
 /** @type {import('next').NextConfig} */
@@ -69,7 +78,7 @@ const nextConfig = withPWA({
 
   async headers() {
     return [
-      // 1) Explicit noindex for assets like the manifest (fixes GSC warning)
+      // 1) Explicit noindex for assets + non-indexable routes
       ...assetNoIndexHeaders,
       // 2) Global security headers for everything
       { source: '/(.*)', headers: securityHeaders },
@@ -78,13 +87,16 @@ const nextConfig = withPWA({
 
   async redirects() {
     return [
-      // Keep your existing helpful redirects
+      // Helpful redirects
       { source: '/help-center', destination: '/help', permanent: true },
       { source: '/contact-us', destination: '/contact', permanent: true },
 
       // ✅ Canonicalize "best sellers" to the single indexable URL
-      { source: '/best-sellers', destination: '/products/best-sellers', permanent: true },
       { source: '/bestsellers', destination: '/products/best-sellers', permanent: true },
+      { source: '/bestsellers/', destination: '/products/best-sellers', permanent: true },
+      { source: '/best-sellers', destination: '/products/best-sellers', permanent: true },
+      { source: '/best-sellers/', destination: '/products/best-sellers', permanent: true },
+      { source: '/products/bestsellers', destination: '/products/best-sellers', permanent: true },
 
       // ✅ Canonicalize "products" (remove trailing slash & legacy alias)
       { source: '/products/', destination: '/products', permanent: true },
