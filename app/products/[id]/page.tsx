@@ -6,7 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Star, Download } from "lucide-react";
 import ProductGallery from "@/components/product-gallery";
 import BuyNowButton from "@/components/buy-now-button";
-import AddToCartButton from "@/components/add-to-cart-button"; // ⬅️ add this
+import AddToCartButton from "@/components/add-to-cart-button";
+import ProductPageFlag from "@/components/ProductPageFlag"; // ⬅️ adds body.product-page while mounted
 
 export const dynamic = "force-dynamic";  // do not pre-render
 export const revalidate = 0;             // no ISR
@@ -67,51 +68,65 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
   };
 
   return (
-    <main className="container mx-auto px-4 py-10">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <nav className="mb-6 text-sm text-gray-500">
-        <Link href="/products" className="hover:underline">← Back to all products</Link>
-      </nav>
+    <>
+      {/* Adds body.product-page while this page is mounted (scopes your CSS fix) */}
+      <ProductPageFlag />
 
-      <div className="grid gap-8 md:grid-cols-2">
-        <Card>
-          <CardContent className="p-4">
-            <ProductGallery images={galleryImages} alt={product.title} />
-          </CardContent>
-        </Card>
+      <main
+        className="product-page container mx-auto px-4 py-10"
+        data-page="product"
+      >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        <nav className="mb-6 text-sm text-gray-500">
+          <Link href="/products" className="hover:underline">← Back to all products</Link>
+        </nav>
 
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold">{product.title}</h1>
-          <p className="mt-3 text-gray-600">{product.description}</p>
+        <div className="grid gap-8 md:grid-cols-2">
+          <Card>
+            <CardContent className="p-4">
+              {/* Wrap gallery so mobile guards apply cleanly */}
+              <div className="product-media">
+                <ProductGallery images={galleryImages} alt={product.title} />
+              </div>
+            </CardContent>
+          </Card>
 
-          <div className="mt-4 flex items-center space-x-2 text-sm text-gray-600">
-            <Star className="w-4 h-4 text-yellow-400" />
-            <span>{product.rating}</span>
-            <span>({product.reviews} reviews)</span>
-            <span>•</span>
-            <span>{product.downloads} downloads</span>
-          </div>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold">{product.title}</h1>
+            <p className="mt-3 text-gray-600">{product.description}</p>
 
-          <div className="mt-6 flex items-center space-x-3">
-            <span className="text-2xl font-semibold">${product.price.toFixed(2)}</span>
-            {product.originalPrice > product.price && (
-              <span className="text-gray-400 line-through">${product.originalPrice.toFixed(2)}</span>
-            )}
-          </div>
+            <div className="mt-4 flex items-center space-x-2 text-sm text-gray-600">
+              <Star className="w-4 h-4 text-yellow-400" />
+              <span>{product.rating}</span>
+              <span>({product.reviews} reviews)</span>
+              <span>•</span>
+              <span>{product.downloads} downloads</span>
+            </div>
 
-          {/* Stripe only (PayPal/Klarna via Stripe if enabled there) */}
-          <div className="mt-6 flex gap-3">
-            <BuyNowButton productId={product.id} />
-            <AddToCartButton productId={product.id} /> {/* ⬅️ FIXED: pass productId only */}
-            <Button variant="outline" asChild>
-              <Link href={`/checkout?product=${product.id}`}>
-                <Download className="w-4 h-4 mr-2" />
-                Download after purchase
-              </Link>
-            </Button>
+            <div className="mt-6 flex items-center space-x-3">
+              <span className="text-2xl font-semibold">${product.price.toFixed(2)}</span>
+              {product.originalPrice > product.price && (
+                <span className="text-gray-400 line-through">${product.originalPrice.toFixed(2)}</span>
+              )}
+            </div>
+
+            {/* Stripe only (PayPal/Klarna via Stripe if enabled there) */}
+            <div className="mt-6 flex gap-3">
+              <BuyNowButton productId={product.id} />
+              <AddToCartButton productId={product.id} />
+              <Button variant="outline" asChild>
+                <Link href={`/checkout?product=${product.id}`}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Download after purchase
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </>
   );
 }
