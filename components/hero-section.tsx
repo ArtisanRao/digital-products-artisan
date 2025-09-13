@@ -78,9 +78,9 @@ export default function HeroSection() {
               <Link
                 href="/faq#delivery"
                 className="mt-2 inline-block text-sm underline underline-offset-4"
-                aria-label="Learn more about instant downloads and delivery"
+                aria-label="Learn how instant downloads work"
               >
-                Learn more →
+                How it works →
               </Link>
             </div>
 
@@ -95,9 +95,9 @@ export default function HeroSection() {
               <Link
                 href="/help#quality"
                 className="mt-2 inline-block text-sm underline underline-offset-4"
-                aria-label="Learn more about our quality standards"
+                aria-label="Read about our quality standards"
               >
-                Learn more →
+                Quality standards →
               </Link>
             </div>
 
@@ -112,9 +112,9 @@ export default function HeroSection() {
               <Link
                 href="/help#access"
                 className="mt-2 inline-block text-sm underline underline-offset-4"
-                aria-label="Learn more about access and support"
+                aria-label="Learn about access and support"
               >
-                Learn more →
+                Access &amp; support →
               </Link>
             </div>
           </div>
