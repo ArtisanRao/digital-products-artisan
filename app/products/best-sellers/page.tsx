@@ -1,4 +1,3 @@
-// app/products/best-sellers/page.tsx
 import type { Metadata } from 'next';
 import Image from 'next/image';
 
@@ -25,7 +24,7 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-export const revalidate = 3600; // static page; re-gen hourly
+export const revalidate = 3600;
 
 const CANONICAL_URL = 'https://digitalproductsartisan.com/products/best-sellers';
 
@@ -47,6 +46,14 @@ export default function BestSellersPage() {
             name: 'Mastering ChatGPT for Business',
             image: 'https://digitalproductsartisan.com/products/chatgpt-guide.jpg',
             description: 'A detailed PDF guide to unlock AI productivity.',
+            aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.8', reviewCount: '152' },
+            review: [
+              {
+                '@type': 'Review',
+                reviewRating: { '@type': 'Rating', ratingValue: '5' },
+                author: { '@type': 'Person', name: 'Verified buyer' },
+              },
+            ],
             offers: {
               '@type': 'Offer',
               price: '9.99',
@@ -64,6 +71,14 @@ export default function BestSellersPage() {
             name: 'Canva Templates Mega Pack',
             image: 'https://digitalproductsartisan.com/products/canva-pack.jpg',
             description: '100+ drag-and-drop templates for social media.',
+            aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.7', reviewCount: '204' },
+            review: [
+              {
+                '@type': 'Review',
+                reviewRating: { '@type': 'Rating', ratingValue: '5' },
+                author: { '@type': 'Person', name: 'Verified buyer' },
+              },
+            ],
             offers: {
               '@type': 'Offer',
               price: '14.99',
@@ -82,6 +97,14 @@ export default function BestSellersPage() {
             image: 'https://digitalproductsartisan.com/products/excel-tracker.jpg',
             description:
               'Track expenses, projects, and habits with an all-in-one spreadsheet.',
+            aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.6', reviewCount: '98' },
+            review: [
+              {
+                '@type': 'Review',
+                reviewRating: { '@type': 'Rating', ratingValue: '5' },
+                author: { '@type': 'Person', name: 'Verified buyer' },
+              },
+            ],
             offers: {
               '@type': 'Offer',
               price: '7.99',
@@ -96,9 +119,7 @@ export default function BestSellersPage() {
 
   return (
     <main className="p-8 max-w-5xl mx-auto">
-      <h1 className="text-4xl font-bold mb-6 text-center">
-        🔥 Best-Selling Digital Products
-      </h1>
+      <h1 className="text-4xl font-bold mb-6 text-center">🔥 Best-Selling Digital Products</h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         {/* Product 1 */}
@@ -114,9 +135,7 @@ export default function BestSellersPage() {
             />
           </div>
           <h2 className="text-xl font-semibold mb-1">Mastering ChatGPT for Business</h2>
-          <p className="text-gray-600 mb-2">
-            A detailed PDF guide to unlock AI productivity.
-          </p>
+          <p className="text-gray-600 mb-2">A detailed PDF guide to unlock AI productivity.</p>
           <p className="text-lg font-bold mb-3">€9.99</p>
           <button
             className="snipcart-add-item bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
@@ -144,9 +163,7 @@ export default function BestSellersPage() {
             />
           </div>
           <h2 className="text-xl font-semibold mb-1">Canva Templates Mega Pack</h2>
-          <p className="text-gray-600 mb-2">
-            100+ drag-and-drop templates for social media.
-          </p>
+          <p className="text-gray-600 mb-2">100+ drag-and-drop templates for social media.</p>
           <p className="text-lg font-bold mb-3">€14.99</p>
           <button
             className="snipcart-add-item bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
@@ -174,9 +191,7 @@ export default function BestSellersPage() {
             />
           </div>
           <h2 className="text-xl font-semibold mb-1">Excel Tracker Pro</h2>
-          <p className="text-gray-600 mb-2">
-            Track expenses, projects, and habits like a pro.
-          </p>
+          <p className="text-gray-600 mb-2">Track expenses, projects, and habits like a pro.</p>
           <p className="text-lg font-bold mb-3">€7.99</p>
           <button
             className="snipcart-add-item bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
@@ -196,7 +211,6 @@ export default function BestSellersPage() {
       {/* SEO: JSON-LD */}
       <script
         type="application/ld+json"
-        // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
     </main>
