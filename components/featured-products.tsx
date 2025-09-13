@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -40,8 +41,7 @@ const featuredProducts = [
   },
   {
     id: 3,
-    title:
-      "Digital Wealth – Ultimate Guide - This Order Includes A Free Extra Bonus.",
+    title: "Digital Wealth – Ultimate Guide - This Order Includes A Free Extra Bonus.",
     description:
       "Step-by-step strategies for building digital income streams. Includes a surprise bonus resource.",
     price: 28.99,
@@ -98,88 +98,101 @@ export default function FeaturedProducts() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          {featuredProducts.map((product) => (
-            <Card key={product.id} className="group hover:shadow-lg transition-shadow duration-300">
-              <CardHeader className="p-0">
-                <div className="relative overflow-hidden rounded-t-lg">
-                  <Link href={`/products/${product.id}`} aria-label={`View ${product.title}`}>
-                    {/* Wrapper ensures full image fits without cropping */}
-                    <div className="relative w-full h-48 md:h-56 bg-white">
-                      <Image
-                        src={product.image || "/placeholder.svg"}
-                        alt={product.title}
-                        fill
-                        className="object-contain"
-                        sizes="(min-width:1024px) 25vw, (min-width:768px) 50vw, 100vw"
-                        priority
-                      />
+          {featuredProducts.map((product, i) => {
+            // compute a safe initial source
+            const initialSrc =
+              product.image?.startsWith("http")
+                ? product.image
+                : product.image?.startsWith("/")
+                ? product.image
+                : `/images/products/${String(product.title).toLowerCase().replace(/\s+/g, "-")}/cover.jpg`
+
+            const [imgSrc, setImgSrc] = React.useState<string>(initialSrc || "/images/placeholder-cover.jpg")
+
+            return (
+              <Card key={product.id} className="group hover:shadow-lg transition-shadow duration-300">
+                <CardHeader className="p-0">
+                  <div className="relative overflow-hidden rounded-t-lg">
+                    <Link href={`/products/${product.id}`} aria-label={`View ${product.title}`}>
+                      {/* Proper aspect ratio wrapper so <Image fill> can render */}
+                      <div className="relative w-full aspect-[3/4] bg-white">
+                        <Image
+                          src={imgSrc}
+                          alt={product.title}
+                          fill
+                          className="object-cover"
+                          sizes="(min-width:1280px) 280px, (min-width:1024px) 25vw, (min-width:768px) 33vw, 100vw"
+                          priority={i < 2}
+                          onError={() => setImgSrc("/images/placeholder-cover.jpg")}
+                        />
+                      </div>
+                    </Link>
+
+                    {product.bestseller && (
+                      <Badge className="absolute top-3 left-3 bg-gradient-to-r from-blue-600 to-cyan-600">
+                        Bestseller
+                      </Badge>
+                    )}
+
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="absolute top-3 right-3 bg-white/80 hover:bg-white"
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label="Add to favorites"
+                    >
+                      <Heart className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <Badge variant="secondary">{product.category}</Badge>
+                    <div className="flex items-center space-x-1">
+                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                      <span className="text-sm text-gray-600">{product.rating}</span>
+                      <span className="text-sm text-gray-400">({product.reviews})</span>
                     </div>
+                  </div>
+
+                  <Link
+                    href={`/products/${product.id}`}
+                    className="hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-sm"
+                  >
+                    <CardTitle className="text-lg mb-2 line-clamp-2">{product.title}</CardTitle>
                   </Link>
 
-                  {product.bestseller && (
-                    <Badge className="absolute top-3 left-3 bg-gradient-to-r from-blue-600 to-cyan-600">
-                      Bestseller
-                    </Badge>
-                  )}
+                  <p className="text-gray-600 text-sm mb-3 line-clamp-2">{product.description}</p>
 
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-lg font-bold text-gray-900">${product.price.toFixed(2)}</span>
+                      {product.originalPrice && product.originalPrice > product.price && (
+                        <span className="text-sm text-gray-500 line-through">
+                          ${product.originalPrice.toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center text-sm text-gray-500">
+                      <Download className="w-4 h-4 mr-1" />
+                      {product.downloads}
+                    </div>
+                  </div>
+                </CardContent>
+
+                <CardFooter className="p-4 pt-0">
                   <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    className="absolute top-3 right-3 bg-white/80 hover:bg-white"
-                    onClick={(e) => e.stopPropagation()}
-                    aria-label="Add to favorites"
+                    className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+                    asChild
                   >
-                    <Heart className="w-4 h-4" />
+                    <Link href={`/products/${product.id}`}>View</Link>
                   </Button>
-                </div>
-              </CardHeader>
-
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <Badge variant="secondary">{product.category}</Badge>
-                  <div className="flex items-center space-x-1">
-                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    <span className="text-sm text-gray-600">{product.rating}</span>
-                    <span className="text-sm text-gray-400">({product.reviews})</span>
-                  </div>
-                </div>
-
-                <Link
-                  href={`/products/${product.id}`}
-                  className="hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-sm"
-                >
-                  <CardTitle className="text-lg mb-2 line-clamp-2">{product.title}</CardTitle>
-                </Link>
-
-                <p className="text-gray-600 text-sm mb-3 line-clamp-2">{product.description}</p>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-lg font-bold text-gray-900">${product.price.toFixed(2)}</span>
-                    {product.originalPrice && product.originalPrice > product.price && (
-                      <span className="text-sm text-gray-500 line-through">
-                        ${product.originalPrice.toFixed(2)}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center text-sm text-gray-500">
-                    <Download className="w-4 h-4 mr-1" />
-                    {product.downloads}
-                  </div>
-                </div>
-              </CardContent>
-
-              <CardFooter className="p-4 pt-0">
-                <Button
-                  className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
-                  asChild
-                >
-                  <Link href={`/products/${product.id}`}>View</Link>
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
+                </CardFooter>
+              </Card>
+            )
+          })}
         </div>
 
         <div className="text-center">
