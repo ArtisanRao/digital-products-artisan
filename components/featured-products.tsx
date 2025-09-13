@@ -6,7 +6,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Badge } from "@/components/ui/badge"
 import { Star, Download, Heart } from "lucide-react"
 import Link from "next/link"
-import Image from "next/image"
+import CoverImage from "@/components/ui/cover-image"
 
 type FeaturedProduct = {
   id: number
@@ -20,7 +20,7 @@ type FeaturedProduct = {
   downloads: number
   category: string
   bestseller?: boolean
-  image?: string // computed from slug below; override if needed
+  image?: string // can override the computed cover path
 }
 
 const featuredProducts: FeaturedProduct[] = [
@@ -97,45 +97,26 @@ const featuredProducts: FeaturedProduct[] = [
 ]
 
 function ProductCard({ product, index }: { product: FeaturedProduct; index: number }) {
-  // Build preferred image paths from slug
-  const jpg = `/images/products/${product.slug}/cover.jpg`
-  const png = `/images/products/${product.slug}/cover.png`
-
-  const [src, setSrc] = React.useState<string>(product.image ?? jpg)
-  const [triedPng, setTriedPng] = React.useState(false)
-
-  const handleError = () => {
-    if (!triedPng && src === jpg) {
-      setTriedPng(true)
-      setSrc(png) // try PNG if JPG missing
-    } else {
-      setSrc("/images/placeholder-cover.jpg")
-    }
-  }
+  // Compute cover path from slug
+  const src = product.image ?? `/images/products/${product.slug}/cover.jpg`
 
   return (
     <Card className="group hover:shadow-lg transition-all duration-300">
       <CardHeader className="p-0">
         <div className="relative overflow-hidden rounded-t-lg">
           <Link href={`/products/${product.id}`} aria-label={`View ${product.title}`} className="block">
-            {/* Fixed-height frame; object-contain ensures no cropping. Adds hover scale + overlay */}
-            <div className="relative w-full h-60 md:h-64 bg-white p-2 overflow-hidden">
-              <Image
-                src={src}
-                alt={product.title}
-                fill
-                className="object-contain transition-transform duration-300 group-hover:scale-[1.03]"
-                sizes="(min-width:1280px) 280px, (min-width:1024px) 25vw, (min-width:768px) 33vw, 100vw"
-                priority={index < 2}
-                onError={handleError}
-                draggable={false}
-              />
-              {/* Subtle hover overlay + ring (doesn't affect layout) */}
-              <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                <div className="absolute inset-0 ring-1 ring-inset ring-blue-500/10 rounded-md" />
-                <div className="absolute inset-0 bg-gradient-to-t from-blue-50/25 to-transparent" />
-              </div>
-            </div>
+            {/* Perfectly fit cover (no crop) + tasteful hover overlay/scale */}
+            <CoverImage
+              src={src}
+              alt={product.title}
+              ratio="3/2"
+              fit="contain"
+              hover
+              paddingClass="p-2"
+              roundedClass="rounded-t-lg"
+              sizes="(min-width:1280px) 280px, (min-width:1024px) 25vw, (min-width:768px) 33vw, 100vw"
+              priority={index < 2}
+            />
           </Link>
 
           {product.bestseller && (

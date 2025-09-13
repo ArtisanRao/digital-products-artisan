@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
+import CoverImage from "@/components/ui/cover-image";
 
 const categories = [
   { name: "📚 eBooks",             slug: "ebooks",               image: "/images/ebooks-cover.jpg" },
@@ -36,24 +36,17 @@ export default function CategoriesPage() {
               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2
             "
           >
-            {/* Fixed-ratio wrapper; object-contain shows full cover with no crop */}
-            <div className="relative w-full aspect-[16/9] md:aspect-[3/2] overflow-hidden bg-white p-2">
-              <Image
-                src={category.image}
-                alt={category.name}
-                fill
-                sizes="(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw"
-                className="object-contain"
-                draggable={false}
-                priority={false}
-              />
-
-              {/* Subtle hover overlay + ring */}
-              <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                <div className="absolute inset-0 ring-1 ring-inset ring-blue-500/10 rounded-md" />
-                <div className="absolute inset-0 bg-gradient-to-t from-blue-50/30 to-transparent" />
-              </div>
-            </div>
+            {/* Perfectly-fit, hoverable cover (no crop) */}
+            <CoverImage
+              src={category.image}
+              alt={category.name}
+              ratio="16/9"
+              fit="contain"
+              paddingClass="p-2"
+              roundedClass="rounded-none"                         /* keep card’s outer rounding */
+              className="md:aspect-[3/2]"                         /* 16:9 → 3/2 on md+ for nicer balance */
+              sizes="(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw"
+            />
 
             <div className="p-4">
               <h2 className="text-xl font-semibold transition-colors group-hover:text-blue-600">
