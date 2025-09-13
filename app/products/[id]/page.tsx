@@ -12,7 +12,7 @@ export function generateStaticParams() {
   return products.map((p) => ({ id: String(p.id) }));
 }
 
-// Per-product SEO (params is a Promise in Next 15)
+// Per-product SEO (Next 15: params is a Promise)
 export async function generateMetadata({
   params,
 }: {
@@ -21,7 +21,10 @@ export async function generateMetadata({
   const { id } = await params;
   const product = products.find((p) => String(p.id) === id);
   if (!product) return {};
+
   const canonical = `/products/${id}`;
+  const absoluteImage = `https://digitalproductsartisan.com${product.image}`;
+
   return {
     metadataBase: new URL('https://digitalproductsartisan.com'),
     title: `${product.title} | Digital Products Artisan`,
@@ -30,8 +33,13 @@ export async function generateMetadata({
     openGraph: {
       title: `${product.title} | Digital Products Artisan`,
       url: `https://digitalproductsartisan.com${canonical}`,
-      type: 'product',
-      images: [{ url: `https://digitalproductsartisan.com${product.image}` }],
+      type: 'website', // ✅ 'product' is not allowed by Next.js types
+      images: [{ url: absoluteImage }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${product.title} | Digital Products Artisan`,
+      images: [absoluteImage],
     },
     robots: { index: true, follow: true },
   };
@@ -48,6 +56,7 @@ export default async function ProductPage({
 
   const canonicalAbs = `https://digitalproductsartisan.com/products/${id}`;
 
+  // ---- JSON-LD: Product ----
   const productLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -77,6 +86,7 @@ export default async function ProductPage({
     ],
   };
 
+  // ---- JSON-LD: Breadcrumbs ----
   const breadcrumbsLd = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
