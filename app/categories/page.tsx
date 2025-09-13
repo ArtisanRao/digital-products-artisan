@@ -28,10 +28,15 @@ export default function CategoriesPage() {
           <Link
             key={category.slug}
             href={`/categories/${category.slug}`}
-            className="block group border rounded-2xl overflow-hidden shadow hover:shadow-lg transition"
             aria-label={`Browse ${category.name}`}
+            className="
+              group block rounded-2xl border overflow-hidden bg-white
+              shadow transition-all duration-300
+              hover:-translate-y-1 hover:shadow-xl
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2
+            "
           >
-            {/* Fixed-ratio wrapper + padding so the whole cover fits with no crop */}
+            {/* Fixed-ratio wrapper; object-contain shows full cover with no crop */}
             <div className="relative w-full aspect-[16/9] md:aspect-[3/2] overflow-hidden bg-white p-2">
               <Image
                 src={category.image}
@@ -42,10 +47,16 @@ export default function CategoriesPage() {
                 draggable={false}
                 priority={false}
               />
+
+              {/* Subtle hover overlay + ring */}
+              <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                <div className="absolute inset-0 ring-1 ring-inset ring-blue-500/10 rounded-md" />
+                <div className="absolute inset-0 bg-gradient-to-t from-blue-50/30 to-transparent" />
+              </div>
             </div>
 
-            <div className="p-4 bg-white">
-              <h2 className="text-xl font-semibold group-hover:text-blue-600">
+            <div className="p-4">
+              <h2 className="text-xl font-semibold transition-colors group-hover:text-blue-600">
                 {category.name}
               </h2>
             </div>
