@@ -96,6 +96,114 @@ const featuredProducts: FeaturedProduct[] = [
   },
 ]
 
+function ProductCard({ product, index }: { product: FeaturedProduct; index: number }) {
+  // Build preferred image paths from slug
+  const jpg = `/images/products/${product.slug}/cover.jpg`
+  const png = `/images/products/${product.slug}/cover.png`
+
+  const [src, setSrc] = React.useState<string>(product.image ?? jpg)
+  const [triedPng, setTriedPng] = React.useState(false)
+
+  const handleError = () => {
+    if (!triedPng && src === jpg) {
+      setTriedPng(true)
+      setSrc(png) // try PNG if JPG missing
+    } else {
+      setSrc("/images/placeholder-cover.jpg")
+    }
+  }
+
+  return (
+    <Card className="group hover:shadow-lg transition-all duration-300">
+      <CardHeader className="p-0">
+        <div className="relative overflow-hidden rounded-t-lg">
+          <Link href={`/products/${product.id}`} aria-label={`View ${product.title}`} className="block">
+            {/* Fixed-height frame; object-contain ensures no cropping. Adds hover scale + overlay */}
+            <div className="relative w-full h-60 md:h-64 bg-white p-2 overflow-hidden">
+              <Image
+                src={src}
+                alt={product.title}
+                fill
+                className="object-contain transition-transform duration-300 group-hover:scale-[1.03]"
+                sizes="(min-width:1280px) 280px, (min-width:1024px) 25vw, (min-width:768px) 33vw, 100vw"
+                priority={index < 2}
+                onError={handleError}
+                draggable={false}
+              />
+              {/* Subtle hover overlay + ring (doesn't affect layout) */}
+              <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                <div className="absolute inset-0 ring-1 ring-inset ring-blue-500/10 rounded-md" />
+                <div className="absolute inset-0 bg-gradient-to-t from-blue-50/25 to-transparent" />
+              </div>
+            </div>
+          </Link>
+
+          {product.bestseller && (
+            <Badge className="absolute top-3 left-3 bg-gradient-to-r from-blue-600 to-cyan-600">
+              Bestseller
+            </Badge>
+          )}
+
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="absolute top-3 right-3 bg-white/80 hover:bg-white"
+            onClick={(e) => e.stopPropagation()}
+            aria-label="Add to favorites"
+          >
+            <Heart className="w-4 h-4" />
+          </Button>
+        </div>
+      </CardHeader>
+
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between mb-2">
+          <Badge variant="secondary">{product.category}</Badge>
+          <div className="flex items-center space-x-1">
+            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+            <span className="text-sm text-gray-600">{product.rating}</span>
+            <span className="text-sm text-gray-400">({product.reviews})</span>
+          </div>
+        </div>
+
+        <Link
+          href={`/products/${product.id}`}
+          className="hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-sm"
+        >
+          <CardTitle className="text-lg mb-2 line-clamp-2">{product.title}</CardTitle>
+        </Link>
+
+        <p className="text-gray-600 text-sm mb-3 line-clamp-2">{product.description}</p>
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <span className="text-lg font-bold text-gray-900">${product.price.toFixed(2)}</span>
+            {product.originalPrice && product.originalPrice > product.price && (
+              <span className="text-sm text-gray-500 line-through">
+                ${product.originalPrice.toFixed(2)}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center text-sm text-gray-500">
+            <Download className="w-4 h-4 mr-1" />
+            {product.downloads}
+          </div>
+        </div>
+      </CardContent>
+
+      <CardFooter className="p-4 pt-0">
+        <Button
+          className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+          asChild
+        >
+          <Link href={`/products/${product.id}`}>View</Link>
+        </Button>
+      </CardFooter>
+    </Card>
+  )
+}
+
 export default function FeaturedProducts() {
   return (
     <section className="py-16 bg-white">
@@ -110,107 +218,9 @@ export default function FeaturedProducts() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          {featuredProducts.map((product, i) => {
-            // Use folder pattern: /images/products/<slug>/cover.jpg
-            const jpg = `/images/products/${product.slug}/cover.jpg`
-            const png = `/images/products/${product.slug}/cover.png`
-
-            const [src, setSrc] = React.useState<string>(product.image ?? jpg)
-            const [triedPng, setTriedPng] = React.useState(false)
-
-            const handleError = () => {
-              if (!triedPng && src === jpg) {
-                setTriedPng(true)
-                setSrc(png) // try PNG if JPG missing
-              } else {
-                setSrc("/images/placeholder-cover.jpg")
-              }
-            }
-
-            return (
-              <Card key={product.id} className="group hover:shadow-lg transition-shadow duration-300">
-                <CardHeader className="p-0">
-                  <div className="relative overflow-hidden rounded-t-lg">
-                    <Link href={`/products/${product.id}`} aria-label={`View ${product.title}`}>
-                      {/* Fixed-height, contained cover (no cropping) */}
-                      <div className="relative w-full h-60 md:h-64 bg-gray-50">
-                        <Image
-                          src={src}
-                          alt={product.title}
-                          fill
-                          className="object-contain"
-                          sizes="(min-width:1280px) 280px, (min-width:1024px) 25vw, (min-width:768px) 33vw, 100vw"
-                          priority={i < 2}
-                          onError={handleError}
-                        />
-                      </div>
-                    </Link>
-
-                    {product.bestseller && (
-                      <Badge className="absolute top-3 left-3 bg-gradient-to-r from-blue-600 to-cyan-600">
-                        Bestseller
-                      </Badge>
-                    )}
-
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      className="absolute top-3 right-3 bg-white/80 hover:bg-white"
-                      onClick={(e) => e.stopPropagation()}
-                      aria-label="Add to favorites"
-                    >
-                      <Heart className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </CardHeader>
-
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <Badge variant="secondary">{product.category}</Badge>
-                    <div className="flex items-center space-x-1">
-                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      <span className="text-sm text-gray-600">{product.rating}</span>
-                      <span className="text-sm text-gray-400">({product.reviews})</span>
-                    </div>
-                  </div>
-
-                  <Link
-                    href={`/products/${product.id}`}
-                    className="hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-sm"
-                  >
-                    <CardTitle className="text-lg mb-2 line-clamp-2">{product.title}</CardTitle>
-                  </Link>
-
-                  <p className="text-gray-600 text-sm mb-3 line-clamp-2">{product.description}</p>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-lg font-bold text-gray-900">${product.price.toFixed(2)}</span>
-                      {product.originalPrice && product.originalPrice > product.price && (
-                        <span className="text-sm text-gray-500 line-through">
-                          ${product.originalPrice.toFixed(2)}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center text-sm text-gray-500">
-                      <Download className="w-4 h-4 mr-1" />
-                      {product.downloads}
-                    </div>
-                  </div>
-                </CardContent>
-
-                <CardFooter className="p-4 pt-0">
-                  <Button
-                    className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
-                    asChild
-                  >
-                    <Link href={`/products/${product.id}`}>View</Link>
-                  </Button>
-                </CardFooter>
-              </Card>
-            )
-          })}
+          {featuredProducts.map((product, i) => (
+            <ProductCard key={product.id} product={product} index={i} />
+          ))}
         </div>
 
         <div className="text-center">
