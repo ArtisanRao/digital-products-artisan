@@ -14,7 +14,7 @@ const csp = [
   "object-src 'none'",
   "worker-src 'self'",
   "font-src 'self' data: https:",
-  "img-src 'self' data: blob: https:",
+  "img-src 'self' data: blob: https:", // CSP already allows HTTPS images
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://js.stripe.com",
   "style-src 'self' 'unsafe-inline'",
   "connect-src 'self' https://www.google-analytics.com https://vitals.vercel-insights.com https://api.stripe.com https://checkout.stripe.com",
@@ -74,6 +74,19 @@ const nextConfig = withPWA({
 
   experimental: {
     optimizeCss: true,
+  },
+
+  // ✅ Allow product cover images from these remote hosts
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    remotePatterns: [
+      { protocol: 'https', hostname: 'digitalproductsartisan.com' },
+      { protocol: 'https', hostname: 'www.digitalproductsartisan.com' },
+      // Add any other sources you use for product images:
+      { protocol: 'https', hostname: 'res.cloudinary.com' },
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'i.imgur.com' },
+    ],
   },
 
   async headers() {
