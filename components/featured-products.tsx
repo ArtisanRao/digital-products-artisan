@@ -8,9 +8,25 @@ import { Star, Download, Heart } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 
-const featuredProducts = [
+type FeaturedProduct = {
+  id: number
+  slug: string
+  title: string
+  description: string
+  price: number
+  originalPrice: number
+  rating: number
+  reviews: number
+  downloads: number
+  category: string
+  bestseller?: boolean
+  image?: string // computed from slug below; override if needed
+}
+
+const featuredProducts: FeaturedProduct[] = [
   {
     id: 1,
+    slug: "buy-this-complete-shop",
     title:
       "Buy This Complete Shop - PLR MRR Digital Product: Resell Ebooks, Courses, Prompts & More.",
     description:
@@ -21,11 +37,11 @@ const featuredProducts = [
     reviews: 210,
     downloads: 1500,
     category: "Complete Shop Packages",
-    image: "/images/products/buy-this-complete-shop-cover.jpg",
     bestseller: true,
   },
   {
     id: 2,
+    slug: "the-art-of-giving-no-fucks",
     title:
       "Self-Help Ebook: The Art of Giving No F*cks - Minimalist Mindset (Digital Download).",
     description:
@@ -36,11 +52,11 @@ const featuredProducts = [
     reviews: 112,
     downloads: 980,
     category: "Self-Help & How-To",
-    image: "/images/products/the-art-of-giving-no-fucks-cover.jpg",
     bestseller: true,
   },
   {
     id: 3,
+    slug: "digital-wealth-ultimate-guide",
     title: "Digital Wealth – Ultimate Guide - This Order Includes A Free Extra Bonus.",
     description:
       "Step-by-step strategies for building digital income streams. Includes a surprise bonus resource.",
@@ -50,11 +66,10 @@ const featuredProducts = [
     reviews: 95,
     downloads: 820,
     category: "Ebooks (Miscellaneous)",
-    image: "/images/products/digital-wealth-cover.jpg",
-    bestseller: false,
   },
   {
     id: 4,
+    slug: "chatgpt-side-hustles",
     title:
       "ChatGPT Side Hustles eBook: 12 AI Income Streams - Beginner's PDF Guide (Digital Download).",
     description:
@@ -65,11 +80,10 @@ const featuredProducts = [
     reviews: 78,
     downloads: 640,
     category: "AI & ChatGPT Guides",
-    image: "/images/products/chatgpt-side-hustles-cover.jpg",
-    bestseller: false,
   },
   {
     id: 5,
+    slug: "make-money-as-you-sleep",
     title: "Passive Income Ebook: Financial Freedom Guide (Digital Download)",
     description:
       "Learn foundational passive income strategies and systems to build long-term financial freedom.",
@@ -79,8 +93,6 @@ const featuredProducts = [
     reviews: 66,
     downloads: 590,
     category: "Passive Income & Side Hustles",
-    image: "/images/products/make-money-as-you-sleep-cover.jpg",
-    bestseller: false,
   },
 ]
 
@@ -99,31 +111,37 @@ export default function FeaturedProducts() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           {featuredProducts.map((product, i) => {
-            // compute a safe initial source
-            const initialSrc =
-              product.image?.startsWith("http")
-                ? product.image
-                : product.image?.startsWith("/")
-                ? product.image
-                : `/images/products/${String(product.title).toLowerCase().replace(/\s+/g, "-")}/cover.jpg`
+            // Use folder pattern: /images/products/<slug>/cover.jpg
+            const jpg = `/images/products/${product.slug}/cover.jpg`
+            const png = `/images/products/${product.slug}/cover.png`
 
-            const [imgSrc, setImgSrc] = React.useState<string>(initialSrc || "/images/placeholder-cover.jpg")
+            const [src, setSrc] = React.useState<string>(product.image ?? jpg)
+            const [triedPng, setTriedPng] = React.useState(false)
+
+            const handleError = () => {
+              if (!triedPng && src === jpg) {
+                setTriedPng(true)
+                setSrc(png) // try PNG if JPG missing
+              } else {
+                setSrc("/images/placeholder-cover.jpg")
+              }
+            }
 
             return (
               <Card key={product.id} className="group hover:shadow-lg transition-shadow duration-300">
                 <CardHeader className="p-0">
                   <div className="relative overflow-hidden rounded-t-lg">
                     <Link href={`/products/${product.id}`} aria-label={`View ${product.title}`}>
-                      {/* Proper aspect ratio wrapper so <Image fill> can render */}
-                      <div className="relative w-full aspect-[3/4] bg-white">
+                      {/* Fixed-height, contained cover (no cropping) */}
+                      <div className="relative w-full h-60 md:h-64 bg-gray-50">
                         <Image
-                          src={imgSrc}
+                          src={src}
                           alt={product.title}
                           fill
-                          className="object-cover"
+                          className="object-contain"
                           sizes="(min-width:1280px) 280px, (min-width:1024px) 25vw, (min-width:768px) 33vw, 100vw"
                           priority={i < 2}
-                          onError={() => setImgSrc("/images/placeholder-cover.jpg")}
+                          onError={handleError}
                         />
                       </div>
                     </Link>
