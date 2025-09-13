@@ -5,22 +5,30 @@ import FeaturedProducts from "@/components/featured-products";
 type CatInfo = { title: string; description: string };
 
 const CATEGORIES: Record<string, CatInfo> = {
-  "ebooks-guides": { title: "Ebooks & Guides", description: "Comprehensive guides and educational content." },
-  "templates-graphics": { title: "Templates & Graphics", description: "Ready-to-use design templates and graphics." },
-  "ai-prompts": { title: "AI Prompts", description: "Curated prompts for AI tools and platforms." },
-  "planners-organizers": { title: "Planners & Organizers", description: "Digital planners and productivity tools." },
-  "code-development": { title: "Code & Development", description: "Scripts, plugins, and development resources." },
-  "photography-media": { title: "Photography & Media", description: "Stock photos, presets, and media assets." },
+  // New targets you asked for
+  "ebooks":              { title: "eBooks",              description: "Digital books, guides, and educational content." },
+  "templates":           { title: "Templates",           description: "Design templates and graphics ready to use." },
+  "marketing-tools":     { title: "Marketing Tools",     description: "Prompts, swipe files, and growth resources for marketing." },
+  "printable-planners":  { title: "Printable Planners",  description: "Digital planners, journals, and productivity tools." },
+  "social-media-kits":   { title: "Social Media Kits",   description: "Packaged posts, graphics, and assets for social channels." },
+  "photography-prints":  { title: "Photography Prints",  description: "High-quality photo prints, presets, and media assets." },
+
+  // Old slugs (keep working links)
+  "ebooks-guides":       { title: "eBooks",              description: "Digital books, guides, and educational content." },
+  "templates-graphics":  { title: "Templates",           description: "Design templates and graphics ready to use." },
+  "ai-prompts":          { title: "AI Prompts",          description: "Curated prompts for AI tools and platforms." },
+  "planners-organizers": { title: "Printable Planners",  description: "Digital planners, journals, and productivity tools." },
+  "code-development":    { title: "Social Media Kits",   description: "Packaged posts, graphics, and assets for social channels." },
+  "photography-media":   { title: "Photography Prints",  description: "High-quality photo prints, presets, and media assets." },
 };
 
-// Pre-render these category routes at build time
+// Pre-render everything we know
 export function generateStaticParams() {
   return Object.keys(CATEGORIES).map((slug) => ({ slug }));
 }
 
-export async function generateMetadata(
-  { params }: { params: Promise<{ slug: string }> }
-) {
+// Next 15: params is a Promise
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const cat = CATEGORIES[slug];
   const title = cat ? `${cat.title} | Digital Products Artisan` : "Digital Products | Digital Products Artisan";
@@ -33,9 +41,7 @@ export async function generateMetadata(
   };
 }
 
-export default async function CategoryPage(
-  { params }: { params: Promise<{ slug: string }> }
-) {
+export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const cat = CATEGORIES[slug];
 
@@ -57,10 +63,8 @@ export default async function CategoryPage(
     <main className="container mx-auto px-4 py-16">
       <h1 className="text-3xl md:text-4xl font-bold mb-2">{cat.title}</h1>
       <p className="text-gray-600 mb-8">{cat.description}</p>
-
       {/* For now this shows best sellers. Later we can filter by slug. */}
       <FeaturedProducts />
-
       <div className="mt-8">
         <Link href="/products" className="inline-block underline">Browse all products →</Link>
       </div>
