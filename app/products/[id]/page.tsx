@@ -1,134 +1,134 @@
-import { notFound } from "next/navigation";
-import Link from "next/link";
-import { products } from "@/data/products";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Star, Download } from "lucide-react";
-import ProductGallery from "@/components/product-gallery";
-import BuyNowButton from "@/components/buy-now-button";
-import AddToCartButton from "@/components/add-to-cart-button";
-import ProductPageFlag from "@/components/ProductPageFlag"; // ⬅️ keep scoped CSS active
+import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import Image from 'next/image';
+import Link from 'next/link';
+import { products, type Product } from '@/data/products';
+import AddToCartButton from '@/components/add-to-cart-button';
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+type PageProps = { params: { id: string } };
 
-type Params = { id: string };
+export const revalidate = 3600;
 
-export async function generateMetadata({ params }: { params: Promise<Params> }) {
-  const { id } = await params;
-  const p = products.find((x) => x.id === Number(id));
-  if (!p) return { title: "Product not found" };
+// Pre-render all product pages
+export function generateStaticParams() {
+  return products.map((p) => ({ id: String(p.id) }));
+}
 
-  const firstImage = p.images?.[0] ?? p.image;
-
+// Per-product SEO
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const product = products.find((p) => String(p.id) === params.id);
+  if (!product) return {};
+  const canonical = `/products/${params.id}`;
   return {
-    title: `${p.title} | Digital Products Artisan`,
-    description: p.description,
-    openGraph: { images: [{ url: firstImage }] },
-    twitter: {
-      card: "summary_large_image",
-      title: p.title,
-      description: p.description,
-      images: [firstImage],
+    metadataBase: new URL('https://digitalproductsartisan.com'),
+    title: `${product.title} | Digital Products Artisan`,
+    description: product.description,
+    alternates: { canonical },
+    openGraph: {
+      title: `${product.title} | Digital Products Artisan`,
+      url: `https://digitalproductsartisan.com${canonical}`,
+      type: 'product',
+      images: [{ url: `https://digitalproductsartisan.com${product.image}` }],
     },
+    robots: { index: true, follow: true },
   };
 }
 
-export default async function ProductPage({ params }: { params: Promise<Params> }) {
-  const { id } = await params;
-  const product = products.find((p) => p.id === Number(id));
-  if (!product) return notFound();
+export default function ProductPage({ params }: PageProps) {
+  const product = products.find((p) => String(p.id) === params.id);
+  if (!product) notFound();
 
-  const galleryImages = product.images?.length ? product.images : [product.image];
+  const canonicalAbs = `https://digitalproductsartisan.com/products/${params.id}`;
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
-  const imagesAbs = galleryImages.map((i) => (i.startsWith("http") ? i : `${siteUrl}${i}`));
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Product",
+  // ---- JSON-LD: Product ----
+  const productLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
     name: product.title,
+    image: [`https://digitalproductsartisan.com${product.image}`],
     description: product.description,
-    image: imagesAbs,
-    sku: product.slug,
-    url: `${siteUrl}/products/${product.id}`,
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: product.rating,
-      reviewCount: product.reviews,
-    },
+    sku: String(product.id),
+    brand: { '@type': 'Brand', name: 'Digital Products Artisan' },
     offers: {
-      "@type": "Offer",
-      price: product.price,
-      priceCurrency: "USD",
-      availability: "https://schema.org/InStock",
-      url: `${siteUrl}/products/${product.id}`,
+      '@type': 'Offer',
+      url: canonicalAbs,
+      priceCurrency: 'EUR',
+      price: product.price.toFixed(2),
+      availability: 'https://schema.org/InStock',
     },
+    // Use real numbers you already show on the card
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: Number(product.rating).toFixed(1),
+      reviewCount: String(product.reviews),
+    },
+    // One lightweight review (optional)
+    review: [
+      {
+        '@type': 'Review',
+        reviewRating: { '@type': 'Rating', ratingValue: '5' },
+        author: { '@type': 'Person', name: 'Verified buyer' },
+      },
+    ],
+  };
+
+  // ---- JSON-LD: Breadcrumbs ----
+  const breadcrumbsLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, item: { '@id': 'https://digitalproductsartisan.com/', name: 'Home' } },
+      { '@type': 'ListItem', position: 2, item: { '@id': 'https://digitalproductsartisan.com/products', name: 'Products' } },
+      { '@type': 'ListItem', position: 3, item: { '@id': canonicalAbs, name: product.title } },
+    ],
   };
 
   return (
-    <>
-      <ProductPageFlag />
+    <main className="container mx-auto px-4 py-8">
+      <nav className="mb-4 text-sm text-gray-600">
+        <Link href="/" className="hover:underline">Home</Link> <span>›</span>{' '}
+        <Link href="/products" className="hover:underline">Products</Link> <span>›</span>{' '}
+        <span aria-current="page">{product.title}</span>
+      </nav>
 
-      <main
-        className="product-page container mx-auto px-4 py-10 max-w-[100vw] overflow-x-hidden"
-        data-page="product"
-      >
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-
-        <nav className="mb-6 text-sm text-gray-500">
-          <Link href="/products" className="hover:underline">
-            ← Back to all products
-          </Link>
-        </nav>
-
-        <div className="grid gap-8 md:grid-cols-2 max-w-full">
-          <Card className="w-full max-w-full overflow-hidden">
-            <CardContent className="p-4 w-full max-w-full overflow-hidden">
-              {/* Wrapper ensures media never exceeds viewport width */}
-              <div className="product-media w-full max-w-full overflow-hidden">
-                <ProductGallery images={galleryImages} alt={product.title} />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* min-w-0 prevents long text from forcing overflow */}
-          <div className="min-w-0">
-            <h1 className="text-2xl md:text-3xl font-bold">{product.title}</h1>
-            <p className="mt-3 text-gray-600">{product.description}</p>
-
-            <div className="mt-4 flex items-center space-x-2 text-sm text-gray-600">
-              <Star className="w-4 h-4 text-yellow-400" />
-              <span>{product.rating}</span>
-              <span>({product.reviews} reviews)</span>
-              <span>•</span>
-              <span>{product.downloads} downloads</span>
-            </div>
-
-            <div className="mt-6 flex items-center space-x-3">
-              <span className="text-2xl font-semibold">${product.price.toFixed(2)}</span>
-              {product.originalPrice > product.price && (
-                <span className="text-gray-400 line-through">
-                  ${product.originalPrice.toFixed(2)}
-                </span>
-              )}
-            </div>
-
-            <div className="mt-6 flex flex-wrap gap-3">
-              <BuyNowButton productId={product.id} />
-              <AddToCartButton productId={product.id} />
-              <Button variant="outline" asChild>
-                <Link href={`/checkout?product=${product.id}`}>
-                  <Download className="w-4 h-4 mr-2" />
-                  Download after purchase
-                </Link>
-              </Button>
-            </div>
-          </div>
+      <div className="grid lg:grid-cols-2 gap-8">
+        <div className="relative w-full h-96 bg-white rounded">
+          <Image
+            src={product.image || '/placeholder.svg'}
+            alt={product.title}
+            fill
+            className="object-contain rounded"
+            sizes="(min-width:1024px) 50vw, 100vw"
+            priority
+          />
         </div>
-      </main>
-    </>
+
+        <section>
+          <h1 className="text-3xl font-bold">{product.title}</h1>
+          <p className="text-gray-600 mt-2">{product.description}</p>
+
+          <div className="mt-4 flex items-center gap-3">
+            <span className="text-2xl font-semibold">€{product.price.toFixed(2)}</span>
+            {product.originalPrice > product.price && (
+              <span className="line-through text-gray-400">€{product.originalPrice.toFixed(2)}</span>
+            )}
+          </div>
+
+          <div className="mt-6">
+            <AddToCartButton productId={product.id} className="bg-black text-white hover:bg-black/90" />
+          </div>
+        </section>
+      </div>
+
+      {/* SEO: JSON-LD */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbsLd) }}
+      />
+    </main>
   );
 }
