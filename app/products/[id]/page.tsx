@@ -2,10 +2,8 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { products, type Product } from '@/data/products';
+import { products } from '@/data/products';
 import AddToCartButton from '@/components/add-to-cart-button';
-
-type PageProps = { params: { id: string } };
 
 export const revalidate = 3600;
 
@@ -14,11 +12,16 @@ export function generateStaticParams() {
   return products.map((p) => ({ id: String(p.id) }));
 }
 
-// Per-product SEO
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const product = products.find((p) => String(p.id) === params.id);
+// Per-product SEO (params is a Promise in Next 15)
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const product = products.find((p) => String(p.id) === id);
   if (!product) return {};
-  const canonical = `/products/${params.id}`;
+  const canonical = `/products/${id}`;
   return {
     metadataBase: new URL('https://digitalproductsartisan.com'),
     title: `${product.title} | Digital Products Artisan`,
@@ -34,13 +37,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default function ProductPage({ params }: PageProps) {
-  const product = products.find((p) => String(p.id) === params.id);
+export default async function ProductPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const product = products.find((p) => String(p.id) === id);
   if (!product) notFound();
 
-  const canonicalAbs = `https://digitalproductsartisan.com/products/${params.id}`;
+  const canonicalAbs = `https://digitalproductsartisan.com/products/${id}`;
 
-  // ---- JSON-LD: Product ----
   const productLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -56,13 +63,11 @@ export default function ProductPage({ params }: PageProps) {
       price: product.price.toFixed(2),
       availability: 'https://schema.org/InStock',
     },
-    // Use real numbers you already show on the card
     aggregateRating: {
       '@type': 'AggregateRating',
       ratingValue: Number(product.rating).toFixed(1),
       reviewCount: String(product.reviews),
     },
-    // One lightweight review (optional)
     review: [
       {
         '@type': 'Review',
@@ -72,7 +77,6 @@ export default function ProductPage({ params }: PageProps) {
     ],
   };
 
-  // ---- JSON-LD: Breadcrumbs ----
   const breadcrumbsLd = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -121,14 +125,8 @@ export default function ProductPage({ params }: PageProps) {
       </div>
 
       {/* SEO: JSON-LD */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(productLd) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbsLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbsLd) }} />
     </main>
   );
 }
