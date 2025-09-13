@@ -8,8 +8,8 @@ export default function HeroSection() {
       className="
         relative 
         bg-gradient-to-br from-blue-50 via-white to-blue-100/50 
-        pt-0   /* Removed extra top padding */
-        -mt-px /* Seamless connection with header */
+        pt-0
+        -mt-px
         pb-12 md:pb-16 
         overflow-hidden
       "
@@ -65,6 +65,7 @@ export default function HeroSection() {
             </Button>
           </div>
 
+          {/* Badges */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             <div className="text-center group">
               <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl group-hover:shadow-2xl group-hover:scale-110 transition-all duration-300">
@@ -74,7 +75,15 @@ export default function HeroSection() {
               <p className="text-gray-600 leading-relaxed">
                 Get your products immediately after purchase with secure, lifetime access
               </p>
+              <Link
+                href="/faq#delivery"
+                className="mt-2 inline-block text-sm underline underline-offset-4"
+                aria-label="Learn more about instant downloads and delivery"
+              >
+                Learn more →
+              </Link>
             </div>
+
             <div className="text-center group">
               <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl group-hover:shadow-2xl group-hover:scale-110 transition-all duration-300">
                 <Zap className="w-8 h-8 text-white" />
@@ -83,13 +92,30 @@ export default function HeroSection() {
               <p className="text-gray-600 leading-relaxed">
                 Professional quality resources crafted by industry experts
               </p>
+              <Link
+                href="/help#quality"
+                className="mt-2 inline-block text-sm underline underline-offset-4"
+                aria-label="Learn more about our quality standards"
+              >
+                Learn more →
+              </Link>
             </div>
+
             <div className="text-center group">
               <div className="w-16 h-16 bg-gradient-to-br from-blue-700 to-blue-800 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl group-hover:shadow-2xl group-hover:scale-110 transition-all duration-300">
                 <Sparkles className="w-8 h-8 text-white" />
               </div>
               <h3 className="font-bold text-xl text-gray-900 mb-2">Always Ready</h3>
-              <p className="text-gray-600 leading-relaxed">Available 24/7 when inspiration strikes, wherever you are</p>
+              <p className="text-gray-600 leading-relaxed">
+                Available 24/7 when inspiration strikes, wherever you are
+              </p>
+              <Link
+                href="/help#access"
+                className="mt-2 inline-block text-sm underline underline-offset-4"
+                aria-label="Learn more about access and support"
+              >
+                Learn more →
+              </Link>
             </div>
           </div>
         </div>
