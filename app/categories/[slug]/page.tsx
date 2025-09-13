@@ -63,8 +63,10 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     <main className="container mx-auto px-4 py-16">
       <h1 className="text-3xl md:text-4xl font-bold mb-2">{cat.title}</h1>
       <p className="text-gray-600 mb-8">{cat.description}</p>
+
       {/* For now this shows best sellers. Later we can filter by slug. */}
       <FeaturedProducts />
+
       <div className="mt-8">
         <Link href="/products" className="inline-block underline">Browse all products →</Link>
       </div>
