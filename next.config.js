@@ -1,4 +1,4 @@
-﻿// next.config.js
+// next.config.js
 
 const withPWA = require("next-pwa")({
   dest: "public",
@@ -12,17 +12,12 @@ const csp = [
   "default-src 'self'",
   "base-uri 'self'",
   "object-src 'none'",
-  // allow web workers & service worker
   "worker-src 'self' blob:",
   "font-src 'self' data: https:",
   "img-src 'self' data: blob: https:",
-  // ✅ allow Snipcart + keep GA/Stripe
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://js.stripe.com https://cdn.snipcart.com https://app.snipcart.com",
-  // ✅ Snipcart CSS
   "style-src 'self' 'unsafe-inline' https://cdn.snipcart.com",
-  // ✅ Snipcart API & events
-  "connect-src 'self' https://www.google-analytics.com https://vitals.vercel-insights.com https://api.stripe.com https://checkout.stripe.com https://app.snipcart.com https://cdn.snipcart.com",
-  // ✅ Snipcart embeds an app frame
+  "connect-src 'self' https://www.google-analytics.com https://vitals.vercel-insights.com https://api.stripe.com https://checkout.stripe.com https://cdn.snipcart.com https://app.snipcart.com",
   "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com https://app.snipcart.com",
 ].join("; ");
 
@@ -39,31 +34,22 @@ const securityHeaders = [
 
 /** Non-HTML assets we never want indexed */
 const assetNoIndexHeaders = [
-  // Web App Manifest (both common paths)
-  {
-    source: "/manifest.json",
-    headers: [
-      { key: "Content-Type", value: "application/manifest+json" },
-      { key: "X-Robots-Tag", value: "noindex, nofollow" },
-      { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
-    ],
-  },
-  {
-    source: "/site.webmanifest",
-    headers: [
-      { key: "Content-Type", value: "application/manifest+json" },
-      { key: "X-Robots-Tag", value: "noindex, nofollow" },
-      { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
-    ],
-  },
-  // Icons / PWA runtime files
+  { source: "/manifest.json", headers: [
+    { key: "Content-Type", value: "application/manifest+json" },
+    { key: "X-Robots-Tag", value: "noindex, nofollow" },
+    { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
+  ]},
+  { source: "/site.webmanifest", headers: [
+    { key: "Content-Type", value: "application/manifest+json" },
+    { key: "X-Robots-Tag", value: "noindex, nofollow" },
+    { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
+  ]},
   { source: "/favicon.ico", headers: [{ key: "X-Robots-Tag", value: "noindex" }] },
   { source: "/apple-touch-icon.png", headers: [{ key: "X-Robots-Tag", value: "noindex" }] },
   { source: "/sw.js", headers: [{ key: "X-Robots-Tag", value: "noindex" }, { key: "Cache-Control", value: "no-cache" }] },
   { source: "/workbox-:hash.js", headers: [{ key: "X-Robots-Tag", value: "noindex" }] },
   { source: "/fallback-:hash.js", headers: [{ key: "X-Robots-Tag", value: "noindex" }] },
 
-  // Pages that should not be indexed
   { source: "/api/:path*", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },
   { source: "/cart", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },
   { source: "/checkout", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },
@@ -79,7 +65,6 @@ const nextConfig = withPWA({
     optimizeCss: true,
   },
 
-  // ✅ Allow product cover images from these remote hosts
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [
@@ -93,31 +78,25 @@ const nextConfig = withPWA({
 
   async headers() {
     return [
-      // 1) Explicit noindex for assets + non-indexable routes
       ...assetNoIndexHeaders,
-      // 2) Global security headers for everything
       { source: "/(.*)", headers: securityHeaders },
     ];
   },
 
   async redirects() {
     return [
-      // Helpful redirects
       { source: "/help-center", destination: "/help", permanent: true },
       { source: "/contact-us", destination: "/contact", permanent: true },
 
-      // ✅ Canonicalize "best sellers" to the single indexable URL
       { source: "/bestsellers", destination: "/products/best-sellers", permanent: true },
       { source: "/bestsellers/", destination: "/products/best-sellers", permanent: true },
       { source: "/best-sellers", destination: "/products/best-sellers", permanent: true },
       { source: "/best-sellers/", destination: "/products/best-sellers", permanent: true },
       { source: "/products/bestsellers", destination: "/products/best-sellers", permanent: true },
 
-      // ✅ Canonicalize "products" (remove trailing slash & legacy alias)
       { source: "/products/", destination: "/products", permanent: true },
       { source: "/shop", destination: "/products", permanent: true },
 
-      // ✅ Legacy category path → canonical categories path
       { source: "/category/:slug", destination: "/categories/:slug", permanent: true },
       { source: "/category/:slug/", destination: "/categories/:slug", permanent: true },
     ];
