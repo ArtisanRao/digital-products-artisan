@@ -8,12 +8,14 @@ import { CartProvider } from "@/contexts/cart-context";
 import { AuthProvider } from "@/contexts/auth-context";
 import { Toaster } from "@/components/ui/toaster";
 import LiveChat from "@/components/live-chat";
-import AutoCurrency from "@/components/auto-currency"; // ⬅️ NEW
-// import CurrencyPicker from "@/components/currency-picker"; // (optional) keep hidden if you want
+import AutoCurrency from "@/components/auto-currency";
+import Script from "next/script";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const snipcartKey = process.env.NEXT_PUBLIC_SNIPCART_KEY;
+
   return (
     <html lang="en">
       <head>
@@ -65,25 +67,51 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             }),
           }}
         />
+
+        {/* --- Snipcart v3: CSS + preconnect --- */}
+        <link rel="preconnect" href="https://app.snipcart.com" />
+        <link rel="preconnect" href="https://cdn.snipcart.com" />
+        <link
+          rel="stylesheet"
+          href="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.css"
+        />
       </head>
 
       <body className={inter.className}>
         <AuthProvider>
           <CartProvider>
-            {/* Auto-detect & store currency, no UI */}
+            {/* Auto-detect & store currency (EUR by default in Snipcart container below) */}
             <AutoCurrency />
 
-            {/* If you still want a manual override, render the picker but keep it hidden:
-            <div className="hidden">
-              <CurrencyPicker />
-            </div>
-            */}
-
+            {/* Site chrome */}
             <Header />
             {children}
             <Footer />
             <LiveChat />
             <Toaster />
+
+            {/* --- Snipcart v3: Script + Container --- */}
+            {/* Load after hydration so buttons become interactive */}
+            <Script
+              src="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.js"
+              strategy="afterInteractive"
+            />
+            {/* Hidden container enables the cart/checkout UI.
+                Currency set to EUR; Snipcart will still work with other currencies
+                if you switch it in code later. */}
+            <div
+              hidden
+              id="snipcart"
+              data-api-key={snipcartKey}
+              data-config-modal-style="side"
+              data-currency="EUR"
+            />
+
+            {/* (Optional) If you want to start the cart open for debugging:
+                <Script id="open-cart" strategy="afterInteractive">
+                  {`document.addEventListener('snipcart.ready', () => Snipcart.api.theme.cart.open())`}
+                </Script>
+            */}
           </CartProvider>
         </AuthProvider>
       </body>
