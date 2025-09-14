@@ -86,26 +86,26 @@ export default function TemplatesPage() {
       </Head>
 
       <main className="max-w-7xl mx-auto px-4 py-12">
-        <h1 className="text-4xl font-bold text-center mb-10">ðŸ§¾ Templates</h1>
+        <h1 className="text-4xl font-bold text-center mb-10">🧾 Templates</h1>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {items.map((item) => (
-            <div
+            <article
               key={item.id}
-              className="rounded-2xl border bg-white overflow-hidden shadow transition hover:shadow-lg group"
+              className="rounded-2xl border bg-white overflow-hidden shadow transition hover:shadow-lg"
             >
-              {/* âœ… Hoverable, perfectly-fit cover */}
+              {/* ✅ Hoverable, perfectly-fit cover */}
               <HoverableCover
                 src={item.image}
                 alt={item.title}
-                ratio="16/9"      // or "3/2"
-                fit="contain"      // use "cover" for edge-to-edge
+                ratio="16/9"   // or "3/2" if your covers are taller
+                fit="contain"  // switch to "cover" for edge-to-edge crop
               />
 
               <div className="p-4">
                 <h2 className="text-xl font-semibold mb-2">{item.title}</h2>
                 <p className="text-gray-600 text-sm mb-2">{item.description}</p>
-                <p className="text-lg font-bold mb-3">â‚¬{item.price.toFixed(2)}</p>
+                <p className="text-lg font-bold mb-3">€{item.price.toFixed(2)}</p>
 
                 <button
                   className="snipcart-add-item bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
@@ -120,7 +120,7 @@ export default function TemplatesPage() {
                   Add to Cart
                 </button>
               </div>
-            </div>
+            </article>
           ))}
         </div>
       </main>
