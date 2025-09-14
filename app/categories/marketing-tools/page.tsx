@@ -3,7 +3,7 @@
 
 import Head from "next/head";
 import HoverableCover from "@/components/ui/hoverable-cover";
-import ShopActions from "@/components/shop-actions"; // ← wrapper around ProductActions
+import ShopActions from "@/components/shop-actions"; // ✅ shared action bar
 
 export default function MarketingToolsPage() {
   const items = [
@@ -57,9 +57,9 @@ export default function MarketingToolsPage() {
               <div className="p-4">
                 <h2 className="text-xl font-semibold mb-2">{item.title}</h2>
                 <p className="text-gray-600 text-sm mb-2">{item.description}</p>
-                <p className="text-lg font-bold mb-4">€{item.price.toFixed(2)}</p>
+                <p className="text-lg font-bold">€{item.price.toFixed(2)}</p>
 
-                {/* Blue “View” → /checkout and working “Add to cart” → /cart */}
+                {/* 🔵 View (blue) + Add to Cart */}
                 <ShopActions item={item} />
               </div>
             </div>
