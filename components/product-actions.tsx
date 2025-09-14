@@ -3,15 +3,20 @@
 import { useState, MouseEvent } from "react";
 import { ShoppingCart, Eye } from "lucide-react";
 
+type Size = "sm" | "md" | "lg";
+
 type Props = {
   id: string | number;
   title: string;
   price: number;
   image?: string;
   quantity?: number;
+  /** Optional: control compactness of the buttons */
+  size?: Size;
+  /** Optional: extra classes for the wrapper */
+  className?: string;
 };
 
-// local add-to-cart (updates header badge via `cart:updated`)
 function addToCartLocal(
   item: { id: string; name: string; price: number; image?: string; quantity: number },
   opts?: { replace?: boolean }
@@ -42,7 +47,6 @@ function addToCartLocal(
   }
 }
 
-// best-effort currency hint for the API
 function getPreferredCurrency(): "eur" | "usd" {
   try {
     const raw =
@@ -56,16 +60,26 @@ function getPreferredCurrency(): "eur" | "usd" {
   }
 }
 
+const SIZE_STYLES: Record<Size, { btn: string; icon: string; gap: string }> = {
+  sm:  { btn: "px-3 py-1.5 text-sm",  icon: "h-4 w-4", gap: "gap-2" },
+  md:  { btn: "px-4 py-2 text-sm",    icon: "h-4 w-4", gap: "gap-3" },
+  lg:  { btn: "px-5 py-2.5 text-base",icon: "h-5 w-5", gap: "gap-3" },
+};
+
 export default function ProductActions({
   id,
   title,
   price,
   image,
   quantity = 1,
+  size = "md",
+  className,
 }: Props) {
   const [adding, setAdding] = useState(false);
   const [viewing, setViewing] = useState(false);
   const idStr = String(id);
+
+  const s = SIZE_STYLES[size];
 
   const handleAdd = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -86,30 +100,19 @@ export default function ProductActions({
 
     setViewing(true);
     try {
-      // create a single-item checkout session directly (no /checkout page)
       const resp = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          lines: [
-            {
-              id: idStr,
-              name: title,
-              price,       // numeric amount; server uses chosen currency
-              image,
-              quantity: 1,
-            },
-          ],
+          lines: [{ id: idStr, name: title, price, image, quantity: 1 }],
           currency: getPreferredCurrency(),
         }),
       });
-
       const data = await resp.json();
       if (resp.ok && data?.url) {
         window.location.href = data.url as string; // ⟶ Stripe Checkout
       } else {
         console.error("Checkout error:", data);
-        // (optional) show a toast here
       }
     } catch (err) {
       console.error(err);
@@ -119,17 +122,19 @@ export default function ProductActions({
   };
 
   return (
-    <div className="relative z-10 flex items-center gap-3 pointer-events-auto">
+    <div
+      className={`relative z-10 flex items-center ${s.gap} pointer-events-auto ${className ?? ""}`}
+    >
       <button
         type="button"
         onClick={handleView}
         disabled={viewing}
         aria-label="View (go to checkout)"
-        className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white
-                   hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2
-                   focus-visible:ring-blue-500 disabled:opacity-60"
+        className={`inline-flex items-center ${s.gap} rounded-lg bg-blue-600 ${s.btn} text-white
+                    hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2
+                    focus-visible:ring-blue-500 disabled:opacity-60`}
       >
-        <Eye className="h-4 w-4" />
+        <Eye className={s.icon} />
         {viewing ? "Opening…" : "View"}
       </button>
 
@@ -138,11 +143,11 @@ export default function ProductActions({
         onClick={handleAdd}
         disabled={adding}
         aria-label="Add to cart"
-        className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white
-                   hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2
-                   focus-visible:ring-blue-500 disabled:opacity-60"
+        className={`inline-flex items-center ${s.gap} rounded-lg bg-blue-600 ${s.btn} text-white
+                    hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2
+                    focus-visible:ring-blue-500 disabled:opacity-60`}
       >
-        <ShoppingCart className="h-4 w-4" />
+        <ShoppingCart className={s.icon} />
         {adding ? "Adding…" : "Add to cart"}
       </button>
     </div>
