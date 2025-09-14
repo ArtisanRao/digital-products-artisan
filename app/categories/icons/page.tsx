@@ -5,33 +5,32 @@ import Head from "next/head";
 import HoverableCover from "@/components/ui/hoverable-cover";
 
 function buildIconCandidates(base: string) {
-  // try multiple name patterns + case variants
-  const exts = ["jpg", "png", "jpeg"];
-  const cands: string[] = [];
+  // base like: "/images/icons/ui-icon-pack"
+  const exts = ["jpg", "png", "jpeg", "JPG", "PNG", "JPEG"];
+  const list: string[] = [];
 
-  // /images/icons/<name>
-  for (const e of exts) cands.push(`${base}.${e}`);
-  for (const e of exts) cands.push(`${base}-cover.${e}`);
-  for (const e of exts) cands.push(`${base}/cover.${e}`);
+  // /images/icons/<name>.* and common variants
+  for (const e of exts) list.push(`${base}.${e}`);
+  for (const e of exts) list.push(`${base}-cover.${e}`);
+  for (const e of exts) list.push(`${base}/cover.${e}`);
 
-  // /images/Icons/<name> (case)
-  const upper = base.replace("/images/icons/", "/images/Icons/");
-  if (upper !== base) {
-    for (const e of exts) cands.push(`${upper}.${e}`);
-    for (const e of exts) cands.push(`${upper}-cover.${e}`);
-    for (const e of exts) cands.push(`${upper}/cover.${e}`);
+  // Case variant for "icons" folder (Icons)
+  const caseVariant = base.replace("/images/icons/", "/images/Icons/");
+  if (caseVariant !== base) {
+    for (const e of exts) list.push(`${caseVariant}.${e}`);
+    for (const e of exts) list.push(`${caseVariant}-cover.${e}`);
+    for (const e of exts) list.push(`${caseVariant}/cover.${e}`);
   }
 
-  // /images/<name> as a last resort
+  // Fallback to /images/<name>.* if assets were moved
   const short = base.replace("/images/icons/", "/images/");
   if (short !== base) {
-    for (const e of exts) cands.push(`${short}-cover.${e}`);
-    for (const e of exts) cands.push(`${short}/cover.${e}`);
-    for (const e of exts) cands.push(`${short}.${e}`);
+    for (const e of exts) list.push(`${short}.${e}`);
+    for (const e of exts) list.push(`${short}-cover.${e}`);
+    for (const e of exts) list.push(`${short}/cover.${e}`);
   }
 
-  // unique
-  return Array.from(new Set(cands));
+  return Array.from(new Set(list));
 }
 
 export default function IconsPage() {
@@ -97,8 +96,8 @@ export default function IconsPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {items.map((item) => {
-            const fallbacks = buildIconCandidates(item.base);
-            const [first, ...rest] = fallbacks;
+            const candidates = buildIconCandidates(item.base);
+            const [first, ...rest] = candidates;
 
             return (
               <div

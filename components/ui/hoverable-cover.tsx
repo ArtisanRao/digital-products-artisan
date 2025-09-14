@@ -5,8 +5,8 @@ import Image from "next/image";
 import * as React from "react";
 
 type Props = {
+  /** Primary src; we’ll also try `fallbacks` in order on error */
   src: string;
-  /** Extra candidates to try if `src` 404s (first 200 OK wins) */
   fallbacks?: string[];
   alt: string;
   /** Aspect ratio of the frame */
@@ -46,34 +46,20 @@ export default function HoverableCover({
   sizes = "(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw",
   hover = true,
 }: Props) {
-  const candidates = React.useMemo(() => {
-    // unique, non-empty
-    return Array.from(new Set([src, ...fallbacks].filter(Boolean)));
-  }, [src, fallbacks]);
+  const candidates = React.useMemo(
+    () => Array.from(new Set([src, ...fallbacks].filter(Boolean))),
+    [src, fallbacks]
+  );
 
-  const [resolved, setResolved] = React.useState<string>("/images/placeholder-cover.jpg");
+  const [idx, setIdx] = React.useState(0);
+  const current = candidates[idx] ?? "/images/placeholder-cover.jpg";
 
-  // Probe candidates client side: first HEAD 200 wins
-  React.useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      for (const url of candidates) {
-        try {
-          const res = await fetch(url, { method: "HEAD", cache: "no-store" });
-          if (res.ok) {
-            if (!cancelled) setResolved(url);
-            return;
-          }
-        } catch {
-          // keep trying
-        }
-      }
-      if (!cancelled) setResolved("/images/placeholder-cover.jpg");
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [candidates.join("|")]);
+  const handleError = () => {
+    setIdx((i) => {
+      const next = i + 1;
+      return next < candidates.length ? next : i; // stop at last; placeholder will show if last fails
+    });
+  };
 
   return (
     <div
@@ -86,13 +72,15 @@ export default function HoverableCover({
     >
       <div className={`absolute inset-0 ${paddingClass}`}>
         <Image
-          src={resolved}
+          key={current} // force refresh when src changes
+          src={current}
           alt={alt}
           fill
           className={fit === "cover" ? "object-cover" : "object-contain"}
           sizes={sizes}
           draggable={false}
           priority={false}
+          onError={handleError}
         />
       </div>
 
