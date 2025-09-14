@@ -1,7 +1,8 @@
-'use client';
+"use client";
 
-import Head from 'next/head';
-import HoverableCover from '@/components/ui/hoverable-cover';
+import Head from "next/head";
+import HoverableCover from "@/components/ui/hoverable-cover";
+import ShopActions from "@/components/shop-actions";
 
 export default function EbooksPage() {
   const ebooks = [
@@ -108,14 +109,14 @@ export default function EbooksPage() {
           {ebooks.map((ebook) => (
             <div
               key={ebook.id}
-              className="rounded-2xl border bg-white overflow-hidden shadow transition hover:shadow-lg group"
+              className="group rounded-2xl border bg-white overflow-hidden shadow transition hover:shadow-lg"
             >
-              {/* ✅ Hoverable, perfectly-fit cover */}
+              {/* Hoverable, perfectly-fit cover */}
               <HoverableCover
                 src={ebook.image}
                 alt={ebook.title}
-                ratio="16/9"    // change to "3/2" if you prefer
-                fit="contain"   // keeps full cover visible; use "cover" for edge-to-edge
+                ratio="3/2"      // change to "16/9" if you prefer
+                fit="contain"    // keeps full cover visible; use "cover" for edge-to-edge
               />
 
               <div className="p-4">
@@ -123,18 +124,8 @@ export default function EbooksPage() {
                 <p className="text-gray-600 text-sm mb-2">{ebook.description}</p>
                 <p className="text-lg font-bold mb-3">€{ebook.price.toFixed(2)}</p>
 
-                <button
-                  className="snipcart-add-item bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-                  data-item-id={ebook.id}
-                  data-item-name={ebook.title}
-                  data-item-price={ebook.price}
-                  data-item-url="/categories/ebooks"
-                  data-item-description={ebook.description}
-                  data-item-image={ebook.image}
-                  data-item-file-guid={ebook.fileUrl}
-                >
-                  Add to Cart
-                </button>
+                {/* Blue View + Add to Cart buttons (like Marketing Tools) */}
+                <ShopActions item={ebook} />
               </div>
             </div>
           ))}
