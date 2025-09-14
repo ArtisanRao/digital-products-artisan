@@ -1,57 +1,63 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useMemo } from 'react';
-import { getPreferredCurrency } from '@/lib/currency';
-import { Button } from '@/components/ui/button';
+import { useState, useEffect, useMemo } from "react";
+import { getPreferredCurrency } from "@/lib/currency";
+import { Button } from "@/components/ui/button";
 
-interface CartItem {
-  id: string;       // product.id as string
+type CartItem = {
+  id: string;        // product.id as string
   name: string;
-  price: number;    // base number; rendered/charged in selected currency
+  price: number;     // in the currently-selected currency
   quantity: number;
   image?: string;
   url?: string;
   description?: string;
   fileGuid?: string;
-}
+};
 
 export default function CartPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [hydrated, setHydrated] = useState(false); // ⬅️ avoid flash-of-empty
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [currency, setCurrency] = useState<string>('usd');
+  const [currency, setCurrency] = useState<string>("eur");
 
-  // Currency bootstrap + live updates from header picker
+  // Bootstrap currency + react to header picker
   useEffect(() => {
-    setCurrency(getPreferredCurrency());
+    const initial = (getPreferredCurrency() || "eur").toLowerCase();
+    setCurrency(initial);
+
     const onChange = (e: Event) => {
       const detail = (e as CustomEvent<string | undefined>).detail;
-      setCurrency((detail || getPreferredCurrency()).toLowerCase());
+      setCurrency((detail || getPreferredCurrency() || "eur").toLowerCase());
     };
-    window.addEventListener('currency:change', onChange as EventListener);
-    return () => window.removeEventListener('currency:change', onChange as EventListener);
+    window.addEventListener("currency:change", onChange as EventListener);
+    return () => window.removeEventListener("currency:change", onChange as EventListener);
   }, []);
 
-  // Helper to persist + broadcast
+  // Helper to persist + broadcast (keeps header badge in sync)
   const persistAndBroadcast = (items: CartItem[]) => {
-    localStorage.setItem('cart', JSON.stringify(items));
+    localStorage.setItem("cart", JSON.stringify(items));
     const count = items.reduce((n, i) => n + Number(i.quantity || 1), 0);
-    localStorage.setItem('cartCount', String(count));
+    localStorage.setItem("cartCount", String(count));
     try {
-      window.dispatchEvent(new CustomEvent('cart:updated', { detail: { count, items } }));
-    } catch {}
+      window.dispatchEvent(new CustomEvent("cart:updated", { detail: { count, items } }));
+    } catch {
+      /* no-op */
+    }
   };
 
   // Load cart from localStorage
   useEffect(() => {
     try {
-      const stored = localStorage.getItem('cart');
-      const items = stored ? (JSON.parse(stored) as CartItem[]) : [];
+      const raw = localStorage.getItem("cart");
+      const items = raw ? (JSON.parse(raw) as CartItem[]) : [];
       setCartItems(items);
-      // ensure header is in sync on page load
-      persistAndBroadcast(items);
+      persistAndBroadcast(items); // ensure header badge matches
     } catch {
       /* ignore parse errors */
+    } finally {
+      setHydrated(true);
     }
   }, []);
 
@@ -62,15 +68,14 @@ export default function CartPage() {
       if (detail?.items) {
         setCartItems(detail.items);
       } else {
-        // fallback: read from storage
         try {
-          const raw = localStorage.getItem('cart');
+          const raw = localStorage.getItem("cart");
           setCartItems(raw ? (JSON.parse(raw) as CartItem[]) : []);
         } catch {}
       }
     };
-    window.addEventListener('cart:updated', onCartUpdated as EventListener);
-    return () => window.removeEventListener('cart:updated', onCartUpdated as EventListener);
+    window.addEventListener("cart:updated", onCartUpdated as EventListener);
+    return () => window.removeEventListener("cart:updated", onCartUpdated as EventListener);
   }, []);
 
   const updateCart = (items: CartItem[]) => {
@@ -81,70 +86,85 @@ export default function CartPage() {
 
   const handleQuantityChange = (id: string, quantity: number) => {
     if (quantity < 1) return;
-    updateCart(cartItems.map((item) => (item.id === id ? { ...item, quantity } : item)));
+    updateCart(cartItems.map((it) => (it.id === id ? { ...it, quantity } : it)));
   };
 
-  const handleRemove = (id: string) => updateCart(cartItems.filter((item) => item.id !== id));
+  const handleRemove = (id: string) => updateCart(cartItems.filter((it) => it.id !== id));
   const handleClear = () => updateCart([]);
 
   const totalPrice = useMemo(
-    () => cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
+    () => cartItems.reduce((sum, it) => sum + it.price * it.quantity, 0),
     [cartItems]
   );
 
-  const formatMoney = (n: number) =>
-    new Intl.NumberFormat(undefined, {
-      style: 'currency',
-      currency: currency.toUpperCase(),
-      maximumFractionDigits: 2,
-    }).format(n);
+  const formatMoney = (n: number) => {
+    const code = (currency || "eur").toUpperCase();
+    try {
+      return new Intl.NumberFormat(undefined, {
+        style: "currency",
+        currency: code,
+        maximumFractionDigits: 2,
+      }).format(n);
+    } catch {
+      // Fallback if a weird/unsupported currency code slips through
+      return new Intl.NumberFormat(undefined, {
+        style: "currency",
+        currency: "EUR",
+        maximumFractionDigits: 2,
+      }).format(n);
+    }
+  };
 
-  // Stripe Checkout (multi-item) via /api/checkout — send chosen currency
+  // Stripe Checkout (multi-item) via /api/checkout — send the "lines" shape
   const handleCheckout = async () => {
     if (!cartItems.length) {
-      setError('Your cart is empty!');
+      setError("Your cart is empty!");
       return;
     }
 
-    const lineItems = cartItems
-      .map((ci) => {
-        const productId = Number.parseInt(ci.id, 10);
-        return Number.isFinite(productId)
-          ? { productId, qty: Math.max(1, Number(ci.quantity) || 1) }
-          : null;
-      })
-      .filter(Boolean) as { productId: number; qty: number }[];
-
-    if (!lineItems.length) {
-      setError('Could not resolve product IDs in your cart.');
-      return;
-    }
+    const lines = cartItems.map((ci) => ({
+      id: ci.id,
+      name: ci.name,
+      price: ci.price,
+      image: ci.image,
+      quantity: Math.max(1, Number(ci.quantity) || 1),
+    }));
 
     setLoading(true);
     setError(null);
 
     try {
-      const resp = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cart: lineItems, currency }),
+      const resp = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lines, currency }), // currency is optional server-side
       });
 
       const data = await resp.json();
       if (!resp.ok || !data?.url) {
-        console.error('Checkout error:', data);
-        setError(data?.error || 'Sorry—couldn’t start checkout.');
+        console.error("Checkout error:", data);
+        setError(data?.error || "Sorry—couldn’t start checkout.");
         setLoading(false);
         return;
       }
 
-      window.location.href = data.url as string;
+      window.location.href = data.url as string; // ⟶ Stripe Checkout
     } catch (e) {
       console.error(e);
-      setError('Network error starting checkout.');
+      setError("Network error starting checkout.");
       setLoading(false);
     }
   };
+
+  // While hydrating, avoid showing "empty" state flash
+  if (!hydrated) {
+    return (
+      <main className="container mx-auto p-6 text-center">
+        <h1 className="text-4xl font-bold mb-2">Loading cart…</h1>
+        <p className="text-gray-600">Please wait.</p>
+      </main>
+    );
+  }
 
   if (!cartItems.length) {
     return (
@@ -160,26 +180,28 @@ export default function CartPage() {
       <h1 className="text-4xl font-bold mb-8">Your Cart</h1>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded" aria-live="polite">
+        <div className="mb-4 rounded bg-red-100 p-3 text-red-700" aria-live="polite">
           {error}
         </div>
       )}
 
-      <ul className="divide-y divide-gray-200 mb-8">
+      <ul className="mb-8 divide-y divide-gray-200">
         {cartItems.map(({ id, name, price, quantity, image }) => (
           <li key={id} className="flex items-center py-6">
-            {image && (
+            {image ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={image}
                 alt={name}
-                className="w-24 h-24 rounded object-cover mr-6"
+                className="mr-6 h-24 w-24 rounded object-cover"
                 loading="lazy"
               />
-            )}
+            ) : null}
+
             <div className="flex-grow">
               <h2 className="text-xl font-semibold">{name}</h2>
-              <p className="text-gray-700 mt-1">{formatMoney(price)} each</p>
+              <p className="mt-1 text-gray-700">{formatMoney(price)} each</p>
+
               <div className="mt-2 flex items-center space-x-2">
                 <label htmlFor={`qty-${id}`} className="mr-2 font-medium">
                   Quantity:
@@ -190,15 +212,16 @@ export default function CartPage() {
                   min={1}
                   value={quantity}
                   onChange={(e) => handleQuantityChange(id, Number(e.target.value))}
-                  className="w-16 p-1 border rounded text-center"
+                  className="w-16 rounded border p-1 text-center"
                 />
               </div>
             </div>
+
             <div className="ml-6 flex flex-col items-end">
-              <p className="text-lg font-bold mb-4">{formatMoney(price * quantity)}</p>
+              <p className="mb-4 text-lg font-bold">{formatMoney(price * quantity)}</p>
               <button
                 onClick={() => handleRemove(id)}
-                className="text-red-600 hover:text-red-800 font-semibold"
+                className="font-semibold text-red-600 hover:text-red-800"
                 aria-label={`Remove ${name} from cart`}
               >
                 Remove
@@ -208,9 +231,10 @@ export default function CartPage() {
         ))}
       </ul>
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-t border-gray-300 pt-6">
+      <div className="flex flex-col gap-4 border-t border-gray-300 pt-6 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-2xl font-bold">Total: {formatMoney(totalPrice)}</p>
-        <div className="flex gap-3 justify-end">
+
+        <div className="flex justify-end gap-3">
           {/* Hide Clear Cart on mobile */}
           <Button
             onClick={handleClear}
@@ -225,9 +249,9 @@ export default function CartPage() {
           <Button
             onClick={handleCheckout}
             disabled={loading}
-            className="bg-blue-600 text-white hover:bg-blue-700 w-full sm:w-auto"
+            className="w-full bg-blue-600 text-white hover:bg-blue-700 sm:w-auto"
           >
-            {loading ? 'Redirecting…' : 'Checkout'}
+            {loading ? "Redirecting…" : "Checkout"}
           </Button>
         </div>
       </div>

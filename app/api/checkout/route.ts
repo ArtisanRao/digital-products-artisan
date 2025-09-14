@@ -14,13 +14,30 @@ function getStripe(): Stripe {
   return _stripe;
 }
 
+// ───────────────────────────────────────────────────────────────────────────────
+// Body shapes we accept
 type BodySingle = { productId: number | string; qty?: number; currency?: string };
 type BodyCart   = { cart: Array<{ productId: number | string; qty?: number }>; currency?: string };
-type Body       = BodySingle | BodyCart;
+type BodyLines  = {
+  lines: Array<{
+    id: number | string;
+    name: string;
+    price: number;          // in chosen currency units (e.g., 14.99)
+    image?: string;
+    quantity?: number;
+  }>;
+  currency?: string;
+};
+type Body = BodySingle | BodyCart | BodyLines;
+// ───────────────────────────────────────────────────────────────────────────────
 
 function toInt(n: any, fallback = 1) {
   const v = Number(n);
   return Number.isFinite(v) && v > 0 ? Math.floor(v) : fallback;
+}
+function toMoney(n: any) {
+  const v = Number(n);
+  return Number.isFinite(v) && v >= 0 ? v : 0;
 }
 
 // Minimal EU set for Klarna eligibility
@@ -53,39 +70,70 @@ export async function POST(req: Request) {
     // Decide currency (client hint or EU geo)
     const currency = decideCurrency(req, (body as any).currency);
 
-    // Normalize to an array of items
-    const items: Array<{ productId: number; qty: number }> = Array.isArray(
-      (body as BodyCart).cart
-    )
-      ? (body as BodyCart).cart.map((it) => ({
-          productId: toInt(it.productId),
-          qty: toInt(it.qty, 1),
-        }))
-      : [
-          {
-            productId: toInt((body as BodySingle).productId),
-            qty: toInt((body as BodySingle).qty, 1),
-          },
-        ];
-
-    // Validate & map to products
-    const chosen = items
-      .map(({ productId, qty }) => {
-        const p = productsById[productId] || products.find((x) => x.id === productId);
-        return p ? { p, qty } : null;
-      })
-      .filter(Boolean) as Array<{ p: (typeof products)[number]; qty: number }>;
-
-    if (!chosen.length) {
-      return NextResponse.json({ error: "No valid products in request." }, { status: 400 });
-    }
-
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
     const stripe = getStripe();
 
-    // Build Stripe line_items (inline price_data so amount comes from your catalog)
-    const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = chosen.map(
-      ({ p, qty }) => {
+    // ───────────────────────────────────────────────────────────────────────────
+    // Build Stripe line_items from one of the accepted body shapes
+    let line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
+
+    if ("lines" in (body as any) && Array.isArray((body as BodyLines).lines)) {
+      // New shape: lines from client (already resolved)
+      const fromLines = (body as BodyLines).lines
+        .map((ln) => {
+          const qty = toInt(ln.quantity, 1);
+          const unit = Math.round(toMoney(ln.price) * 100);
+          if (!ln.name || unit <= 0 || qty <= 0) return null;
+
+          const img = ln.image || "";
+          const absoluteImage = img
+            ? (img.startsWith("http") ? img : `${baseUrl}${img}`)
+            : undefined;
+
+          return {
+            quantity: qty,
+            price_data: {
+              currency,
+              unit_amount: unit,
+              product_data: {
+                name: ln.name,
+                images: absoluteImage ? [absoluteImage] : [],
+                metadata: { from: "client-lines", id: String(ln.id ?? "") },
+              },
+            },
+          } as Stripe.Checkout.SessionCreateParams.LineItem;
+        })
+        .filter(Boolean) as Stripe.Checkout.SessionCreateParams.LineItem[];
+
+      line_items = fromLines;
+    } else {
+      // Legacy shapes: single or cart -> resolve from catalog
+      const items: Array<{ productId: number; qty: number }> = Array.isArray(
+        (body as BodyCart).cart
+      )
+        ? (body as BodyCart).cart.map((it) => ({
+            productId: toInt(it.productId),
+            qty: toInt(it.qty, 1),
+          }))
+        : [
+            {
+              productId: toInt((body as BodySingle).productId),
+              qty: toInt((body as BodySingle).qty, 1),
+            },
+          ];
+
+      const chosen = items
+        .map(({ productId, qty }) => {
+          const p = productsById[productId] || products.find((x) => x.id === productId);
+          return p ? { p, qty } : null;
+        })
+        .filter(Boolean) as Array<{ p: (typeof products)[number]; qty: number }>;
+
+      if (!chosen.length) {
+        return NextResponse.json({ error: "No valid products in request." }, { status: 400 });
+      }
+
+      line_items = chosen.map(({ p, qty }) => {
         const firstImage = p.images?.[0] ?? p.image;
         const absoluteImage = firstImage?.startsWith("http")
           ? firstImage
@@ -94,8 +142,8 @@ export async function POST(req: Request) {
         return {
           quantity: qty,
           price_data: {
-            currency,                                 // USD by default; EUR in EU / if chosen
-            unit_amount: Math.round(p.price * 100),   // same numeric amount in chosen currency
+            currency,                               // USD by default; EUR in EU / if chosen
+            unit_amount: Math.round(p.price * 100), // same numeric amount in chosen currency
             product_data: {
               name: p.title,
               images: absoluteImage ? [absoluteImage] : [],
@@ -103,8 +151,12 @@ export async function POST(req: Request) {
             },
           },
         };
-      }
-    );
+      });
+    }
+
+    if (!line_items.length) {
+      return NextResponse.json({ error: "No purchasable line items." }, { status: 400 });
+    }
 
     // Explicitly list allowed methods (blocks Link by omission).
     // Apple Pay / Google Pay come through "card" automatically when eligible.
@@ -113,23 +165,18 @@ export async function POST(req: Request) {
         ? (["card", "paypal", "klarna"] as const)
         : (["card", "paypal"] as const);
 
-    const params: any = {
+    const params: Stripe.Checkout.SessionCreateParams = {
       mode: "payment",
       line_items,
-      payment_method_types,                   // <— keep explicit list (no Link)
+      payment_method_types: payment_method_types as unknown as Stripe.Checkout.SessionCreateParams.PaymentMethodType[],
       success_url: `${baseUrl}/order-confirmation?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url:
-        chosen.length === 1
-          ? `${baseUrl}/products/${chosen[0].p.id}`
-          : `${baseUrl}/products`,
+      cancel_url: `${baseUrl}/products`,
       billing_address_collection: "required", // helps eligibility (Klarna, wallets)
       locale: "auto",
       metadata: { currencyChosen: currency },
     };
 
-    const session = await stripe.checkout.sessions.create(
-      params as Stripe.Checkout.SessionCreateParams
-    );
+    const session = await stripe.checkout.sessions.create(params);
 
     if (!session.url) {
       return NextResponse.json(
