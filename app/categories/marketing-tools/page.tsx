@@ -1,9 +1,8 @@
-// app/categories/marketing-tools/page.tsx
 "use client";
 
 import Head from "next/head";
 import HoverableCover from "@/components/ui/hoverable-cover";
-import ShopActions from "@/components/shop-actions"; // ✅ shared action bar
+import ShopActions from "@/components/shop-actions";
 
 export default function MarketingToolsPage() {
   const items = [
@@ -59,7 +58,7 @@ export default function MarketingToolsPage() {
                 <p className="text-gray-600 text-sm mb-2">{item.description}</p>
                 <p className="text-lg font-bold">€{item.price.toFixed(2)}</p>
 
-                {/* 🔵 View (blue) + Add to Cart */}
+                {/* Two-button action bar */}
                 <ShopActions item={item} />
               </div>
             </div>

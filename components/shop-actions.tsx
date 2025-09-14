@@ -15,7 +15,7 @@ type Item = {
 };
 
 export default function ShopActions({ item }: { item: Item }) {
-  // Your provider should exist, but we guard just in case
+  // Guard in case the context API shape differs
   const cart = (useCart?.() ?? {}) as any;
 
   const persistAndBroadcast = (items: any[]) => {
@@ -52,7 +52,7 @@ export default function ShopActions({ item }: { item: Item }) {
   };
 
   const add = () => {
-    // Try context first
+    // Try Cart Context first (if present)
     (cart.addItem ?? cart.add ?? cart.actions?.addItem)?.({
       id: String(item.id),
       name: item.title,
@@ -66,15 +66,16 @@ export default function ShopActions({ item }: { item: Item }) {
     });
     (cart.openCart ?? cart.open ?? cart.actions?.openCart)?.();
 
-    // Always keep localStorage in sync for the badge and /cart page
+    // Always keep localStorage in sync so badge & /cart stay correct
     addToLocalCart();
   };
 
   const buyNow = async () => {
-    // Ensure present in local cart (badge stays correct)
+    // Add locally so the header badge increments instantly
     addToLocalCart();
 
     const currency = (getPreferredCurrency?.() || "eur").toLowerCase();
+
     const resp = await fetch("/api/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -83,7 +84,7 @@ export default function ShopActions({ item }: { item: Item }) {
           {
             id: item.id,
             name: item.title,
-            price: item.price, // numeric amount in chosen currency units
+            price: item.price, // numeric amount in current currency
             image: item.image,
             quantity: 1,
           },
@@ -98,7 +99,6 @@ export default function ShopActions({ item }: { item: Item }) {
         window.location.href = data.url; // 👉 straight to Stripe Checkout
       } else {
         console.error("Checkout error:", data);
-        // Optional: toast error
       }
     } catch (e) {
       console.error(e);
