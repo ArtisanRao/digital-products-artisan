@@ -15,7 +15,6 @@ type Item = {
 };
 
 export default function ShopActions({ item }: { item: Item }) {
-  // Guard in case the context API shape differs
   const cart = (useCart?.() ?? {}) as any;
 
   const persistAndBroadcast = (items: any[]) => {
@@ -52,7 +51,6 @@ export default function ShopActions({ item }: { item: Item }) {
   };
 
   const add = () => {
-    // Try Cart Context first (if present)
     (cart.addItem ?? cart.add ?? cart.actions?.addItem)?.({
       id: String(item.id),
       name: item.title,
@@ -65,13 +63,10 @@ export default function ShopActions({ item }: { item: Item }) {
       quantity: 1,
     });
     (cart.openCart ?? cart.open ?? cart.actions?.openCart)?.();
-
-    // Always keep localStorage in sync so badge & /cart stay correct
     addToLocalCart();
   };
 
   const buyNow = async () => {
-    // Add locally so the header badge increments instantly
     addToLocalCart();
 
     const currency = (getPreferredCurrency?.() || "eur").toLowerCase();
@@ -81,13 +76,7 @@ export default function ShopActions({ item }: { item: Item }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         lines: [
-          {
-            id: item.id,
-            name: item.title,
-            price: item.price, // numeric amount in current currency
-            image: item.image,
-            quantity: 1,
-          },
+          { id: item.id, name: item.title, price: item.price, image: item.image, quantity: 1 },
         ],
         currency,
       }),
@@ -95,11 +84,8 @@ export default function ShopActions({ item }: { item: Item }) {
 
     try {
       const data = await resp.json();
-      if (resp.ok && data?.url) {
-        window.location.href = data.url; // 👉 straight to Stripe Checkout
-      } else {
-        console.error("Checkout error:", data);
-      }
+      if (resp.ok && data?.url) window.location.href = data.url;
+      else console.error("Checkout error:", data);
     } catch (e) {
       console.error(e);
     }
@@ -107,24 +93,25 @@ export default function ShopActions({ item }: { item: Item }) {
 
   return (
     <div className="mt-3 flex items-center gap-2">
+      {/* VIEW — now same blue style as Add to Cart */}
       <Button
         type="button"
-        variant="outline"
         onClick={buyNow}
-        className="gap-2 group"
+        className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
         aria-label="View / Buy now"
       >
-        <Eye className="h-4 w-4 text-blue-600 group-hover:text-blue-700" />
-        <span className="text-blue-600 group-hover:text-blue-700">View</span>
+        <Eye className="h-4 w-4 text-white" />
+        View
       </Button>
 
+      {/* ADD TO CART — unchanged visual (blue) */}
       <Button
         type="button"
         onClick={add}
-        className="gap-2 bg-blue-600 hover:bg-blue-700"
+        className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
         aria-label="Add to cart"
       >
-        <ShoppingCart className="h-4 w-4" />
+        <ShoppingCart className="h-4 w-4 text-white" />
         Add to Cart
       </Button>
     </div>
