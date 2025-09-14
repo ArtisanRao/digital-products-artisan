@@ -36,7 +36,7 @@ export default function HoverableCover({
 
   return (
     <div className={`relative w-full ${roundedClass}`}>
-      {/* Wrapper now has plain hover styles so it works even without .group */}
+      {/* Named group so child selectors always work, even inside other groups */}
       <div
         className={[
           'relative w-full overflow-hidden bg-white',
@@ -44,6 +44,7 @@ export default function HoverableCover({
           paddingClass,
           ratioClass,
           'transition-all duration-300',
+          'group/cover',                              // <-- scoped group
           hover ? 'hover:shadow-lg hover:ring-2 hover:ring-blue-500/20' : '',
         ].join(' ')}
       >
@@ -56,7 +57,7 @@ export default function HoverableCover({
           className={[
             objectClass,
             'transition-transform duration-300 will-change-transform',
-            hover ? 'hover:scale-105' : '',
+            hover ? 'group-hover/cover:scale-105 hover:scale-105' : '',
           ].join(' ')}
         />
 
@@ -65,7 +66,7 @@ export default function HoverableCover({
             className={[
               'pointer-events-none absolute inset-0',
               'opacity-0 transition-opacity duration-300',
-              'hover:opacity-100',
+              'group-hover/cover:opacity-100 hover:opacity-100',
             ].join(' ')}
           >
             <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent" />
