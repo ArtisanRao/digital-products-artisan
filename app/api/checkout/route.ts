@@ -1,3 +1,4 @@
+// app/api/checkout/route.ts
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { products, productsById } from "@/data/products";
@@ -15,14 +16,14 @@ function getStripe(): Stripe {
 }
 
 // ───────────────────────────────────────────────────────────────────────────────
-// Body shapes we accept
+// Accepted body shapes
 type BodySingle = { productId: number | string; qty?: number; currency?: string };
-type BodyCart   = { cart: Array<{ productId: number | string; qty?: number }>; currency?: string };
-type BodyLines  = {
+type BodyCart = { cart: Array<{ productId: number | string; qty?: number }>; currency?: string };
+type BodyLines = {
   lines: Array<{
     id: number | string;
-    name: string;
-    price: number;          // in chosen currency units (e.g., 14.99)
+    name?: string;
+    price?: number;     // client-supplied fallback; ignored if we find a catalog match
     image?: string;
     quantity?: number;
   }>;
@@ -39,6 +40,21 @@ function toMoney(n: any) {
   const v = Number(n);
   return Number.isFinite(v) && v >= 0 ? v : 0;
 }
+function isNumericLike(v: any) {
+  return typeof v === "number" || (typeof v === "string" && /^[0-9]+$/.test(v));
+}
+function findCatalog(idOrSlug: number | string) {
+  if (isNumericLike(idOrSlug)) {
+    const id = Number(idOrSlug);
+    return productsById[id] || products.find((p) => p.id === id) || null;
+  }
+  const slug = String(idOrSlug).toLowerCase();
+  return (
+    products.find((p) => String(p.slug).toLowerCase() === slug) ||
+    products.find((p) => String(p.id) === slug) || // super fallback
+    null
+  );
+}
 
 // Minimal EU set for Klarna eligibility
 const EU = new Set([
@@ -47,19 +63,15 @@ const EU = new Set([
 ]);
 
 function decideCurrency(request: Request, bodyCurrency?: string): "usd" | "eur" {
-  // 1) honor explicit client choice, if provided
   const v = String(bodyCurrency || "").toLowerCase();
   if (v === "eur" || v === "usd") return v as "eur" | "usd";
 
-  // 2) geo fallback (Vercel/Cloudflare headers)
   const country =
     request.headers.get("x-vercel-ip-country") ||
     request.headers.get("cf-ipcountry") ||
     "";
 
   if (EU.has(country.toUpperCase())) return "eur";
-
-  // 3) default
   return "usd";
 }
 
@@ -76,29 +88,44 @@ export async function POST(req: Request) {
     // ───────────────────────────────────────────────────────────────────────────
     // Build Stripe line_items from one of the accepted body shapes
     let line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
+    let singleKnownProductUrl: string | null = null;
 
     if ("lines" in (body as any) && Array.isArray((body as BodyLines).lines)) {
-      // New shape: lines from client (already resolved)
+      // New shape: "lines" from client
       const fromLines = (body as BodyLines).lines
         .map((ln) => {
           const qty = toInt(ln.quantity, 1);
-          const unit = Math.round(toMoney(ln.price) * 100);
-          if (!ln.name || unit <= 0 || qty <= 0) return null;
+          if (qty <= 0) return null;
 
-          const img = ln.image || "";
-          const absoluteImage = img
-            ? (img.startsWith("http") ? img : `${baseUrl}${img}`)
-            : undefined;
+          // Try to map to your catalog first (authoritative price & name)
+          const cat = findCatalog(ln.id);
+          const useName = cat?.title ?? ln.name ?? `Item ${String(ln.id ?? "")}`;
+          const unitAmount =
+            cat ? Math.round(cat.price * 100) : Math.round(toMoney(ln.price) * 100);
+
+          if (!useName || unitAmount <= 0) return null;
+
+          const img = (cat?.images?.[0] ?? cat?.image ?? ln.image) || "";
+          const absoluteImage = img ? (img.startsWith("http") ? img : `${baseUrl}${img}`) : undefined;
+
+          // If it's a single-known product, remember its page for cancel_url
+          if ((body as BodyLines).lines.length === 1 && cat) {
+            singleKnownProductUrl = `${baseUrl}/products/${cat.id}`;
+          }
 
           return {
             quantity: qty,
             price_data: {
               currency,
-              unit_amount: unit,
+              unit_amount: unitAmount,
               product_data: {
-                name: ln.name,
+                name: useName,
                 images: absoluteImage ? [absoluteImage] : [],
-                metadata: { from: "client-lines", id: String(ln.id ?? "") },
+                metadata: {
+                  from: "client-lines",
+                  id: String(ln.id ?? ""),
+                  ...(cat ? { slug: String(cat.slug), productId: String(cat.id) } : {}),
+                },
               },
             },
           } as Stripe.Checkout.SessionCreateParams.LineItem;
@@ -107,30 +134,36 @@ export async function POST(req: Request) {
 
       line_items = fromLines;
     } else {
-      // Legacy shapes: single or cart -> resolve from catalog
-      const items: Array<{ productId: number; qty: number }> = Array.isArray(
+      // Legacy shapes: single or cart -> resolve entirely from catalog
+      const items: Array<{ productId: number | string; qty: number }> = Array.isArray(
         (body as BodyCart).cart
       )
         ? (body as BodyCart).cart.map((it) => ({
-            productId: toInt(it.productId),
+            productId: isNumericLike(it.productId) ? Number(it.productId) : String(it.productId),
             qty: toInt(it.qty, 1),
           }))
         : [
             {
-              productId: toInt((body as BodySingle).productId),
+              productId: isNumericLike((body as BodySingle).productId)
+                ? Number((body as BodySingle).productId)
+                : String((body as BodySingle).productId),
               qty: toInt((body as BodySingle).qty, 1),
             },
           ];
 
       const chosen = items
         .map(({ productId, qty }) => {
-          const p = productsById[productId] || products.find((x) => x.id === productId);
+          const p = findCatalog(productId);
           return p ? { p, qty } : null;
         })
         .filter(Boolean) as Array<{ p: (typeof products)[number]; qty: number }>;
 
       if (!chosen.length) {
         return NextResponse.json({ error: "No valid products in request." }, { status: 400 });
+      }
+
+      if (chosen.length === 1) {
+        singleKnownProductUrl = `${baseUrl}/products/${chosen[0].p.id}`;
       }
 
       line_items = chosen.map(({ p, qty }) => {
@@ -147,7 +180,7 @@ export async function POST(req: Request) {
             product_data: {
               name: p.title,
               images: absoluteImage ? [absoluteImage] : [],
-              metadata: { slug: p.slug, productId: String(p.id) },
+              metadata: { slug: String(p.slug), productId: String(p.id) },
             },
           },
         };
@@ -170,8 +203,8 @@ export async function POST(req: Request) {
       line_items,
       payment_method_types: payment_method_types as unknown as Stripe.Checkout.SessionCreateParams.PaymentMethodType[],
       success_url: `${baseUrl}/order-confirmation?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/products`,
-      billing_address_collection: "required", // helps eligibility (Klarna, wallets)
+      cancel_url: singleKnownProductUrl ?? `${baseUrl}/cart`,
+      billing_address_collection: "required",
       locale: "auto",
       metadata: { currencyChosen: currency },
     };
@@ -211,7 +244,7 @@ export async function GET(req: Request) {
       stripeEnvSet: !!process.env.STRIPE_SECRET_KEY,
       siteUrlSet: !!process.env.NEXT_PUBLIC_SITE_URL,
       seenCountry: req.headers.get("x-vercel-ip-country") || req.headers.get("cf-ipcountry") || null,
-      note: "Link is blocked by using explicit payment_method_types only.",
+      note: "Link is blocked by using explicit payment_method_types only. Apple/Google Pay come through 'card'.",
     });
   }
   return NextResponse.json({ error: "Method Not Allowed" }, { status: 405 });
