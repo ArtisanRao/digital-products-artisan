@@ -12,13 +12,18 @@ const csp = [
   "default-src 'self'",
   "base-uri 'self'",
   "object-src 'none'",
-  "worker-src 'self'",
+  // allow web workers & service worker
+  "worker-src 'self' blob:",
   "font-src 'self' data: https:",
   "img-src 'self' data: blob: https:",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://js.stripe.com",
-  "style-src 'self' 'unsafe-inline'",
-  "connect-src 'self' https://www.google-analytics.com https://vitals.vercel-insights.com https://api.stripe.com https://checkout.stripe.com",
-  "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com",
+  // ✅ allow Snipcart + keep GA/Stripe
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://js.stripe.com https://cdn.snipcart.com https://app.snipcart.com",
+  // ✅ Snipcart CSS
+  "style-src 'self' 'unsafe-inline' https://cdn.snipcart.com",
+  // ✅ Snipcart API & events
+  "connect-src 'self' https://www.google-analytics.com https://vitals.vercel-insights.com https://api.stripe.com https://checkout.stripe.com https://app.snipcart.com https://cdn.snipcart.com",
+  // ✅ Snipcart embeds an app frame
+  "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com https://app.snipcart.com",
 ].join("; ");
 
 /** Shared security headers */
@@ -27,9 +32,7 @@ const securityHeaders = [
   { key: "X-Frame-Options", value: "SAMEORIGIN" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  // Disable Topics/FLoC + powerful device APIs by default
   { key: "Permissions-Policy", value: "accelerometer=(), autoplay=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=(), interest-cohort=()" },
-  // (Optional hardening)
   { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains; preload" },
   { key: "Origin-Agent-Cluster", value: "?1" },
 ];
