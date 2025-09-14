@@ -1,4 +1,4 @@
-\'use client\';
+'use client';
 
 import Head from 'next/head';
 import HoverableCover from '@/components/ui/hoverable-cover';
@@ -86,7 +86,7 @@ export default function TemplatesPage() {
       </Head>
 
       <main className="max-w-7xl mx-auto px-4 py-12">
-        <h1 className="text-4xl font-bold text-center mb-10">🧾 Templates</h1>
+        <h1 className="text-4xl font-bold text-center mb-10">ðŸ§¾ Templates</h1>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {items.map((item) => (
@@ -94,7 +94,7 @@ export default function TemplatesPage() {
               key={item.id}
               className="rounded-2xl border bg-white overflow-hidden shadow transition hover:shadow-lg group"
             >
-              {/* ✅ Hoverable, perfectly-fit cover */}
+              {/* âœ… Hoverable, perfectly-fit cover */}
               <HoverableCover
                 src={item.image}
                 alt={item.title}
@@ -105,7 +105,7 @@ export default function TemplatesPage() {
               <div className="p-4">
                 <h2 className="text-xl font-semibold mb-2">{item.title}</h2>
                 <p className="text-gray-600 text-sm mb-2">{item.description}</p>
-                <p className="text-lg font-bold mb-3">€{item.price.toFixed(2)}</p>
+                <p className="text-lg font-bold mb-3">â‚¬{item.price.toFixed(2)}</p>
 
                 <button
                   className="snipcart-add-item bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
