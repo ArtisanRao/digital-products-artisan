@@ -7,11 +7,11 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Star, Search, Filter, Grid, List, Eye } from 'lucide-react';
+import { Star, Search, Filter, Grid, List } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { products, type Product } from '@/data/products';
-import AddToCartButton from '@/components/add-to-cart-button';
+import ProductActions from '@/components/product-actions'; // ⬅️ use the unified blue actions
 
 const baseCategories = [
   'AI & ChatGPT Guides',
@@ -340,25 +340,13 @@ export default function ProductsPage() {
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <Button
-                        asChild
-                        className="bg-black text-white hover:bg-black/90"
-                        aria-label={`View ${product.title}`}
-                        size="sm"
-                      >
-                        <Link href={`/products/${product.id}`}>
-                          <Eye className="w-4 h-4 mr-2" aria-hidden />
-                          View
-                        </Link>
-                      </Button>
-
-                      <AddToCartButton
-                        productId={product.id}
-                        size="sm"
-                        className="bg-black text-white hover:bg-black/90"
-                      />
-                    </div>
+                    {/* Unified blue actions: View -> checkout, Add to cart -> cart */}
+                    <ProductActions
+                      id={product.id}
+                      title={product.title}
+                      price={product.price}
+                      image={product.image}
+                    />
                   </CardFooter>
                 </Card>
               ))}
@@ -406,23 +394,13 @@ export default function ProductsPage() {
                       </span>
                     )}
 
-                    <AddToCartButton
-                      productId={product.id}
-                      size="sm"
-                      className="bg-black text-white hover:bg-black/90"
+                    {/* Unified blue actions */}
+                    <ProductActions
+                      id={product.id}
+                      title={product.title}
+                      price={product.price}
+                      image={product.image}
                     />
-
-                    <Button
-                      asChild
-                      className="bg-black text-white hover:bg-black/90"
-                      aria-label={`View ${product.title}`}
-                      size="sm"
-                    >
-                      <Link href={`/products/${product.id}`}>
-                        <Eye className="w-4 h-4 mr-2" aria-hidden />
-                        View
-                      </Link>
-                    </Button>
                   </div>
                 </li>
               ))}
