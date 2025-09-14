@@ -1,50 +1,80 @@
 // app/categories/icons/page.tsx
-'use client';
+"use client";
 
-import Head from 'next/head';
-import HoverableCover from '@/components/ui/hoverable-cover';
+import Head from "next/head";
+import HoverableCover from "@/components/ui/hoverable-cover";
+
+function buildIconCandidates(base: string) {
+  // try multiple name patterns + case variants
+  const exts = ["jpg", "png", "jpeg"];
+  const cands: string[] = [];
+
+  // /images/icons/<name>
+  for (const e of exts) cands.push(`${base}.${e}`);
+  for (const e of exts) cands.push(`${base}-cover.${e}`);
+  for (const e of exts) cands.push(`${base}/cover.${e}`);
+
+  // /images/Icons/<name> (case)
+  const upper = base.replace("/images/icons/", "/images/Icons/");
+  if (upper !== base) {
+    for (const e of exts) cands.push(`${upper}.${e}`);
+    for (const e of exts) cands.push(`${upper}-cover.${e}`);
+    for (const e of exts) cands.push(`${upper}/cover.${e}`);
+  }
+
+  // /images/<name> as a last resort
+  const short = base.replace("/images/icons/", "/images/");
+  if (short !== base) {
+    for (const e of exts) cands.push(`${short}-cover.${e}`);
+    for (const e of exts) cands.push(`${short}/cover.${e}`);
+    for (const e of exts) cands.push(`${short}.${e}`);
+  }
+
+  // unique
+  return Array.from(new Set(cands));
+}
 
 export default function IconsPage() {
   const items = [
     {
-      id: 'ui-icon-pack',
-      title: 'UI Icon Pack',
-      imageBase: '/images/icons/ui-icon-pack',
+      id: "ui-icon-pack",
+      title: "UI Icon Pack",
+      base: "/images/icons/ui-icon-pack",
       price: 4.99,
-      description: '500 crisp UI icons in SVG + PNG.',
-      fileUrl: '/downloads/ui-icon-pack.zip',
+      description: "500 crisp UI icons in SVG + PNG.",
+      fileUrl: "/downloads/ui-icon-pack.zip",
     },
     {
-      id: 'minimal-icons',
-      title: 'Minimal Icons',
-      imageBase: '/images/icons/minimal-icons',
+      id: "minimal-icons",
+      title: "Minimal Icons",
+      base: "/images/icons/minimal-icons",
       price: 3.99,
-      description: 'Clean, thin-line icons great for dashboards.',
-      fileUrl: '/downloads/minimal-icons.zip',
+      description: "Clean, thin-line icons great for dashboards.",
+      fileUrl: "/downloads/minimal-icons.zip",
     },
     {
-      id: 'gradient-icons',
-      title: 'Gradient Icons',
-      imageBase: '/images/icons/gradient-icons',
+      id: "gradient-icons",
+      title: "Gradient Icons",
+      base: "/images/icons/gradient-icons",
       price: 5.49,
-      description: 'Vibrant, modern gradient-styled icons.',
-      fileUrl: '/downloads/gradient-icons.zip',
+      description: "Vibrant, modern gradient-styled icons.",
+      fileUrl: "/downloads/gradient-icons.zip",
     },
   ];
 
   const structuredData = items.map((p) => ({
-    '@context': 'https://schema.org',
-    '@type': 'Product',
+    "@context": "https://schema.org",
+    "@type": "Product",
     name: p.title,
-    image: `https://digitalproductsartisan.com${p.imageBase}.jpg`,
+    image: `https://digitalproductsartisan.com${p.base}.jpg`,
     description: p.description,
     sku: p.id,
     offers: {
-      '@type': 'Offer',
-      url: 'https://digitalproductsartisan.com/categories/icons',
-      priceCurrency: 'EUR',
+      "@type": "Offer",
+      url: "https://digitalproductsartisan.com/categories/icons",
+      priceCurrency: "EUR",
       price: p.price.toFixed(2),
-      availability: 'https://schema.org/InStock',
+      availability: "https://schema.org/InStock",
     },
   }));
 
@@ -52,7 +82,10 @@ export default function IconsPage() {
     <>
       <Head>
         <title>Icons | Digital Products Artisan</title>
-        <meta name="description" content="Premium icon packs for apps, dashboards, and websites." />
+        <meta
+          name="description"
+          content="Premium icon packs for apps, dashboards, and websites."
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
@@ -60,21 +93,12 @@ export default function IconsPage() {
       </Head>
 
       <main className="max-w-7xl mx-auto px-4 py-12">
-        <h1 className="text-4xl font-bold text-center mb-10">🟣 Icons</h1>
+        <h1 className="text-4xl font-bold text-center mb-10">🔘 Icons</h1>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {items.map((item) => {
-            const base = item.imageBase;
-            const fallbacks = [
-              // same filename, different extension
-              `${base}.png`,
-              // with "-cover" suffix
-              `${base}-cover.jpg`,
-              `${base}-cover.png`,
-              // in a subfolder as "cover"
-              `${base}/cover.jpg`,
-              `${base}/cover.png`,
-            ];
+            const fallbacks = buildIconCandidates(item.base);
+            const [first, ...rest] = fallbacks;
 
             return (
               <div
@@ -82,8 +106,8 @@ export default function IconsPage() {
                 className="rounded-2xl border bg-white overflow-hidden shadow transition hover:shadow-lg group"
               >
                 <HoverableCover
-                  src={`${base}.jpg`}
-                  fallbacks={fallbacks}
+                  src={first ?? "/images/placeholder-cover.jpg"}
+                  fallbacks={rest}
                   alt={item.title}
                   ratio="1/1"
                   fit="contain"
@@ -101,7 +125,7 @@ export default function IconsPage() {
                     data-item-price={item.price}
                     data-item-url="/categories/icons"
                     data-item-description={item.description}
-                    data-item-image={`${base}.jpg`}
+                    data-item-image={first ?? "/images/placeholder-cover.jpg"}
                     data-item-file-guid={item.fileUrl}
                   >
                     Add to Cart

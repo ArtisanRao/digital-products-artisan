@@ -1,83 +1,110 @@
-'use client';
+// components/ui/hoverable-cover.tsx
+"use client";
 
-import Image from 'next/image';
-import * as React from 'react';
+import Image from "next/image";
+import * as React from "react";
 
 type Props = {
-  /** Primary image to try first */
   src: string;
-  /** Optional list of alternative sources (e.g., PNG if JPG is missing) */
+  /** Extra candidates to try if `src` 404s (first 200 OK wins) */
   fallbacks?: string[];
-  /** Final fallback if all sources fail */
-  placeholderSrc?: string;
-
   alt: string;
-  ratio?: '16/9' | '3/2' | '1/1' | '4/5';
-  fit?: 'contain' | 'cover';
-  roundedClass?: string;
+  /** Aspect ratio of the frame */
+  ratio?: "16/9" | "3/2" | "4/3" | "1/1";
+  /** Image fit behavior inside the frame */
+  fit?: "cover" | "contain";
+  className?: string;
   paddingClass?: string;
+  roundedClass?: string;
   sizes?: string;
+  /** Keep default hover overlay; set false to disable */
   hover?: boolean;
 };
 
-const RATIO_CLASS: Record<NonNullable<Props['ratio']>, string> = {
-  '16/9': 'aspect-[16/9]',
-  '3/2' : 'aspect-[3/2]',
-  '1/1' : 'aspect-square',
-  '4/5' : 'aspect-[4/5]',
+const ratioClass = (r: Props["ratio"]) => {
+  switch (r) {
+    case "1/1":
+      return "aspect-[1/1]";
+    case "3/2":
+      return "aspect-[3/2]";
+    case "4/3":
+      return "aspect-[4/3]";
+    default:
+      return "aspect-[16/9]";
+  }
 };
 
 export default function HoverableCover({
   src,
   fallbacks = [],
-  placeholderSrc = '/images/placeholder-cover.jpg',
   alt,
-  ratio = '16/9',
-  fit = 'contain',
-  roundedClass = 'rounded-2xl',
-  paddingClass = 'p-2',
-  sizes = '(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw',
+  ratio = "16/9",
+  fit = "contain",
+  className = "",
+  paddingClass = "p-2",
+  roundedClass = "rounded-md",
+  sizes = "(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw",
   hover = true,
 }: Props) {
-  const sources = React.useMemo(() => [src, ...fallbacks, placeholderSrc], [src, fallbacks, placeholderSrc]);
-  const [idx, setIdx] = React.useState(0);
-  const currentSrc = sources[Math.min(idx, sources.length - 1)];
+  const candidates = React.useMemo(() => {
+    // unique, non-empty
+    return Array.from(new Set([src, ...fallbacks].filter(Boolean)));
+  }, [src, fallbacks]);
 
-  const ratioClass = RATIO_CLASS[ratio] ?? RATIO_CLASS['16/9'];
-  const objectClass = fit === 'cover' ? 'object-cover' : 'object-contain';
+  const [resolved, setResolved] = React.useState<string>("/images/placeholder-cover.jpg");
+
+  // Probe candidates client side: first HEAD 200 wins
+  React.useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      for (const url of candidates) {
+        try {
+          const res = await fetch(url, { method: "HEAD", cache: "no-store" });
+          if (res.ok) {
+            if (!cancelled) setResolved(url);
+            return;
+          }
+        } catch {
+          // keep trying
+        }
+      }
+      if (!cancelled) setResolved("/images/placeholder-cover.jpg");
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [candidates.join("|")]);
 
   return (
-    <div className={`relative w-full ${roundedClass}`}>
-      <div
-        className={[
-          'relative w-full overflow-hidden bg-white',
-          roundedClass,
-          paddingClass,
-          ratioClass,
-          'transition-all duration-300',
-          hover ? 'hover:shadow-lg hover:ring-2 hover:ring-blue-500/20' : '',
-        ].join(' ')}
-      >
+    <div
+      className={[
+        "relative w-full overflow-hidden bg-white",
+        ratioClass(ratio),
+        roundedClass,
+        className,
+      ].join(" ")}
+    >
+      <div className={`absolute inset-0 ${paddingClass}`}>
         <Image
-          key={currentSrc} // force rerender when src changes
-          src={currentSrc}
+          src={resolved}
           alt={alt}
           fill
+          className={fit === "cover" ? "object-cover" : "object-contain"}
           sizes={sizes}
           draggable={false}
-          onError={() => setIdx(i => Math.min(i + 1, sources.length - 1))}
-          className={[
-            objectClass,
-            'transition-transform duration-300 will-change-transform',
-            hover ? 'hover:scale-105' : '',
-          ].join(' ')}
+          priority={false}
         />
+      </div>
 
-        {hover && (
-          <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 hover:opacity-100">
-            <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent" />
-          </div>
-        )}
+      {/* Subtle hover overlay + ring */}
+      <div
+        className={[
+          "pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300",
+          hover ? "group-hover:opacity-100" : "",
+        ].join(" ")}
+      >
+        <div className="absolute inset-0 ring-1 ring-inset ring-blue-500/10 rounded-md" />
+        <div className="absolute inset-0 bg-gradient-to-t from-blue-50/30 to-transparent" />
       </div>
     </div>
   );
