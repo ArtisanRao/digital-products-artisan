@@ -4,43 +4,13 @@
 import Head from "next/head";
 import HoverableCover from "@/components/ui/hoverable-cover";
 
-function buildFallbacksFrom(src: string) {
-  // src like "/images/icons/ui-icon-pack-cover.jpg"
-  const parts = src.split(".");
-  const ext = parts.pop() || "jpg";
-  const noExt = parts.join(".");
-  const exts = ["jpg", "png", "jpeg", "JPG", "PNG", "JPEG"];
-
-  // base variants: with/without "-cover", also "/cover"
-  const noCover = noExt.replace(/-cover$/i, "");
-  const asFolder = `${noCover}/cover`;
-
-  const bases = Array.from(new Set([noExt, noCover, asFolder]));
-
-  // icons vs Icons (case on folder)
-  const caseSwaps = bases.flatMap((b) => {
-    if (b.startsWith("/images/icons/")) {
-      return [b, b.replace("/images/icons/", "/images/Icons/")];
-    }
-    return [b];
-  });
-
-  // expand with all extensions
-  const withExts: string[] = [];
-  for (const b of caseSwaps) {
-    for (const e of exts) withExts.push(`${b}.${e}`);
-  }
-
-  // remove the original src if present (it will be primary)
-  return Array.from(new Set(withExts.filter((p) => p !== src)));
-}
-
 export default function IconsPage() {
   const items = [
     {
       id: "ui-icon-pack",
       title: "UI Icon Pack",
-      image: "/images/icons/ui-icon-pack-cover.jpg",
+      // base path only; the component will try jpg/png/webp/avif, Icons/icons, -cover/cover/
+      imageBase: "/images/icons/ui-icon-pack-cover",
       price: 4.99,
       description: "500 crisp UI icons in SVG + PNG.",
       fileUrl: "/downloads/ui-icon-pack.zip",
@@ -48,7 +18,7 @@ export default function IconsPage() {
     {
       id: "minimal-icons",
       title: "Minimal Icons",
-      image: "/images/icons/minimal-icons-cover.jpg",
+      imageBase: "/images/icons/minimal-icons-cover",
       price: 3.99,
       description: "Clean, thin-line icons great for dashboards.",
       fileUrl: "/downloads/minimal-icons.zip",
@@ -56,7 +26,7 @@ export default function IconsPage() {
     {
       id: "gradient-icons",
       title: "Gradient Icons",
-      image: "/images/icons/gradient-icons-cover.jpg",
+      imageBase: "/images/icons/gradient-icons-cover",
       price: 5.49,
       description: "Vibrant, modern gradient-styled icons.",
       fileUrl: "/downloads/gradient-icons.zip",
@@ -67,7 +37,7 @@ export default function IconsPage() {
     "@context": "https://schema.org",
     "@type": "Product",
     name: p.title,
-    image: `https://digitalproductsartisan.com${p.image}`,
+    image: `https://digitalproductsartisan.com${p.imageBase}.jpg`,
     description: p.description,
     sku: p.id,
     offers: {
@@ -103,8 +73,7 @@ export default function IconsPage() {
               className="rounded-2xl border bg-white overflow-hidden shadow transition hover:shadow-lg group"
             >
               <HoverableCover
-                src={item.image}
-                fallbacks={buildFallbacksFrom(item.image)}
+                src={item.imageBase}   // <— base path, no extension
                 alt={item.title}
                 ratio="1/1"
                 fit="contain"
@@ -122,7 +91,7 @@ export default function IconsPage() {
                   data-item-price={item.price}
                   data-item-url="/categories/icons"
                   data-item-description={item.description}
-                  data-item-image={item.image}
+                  data-item-image={`${item.imageBase}.jpg`}
                   data-item-file-guid={item.fileUrl}
                 >
                   Add to Cart

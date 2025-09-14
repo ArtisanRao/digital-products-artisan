@@ -5,9 +5,8 @@ import Image from "next/image";
 import * as React from "react";
 
 type Props = {
+  /** You can pass either a full filename (with extension) OR a base path without extension. */
   src: string;
-  /** Optional extra candidates to try, in order */
-  fallbacks?: string[];
   alt: string;
   ratio?: "16/9" | "3/2" | "4/3" | "1/1";
   fit?: "cover" | "contain";
@@ -31,9 +30,53 @@ const ratioClass = (r: Props["ratio"]) => {
   }
 };
 
+const IMG_EXTS = ["jpg", "jpeg", "png", "webp", "avif", "JPG", "JPEG", "PNG", "WEBP", "AVIF"];
+
+function stripExt(p: string) {
+  const i = p.lastIndexOf(".");
+  if (i === -1) return p;
+  return p.slice(0, i);
+}
+
+function hasExt(p: string) {
+  return /\.[a-zA-Z0-9]+$/.test(p);
+}
+
+function expandCandidates(src: string) {
+  // Normalize: try both icons/Icons, with/without "-cover", and "…/cover" folder
+  const bases = new Set<string>();
+  const s0 = hasExt(src) ? stripExt(src) : src;
+
+  const withCover = s0.endsWith("-cover") ? s0 : `${s0}-cover`;
+  const withoutCover = s0.replace(/-cover$/i, "");
+  const asFolder = `${withoutCover}/cover`;
+
+  const variants = [s0, withCover, withoutCover, asFolder];
+
+  for (const v of variants) {
+    bases.add(v);
+    if (v.startsWith("/images/icons/")) bases.add(v.replace("/images/icons/", "/images/Icons/"));
+    if (v.startsWith("/images/Icons/")) bases.add(v.replace("/images/Icons/", "/images/icons/"));
+  }
+
+  const withExts: string[] = [];
+  for (const b of bases) {
+    if (hasExt(src)) {
+      // If the original had an extension, try that exact one first.
+      withExts.push(`${b}${src.slice(stripExt(src).length)}`);
+    }
+    for (const e of IMG_EXTS) withExts.push(`${b}.${e}`);
+  }
+
+  // Ensure uniqueness and filter out empties
+  const uniq = Array.from(new Set(withExts.filter(Boolean)));
+  // Always end with placeholder
+  uniq.push("/images/placeholder-cover.jpg");
+  return uniq;
+}
+
 export default function HoverableCover({
   src,
-  fallbacks = [],
   alt,
   ratio = "16/9",
   fit = "contain",
@@ -43,13 +86,7 @@ export default function HoverableCover({
   sizes = "(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw",
   hover = true,
 }: Props) {
-  const candidates = React.useMemo(() => {
-    const all = Array.from(new Set([src, ...fallbacks].filter(Boolean)));
-    // Always end with a placeholder
-    all.push("/images/placeholder-cover.jpg");
-    return all;
-  }, [src, fallbacks]);
-
+  const candidates = React.useMemo(() => expandCandidates(src), [src]);
   const [idx, setIdx] = React.useState(0);
   const current = candidates[idx];
 
