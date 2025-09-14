@@ -5,19 +5,16 @@ import Image from "next/image";
 import * as React from "react";
 
 type Props = {
-  /** Primary src; we’ll also try `fallbacks` in order on error */
   src: string;
+  /** Optional extra candidates to try, in order */
   fallbacks?: string[];
   alt: string;
-  /** Aspect ratio of the frame */
   ratio?: "16/9" | "3/2" | "4/3" | "1/1";
-  /** Image fit behavior inside the frame */
   fit?: "cover" | "contain";
   className?: string;
   paddingClass?: string;
   roundedClass?: string;
   sizes?: string;
-  /** Keep default hover overlay; set false to disable */
   hover?: boolean;
 };
 
@@ -46,19 +43,18 @@ export default function HoverableCover({
   sizes = "(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw",
   hover = true,
 }: Props) {
-  const candidates = React.useMemo(
-    () => Array.from(new Set([src, ...fallbacks].filter(Boolean))),
-    [src, fallbacks]
-  );
+  const candidates = React.useMemo(() => {
+    const all = Array.from(new Set([src, ...fallbacks].filter(Boolean)));
+    // Always end with a placeholder
+    all.push("/images/placeholder-cover.jpg");
+    return all;
+  }, [src, fallbacks]);
 
   const [idx, setIdx] = React.useState(0);
-  const current = candidates[idx] ?? "/images/placeholder-cover.jpg";
+  const current = candidates[idx];
 
   const handleError = () => {
-    setIdx((i) => {
-      const next = i + 1;
-      return next < candidates.length ? next : i; // stop at last; placeholder will show if last fails
-    });
+    setIdx((i) => (i < candidates.length - 1 ? i + 1 : i));
   };
 
   return (
@@ -72,19 +68,19 @@ export default function HoverableCover({
     >
       <div className={`absolute inset-0 ${paddingClass}`}>
         <Image
-          key={current} // force refresh when src changes
+          key={current}
           src={current}
           alt={alt}
           fill
           className={fit === "cover" ? "object-cover" : "object-contain"}
           sizes={sizes}
           draggable={false}
-          priority={false}
+          loading="lazy"
           onError={handleError}
         />
       </div>
 
-      {/* Subtle hover overlay + ring */}
+      {/* Hover overlay */}
       <div
         className={[
           "pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300",
