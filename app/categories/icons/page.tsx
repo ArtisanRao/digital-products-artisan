@@ -4,11 +4,12 @@ import Head from 'next/head';
 import HoverableCover from '@/components/ui/hoverable-cover';
 
 export default function IconsPage() {
+  // Use a base path without extension, so we can try .jpg then .png automatically
   const items = [
     {
       id: 'ui-icon-pack',
       title: 'UI Icon Pack',
-      image: '/images/icons/ui-icon-pack-cover.jpg',
+      imageBase: '/images/icons/ui-icon-pack-cover',
       price: 4.99,
       description: '500 crisp UI icons in SVG + PNG.',
       fileUrl: '/downloads/ui-icon-pack.zip',
@@ -16,7 +17,7 @@ export default function IconsPage() {
     {
       id: 'minimal-icons',
       title: 'Minimal Icons',
-      image: '/images/icons/minimal-icons-cover.jpg',
+      imageBase: '/images/icons/minimal-icons-cover',
       price: 3.99,
       description: 'Clean, thin-line icons great for dashboards.',
       fileUrl: '/downloads/minimal-icons.zip',
@@ -24,7 +25,7 @@ export default function IconsPage() {
     {
       id: 'gradient-icons',
       title: 'Gradient Icons',
-      image: '/images/icons/gradient-icons-cover.jpg',
+      imageBase: '/images/icons/gradient-icons-cover',
       price: 5.49,
       description: 'Vibrant, modern gradient-styled icons.',
       fileUrl: '/downloads/gradient-icons.zip',
@@ -32,7 +33,7 @@ export default function IconsPage() {
     {
       id: 'outline-icons',
       title: 'Outline Icons',
-      image: '/images/icons/outline-icons-cover.jpg',
+      imageBase: '/images/icons/outline-icons-cover',
       price: 4.49,
       description: 'Balanced outlines in multiple sizes.',
       fileUrl: '/downloads/outline-icons.zip',
@@ -40,7 +41,7 @@ export default function IconsPage() {
     {
       id: 'emoji-icons',
       title: 'Emoji Icons',
-      image: '/images/icons/emoji-icons-cover.jpg',
+      imageBase: '/images/icons/emoji-icons-cover',
       price: 3.49,
       description: 'Friendly emoji-style set for playful UIs.',
       fileUrl: '/downloads/emoji-icons.zip',
@@ -48,7 +49,7 @@ export default function IconsPage() {
     {
       id: 'social-icon-pack',
       title: 'Social Icon Pack',
-      image: '/images/icons/social-icon-pack-cover.jpg',
+      imageBase: '/images/icons/social-icon-pack-cover',
       price: 3.99,
       description: 'All major platforms, filled & outline variants.',
       fileUrl: '/downloads/social-icon-pack.zip',
@@ -59,7 +60,7 @@ export default function IconsPage() {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: p.title,
-    image: `https://digitalproductsartisan.com${p.image}`,
+    image: `https://digitalproductsartisan.com${p.imageBase}.jpg`,
     description: p.description,
     sku: p.id,
     offers: {
@@ -91,12 +92,13 @@ export default function IconsPage() {
               key={item.id}
               className="rounded-2xl border bg-white overflow-hidden shadow transition hover:shadow-lg"
             >
-              {/* ✅ Hoverable, perfectly-fit cover (icon art is often square) */}
+              {/* ✅ Tries .jpg, then .png, then placeholder */}
               <HoverableCover
-                src={item.image}
+                src={`${item.imageBase}.jpg`}
+                fallbacks={[`${item.imageBase}.png`]}
                 alt={item.title}
                 ratio="1/1"
-                fit="contain"   // switch to "cover" if you prefer edge-to-edge fill
+                fit="contain"
               />
 
               <div className="p-4">
@@ -111,7 +113,7 @@ export default function IconsPage() {
                   data-item-price={item.price}
                   data-item-url="/categories/icons"
                   data-item-description={item.description}
-                  data-item-image={item.image}
+                  data-item-image={`${item.imageBase}.jpg`}
                   data-item-file-guid={item.fileUrl}
                 >
                   Add to Cart
