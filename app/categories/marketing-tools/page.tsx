@@ -56,9 +56,9 @@ export default function MarketingToolsPage() {
               <div className="p-4">
                 <h2 className="text-xl font-semibold mb-2">{item.title}</h2>
                 <p className="text-gray-600 text-sm mb-2">{item.description}</p>
-                <p className="text-lg font-bold">€{item.price.toFixed(2)}</p>
+                <p className="text-lg font-bold mb-3">€{item.price.toFixed(2)}</p>
 
-                {/* Two-button action bar */}
+                {/* Blue View + Add to Cart bar (clickable + hoverable) */}
                 <ShopActions item={item} />
               </div>
             </div>
