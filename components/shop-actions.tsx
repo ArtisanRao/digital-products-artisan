@@ -1,97 +1,108 @@
-// components/shop-actions.tsx
 "use client";
 
 import { Button } from "@/components/ui/button";
 import { Eye, ShoppingCart } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { getPreferredCurrency } from "@/lib/currency";
 import { useCart } from "@/contexts/cart-context";
 
 type Item = {
-  id: string | number;
+  id: string;
   title: string;
   price: number;
-  image?: string;
+  image: string;
   description?: string;
   fileUrl?: string;
 };
 
 export default function ShopActions({ item }: { item: Item }) {
+  // Your provider should exist, but we guard just in case
   const cart = (useCart?.() ?? {}) as any;
-  const router = useRouter();
 
-  // Fallback: if your cart context doesn't persist/emit, do a simple localStorage add + badge update
-  const fallbackAdd = () => {
+  const persistAndBroadcast = (items: any[]) => {
+    localStorage.setItem("cart", JSON.stringify(items));
+    const count = items.reduce((n, i) => n + Number(i.quantity || 1), 0);
+    localStorage.setItem("cartCount", String(count));
     try {
-      const raw = localStorage.getItem("cart");
-      const items = raw ? (JSON.parse(raw) as any[]) : [];
-      const idStr = String(item.id);
-      const idx = items.findIndex((i) => String(i.id) === idStr);
-      if (idx >= 0) {
-        items[idx].quantity = Math.max(1, Number(items[idx].quantity || 1)) + 1;
-      } else {
-        items.push({
-          id: idStr,
-          name: item.title,
-          title: item.title,
-          price: item.price,
-          image: item.image,
-          description: item.description,
-          fileUrl: item.fileUrl,
-          url: "/categories",
-          quantity: 1,
-        });
-      }
-      localStorage.setItem("cart", JSON.stringify(items));
-      const count = items.reduce((n, i) => n + Number(i.quantity || 1), 0);
-      localStorage.setItem("cartCount", String(count));
       window.dispatchEvent(new CustomEvent("cart:updated", { detail: { count, items } }));
-    } catch {
-      /* no-op */
-    }
+    } catch {}
   };
 
-  const add = () => {
-    const addFn = cart.addItem ?? cart.add ?? cart.actions?.addItem;
-    if (typeof addFn === "function") {
-      addFn({
-        id: String(item.id), // keep as string for consistency across pages
-        name: item.title,
-        title: item.title,
-        price: item.price,
-        image: item.image,
-        description: item.description,
-        fileUrl: item.fileUrl,
-        url: "/categories",
-        quantity: 1,
-      });
-      (cart.openCart ?? cart.open ?? cart.actions?.openCart)?.();
+  const addToLocalCart = () => {
+    let items: any[] = [];
+    try {
+      items = JSON.parse(localStorage.getItem("cart") || "[]");
+    } catch {}
+    const idx = items.findIndex((x) => String(x.id) === String(item.id));
+    if (idx >= 0) {
+      items[idx].quantity = Number(items[idx].quantity || 1) + 1;
     } else {
-      // fallback so the badge updates and Cart page sees the item
-      fallbackAdd();
-    }
-  };
-
-  const buyNow = () => {
-    // ensure it’s in the cart (replace quantity to 1 for a clean buy-now)
-    const addFn = cart.addItem ?? cart.add ?? cart.actions?.addItem;
-    if (typeof addFn === "function") {
-      addFn({
+      items.push({
         id: String(item.id),
         name: item.title,
         title: item.title,
         price: item.price,
         image: item.image,
         description: item.description,
-        fileUrl: item.fileUrl,
+        fileGuid: item.fileUrl,
         url: "/categories",
         quantity: 1,
-        replaceIfExists: true,
       });
-    } else {
-      fallbackAdd();
     }
-    // go straight to your Checkout page (which creates a Stripe session)
-    router.push(`/checkout?buyNow=1&item=${encodeURIComponent(String(item.id))}`);
+    persistAndBroadcast(items);
+  };
+
+  const add = () => {
+    // Try context first
+    (cart.addItem ?? cart.add ?? cart.actions?.addItem)?.({
+      id: String(item.id),
+      name: item.title,
+      title: item.title,
+      price: item.price,
+      image: item.image,
+      description: item.description,
+      fileUrl: item.fileUrl,
+      url: "/categories",
+      quantity: 1,
+    });
+    (cart.openCart ?? cart.open ?? cart.actions?.openCart)?.();
+
+    // Always keep localStorage in sync for the badge and /cart page
+    addToLocalCart();
+  };
+
+  const buyNow = async () => {
+    // Ensure present in local cart (badge stays correct)
+    addToLocalCart();
+
+    const currency = (getPreferredCurrency?.() || "eur").toLowerCase();
+    const resp = await fetch("/api/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        lines: [
+          {
+            id: item.id,
+            name: item.title,
+            price: item.price, // numeric amount in chosen currency units
+            image: item.image,
+            quantity: 1,
+          },
+        ],
+        currency,
+      }),
+    });
+
+    try {
+      const data = await resp.json();
+      if (resp.ok && data?.url) {
+        window.location.href = data.url; // 👉 straight to Stripe Checkout
+      } else {
+        console.error("Checkout error:", data);
+        // Optional: toast error
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   return (
