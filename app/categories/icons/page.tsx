@@ -1,89 +1,84 @@
 'use client';
 
-import Head from 'next/head';
 import HoverableCover from '@/components/ui/hoverable-cover';
+import ShopActions from '@/components/shop-actions';
 
-type IconItem = {
-  slug: string; // used to generate candidate paths
-  title: string;
-  price: number;
-  description: string;
-};
+type Item = { slug: string; title: string; price: number; description: string };
+
+const CAT = 'icons';
+
+// Try multiple sensible filenames (category folder, root, -cover variants) + safe fallbacks
+const imgCandidates = (slug: string) => [
+  `/images/${CAT}/${slug}.jpg`,
+  `/images/${CAT}/${slug}-cover.jpg`,
+  `/images/${slug}.jpg`,
+  `/images/${slug}-cover.jpg`,
+  `/images/${CAT}/cover.jpg`,
+  `/images/${CAT}-cover.jpg`,
+  `/images/${CAT}.jpg`,
+  `/images/icons-cover.jpg`,
+  `/images/placeholder-cover.jpg`,
+];
 
 export default function IconsPage() {
-  const items: IconItem[] = [
+  const items: Item[] = [
     {
-      slug: 'ui-icon-pack',
-      title: 'UI Icon Pack',
+      slug: 'minimal-icons-pack',
+      title: 'Minimal Icons Pack',
       price: 4.99,
-      description: '500 crisp UI icons in SVG + PNG.',
+      description: 'Clean, consistent 24px line icons for interfaces.',
     },
     {
-      slug: 'minimal-icons',
-      title: 'Minimal Icons',
-      price: 3.99,
-      description: 'Clean, thin-line icons great for dashboards.',
-    },
-    {
-      slug: 'gradient-icons',
-      title: 'Gradient Icons',
+      slug: 'business-icons-pack',
+      title: 'Business Icons Pack',
       price: 5.49,
-      description: 'Vibrant, modern gradient-styled icons.',
+      description: 'Office, finance & analytics icons for dashboards.',
+    },
+    {
+      slug: 'social-icons-pack',
+      title: 'Social Media Icons',
+      price: 3.99,
+      description: 'Brand-safe logos in multiple styles and sizes.',
     },
   ];
 
   return (
-    <>
-      <Head>
-        <title>Icons | Digital Products Artisan</title>
-        <meta name="description" content="UI, minimal, and gradient icon packs for your projects." />
-      </Head>
+    <main className="mx-auto max-w-7xl px-4 py-12">
+      <h1 className="mb-10 text-center text-4xl font-bold">🔘 Icons</h1>
 
-      <main className="max-w-7xl mx-auto px-4 py-12">
-        <h1 className="text-4xl font-bold text-center mb-10">🟣 Icons</h1>
+      <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        {items.map((p) => {
+          // Primary image used for cart/checkout + first attempt
+          const primaryImg = `/images/${CAT}/${p.slug}.jpg`;
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {items.map((item) => {
-            // Try multiple filename shapes and locations:
-            const candidates = [
-              `/images/icons/${item.slug}.jpg`,
-              `/images/icons/${item.slug}-cover.jpg`,
-              `/images/${item.slug}.jpg`,
-              `/images/${item.slug}-cover.jpg`,
-            ];
+          return (
+            <div
+              key={p.slug}
+              className="group overflow-hidden rounded-2xl border bg-white shadow transition hover:shadow-lg"
+            >
+              {/* Square looks best for icon sets */}
+              <HoverableCover srcs={imgCandidates(p.slug)} alt={p.title} ratio="1/1" fit="contain" />
 
-            return (
-              <div key={item.slug} className="rounded-2xl border bg-white overflow-hidden shadow transition hover:shadow-lg group">
-                <HoverableCover
-                  srcs={candidates}
-                  alt={item.title}
-                  ratio="1/1"
-                  fit="contain"
+              <div className="p-4">
+                <h2 className="mb-2 text-xl font-semibold">{p.title}</h2>
+                <p className="mb-2 text-sm text-gray-600">{p.description}</p>
+                <p className="mb-3 text-lg font-bold">€{p.price.toFixed(2)}</p>
+
+                {/* Blue View + Add to Cart (consistent site-wide) */}
+                <ShopActions
+                  item={{
+                    id: p.slug,
+                    title: p.title,
+                    price: p.price,
+                    image: primaryImg,
+                    description: p.description,
+                  }}
                 />
-
-                <div className="p-4">
-                  <h2 className="text-xl font-semibold mb-2">{item.title}</h2>
-                  <p className="text-gray-600 text-sm mb-2">{item.description}</p>
-                  <p className="text-lg font-bold mb-3">€{item.price.toFixed(2)}</p>
-
-                  <button
-                    className="snipcart-add-item bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-                    data-item-id={item.slug}
-                    data-item-name={item.title}
-                    data-item-price={item.price}
-                    data-item-url="/categories/icons"
-                    data-item-description={item.description}
-                    // Use the first candidate as the purchase image; Snipcart doesn’t need fallbacks
-                    data-item-image={candidates[0]}
-                  >
-                    Add to Cart
-                  </button>
-                </div>
               </div>
-            );
-          })}
-        </div>
-      </main>
-    </>
+            </div>
+          );
+        })}
+      </div>
+    </main>
   );
 }
