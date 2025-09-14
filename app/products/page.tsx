@@ -11,7 +11,7 @@ import { Star, Search, Filter, Grid, List } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { products, type Product } from '@/data/products';
-import ProductActions from '@/components/product-actions'; // ⬅️ use the unified blue actions
+import ProductActions from '@/components/product-actions'; // unified blue actions
 
 const baseCategories = [
   'AI & ChatGPT Guides',
@@ -340,12 +340,14 @@ export default function ProductsPage() {
                       )}
                     </div>
 
-                    {/* Unified blue actions: View -> checkout, Add to cart -> cart */}
+                    {/* Compact blue actions */}
                     <ProductActions
                       id={product.id}
                       title={product.title}
                       price={product.price}
                       image={product.image}
+                      size="sm"
+                      className="shrink-0"
                     />
                   </CardFooter>
                 </Card>
@@ -394,12 +396,14 @@ export default function ProductsPage() {
                       </span>
                     )}
 
-                    {/* Unified blue actions */}
+                    {/* Compact blue actions on list rows too */}
                     <ProductActions
                       id={product.id}
                       title={product.title}
                       price={product.price}
                       image={product.image}
+                      size="sm"
+                      className="justify-end"
                     />
                   </div>
                 </li>

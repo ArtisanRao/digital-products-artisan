@@ -10,6 +10,10 @@ type Props = {
   price: number;
   image?: string;
   quantity?: number;
+  /** Compact buttons when space is tight (e.g., product grid) */
+  size?: "sm" | "md";
+  /** Extra classes for the wrapper row */
+  className?: string;
 };
 
 function addToCartLocal(
@@ -58,19 +62,34 @@ export default function ProductActions({
   price,
   image,
   quantity = 1,
+  size = "md",
+  className = "",
 }: Props) {
   const [adding, setAdding] = useState(false);
   const idStr = String(id);
   const router = useRouter();
 
+  const sizeBtn =
+    size === "sm" ? "px-3 py-1.5 text-sm" : "px-4 py-2 text-[15px]";
+  const sizeIcon = size === "sm" ? "h-4 w-4" : "h-4 w-4"; // same glyph, smaller padding for sm
+
+  const baseBtn =
+    "inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white " +
+    "hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500";
+
   const handleAdd = (e: MouseEvent<HTMLButtonElement>) => {
-    // keep parent Links from hijacking the click
     e.preventDefault();
     e.stopPropagation();
 
     setAdding(true);
     const ok = addToCartLocal(
-      { id: idStr, name: title, price, image, quantity: Math.max(1, Number(quantity) || 1) },
+      {
+        id: idStr,
+        name: title,
+        price,
+        image,
+        quantity: Math.max(1, Number(quantity) || 1),
+      },
       { replace: false }
     );
     setAdding(false);
@@ -81,7 +100,7 @@ export default function ProductActions({
     e.preventDefault();
     e.stopPropagation();
 
-    // Ensure it exists in cart (replace quantity with 1 so checkout is deterministic)
+    // Ensure it’s present with qty=1 for a predictable checkout
     addToCartLocal(
       { id: idStr, name: title, price, image, quantity: 1 },
       { replace: true }
@@ -91,16 +110,14 @@ export default function ProductActions({
   };
 
   return (
-    <div className="relative z-10 flex items-center gap-3 pointer-events-auto">
+    <div className={`relative z-10 flex items-center gap-2 pointer-events-auto ${className}`}>
       <button
         type="button"
         onClick={handleView}
         aria-label="View (go to checkout)"
-        className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white
-                   hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2
-                   focus-visible:ring-blue-500"
+        className={`${baseBtn} ${sizeBtn}`}
       >
-        <Eye className="h-4 w-4" />
+        <Eye className={sizeIcon} />
         View
       </button>
 
@@ -109,11 +126,9 @@ export default function ProductActions({
         onClick={handleAdd}
         disabled={adding}
         aria-label="Add to cart"
-        className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white
-                   hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2
-                   focus-visible:ring-blue-500 disabled:opacity-60"
+        className={`${baseBtn} ${sizeBtn} disabled:opacity-60`}
       >
-        <ShoppingCart className="h-4 w-4" />
+        <ShoppingCart className={sizeIcon} />
         {adding ? "Adding…" : "Add to cart"}
       </button>
     </div>
