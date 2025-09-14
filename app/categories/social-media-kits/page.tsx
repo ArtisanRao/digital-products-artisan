@@ -1,103 +1,129 @@
-
 'use client';
 
+import Head from 'next/head';
+import HoverableCover from '@/components/ui/hoverable-cover';
+
 export default function SocialMediaKitsPage() {
-  const products = [
+  const items = [
     {
-      id: "instagram-branding-kit",
-      title: "Instagram Branding Kit",
-      image: "/images/instagram-branding-kit-cover.jpg",
-      price: 9.99,
-      description: "Editable templates optimized for Instagram branding.",
-      fileGuid: "GUID1",
-    },
-    {
-      id: "pinterest-growth-pack",
-      title: "Pinterest Growth Pack",
-      image: "/images/pinterest-growth-pack-cover.jpg",
-      price: 8.99,
-      description: "Styled Pinterest pins and templates to boost traffic.",
-      fileGuid: "GUID2",
-    },
-    {
-      id: "facebook-ad-templates",
-      title: "Facebook Ad Templates",
-      image: "/images/facebook-ad-templates-cover.jpg",
-      price: 7.99,
-      description: "Ready-for-use Facebook ad templates in PNG format.",
-      fileGuid: "GUID3",
-    },
-    {
-      id: "canva-social-media-bundle",
-      title: "Canva Social Media Bundle",
-      image: "/images/canva-social-media-bundle-cover.jpg",
-      price: 12.99,
-      description: "A bundle of Canva templates for multiple platforms.",
-      fileGuid: "GUID4",
-    },
-    {
-      id: "instagram-story-templates",
-      title: "Instagram Story Templates",
-      image: "/images/instagram-story-templates-cover.jpg",
+      id: 'instagram-canva-templates',
+      title: 'Instagram Canva Templates',
+      image: '/images/social-media-kits/instagram-canva-templates-cover.jpg',
       price: 6.99,
-      description: "Stylish Stories designs for promotions or engagement.",
-      fileGuid: "GUID5",
+      description: 'Stylish post & story templates ready to edit in Canva.',
+      fileUrl: '/downloads/instagram-canva-templates.zip',
     },
     {
-      id: "youtube-channel-kit",
-      title: "YouTube Channel Kit",
-      image: "/images/youtube-channel-kit-cover.jpg",
-      price: 10.0,
-      description: "Cover art, thumbnails, and banner templates included.",
-      fileGuid: "GUID6",
+      id: 'tiktok-reels-pack',
+      title: 'TikTok & Reels Pack',
+      image: '/images/social-media-kits/tiktok-reels-pack-cover.jpg',
+      price: 5.49,
+      description: 'Hook-driven short video prompt cards and overlays.',
+      fileUrl: '/downloads/tiktok-reels-pack.zip',
     },
     {
-      id: "chatgpt-guide",
-      title: "ChatGPT Guide for Social Media",
-      image: "/images/chatgpt-guide-cover.jpg",
-      price: 11.99,
-      description: "Learn how to use ChatGPT to generate content ideas, captions, and ads.",
-      fileGuid: "GUID7",
+      id: 'pinterest-pin-templates',
+      title: 'Pinterest Pin Templates',
+      image: '/images/social-media-kits/pinterest-pin-templates-cover.jpg',
+      price: 4.99,
+      description: 'High-CTR pin designs optimized for saves and clicks.',
+      fileUrl: '/downloads/pinterest-pin-templates.zip',
     },
     {
-      id: "excel-social-tracker",
-      title: "Excel Tracker for Social Media",
-      image: "/images/excel-tracker-cover.jpg",
-      price: 5.99,
-      description: "Simple Excel tracker for posts, analytics, and performance.",
-      fileGuid: "GUID8",
+      id: 'facebook-ads-creatives',
+      title: 'Facebook Ads Creatives',
+      image: '/images/social-media-kits/facebook-ads-creatives-cover.jpg',
+      price: 7.99,
+      description: 'Editable ad image templates for quick A/B testing.',
+      fileUrl: '/downloads/facebook-ads-creatives.zip',
+    },
+    {
+      id: 'stories-highlights-icons',
+      title: 'Stories & Highlight Icons',
+      image: '/images/social-media-kits/stories-highlights-icons-cover.jpg',
+      price: 3.99,
+      description: 'Minimal story backgrounds + 50 highlight icons.',
+      fileUrl: '/downloads/stories-highlights-icons.zip',
+    },
+    {
+      id: 'carousel-posts-kit',
+      title: 'Carousel Posts Kit',
+      image: '/images/social-media-kits/carousel-posts-kit-cover.jpg',
+      price: 6.49,
+      description: 'Swipe-worthy carousel layouts with pro typography.',
+      fileUrl: '/downloads/carousel-posts-kit.zip',
     },
   ];
 
+  const structuredData = items.map((p) => ({
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: p.title,
+    image: `https://digitalproductsartisan.com${p.image}`,
+    description: p.description,
+    sku: p.id,
+    offers: {
+      '@type': 'Offer',
+      url: 'https://digitalproductsartisan.com/categories/social-media-kits',
+      priceCurrency: 'EUR',
+      price: p.price.toFixed(2),
+      availability: 'https://schema.org/InStock',
+    },
+  }));
+
   return (
-    <main className="max-w-7xl mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold text-center mb-10">Social Media Kits</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        {products.map((item) => (
-          <div key={item.id} className="border rounded-xl p-4 shadow hover:shadow-lg transition">
-            <img
-              src={item.image}
-              alt={item.title}
-              className="w-full h-48 object-cover rounded mb-4"
-            />
-            <h2 className="text-xl font-semibold mb-2">{item.title}</h2>
-            <p className="text-gray-600 text-sm mb-2">{item.description}</p>
-            <p className="text-lg font-bold mb-3">€{item.price.toFixed(2)}</p>
-            <button
-              className="snipcart-add-item bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-              data-item-id={item.id}
-              data-item-name={item.title}
-              data-item-price={item.price}
-              data-item-url="/categories/social-media-kits"
-              data-item-description={item.description}
-              data-item-image={item.image}
-              data-item-file-guid={item.fileGuid}
+    <>
+      <Head>
+        <title>Social Media Kits | Digital Products Artisan</title>
+        <meta
+          name="description"
+          content="Editable social templates, ad creatives, carousels, and more — ready to customize."
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
+      </Head>
+
+      <main className="max-w-7xl mx-auto px-4 py-12">
+        <h1 className="text-4xl font-bold text-center mb-10">📱 Social Media Kits</h1>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {items.map((item) => (
+            <div
+              key={item.id}
+              className="rounded-2xl border bg-white overflow-hidden shadow transition hover:shadow-lg group"
             >
-              Add to Cart
-            </button>
-          </div>
-        ))}
-      </div>
-    </main>
+              {/* ✅ Hoverable, perfectly-fit cover */}
+              <HoverableCover
+                src={item.image}
+                alt={item.title}
+                ratio="16/9"     // keep consistent with other categories; change to "1/1" if your covers are square
+                fit="contain"     // switch to "cover" for edge-to-edge fill
+              />
+
+              <div className="p-4">
+                <h2 className="text-xl font-semibold mb-2">{item.title}</h2>
+                <p className="text-gray-600 text-sm mb-2">{item.description}</p>
+                <p className="text-lg font-bold mb-3">€{item.price.toFixed(2)}</p>
+
+                <button
+                  className="snipcart-add-item bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+                  data-item-id={item.id}
+                  data-item-name={item.title}
+                  data-item-price={item.price}
+                  data-item-url="/categories/social-media-kits"
+                  data-item-description={item.description}
+                  data-item-image={item.image}
+                  data-item-file-guid={item.fileUrl}
+                >
+                  Add to Cart
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </main>
+    </>
   );
 }
