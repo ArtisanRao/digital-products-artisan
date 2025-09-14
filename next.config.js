@@ -13,12 +13,15 @@ const csp = [
   "base-uri 'self'",
   "object-src 'none'",
   "worker-src 'self' blob:",
-  "font-src 'self' data: https:",
-  "img-src 'self' data: blob: https:",
+  "font-src 'self' data: https: https://cdn.snipcart.com",
+  "img-src 'self' data: blob: https: https://cdn.snipcart.com https://app.snipcart.com",
+  "media-src 'self' blob:",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://js.stripe.com https://cdn.snipcart.com https://app.snipcart.com",
   "style-src 'self' 'unsafe-inline' https://cdn.snipcart.com",
   "connect-src 'self' https://www.google-analytics.com https://vitals.vercel-insights.com https://api.stripe.com https://checkout.stripe.com https://cdn.snipcart.com https://app.snipcart.com",
   "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com https://app.snipcart.com",
+  "form-action 'self' https://app.snipcart.com https://checkout.stripe.com",
+  "frame-ancestors 'self'",
 ].join("; ");
 
 /** Shared security headers */
@@ -34,16 +37,22 @@ const securityHeaders = [
 
 /** Non-HTML assets we never want indexed */
 const assetNoIndexHeaders = [
-  { source: "/manifest.json", headers: [
-    { key: "Content-Type", value: "application/manifest+json" },
-    { key: "X-Robots-Tag", value: "noindex, nofollow" },
-    { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
-  ]},
-  { source: "/site.webmanifest", headers: [
-    { key: "Content-Type", value: "application/manifest+json" },
-    { key: "X-Robots-Tag", value: "noindex, nofollow" },
-    { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
-  ]},
+  {
+    source: "/manifest.json",
+    headers: [
+      { key: "Content-Type", value: "application/manifest+json" },
+      { key: "X-Robots-Tag", value: "noindex, nofollow" },
+      { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
+    ],
+  },
+  {
+    source: "/site.webmanifest",
+    headers: [
+      { key: "Content-Type", value: "application/manifest+json" },
+      { key: "X-Robots-Tag", value: "noindex, nofollow" },
+      { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
+    ],
+  },
   { source: "/favicon.ico", headers: [{ key: "X-Robots-Tag", value: "noindex" }] },
   { source: "/apple-touch-icon.png", headers: [{ key: "X-Robots-Tag", value: "noindex" }] },
   { source: "/sw.js", headers: [{ key: "X-Robots-Tag", value: "noindex" }, { key: "Cache-Control", value: "no-cache" }] },
