@@ -27,7 +27,7 @@ const bundles = [
       "Content Calendar Template",
       "Email Marketing Templates",
     ],
-    image: "/placeholder.svg?height=300&width=400",
+    image: "/images/bundles/complete-creator-bundle-cover.jpg",
     popular: true,
   },
   {
@@ -48,7 +48,7 @@ const bundles = [
       "Social Media Strategy Guide",
       "Hashtag Research Tool",
     ],
-    image: "/placeholder.svg?height=300&width=400",
+    image: "/images/bundles/social-media-master-pack-cover.jpg",
     popular: false,
   },
   {
@@ -70,7 +70,7 @@ const bundles = [
       "Pitch Deck Template",
       "Brand Guidelines Template",
     ],
-    image: "/placeholder.svg?height=300&width=400",
+    image: "/images/bundles/business-starter-bundle-cover.jpg",
     popular: false,
   },
   {
@@ -90,7 +90,7 @@ const bundles = [
       "AI Writing Assistant Guide",
       "Automation Setup Templates",
     ],
-    image: "/placeholder.svg?height=300&width=400",
+    image: "/images/bundles/ai-productivity-suite-cover.jpg",
     popular: true,
   },
 ]
@@ -110,13 +110,18 @@ export default function BundlesPage() {
           <Card key={bundle.id} className="group hover:shadow-xl transition-all duration-300">
             <CardHeader className="p-0">
               <div className="relative overflow-hidden rounded-t-lg">
-                <Image
-                  src={bundle.image || "/placeholder.svg"}
-                  alt={bundle.title}
-                  width={400}
-                  height={300}
-                  className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                />
+                {/* Cover */}
+                <div className="relative w-full aspect-[16/9] bg-gray-100">
+                  <Image
+                    src={bundle.image}
+                    alt={bundle.title}
+                    fill
+                    sizes="(max-width:768px) 100vw, (max-width:1200px) 50vw, 33vw"
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    priority={false}
+                  />
+                </div>
+
                 {bundle.popular && (
                   <Badge className="absolute top-3 left-3 bg-gradient-to-r from-purple-600 to-pink-600">
                     Most Popular
