@@ -6,19 +6,26 @@ import DescriptionClamp from "@/components/DescriptionClamp"; // ⬅️ text exp
 
 type CatInfo = { title: string; description: string; folder: string };
 
-// Map new slugs + legacy slugs → display info + physical folder under /public/images/<folder>
+// Map slugs → display info + physical folder under /public/images/<folder>
 const CATEGORIES: Record<string, CatInfo> = {
   // New
   ebooks:               { title: "eBooks",             description: "Digital books, guides, and educational content.",            folder: "ebooks" },
+  "digital-art":        { title: "Digital Art",        description: "Illustrations, posters, wallpapers and creative assets.",   folder: "digital-art" },
   templates:            { title: "Templates",          description: "Design templates and graphics ready to use.",               folder: "templates" },
   "marketing-tools":    { title: "Marketing Tools",    description: "Prompts, swipe files, and growth resources for marketing.", folder: "marketing-tools" },
   "printable-planners": { title: "Printable Planners", description: "Digital planners, journals, and productivity tools.",       folder: "printable-planners" },
-  "social-media-kits":  { title: "Social Media Kits",  description: "Packaged posts, graphics, and assets for social channels.", folder: "social-media-kits" },
   "photography-prints": { title: "Photography Prints", description: "High-quality photo prints, presets, and media assets.",     folder: "photography-prints" },
+  fonts:                { title: "Fonts",              description: "Display, serif, sans and script fonts for your projects.",  folder: "fonts" },
+  icons:                { title: "Icons",              description: "Clean, scalable icon packs for UI and branding.",           folder: "icons" },
+  "web-templates":      { title: "Web Templates",      description: "Website templates, UI kits, and themes.",                   folder: "web-templates" },
+  "video-resources":    { title: "Video Resources",    description: "Stock footage, overlays, LUTs, and templates.",             folder: "video-resources" },
+  "audio-samples":      { title: "Audio Samples",      description: "Loops, one-shots, SFX and music beds for creators.",        folder: "audio-samples" },
+  "social-media-kits":  { title: "Social Media Kits",  description: "Packaged posts, graphics, and assets for social channels.", folder: "social-media-kits" },
 
   // Legacy → point to the new folders above
   "ebooks-guides":       { title: "eBooks",             description: "Digital books, guides, and educational content.",            folder: "ebooks" },
   "templates-graphics":  { title: "Templates",          description: "Design templates and graphics ready to use.",               folder: "templates" },
+  "business-templates":  { title: "Templates",          description: "Design templates and graphics ready to use.",               folder: "templates" },
   "ai-prompts":          { title: "Marketing Tools",    description: "Prompts, swipe files, and growth resources for marketing.", folder: "marketing-tools" },
   "planners-organizers": { title: "Printable Planners", description: "Digital planners, journals, and productivity tools.",       folder: "printable-planners" },
   "code-development":    { title: "Social Media Kits",  description: "Packaged posts, graphics, and assets for social channels.", folder: "social-media-kits" },
@@ -30,11 +37,11 @@ export function generateStaticParams() {
   return Object.keys(CATEGORIES).map((slug) => ({ slug }));
 }
 
-// Works on Next 14 (object) and 15 (Promise) by using a union and always awaiting
-type ParamsMaybePromise = { slug: string } | Promise<{ slug: string }>;
+// Next 15: params is a Promise
+type Params = { slug: string };
 
-export async function generateMetadata({ params }: { params: ParamsMaybePromise }) {
-  const { slug } = await (params as any);
+export async function generateMetadata({ params }: { params: Promise<Params> }) {
+  const { slug } = await params;
   const cat = CATEGORIES[slug];
   const title = cat ? `${cat.title} | Digital Products Artisan` : "Digital Products | Digital Products Artisan";
   const description = cat?.description ?? "Browse our curated digital products.";
@@ -63,8 +70,8 @@ function listFolderImages(folder: string) {
   }
 }
 
-export default async function CategoryPage({ params }: { params: ParamsMaybePromise }) {
-  const { slug } = await (params as any);
+export default async function CategoryPage({ params }: { params: Promise<Params> }) {
+  const { slug } = await params;
   const cat = CATEGORIES[slug];
 
   if (!cat) {
