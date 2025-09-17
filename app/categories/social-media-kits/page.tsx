@@ -19,10 +19,8 @@ const items: Item[] = [
   { id: "social-media-kits", slug: "social-media-kits", title: "Social Media Kit", price: 5.99, description: "Ready-made posts & story sets." },
   { id: "instagram-branding-kit", slug: "instagram-branding-kit", title: "Instagram Branding Kit", price: 5.49, description: "On-brand templates for IG." },
   { id: "instagram-story-templates", slug: "instagram-story-templates", title: "IG Story Templates", price: 4.99, description: "Eye-catching stories in minutes." },
-  // add more; the expander will handle the rest
 ];
 
-// Try multiple sensible filenames (+ fallbacks)
 const imgCandidates = (slug: string) => [
   `/images/${CAT}/${slug}.jpg`,
   `/images/${CAT}/${slug}-cover.jpg`,
@@ -46,7 +44,6 @@ export default function SocialMediaKitsPage() {
       <CategoryGrid
         items={items}
         renderItem={(p) => {
-          // normalize for strict TS (CategoryGrid’s Product has optional fields)
           const slug = p.slug ?? String(p.id);
           const price =
             typeof p.price === "number"
@@ -67,12 +64,16 @@ export default function SocialMediaKitsPage() {
               <div className="p-4">
                 <h2 className="text-xl font-semibold mb-2">{p.title}</h2>
 
-                {/* Inline “More / Less” under subtitle */}
-                <InlineMore text={p.description} lines={2} className="text-gray-600 text-sm mb-2" />
+                {/* Inline “More / Less” under subtitle — force visible */}
+                <InlineMore
+                  text={p.description}
+                  lines={2}
+                  minChars={1}
+                  className="text-gray-600 text-sm mb-2"
+                />
 
                 <p className="text-lg font-bold mb-3">{formatEUR(price)}</p>
 
-                {/* Blue View + Add to Cart (same behavior as other categories) */}
                 <ShopActions
                   item={{
                     id: slug,
