@@ -4,6 +4,7 @@ import Head from "next/head";
 import CategoryGrid from "@/components/categories/CategoryGrid";
 import HoverableCover from "@/components/ui/hoverable-cover";
 import ShopActions from "@/components/shop-actions";
+import InlineMore from "@/components/ui/inline-more";
 
 export default function MarketingToolsPage() {
   const items = [
@@ -31,7 +32,6 @@ export default function MarketingToolsPage() {
       description: "Ready-to-run ad creatives & copy.",
       fileUrl: "/downloads/facebook-ad-templates.zip",
     },
-    // add more as needed; CategoryGrid will auto-expand with "Read more"
   ];
 
   const formatEUR = (n: number) =>
@@ -53,7 +53,6 @@ export default function MarketingToolsPage() {
         <CategoryGrid
           items={items}
           renderItem={(p, i) => {
-            // normalize for strict TS (CategoryGrid’s Product has optional fields)
             const id = String(p.id);
             const title = p.title;
             const image = typeof p.image === "string" ? p.image : "/images/placeholder-cover.jpg";
@@ -74,10 +73,13 @@ export default function MarketingToolsPage() {
 
                 <div className="p-4">
                   <h2 className="text-xl font-semibold mb-2">{title}</h2>
-                  <p className="text-gray-600 text-sm mb-2">{description}</p>
+
+                  {/* Inline “More / Less” under subtitle */}
+                  <InlineMore text={description} lines={2} className="text-gray-600 text-sm mb-2" />
+
                   <p className="text-lg font-bold mb-3">{formatEUR(price)}</p>
 
-                  {/* keep your original object so checkout/download logic remains intact */}
+                  {/* keep original fields so checkout/download logic remains intact */}
                   <ShopActions
                     item={{
                       ...(items[i] as any),
