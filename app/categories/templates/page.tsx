@@ -1,9 +1,11 @@
 "use client";
 
+import CategoryGrid from "@/components/categories/CategoryGrid";
 import HoverableCover from "@/components/ui/hoverable-cover";
 import ShopActions from "@/components/shop-actions";
 
 type Item = {
+  id: string;        // stable key
   slug: string;
   title: string;
   price: number;
@@ -14,64 +16,84 @@ type Item = {
 const CAT = "templates";
 const primary = (slug: string) => `/images/${CAT}/${slug}.jpg`;
 
-export default function TemplatesPage() {
-  const items: Item[] = [
-    {
-      slug: "invoice-template",
-      title: "Invoice Template Kit",
-      price: 5.49,
-      description: "Clean, professional invoices.",
-      image: primary("invoice-template"),
-    },
-    {
-      slug: "presentation-deck-template",
-      title: "Presentation Deck Template",
-      price: 6.49,
-      description: "Modern slide layouts for anything.",
-      image: primary("presentation-deck-template"),
-    },
-    {
-      slug: "resume-template",
-      title: "Ultimate Resume Template",
-      price: 6.99,
-      description: "ATS-friendly resume with cover letter.",
-      image: primary("resume-template"),
-    },
-  ];
+const items: Item[] = [
+  {
+    id: "invoice-template",
+    slug: "invoice-template",
+    title: "Invoice Template Kit",
+    price: 5.49,
+    description: "Clean, professional invoices.",
+    image: primary("invoice-template"),
+  },
+  {
+    id: "presentation-deck-template",
+    slug: "presentation-deck-template",
+    title: "Presentation Deck Template",
+    price: 6.49,
+    description: "Modern slide layouts for anything.",
+    image: primary("presentation-deck-template"),
+  },
+  {
+    id: "resume-template",
+    slug: "resume-template",
+    title: "Ultimate Resume Template",
+    price: 6.99,
+    description: "ATS-friendly resume with cover letter.",
+    image: primary("resume-template"),
+  },
+  // add more; CategoryGrid will handle the expander
+];
 
+const formatEUR = (n: number) =>
+  new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
+
+export default function TemplatesPage() {
   return (
     <main className="max-w-7xl mx-auto px-4 py-12">
       <h1 className="text-4xl font-bold text-center mb-10">🧾 Templates</h1>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        {items.map((p) => (
-          <div
-            key={p.slug}
-            className="group rounded-2xl border bg-white overflow-hidden shadow transition hover:shadow-lg"
-          >
-            {/* Hoverable, perfectly-fit cover (same behavior as Marketing Tools) */}
-            <HoverableCover src={p.image} alt={p.title} ratio="16/9" fit="contain" />
+      <CategoryGrid
+        items={items}
+        // two rows by default per breakpoint; reveals more with "Read more"
+        renderItem={(p) => {
+          const slug = p.slug ?? String(p.id);
+          const price =
+            typeof p.price === "number"
+              ? p.price
+              : typeof p.price === "string"
+              ? parseFloat(p.price)
+              : 0;
+          const image = typeof p.image === "string" ? p.image : primary(slug);
 
-            <div className="p-4">
-              <h2 className="text-xl font-semibold mb-2">{p.title}</h2>
-              <p className="text-gray-600 text-sm mb-2">{p.description}</p>
-              <p className="text-lg font-bold mb-3">€{p.price.toFixed(2)}</p>
+          return (
+            <div
+              key={String(p.id)}
+              className="group rounded-2xl border bg-white overflow-hidden shadow transition hover:shadow-lg"
+            >
+              {/* Hoverable, perfectly-fit cover (same behavior as Marketing Tools) */}
+              <HoverableCover src={image} alt={p.title} ratio="16/9" fit="contain" />
 
-              {/* Blue View + Add to Cart actions */}
-              <ShopActions
-                item={{
-                  id: p.slug,
-                  title: p.title,
-                  price: p.price,
-                  image: p.image,
-                  description: p.description,
-                  // fileUrl: "/downloads/..."  // add if/when you have downloadable zips for these
-                }}
-              />
+              <div className="p-4">
+                <h2 className="text-xl font-semibold mb-2">{p.title}</h2>
+                <p className="text-gray-600 text-sm mb-2">{p.description}</p>
+                <p className="text-lg font-bold mb-3">{formatEUR(price)}</p>
+
+                {/* Blue View + Add to Cart actions */}
+                <ShopActions
+                  item={{
+                    id: slug,
+                    title: p.title,
+                    price,
+                    image,
+                    description: p.description,
+                    // fileUrl: "/downloads/..." // add when ready
+                  }}
+                />
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          );
+        }}
+      />
     </main>
   );
 }
