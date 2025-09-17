@@ -19,43 +19,42 @@ const categories = [
   { name: "📱 Social Media Kits",  slug: "social-media-kits",    image: "/images/social-media-kits-cover.jpg" },
 ];
 
-// ultra-light breakpoint helper (mobile-first)
-function getCollapsedCount(width: number) {
-  // grid: base=1 col → 2 items (2 rows)
-  // sm (≥640px)=2 cols → 4 items
-  // md+ (≥768px)=3 cols → 6 items
+// Mobile-first: base=1 col → 2 items; sm(≥640)=2 cols → 4; md+(≥768)=3 cols → 6
+function chunkByBreakpoint(width: number) {
   if (width >= 768) return 6;
   if (width >= 640) return 4;
   return 2;
 }
 
 export default function CategoriesPage() {
-  const [collapsedCount, setCollapsedCount] = useState(6); // default for SSR hydration
+  // SSR-safe defaults; will correct on mount
+  const [collapsedCount, setCollapsedCount] = useState(6);
   const [visible, setVisible] = useState(6);
-  const [expanded, setExpanded] = useState(false);
 
-  // compute initial collapsed count on mount and on resize
+  // compute collapsed chunk on mount + resize; don't collapse if user already expanded
   useEffect(() => {
     const apply = () => {
-      const c = getCollapsedCount(window.innerWidth);
+      const c = chunkByBreakpoint(window.innerWidth);
       setCollapsedCount(c);
-      setVisible(c);
-      setExpanded(false);
+      setVisible((v) => (v < c ? c : v));
     };
     apply();
     window.addEventListener("resize", apply);
     return () => window.removeEventListener("resize", apply);
   }, []);
 
-  const items = expanded ? categories : categories.slice(0, visible);
-  const canExpand = categories.length > collapsedCount;
+  const increment = collapsedCount; // reveal per click equals one collapsed "page"
+  const canShowMore = visible < categories.length;
+  const canShowLess = visible > collapsedCount;
+
+  const shown = categories.slice(0, Math.min(visible, categories.length));
 
   return (
     <main className="max-w-7xl mx-auto px-4 py-12">
       <h1 className="text-4xl font-bold text-center mb-12">🗂️ All Categories</h1>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {items.map((category) => (
+      <div id="categories-grid" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        {shown.map((category) => (
           <Link
             key={category.slug}
             href={`/categories/${category.slug}`}
@@ -86,23 +85,24 @@ export default function CategoriesPage() {
         ))}
       </div>
 
-      {canExpand && (
-        <div className="mt-8 flex justify-center">
-          {!expanded ? (
+      {(canShowMore || canShowLess) && (
+        <div className="mt-8 flex items-center justify-center gap-3">
+          {canShowMore && (
             <button
-              onClick={() => { setExpanded(true); setVisible(categories.length); }}
+              onClick={() => setVisible((v) => Math.min(v + increment, categories.length))}
               className="rounded-2xl border px-4 py-2 text-sm hover:bg-muted/30"
-              aria-expanded={expanded}
+              aria-controls="categories-grid"
             >
-              Read more
+              More
             </button>
-          ) : (
+          )}
+          {canShowLess && (
             <button
-              onClick={() => { setExpanded(false); setVisible(collapsedCount); }}
+              onClick={() => setVisible(collapsedCount)}
               className="rounded-2xl px-4 py-2 text-sm underline"
-              aria-expanded={expanded}
+              aria-controls="categories-grid"
             >
-              Show less
+              Less
             </button>
           )}
         </div>
