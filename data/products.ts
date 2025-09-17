@@ -38,19 +38,55 @@ const base: Omit<Product, "images">[] = [
       "Buy This Complete Shop - PLR MRR Digital Product: Resell Ebooks, Courses, Prompts & More.",
     description:
       "Complete, rights-included digital shop bundle. Rebrand and resell ebooks, courses, prompts, templates, and more.",
-    longDescription: `Launch a complete digital products shop in hours, not months.
+    longDescription: `✸ Buy my complete Shop with PLR / MRR Rights ✸ 
 
-What’s inside:
-• 40+ editable ebooks, courses, templates & prompt packs  
-• Master Resell Rights (MRR) + Private Label Rights (PLR) on eligible items  
-• Editable source files where applicable  
-• Branding assets, product mockups & sales copy  
-• Step-by-step quick-start guide
+You have here the opportunity to buy my complete shop with a big discount!! This Bundle is way more worth than 100 USD!
 
-License & delivery:
-• Commercial use allowed per included license
-• Instant download after purchase, lifetime access to updates
-• No physical item will be shipped (digital download)`,
+Profit of my PLR+MRR Bundle for your business and clients.
+
+The PLR license allows you to edit, rebrand and sell the products as your own product, making it an excellent addition to your product line or as a lead magnet to attract potential customers. With the MRR License you can resell the product as your own. The options are endless!!
+
+In this bundle you will receive all products of my shop:
+
+🚀 ChatGPT Expertise BASIC PACK Video Course
+🚀 ChatGPT Expertise UPGRADE PACK Video Course
+🚀 Make Money with AI Art Ebook
+🚀 Make Money with AI Art Video
+🚀 Create AI Human Reel Videos Video Course
+🚀 PLR Chat GPT Video Course
+🚀 10 Business & Marketing Video Courses PLR
+🚀 100 Midjourney Prompts Abstract Art
+🚀 Cryptocurrency Secrets Video Course and Ebook
+🚀 700 Product Ideas to sell on Etsy
+🚀 Keto Diet Secrets Ebook
+🚀 Eating Healthy Premium PLR EBook Complete Video Course
+🚀 Carb Cycling For Weight Loss Premium PLR EBook Complete Video Course
+🚀 Healthy Primal Living PLR EBook Video Course
+🚀 Lose Your Belly Diet PLR EBook Video Course
+🚀 Boost Your Immune System PLR EBook Video Course
+🚀 Coloring Book 911
+🚀 450 Coloring Book Pages
+🚀 Intermittent Fasting Quick Start
+🚀 ChatGPT for Internet Marketers
+🚀 Juicing Recipes
+🚀 Make Money with PLR Ebook
+🚀 Make Money with PLR Video Course
+🚀 Google Gemini 7K Prompts
+🚀 Side Hustle Secrets Ebook
+🚀 Side Hustle Secrets Video Upgrade
+🚀 Easy Keto
+🚀 1940 Graphic Recipes
+🚀 AI Images Library
+🚀 Effective Instagram Marketing
+🚀 Blockchain Explained Ebook
+
+After your order is processed, you will receive a PDF document with the links to download the files from Google Drive. This item is provided electronically.
+
+This listing is for a digital download. No physical product will be shipped.
+
+If you have any questions, please contact me and I will be more than happy to help!
+
+🚀Check out my other PLR Products at my store🚀: https://www.etsy.com/shop/ArtisanRao?ref=dashboard-header`,
     price: 42.99,
     originalPrice: 0,
     category: "Complete Shop Packages",
