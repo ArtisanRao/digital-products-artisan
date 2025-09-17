@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import CategoryGrid from "@/components/categories/CategoryGrid";
 import HoverableCover from "@/components/ui/hoverable-cover";
@@ -11,14 +10,14 @@ type Item = {
   id: string;
   title: string;
   image: string;
-  price: number;
+  price: number | string;
   description: string;
 };
 
 const formatEUR = (n: number) =>
   new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
 
-/** Auto-redirect to /cart after adding an item (Snipcart or custom event) */
+/** Auto-redirect to /cart after Add to Cart (Snipcart or custom event) */
 function CartAutoRedirect() {
   const router = useRouter();
   useEffect(() => {
@@ -39,9 +38,11 @@ export default function BestSellersGrid({ items }: { items: Item[] }) {
       <CartAutoRedirect />
       <CategoryGrid
         items={items}
+        // Force a "Read more" on small lists: 1 item visible at first on all bps
+        collapsedCountByBp={{ base: 1, sm: 1, md: 1, lg: 1, xl: 1 }}
+        increment={4}
         renderItem={(p) => {
-          // Normalize fields from CategoryGrid.Product (id | number, price: number | string | undefined, etc.)
-          const anchorId = String(p.id);
+          const id = String(p.id);
           const title = p.title;
           const image = typeof p.image === "string" ? p.image : "/images/placeholder-cover.jpg";
           const description = p.description ?? "";
@@ -54,8 +55,8 @@ export default function BestSellersGrid({ items }: { items: Item[] }) {
 
           return (
             <div
-              key={anchorId}
-              id={anchorId}
+              key={id}
+              id={id}
               className="group rounded-2xl border bg-white overflow-hidden shadow transition hover:shadow-lg"
             >
               <HoverableCover src={image} alt={title} ratio="3/2" fit="contain" />
@@ -65,18 +66,11 @@ export default function BestSellersGrid({ items }: { items: Item[] }) {
                 <p className="text-gray-600 mb-2 text-sm">{description}</p>
                 <p className="text-lg font-bold mb-3">{formatEUR(price)}</p>
 
-                <div className="flex gap-2">
-                  <Link
-                    href="/checkout"
-                    className="inline-flex items-center justify-center rounded-md border px-3 py-2 text-sm hover:bg-muted/30"
-                  >
-                    View
-                  </Link>
-
-                  <ShopActions
-                    item={{ id: anchorId, title, price, image, description }}
-                  />
-                </div>
+                {/* Keep only the BLUE actions from ShopActions */}
+                <ShopActions
+                  item={{ id, title, price, image, description }}
+                  viewHref="/checkout"      // ← send “View” to Checkout
+                />
               </div>
             </div>
           );
