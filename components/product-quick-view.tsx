@@ -4,99 +4,83 @@ import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { X } from 'lucide-react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import AddToCartButton from '@/components/add-to-cart-button';
 
 type Product = {
-  id: number;
+  id: number | string;
   title: string;
-  description: string;
+  slug: string;
+  description?: string;
   price: number;
-  image: string;
+  image?: string | null;
   images?: string[];
 };
 
-export default function ProductQuickView({
-  product,
-  triggerClassName = 'text-blue-600 hover:underline',
-  children, // optional custom trigger content
-}: {
+type Props = {
   product: Product;
-  triggerClassName?: string;
-  children?: React.ReactNode;
-}) {
-  const [open, setOpen] = React.useState(false);
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
 
-  const firstImage =
-    (product.images && product.images[0]) || product.image || '/placeholder.svg';
+export default function ProductQuickView({ product, open, onOpenChange }: Props) {
+  const images = (product.images?.length ? product.images : [product.image]).filter(Boolean) as string[];
+  const cover = images[0] ?? '/images/placeholder-cover.jpg';
 
   return (
-    <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className={triggerClassName}
-        aria-haspopup="dialog"
-      >
-        {children ?? 'Full description'}
-      </button>
-
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent
-          className="max-w-3xl w-[95vw] p-0 overflow-hidden"
-          aria-describedby={undefined}
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-[min(900px,96vw)] p-0 overflow-hidden">
+        {/* close button */}
+        <button
+          onClick={() => onOpenChange(false)}
+          className="absolute right-3 top-3 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-gray-800 shadow"
+          aria-label="Close"
         >
-          <div className="relative bg-white">
-            <button
-              onClick={() => setOpen(false)}
-              className="absolute top-3 right-3 z-10 inline-flex items-center justify-center rounded-full w-9 h-9 bg-black/80 text-white hover:bg-black"
-              aria-label="Close"
-              title="Close"
-            >
-              <X className="w-5 h-5" />
-            </button>
+          <X className="h-6 w-6" />
+        </button>
 
-            <div className="grid md:grid-cols-2 gap-0">
-              <div className="relative aspect-[4/3] md:aspect-square bg-white">
-                <Image
-                  src={firstImage}
-                  alt={product.title}
-                  fill
-                  sizes="(min-width:768px) 50vw, 100vw"
-                  className="object-contain"
-                />
-              </div>
+        <div className="grid md:grid-cols-2 gap-0">
+          {/* media */}
+          <div className="relative bg-gray-50">
+            <Image
+              src={cover}
+              alt={product.title}
+              width={900}
+              height={900}
+              className="h-full w-full object-contain"
+              priority={false}
+            />
+          </div>
 
-              <div className="p-5 md:p-6">
-                <h3 className="text-xl font-semibold">{product.title}</h3>
-                <div className="mt-2 text-gray-600 whitespace-pre-line">
-                  {product.description}
-                </div>
+          {/* details */}
+          <div className="p-6 md:p-8">
+            <DialogHeader className="mb-3">
+              <DialogTitle className="text-xl md:text-2xl font-bold">
+                {product.title}
+              </DialogTitle>
+            </DialogHeader>
 
-                <div className="mt-4 flex items-center gap-3">
-                  <span className="text-2xl font-bold">
-                    €{product.price.toFixed(2)}
-                  </span>
-                  <AddToCartButton
-                    productId={product.id}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                  />
-                </div>
+            {/* price */}
+            <div className="mb-4 text-2xl font-semibold">
+              €{product.price.toFixed(2)}
+            </div>
 
-                <div className="mt-4">
-                  <Link
-                    href={`/products/${product.id}`}
-                    className="text-sm text-gray-700 underline underline-offset-2"
-                    onClick={() => setOpen(false)}
-                  >
-                    View full product page →
-                  </Link>
-                </div>
-              </div>
+            {/* long description (scrollable if very long) */}
+            <div className="prose prose-sm max-w-none text-gray-700 max-h-56 overflow-auto pr-2">
+              {product.description || 'No description provided.'}
+            </div>
+
+            {/* actions */}
+            <div className="mt-6 flex flex-wrap gap-3">
+              <AddToCartButton productId={Number(product.id)} />
+              <Button variant="outline" asChild>
+                <Link href={`/products/${product.id}`}>View full details</Link>
+              </Button>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
-    </>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

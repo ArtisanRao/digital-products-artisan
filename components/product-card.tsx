@@ -1,94 +1,84 @@
-// components/product-card.tsx
 'use client';
 
-import Image from "next/image";
-import Link from "next/link";
-import * as React from "react";
-import ReadMore from "@/components/read-more";
-import ProductQuickView from "@/components/product-quick-view";
+import Image from 'next/image';
+import * as React from 'react';
+import { Eye } from 'lucide-react';
+import ProductQuickView from '@/components/product-quick-view';
+import { Button } from '@/components/ui/button';
 
 type Product = {
-  id: string;                 // numeric string ok
+  id: number | string;
   title: string;
   slug: string;
-  image?: string | null;      // absolute URL or /images/...
-  images?: string[];          // optional gallery
-  description?: string;       // optional long copy
-  price?: number;             // optional (for quick view CTA)
-  // ...other fields
+  image?: string | null; // absolute URL or /images/... or undefined
+  description?: string;
+  price: number;
+  images?: string[];
+  // ...other fields if you like
 };
 
 export default function ProductCard({ product }: { product: Product }) {
-  // Compute a safe primary image (prefer gallery[0], then image, then slug-based default)
+  // Compute a safe initial src and fallbacks
   const computeSrc = () => {
-    const galleryFirst =
-      Array.isArray(product.images) && product.images.length
-        ? product.images[0]
-        : null;
-
-    const candidate = galleryFirst ?? product.image ?? "";
-    if (candidate && candidate.startsWith("http")) return candidate;
-    if (candidate && candidate.startsWith("/")) return candidate;
-
-    // slug-based local default (ensure file exists)
+    if (product.image && product.image.startsWith('http')) return product.image;
+    if (product.image && product.image.startsWith('/')) return product.image;
+    // slug-based local default (place a file at /public/images/products/<slug>/cover.jpg)
     return `/images/products/${product.slug}/cover.jpg`;
   };
 
   const [src, setSrc] = React.useState<string>(computeSrc());
+  const [open, setOpen] = React.useState(false);
 
-  // Prepare minimal data for the quick view dialog
-  const quickViewData = {
-    id: Number(product.id) || 0,
-    title: product.title,
-    description: product.description ?? "",
-    price: typeof product.price === "number" ? product.price : 0,
-    image: src,
-    images: product.images,
+  const openQuickView = (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    setOpen(true);
   };
 
   return (
-    <div className="group overflow-hidden rounded-2xl border bg-white">
-      {/* IMAGE */}
-      <Link href={`/products/${product.id}`} className="relative block aspect-[3/4] w-full bg-gray-100">
-        <Image
-          src={src}
-          alt={product.title}
-          fill
-          sizes="(min-width:1280px) 280px, (min-width:1024px) 25vw, (min-width:768px) 33vw, 100vw"
-          className="object-cover transition-transform duration-300 group-hover:scale-105"
-          onError={() => setSrc("/images/placeholder-cover.jpg")} // place this in /public/images/
-          priority={false}
-        />
-      </Link>
+    <>
+      <div className="group overflow-hidden rounded-2xl border bg-white">
+        {/* IMAGE (clickable for quick view) */}
+        <div className="relative aspect-[3/4] w-full bg-gray-100">
+          <Image
+            src={src}
+            alt={product.title}
+            fill
+            sizes="(min-width:1280px) 280px, (min-width:1024px) 25vw, (min-width:768px) 33vw, 100vw"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            onError={() => setSrc('/images/placeholder-cover.jpg')} // put this file in /public/images/
+            priority={false}
+            onClick={openQuickView}
+          />
 
-      {/* BODY */}
-      <div className="p-4">
-        <h3 className="text-base md:text-lg font-semibold leading-snug">
-          <Link href={`/products/${product.id}`} className="hover:underline">
-            {product.title}
-          </Link>
-        </h3>
+          {/* floating quick-view trigger */}
+          <button
+            onClick={openQuickView}
+            className="absolute right-3 top-3 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-gray-800 shadow hover:bg-white focus:outline-none"
+            aria-label="Quick view"
+          >
+            <Eye className="h-5 w-5" />
+          </button>
+        </div>
 
-        {/* Short description preview with toggle */}
-        {product.description && (
-          <ReadMore text={product.description} lines={2} className="mt-1" />
-        )}
+        {/* footer area (title + View button) — keep light to avoid layout shifts */}
+        <div className="flex items-start justify-between gap-3 p-4">
+          <h3 className="line-clamp-2 font-semibold text-gray-900">{product.title}</h3>
 
-        {/* Actions: keep your existing buttons where you render them;
-           add a quick 'Full description' modal trigger here */}
-        <div className="mt-3 flex items-center gap-3">
-          <Link
-            href={`/products/${product.id}`}
-            className="text-sm px-3 py-1.5 rounded-md border border-gray-300 hover:bg-gray-50"
+          {/* small “View” button that opens the modal */}
+          <Button
+            size="sm"
+            variant="secondary"
+            className="shrink-0"
+            onClick={openQuickView}
+            aria-label={`View ${product.title}`}
           >
             View
-          </Link>
-
-          <ProductQuickView product={quickViewData}>
-            <span className="text-sm">Full description</span>
-          </ProductQuickView>
+          </Button>
         </div>
       </div>
-    </div>
+
+      {/* Quick-View modal */}
+      <ProductQuickView product={product} open={open} onOpenChange={setOpen} />
+    </>
   );
 }
