@@ -60,7 +60,12 @@ export default function DigitalArtPage() {
                 <h2 className="mb-2 text-xl font-semibold">{p.title}</h2>
 
                 {/* Inline “More / Less” under subtitle */}
-                <InlineMore text={p.description} lines={2} className="text-gray-600 text-sm mb-2" />
+                <InlineMore
+                  text={p.description}
+                  lines={2}
+                  minChars={1}
+                  className="text-gray-600 text-sm mb-2"
+                />
 
                 <p className="mb-3 text-lg font-bold">{formatEUR(price)}</p>
 
