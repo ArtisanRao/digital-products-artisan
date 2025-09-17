@@ -3,34 +3,11 @@
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
 
-type ExpandableGridProps<T> = {
-  items: T[];
-  renderItem: (item: T, index: number) => React.ReactNode;
-  /** How many items are visible when collapsed (fallback if no per-breakpoint config) */
-  collapsedCount?: number; // default 6
-  /** How many more to reveal per click */
-  increment?: number; // default 6
-  /** Optional id for aria-controls */
-  id?: string;
-  /** Hide this component’s own controls and force fully expanded (for a parent “Expand all”) */
-  forceExpanded?: boolean;
-  /** Per-breakpoint initial visible counts (computed on client). */
-  collapsedCountByBp?: Partial<{
-    base: number; // <640px
-    sm: number;   // ≥640px
-    md: number;   // ≥768px
-    lg: number;   // ≥1024px
-    xl: number;   // ≥1280px
-  }>;
-  className?: string;
-  moreLabel?: string; // default "Read more"
-  lessLabel?: string; // default "Show less"
-};
+type Breakpoint = "base" | "sm" | "md" | "lg" | "xl";
 
-function useBreakpoint(): "xl" | "lg" | "md" | "sm" | "base" {
-  const [bp, setBp] = React.useState<"xl" | "lg" | "md" | "sm" | "base">("base");
+function useBreakpoint(): Breakpoint {
+  const [bp, setBp] = React.useState<Breakpoint>("base");
   React.useEffect(() => {
     const q = {
       xl: window.matchMedia("(min-width: 1280px)"),
@@ -41,99 +18,109 @@ function useBreakpoint(): "xl" | "lg" | "md" | "sm" | "base" {
     const compute = () =>
       q.xl.matches ? "xl" : q.lg.matches ? "lg" : q.md.matches ? "md" : q.sm.matches ? "sm" : "base";
     const handler = () => setBp(compute());
-    Object.values(q).forEach(m => m.addEventListener("change", handler));
+    Object.values(q).forEach((m) => m.addEventListener("change", handler));
     handler();
-    return () => Object.values(q).forEach(m => m.removeEventListener("change", handler));
+    return () => Object.values(q).forEach((m) => m.removeEventListener("change", handler));
   }, []);
   return bp;
 }
 
-export function ExpandableGrid<T>({
+export type ExpandableGridProps<T> = {
+  items: T[];
+  /** Fallback count when collapsed (if no per-bp override). Default: 6 */
+  collapsedCount?: number;
+  /** Per-breakpoint collapsed counts. Use `false` to mean “show all” at that breakpoint. */
+  collapsedCountByBp?: Partial<Record<Breakpoint, number | false>>;
+  /** How many more to reveal per click. Default: 4 */
+  increment?: number;
+  /** Render each card */
+  renderItem: (item: T, index: number) => React.ReactNode;
+  /** Container className */
+  className?: string;
+  /** Grid className */
+  gridClassName?: string;
+  /** Labels */
+  labels?: { more?: string; less?: string };
+};
+
+export default function ExpandableGrid<T>({
   items,
   renderItem,
   collapsedCount = 6,
-  increment = 6,
-  id,
-  forceExpanded,
-  collapsedCountByBp,
+  collapsedCountByBp = { base: 6, sm: 4, lg: 6, xl: 8 },
+  increment = 4,
   className,
-  moreLabel = "Read more",
-  lessLabel = "Show less",
+  gridClassName = "grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
+  labels = { more: "More", less: "Show less" },
 }: ExpandableGridProps<T>) {
   const bp = useBreakpoint();
+
   const initialCollapsed = React.useMemo(() => {
-    if (!collapsedCountByBp) return Math.min(collapsedCount, items.length);
-    const map = { base: collapsedCountByBp.base, sm: collapsedCountByBp.sm, md: collapsedCountByBp.md, lg: collapsedCountByBp.lg, xl: collapsedCountByBp.xl };
-    const pick =
-      (bp === "xl" && map.xl) ??
-      (bp === "lg" && map.lg) ??
-      (bp === "md" && map.md) ??
-      (bp === "sm" && map.sm) ??
+    // pick the per-bp value (may be number or false) or fallback
+    const map = collapsedCountByBp || {};
+    const rawPick =
+      (bp === "xl" ? map.xl : undefined) ??
+      (bp === "lg" ? map.lg : undefined) ??
+      (bp === "md" ? map.md : undefined) ??
+      (bp === "sm" ? map.sm : undefined) ??
       map.base ??
       collapsedCount;
-    return Math.min(pick!, items.length);
+
+    // If explicitly false → show all initially
+    if (rawPick === false) return items.length;
+
+    // Otherwise coerce to number and clamp
+    const n = typeof rawPick === "number" ? rawPick : collapsedCount;
+    return Math.min(n, items.length);
   }, [bp, collapsedCountByBp, collapsedCount, items.length]);
 
   const [visible, setVisible] = React.useState(initialCollapsed);
 
-  // Recalculate when items or breakpoint change
+  // Reset visibility when bp/items change
   React.useEffect(() => {
     setVisible(initialCollapsed);
   }, [initialCollapsed, items.length]);
 
-  const contentId = id ? `${id}-grid` : undefined;
-  const fullyExpanded = forceExpanded || visible >= items.length;
+  const fullyExpanded = visible >= items.length;
 
-  const showMore = () => setVisible(v => Math.min(v + increment, items.length));
+  const showMore = () => setVisible((v) => Math.min(v + increment, items.length));
   const showLess = () => setVisible(initialCollapsed);
 
   return (
     <div className={className}>
-      <div
-        id={contentId}
-        role="region"
-        aria-label="Category products"
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-      >
-        <AnimatePresence initial={false}>
-          {items.slice(0, forceExpanded ? items.length : visible).map((item, i) => (
-            <motion.div
-              key={i}
-              layout
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-            >
-              {renderItem(item, i)}
-            </motion.div>
-          ))}
-        </AnimatePresence>
+      <div className={gridClassName}>
+        {items.slice(0, visible).map((item, i) => (
+          <React.Fragment key={String((item as any)?.id ?? i)}>
+            {renderItem(item, i)}
+          </React.Fragment>
+        ))}
       </div>
 
-      {!forceExpanded && items.length > initialCollapsed && (
+      {items.length > initialCollapsed && (
         <div className="mt-6 flex justify-center">
           {!fullyExpanded ? (
             <Button
-              variant="outline"
+              type="button"
               onClick={showMore}
-              aria-controls={contentId}
+              variant="outline"
+              className="gap-2"
               aria-expanded={!fullyExpanded}
-              className="rounded-2xl"
             >
-              <ChevronDown className="mr-2 h-4 w-4" />
-              {moreLabel}
+              <ChevronDown className="h-4 w-4" />
+              {labels.more ?? "More"}
             </Button>
           ) : (
-            <Button
-              variant="ghost"
+            <button
+              type="button"
               onClick={showLess}
-              aria-controls={contentId}
+              className="rounded-2xl px-4 py-2 text-sm underline"
               aria-expanded={!fullyExpanded}
-              className="rounded-2xl"
             >
-              <ChevronUp className="mr-2 h-4 w-4" />
-              {lessLabel}
-            </Button>
+              <span className="inline-flex items-center gap-1">
+                <ChevronUp className="h-4 w-4" />
+                {labels.less ?? "Show less"}
+              </span>
+            </button>
           )}
         </div>
       )}
