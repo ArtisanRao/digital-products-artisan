@@ -4,6 +4,7 @@ import Head from "next/head";
 import CategoryGrid from "@/components/categories/CategoryGrid";
 import HoverableCover from "@/components/ui/hoverable-cover";
 import ShopActions from "@/components/shop-actions";
+import InlineMore from "@/components/ui/inline-more";
 
 export default function EbooksPage() {
   const ebooks = [
@@ -111,9 +112,7 @@ export default function EbooksPage() {
 
         <CategoryGrid
           items={ebooks}
-          // shows two rows by default per breakpoint; reveals more with "Read more"
           renderItem={(p, i) => {
-            // Normalize types for strict TS (CategoryGrid’s Product has optional fields)
             const id = String(p.id);
             const title = p.title;
             const image = typeof p.image === "string" ? p.image : "/images/placeholder-cover.jpg";
@@ -130,23 +129,24 @@ export default function EbooksPage() {
                 key={id}
                 className="group rounded-2xl border bg-white overflow-hidden shadow transition hover:shadow-lg"
               >
-                {/* Hoverable, perfectly-fit cover */}
                 <HoverableCover
                   src={image}
                   alt={title}
-                  ratio="3/2"      // change to "16/9" if you prefer
-                  fit="contain"    // keeps full cover visible; use "cover" for edge-to-edge
+                  ratio="3/2"
+                  fit="contain"
                 />
 
                 <div className="p-4">
                   <h2 className="text-xl font-semibold mb-2">{title}</h2>
-                  <p className="text-gray-600 text-sm mb-2">{description}</p>
+
+                  {/* Inline “More / Less” under subtitle */}
+                  <InlineMore text={description} lines={2} className="text-gray-600 text-sm mb-2" />
+
                   <p className="text-lg font-bold mb-3">{formatEUR(price)}</p>
 
-                  {/* Blue View + Add to Cart buttons (like Marketing Tools) */}
+                  {/* Blue View + Add to Cart buttons */}
                   <ShopActions
                     item={{
-                      // keep original fields so your checkout/download logic still works
                       ...(ebooks[i] as any),
                       id,
                       title,
