@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
 import { products } from '@/data/products';
 import AddToCartButton from '@/components/add-to-cart-button';
+import ProductGallery from '@/components/product-gallery'; // ⬅️ restore gallery
 
 export const revalidate = 3600;
 
@@ -61,7 +61,9 @@ export default async function ProductPage({
     Array.isArray((product as any).images) && (product as any).images.length
       ? (product as any).images
       : [product.image];
-  const imagesAbs = imagesRel.map((src: string) =>
+  const galleryImages = (imagesRel as string[]).filter(Boolean);
+
+  const imagesAbs = galleryImages.map((src: string) =>
     src.startsWith('http') ? src : `https://digitalproductsartisan.com${src}`
   );
 
@@ -95,22 +97,18 @@ export default async function ProductPage({
       availability: 'https://schema.org/InStock',
       priceValidFrom,
       priceValidUntil,
-
-      // Returns not permitted (add coverage to silence optional warning)
       hasMerchantReturnPolicy: {
         '@type': 'MerchantReturnPolicy',
         returnPolicyCategory: 'https://schema.org/MerchantReturnNotPermitted',
-        applicableCountry: POLICY_COUNTRIES, // <— added
+        applicableCountry: POLICY_COUNTRIES,
       },
-
-      // Digital download → no physical shipping (add destination to silence optional warning)
       shippingDetails: [
         {
           '@type': 'OfferShippingDetails',
           doesNotShip: true,
           shippingDestination: {
             '@type': 'DefinedRegion',
-            addressCountry: POLICY_COUNTRIES, // <— added
+            addressCountry: POLICY_COUNTRIES,
           },
         },
       ],
@@ -156,7 +154,7 @@ export default async function ProductPage({
   };
 
   return (
-    <main className="container mx-auto px-4 py-8">
+    <main className="container mx-auto px-4 py-8 product-page" data-page="product">
       <nav className="mb-4 text-sm text-gray-600">
         <Link href="/" className="hover:underline">Home</Link>{' '}
         <span>›</span>{' '}
@@ -166,15 +164,9 @@ export default async function ProductPage({
       </nav>
 
       <div className="grid lg:grid-cols-2 gap-8">
-        <div className="relative w-full h-96 bg-white rounded">
-          <Image
-            src={product.image || '/placeholder.svg'}
-            alt={product.title}
-            fill
-            className="object-contain rounded"
-            sizes="(min-width:1024px) 50vw, 100vw"
-            priority
-          />
+        {/* ⬇ restored gallery with left-side thumbnail rail */}
+        <div className="w-full">
+          <ProductGallery images={galleryImages} alt={product.title} />
         </div>
 
         <section>
