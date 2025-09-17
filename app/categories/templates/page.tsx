@@ -75,8 +75,13 @@ export default function TemplatesPage() {
               <div className="p-4">
                 <h2 className="text-xl font-semibold mb-2">{p.title}</h2>
 
-                {/* Inline “More / Less” under subtitle */}
-                <InlineMore text={p.description} lines={2} className="text-gray-600 text-sm mb-2" />
+                {/* Inline “More / Less” under subtitle — always show trigger */}
+                <InlineMore
+                  text={p.description}
+                  lines={2}
+                  minChars={1}
+                  className="text-gray-600 text-sm mb-2"
+                />
 
                 <p className="text-lg font-bold mb-3">{formatEUR(price)}</p>
 
