@@ -1,6 +1,7 @@
 "use client";
 
 import Head from "next/head";
+import CategoryGrid from "@/components/categories/CategoryGrid";
 import HoverableCover from "@/components/ui/hoverable-cover";
 import ShopActions from "@/components/shop-actions";
 
@@ -88,6 +89,9 @@ export default function EbooksPage() {
     },
   }));
 
+  const formatEUR = (n: number) =>
+    new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
+
   return (
     <>
       <Head>
@@ -105,31 +109,57 @@ export default function EbooksPage() {
       <main className="max-w-7xl mx-auto px-4 py-12">
         <h1 className="text-4xl font-bold text-center mb-10">📚 eBooks Collection</h1>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {ebooks.map((ebook) => (
-            <div
-              key={ebook.id}
-              className="group rounded-2xl border bg-white overflow-hidden shadow transition hover:shadow-lg"
-            >
-              {/* Hoverable, perfectly-fit cover */}
-              <HoverableCover
-                src={ebook.image}
-                alt={ebook.title}
-                ratio="3/2"      // change to "16/9" if you prefer
-                fit="contain"    // keeps full cover visible; use "cover" for edge-to-edge
-              />
+        <CategoryGrid
+          items={ebooks}
+          // shows two rows by default per breakpoint; reveals more with "Read more"
+          renderItem={(p, i) => {
+            // Normalize types for strict TS (CategoryGrid’s Product has optional fields)
+            const id = String(p.id);
+            const title = p.title;
+            const image = typeof p.image === "string" ? p.image : "/images/placeholder-cover.jpg";
+            const description = p.description ?? (ebooks[i] as any)?.description ?? "";
+            const price =
+              typeof p.price === "number"
+                ? p.price
+                : typeof p.price === "string"
+                ? parseFloat(p.price)
+                : Number((ebooks[i] as any)?.price ?? 0);
 
-              <div className="p-4">
-                <h2 className="text-xl font-semibold mb-2">{ebook.title}</h2>
-                <p className="text-gray-600 text-sm mb-2">{ebook.description}</p>
-                <p className="text-lg font-bold mb-3">€{ebook.price.toFixed(2)}</p>
+            return (
+              <div
+                key={id}
+                className="group rounded-2xl border bg-white overflow-hidden shadow transition hover:shadow-lg"
+              >
+                {/* Hoverable, perfectly-fit cover */}
+                <HoverableCover
+                  src={image}
+                  alt={title}
+                  ratio="3/2"      // change to "16/9" if you prefer
+                  fit="contain"    // keeps full cover visible; use "cover" for edge-to-edge
+                />
 
-                {/* Blue View + Add to Cart buttons (like Marketing Tools) */}
-                <ShopActions item={ebook} />
+                <div className="p-4">
+                  <h2 className="text-xl font-semibold mb-2">{title}</h2>
+                  <p className="text-gray-600 text-sm mb-2">{description}</p>
+                  <p className="text-lg font-bold mb-3">{formatEUR(price)}</p>
+
+                  {/* Blue View + Add to Cart buttons (like Marketing Tools) */}
+                  <ShopActions
+                    item={{
+                      // keep original fields so your checkout/download logic still works
+                      ...(ebooks[i] as any),
+                      id,
+                      title,
+                      image,
+                      price,
+                      description,
+                    }}
+                  />
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            );
+          }}
+        />
       </main>
     </>
   );
