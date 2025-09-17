@@ -16,28 +16,9 @@ type Item = {
 };
 
 const items: Item[] = [
-  {
-    id: "minimal-icons-pack",
-    slug: "minimal-icons-pack",
-    title: "Minimal Icons Pack",
-    price: 4.99,
-    description: "Clean, consistent 24px line icons for interfaces.",
-  },
-  {
-    id: "business-icons-pack",
-    slug: "business-icons-pack",
-    title: "Business Icons Pack",
-    price: 5.49,
-    description: "Office, finance & analytics icons for dashboards.",
-  },
-  {
-    id: "social-icons-pack",
-    slug: "social-icons-pack",
-    title: "Social Media Icons",
-    price: 3.99,
-    description: "Brand-safe logos in multiple styles and sizes.",
-  },
-  // add more; the expander will handle the rest
+  { id: "minimal-icons-pack",  slug: "minimal-icons-pack",  title: "Minimal Icons Pack",  price: 4.99, description: "Clean, consistent 24px line icons for interfaces." },
+  { id: "business-icons-pack", slug: "business-icons-pack", title: "Business Icons Pack", price: 5.49, description: "Office, finance & analytics icons for dashboards." },
+  { id: "social-icons-pack",   slug: "social-icons-pack",   title: "Social Media Icons",  price: 3.99, description: "Brand-safe logos in multiple styles and sizes." },
 ];
 
 // Try multiple sensible filenames (category folder, root, -cover variants) + safe fallbacks
@@ -85,8 +66,8 @@ export default function IconsPage() {
               <div className="p-4">
                 <h2 className="mb-2 text-xl font-semibold">{p.title}</h2>
 
-                {/* Inline “More / Less” under subtitle */}
-                <InlineMore text={p.description} lines={2} className="mb-2 text-sm text-gray-600" />
+                {/* Inline “More / Less” under subtitle (force show) */}
+                <InlineMore text={p.description} lines={2} minChars={1} className="mb-2 text-sm text-gray-600" />
 
                 <p className="mb-3 text-lg font-bold">{formatEUR(price)}</p>
 
