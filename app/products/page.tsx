@@ -12,6 +12,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { products, type Product } from '@/data/products';
 import ProductActions from '@/components/product-actions'; // unified blue actions
+import DescriptionClamp from '@/components/DescriptionClamp'; // ⬅️ NEW
 
 const baseCategories = [
   'AI & ChatGPT Guides',
@@ -79,8 +80,8 @@ export default function ProductsPage() {
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
       const q = searchQuery.toLowerCase();
-      const matchesSearch =
-        product.title.toLowerCase().includes(q) || product.description.toLowerCase().includes(q);
+      const text = (product.longDescription ?? product.description ?? '').toLowerCase(); // ⬅️ include longDescription
+      const matchesSearch = product.title.toLowerCase().includes(q) || text.includes(q);
       const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
       const matchesPrice = product.price >= priceRange.min && product.price <= priceRange.max;
       const matchesTags =
@@ -93,7 +94,7 @@ export default function ProductsPage() {
     return [...filteredProducts].sort((a, b) => {
       switch (sortBy) {
         case 'newest':
-          return b.id - a.id;
+          return Number(b.id) - Number(a.id);
         case 'price-low':
           return a.price - b.price;
         case 'price-high':
@@ -320,7 +321,14 @@ export default function ProductsPage() {
                     >
                       <CardTitle className="text-lg font-semibold line-clamp-2">{product.title}</CardTitle>
                     </Link>
-                    <p className="text-sm text-gray-600 line-clamp-3">{product.description}</p>
+
+                    {/* ⬇️ Read more / Show less on cards */}
+                    <DescriptionClamp
+                      text={(product as any).longDescription ?? product.description ?? ''}
+                      maxChars={120}
+                      className="text-sm text-gray-600"
+                    />
+
                     <div className="mt-3 flex items-center space-x-2">
                       <Star className="w-4 h-4 text-yellow-400" aria-hidden />
                       <span className="text-sm font-medium text-gray-800">{product.rating}</span>
@@ -378,7 +386,14 @@ export default function ProductsPage() {
                     <Link href={`/products/${product.id}`} className="hover:underline">
                       <h3 className="text-lg font-semibold truncate">{product.title}</h3>
                     </Link>
-                    <p className="text-sm text-gray-600 truncate">{product.description}</p>
+
+                    {/* ⬇️ Read more / Show less on list rows */}
+                    <DescriptionClamp
+                      text={(product as any).longDescription ?? product.description ?? ''}
+                      maxChars={160}
+                      className="text-sm text-gray-600"
+                    />
+
                     <div className="flex items-center space-x-2 mt-1">
                       <Star className="w-4 h-4 text-yellow-400" aria-hidden />
                       <span className="text-sm font-medium text-gray-800">{product.rating}</span>
