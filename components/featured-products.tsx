@@ -1,27 +1,30 @@
-"use client"
+// components/featured-products.tsx
+"use client";
 
-import * as React from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Star, Download, Heart } from "lucide-react"
-import Link from "next/link"
-import CoverImage from "@/components/ui/cover-image"
+import * as React from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Star, Download, Heart } from "lucide-react";
+import Link from "next/link";
+import CoverImage from "@/components/ui/cover-image";
+import DescriptionClamp from "@/components/DescriptionClamp";
 
 type FeaturedProduct = {
-  id: number
-  slug: string
-  title: string
-  description: string
-  price: number
-  originalPrice: number
-  rating: number
-  reviews: number
-  downloads: number
-  category: string
-  bestseller?: boolean
-  image?: string // can override the computed cover path
-}
+  id: number;
+  slug: string;
+  title: string;
+  description: string;
+  longDescription?: string; // ⬅️ allow richer copy if you add it later
+  price: number;
+  originalPrice: number;
+  rating: number;
+  reviews: number;
+  downloads: number;
+  category: string;
+  bestseller?: boolean;
+  image?: string; // can override the computed cover path
+};
 
 const featuredProducts: FeaturedProduct[] = [
   {
@@ -94,18 +97,20 @@ const featuredProducts: FeaturedProduct[] = [
     downloads: 590,
     category: "Passive Income & Side Hustles",
   },
-]
+];
+
+// Small util so we always show € correctly
+const formatPrice = (value: number, currency = "EUR", locale = "de-DE") =>
+  new Intl.NumberFormat(locale, { style: "currency", currency }).format(value);
 
 function ProductCard({ product, index }: { product: FeaturedProduct; index: number }) {
-  // Compute cover path from slug
-  const src = product.image ?? `/images/products/${product.slug}/cover.jpg`
+  const src = product.image ?? `/images/products/${product.slug}/cover.jpg`;
 
   return (
     <Card className="group hover:shadow-lg transition-all duration-300">
       <CardHeader className="p-0">
         <div className="relative overflow-hidden rounded-t-lg">
           <Link href={`/products/${product.id}`} aria-label={`View ${product.title}`} className="block">
-            {/* Perfectly fit cover (no crop) + tasteful hover overlay/scale */}
             <CoverImage
               src={src}
               alt={product.title}
@@ -155,14 +160,20 @@ function ProductCard({ product, index }: { product: FeaturedProduct; index: numb
           <CardTitle className="text-lg mb-2 line-clamp-2">{product.title}</CardTitle>
         </Link>
 
-        <p className="text-gray-600 text-sm mb-3 line-clamp-2">{product.description}</p>
+        {/* Read more / Show less for the description */}
+        <DescriptionClamp
+          text={(product.longDescription ?? product.description) as string}
+          maxChars={140}
+        />
 
-        <div className="flex items-center justify-between">
+        <div className="mt-3 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <span className="text-lg font-bold text-gray-900">${product.price.toFixed(2)}</span>
-            {product.originalPrice && product.originalPrice > product.price && (
+            <span className="text-lg font-bold text-gray-900">
+              {formatPrice(product.price)}
+            </span>
+            {product.originalPrice > product.price && (
               <span className="text-sm text-gray-500 line-through">
-                ${product.originalPrice.toFixed(2)}
+                {formatPrice(product.originalPrice)}
               </span>
             )}
           </div>
@@ -182,7 +193,7 @@ function ProductCard({ product, index }: { product: FeaturedProduct; index: numb
         </Button>
       </CardFooter>
     </Card>
-  )
+  );
 }
 
 export default function FeaturedProducts() {
@@ -191,7 +202,7 @@ export default function FeaturedProducts() {
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Best Selling Digital Products
+            Best-Selling Digital Products
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             Discover our most popular digital downloads that creators love
@@ -211,5 +222,5 @@ export default function FeaturedProducts() {
         </div>
       </div>
     </section>
-  )
+  );
 }

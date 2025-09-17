@@ -3,18 +3,19 @@ import fs from "node:fs";
 import path from "node:path";
 import Link from "next/link";
 import CoverImage from "@/components/ui/cover-image";
+import DescriptionClamp from "@/components/DescriptionClamp"; // ⬅️ add expander
 
 type CatInfo = { title: string; description: string; folder: string };
 
 // Map new slugs + legacy slugs → display info + physical folder under /public/images/<folder>
 const CATEGORIES: Record<string, CatInfo> = {
   // New
-  "ebooks":              { title: "eBooks",             description: "Digital books, guides, and educational content.",            folder: "ebooks" },
-  "templates":           { title: "Templates",          description: "Design templates and graphics ready to use.",               folder: "templates" },
-  "marketing-tools":     { title: "Marketing Tools",    description: "Prompts, swipe files, and growth resources for marketing.", folder: "marketing-tools" },
-  "printable-planners":  { title: "Printable Planners", description: "Digital planners, journals, and productivity tools.",       folder: "printable-planners" },
-  "social-media-kits":   { title: "Social Media Kits",  description: "Packaged posts, graphics, and assets for social channels.", folder: "social-media-kits" },
-  "photography-prints":  { title: "Photography Prints", description: "High-quality photo prints, presets, and media assets.",     folder: "photography-prints" },
+  ebooks:              { title: "eBooks",             description: "Digital books, guides, and educational content.",            folder: "ebooks" },
+  templates:           { title: "Templates",          description: "Design templates and graphics ready to use.",               folder: "templates" },
+  "marketing-tools":   { title: "Marketing Tools",    description: "Prompts, swipe files, and growth resources for marketing.", folder: "marketing-tools" },
+  "printable-planners":{ title: "Printable Planners", description: "Digital planners, journals, and productivity tools.",       folder: "printable-planners" },
+  "social-media-kits": { title: "Social Media Kits",  description: "Packaged posts, graphics, and assets for social channels.", folder: "social-media-kits" },
+  "photography-prints":{ title: "Photography Prints", description: "High-quality photo prints, presets, and media assets.",     folder: "photography-prints" },
 
   // Legacy → point to the new folders above
   "ebooks-guides":       { title: "eBooks",             description: "Digital books, guides, and educational content.",            folder: "ebooks" },
@@ -70,11 +71,17 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     return (
       <main className="container mx-auto px-4 py-16">
         <h1 className="text-3xl md:text-4xl font-bold mb-2">{pretty}</h1>
-        <p className="text-gray-600 mb-8">
-          We couldn’t find a dedicated page for this category yet. Explore best sellers below or visit{" "}
-          <Link href="/products" className="underline">all products</Link>.
+
+        {/* Short teaser with expander just in case this grows later */}
+        <DescriptionClamp
+          text={
+            "We couldn’t find a dedicated page for this category yet. Explore best sellers below or visit all products."
+          }
+          maxChars={160}
+        />
+        <p className="mt-2">
+          <Link href="/products" className="underline">Browse all products →</Link>
         </p>
-        {/* Fallback: nothing to list */}
       </main>
     );
   }
@@ -84,10 +91,12 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   return (
     <main className="container mx-auto px-4 py-16">
       <h1 className="text-3xl md:text-4xl font-bold mb-2">{cat.title}</h1>
-      <p className="text-gray-600 mb-8">{cat.description}</p>
+
+      {/* Category description with “Read more / Show less” */}
+      <DescriptionClamp text={cat.description} maxChars={140} />
 
       {items.length ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
           {items.map((it) => (
             <div key={it.src} className="rounded-xl border bg-white hover:shadow-lg transition">
               <CoverImage
@@ -107,7 +116,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
           ))}
         </div>
       ) : (
-        <p className="text-gray-600">
+        <p className="mt-6 text-gray-600">
           No covers found in <code>/public/images/{cat.folder}</code>. Add images (jpg, png, webp, avif) and redeploy.
         </p>
       )}
