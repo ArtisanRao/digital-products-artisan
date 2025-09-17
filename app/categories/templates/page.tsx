@@ -3,6 +3,7 @@
 import CategoryGrid from "@/components/categories/CategoryGrid";
 import HoverableCover from "@/components/ui/hoverable-cover";
 import ShopActions from "@/components/shop-actions";
+import InlineMore from "@/components/ui/inline-more";
 
 type Item = {
   id: string;        // stable key
@@ -41,7 +42,6 @@ const items: Item[] = [
     description: "ATS-friendly resume with cover letter.",
     image: primary("resume-template"),
   },
-  // add more; CategoryGrid will handle the expander
 ];
 
 const formatEUR = (n: number) =>
@@ -54,7 +54,6 @@ export default function TemplatesPage() {
 
       <CategoryGrid
         items={items}
-        // two rows by default per breakpoint; reveals more with "Read more"
         renderItem={(p) => {
           const slug = p.slug ?? String(p.id);
           const price =
@@ -70,15 +69,18 @@ export default function TemplatesPage() {
               key={String(p.id)}
               className="group rounded-2xl border bg-white overflow-hidden shadow transition hover:shadow-lg"
             >
-              {/* Hoverable, perfectly-fit cover (same behavior as Marketing Tools) */}
+              {/* Hoverable, perfectly-fit cover */}
               <HoverableCover src={image} alt={p.title} ratio="16/9" fit="contain" />
 
               <div className="p-4">
                 <h2 className="text-xl font-semibold mb-2">{p.title}</h2>
-                <p className="text-gray-600 text-sm mb-2">{p.description}</p>
+
+                {/* Inline “More / Less” under subtitle */}
+                <InlineMore text={p.description} lines={2} className="text-gray-600 text-sm mb-2" />
+
                 <p className="text-lg font-bold mb-3">{formatEUR(price)}</p>
 
-                {/* Blue View + Add to Cart actions */}
+                {/* View (checkout) + Add to Cart (opens cart with badge) */}
                 <ShopActions
                   item={{
                     id: slug,
@@ -86,7 +88,6 @@ export default function TemplatesPage() {
                     price,
                     image,
                     description: p.description,
-                    // fileUrl: "/downloads/..." // add when ready
                   }}
                 />
               </div>
