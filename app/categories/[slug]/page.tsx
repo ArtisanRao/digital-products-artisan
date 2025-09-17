@@ -37,12 +37,10 @@ export function generateStaticParams() {
   return Object.keys(CATEGORIES).map((slug) => ({ slug }));
 }
 
-// Works on Next 14 (object) and 15 (Promise) by using a union
 type Params = { slug: string };
-type ParamsMaybePromise = Params | Promise<Params>;
 
-export async function generateMetadata({ params }: { params: ParamsMaybePromise }) {
-  const { slug } = await (params as Promise<Params>);
+export async function generateMetadata({ params }: { params: Promise<Params> }) {
+  const { slug } = await params;
   const cat = CATEGORIES[slug];
   const title = cat ? `${cat.title} | Digital Products Artisan` : "Digital Products | Digital Products Artisan";
   const description = cat?.description ?? "Browse our curated digital products.";
@@ -71,8 +69,8 @@ function listFolderImages(folder: string) {
   }
 }
 
-export default async function CategoryPage({ params }: { params: ParamsMaybePromise }) {
-  const { slug } = await (params as Promise<Params>);
+export default async function CategoryPage({ params }: { params: Promise<Params> }) {
+  const { slug } = await params;
   const cat = CATEGORIES[slug];
 
   if (!cat) {
