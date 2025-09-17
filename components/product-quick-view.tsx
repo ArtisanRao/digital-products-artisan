@@ -13,6 +13,7 @@ type Product = {
   title: string;
   slug: string;
   description?: string;
+  longDescription?: string; // ✅ prefer this when present
   price: number;
   image?: string | null;
   images?: string[];
@@ -25,8 +26,13 @@ type Props = {
 };
 
 export default function ProductQuickView({ product, open, onOpenChange }: Props) {
-  const images = (product.images?.length ? product.images : [product.image]).filter(Boolean) as string[];
+  const images = (product.images?.length ? product.images : [product.image]).filter(
+    Boolean
+  ) as string[];
   const cover = images[0] ?? '/images/placeholder-cover.jpg';
+
+  // Prefer longDescription, then description, otherwise empty string
+  const desc = (product.longDescription?.trim() || product.description?.trim() || '');
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -34,8 +40,8 @@ export default function ProductQuickView({ product, open, onOpenChange }: Props)
         {/* close button */}
         <button
           onClick={() => onOpenChange(false)}
-          className="absolute right-3 top-3 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-gray-800 shadow"
-          aria-label="Close"
+          className="absolute right-3 top-3 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-gray-800 shadow focus:outline-none focus:ring-2 focus:ring-blue-600"
+          aria-label="Close quick view"
         >
           <X className="h-6 w-6" />
         </button>
@@ -66,9 +72,16 @@ export default function ProductQuickView({ product, open, onOpenChange }: Props)
               €{product.price.toFixed(2)}
             </div>
 
-            {/* long description (scrollable if very long) */}
-            <div className="prose prose-sm max-w-none text-gray-700 max-h-56 overflow-auto pr-2">
-              {product.description || 'No description provided.'}
+            {/* long description (scrollable if very long). 
+                whitespace-pre-line preserves your line breaks from data/products.ts */}
+            <div className="max-h-56 overflow-auto pr-2">
+              {desc ? (
+                <p className="whitespace-pre-line text-sm leading-relaxed text-gray-700">
+                  {desc}
+                </p>
+              ) : (
+                <p className="text-sm text-gray-500">No description provided.</p>
+              )}
             </div>
 
             {/* actions */}
