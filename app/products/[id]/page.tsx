@@ -56,7 +56,7 @@ export default async function ProductPage({
 
   const canonicalAbs = `https://digitalproductsartisan.com/products/${id}`;
 
-  // Build absolute image list (prefer array if present)
+  // Build image list for gallery
   const imagesRel =
     Array.isArray((product as any).images) && (product as any).images.length
       ? (product as any).images
@@ -132,28 +132,13 @@ export default async function ProductPage({
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      {
-        '@type': 'ListItem',
-        position: 1,
-        item: { '@id': 'https://digitalproductsartisan.com/', name: 'Home' },
-      },
-      {
-        '@type': 'ListItem',
-        position: 2,
-        item: {
-          '@id': 'https://digitalproductsartisan.com/products',
-          name: 'Products',
-        },
-      },
-      {
-        '@type': 'ListItem',
-        position: 3,
-        item: { '@id': canonicalAbs, name: product.title },
-      },
+      { '@type': 'ListItem', position: 1, item: { '@id': 'https://digitalproductsartisan.com/', name: 'Home' } },
+      { '@type': 'ListItem', position: 2, item: { '@id': 'https://digitalproductsartisan.com/products', name: 'Products' } },
+      { '@type': 'ListItem', position: 3, item: { '@id': canonicalAbs, name: product.title } },
     ],
   };
 
-  // ---------- Read more / Show less (server-friendly) ----------
+  // ---------- Read more / Show less (server-only; no client JS) ----------
   const fullText =
     ((product as any).longDescription as string | undefined)?.trim() ||
     product.description ||
@@ -174,7 +159,7 @@ export default async function ProductPage({
       </nav>
 
       <div className="grid lg:grid-cols-2 gap-8">
-        {/* ⬇ restored gallery with left-side thumbnail rail */}
+        {/* Gallery with left-side thumbnail rail */}
         <div className="w-full">
           <ProductGallery images={galleryImages} alt={product.title} />
         </div>
@@ -190,9 +175,13 @@ export default async function ProductPage({
             </p>
 
             {needsToggle && (
-              <details className="mt-1">
-                <summary className="inline cursor-pointer text-blue-700 hover:underline">
-                  More
+              <details className="group mt-1">
+                <summary
+                  className="inline cursor-pointer text-blue-700 hover:underline select-none"
+                  aria-label="Toggle full description"
+                >
+                  <span className="group-open:hidden">More</span>
+                  <span className="hidden group-open:inline">Less</span>
                 </summary>
                 <div className="mt-2 whitespace-pre-line">
                   {remainder}
