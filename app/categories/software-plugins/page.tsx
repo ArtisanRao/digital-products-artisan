@@ -40,7 +40,6 @@ const items: Item[] = [
     description: "Custom integrations and scripts for Notion workflows.",
     fileUrl: "/downloads/notion-automation-pack.zip",
   },
-  // add more; expander will handle the rest
 ];
 
 const formatEUR = (n: number) =>
@@ -76,12 +75,16 @@ export default function SoftwarePluginsPage() {
               <div className="p-4">
                 <h2 className="text-xl font-semibold mb-2">{title}</h2>
 
-                {/* Inline “More / Less” under subtitle */}
-                <InlineMore text={description} lines={2} className="text-gray-600 text-sm mb-2" />
+                {/* Inline “More / Less” under subtitle — force visible */}
+                <InlineMore
+                  text={description}
+                  lines={2}
+                  minChars={1}
+                  className="text-gray-600 text-sm mb-2"
+                />
 
                 <p className="text-lg font-bold mb-3">{formatEUR(price)}</p>
 
-                {/* Keeps your checkout flow (ShopActions wires to View/Cart) */}
                 <ShopActions
                   item={{
                     ...(items[i] as any),
