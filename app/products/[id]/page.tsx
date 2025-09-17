@@ -153,6 +153,16 @@ export default async function ProductPage({
     ],
   };
 
+  // ---------- Read more / Show less (server-friendly) ----------
+  const fullText =
+    ((product as any).longDescription as string | undefined)?.trim() ||
+    product.description ||
+    '';
+  const MAX_CHARS = 220;
+  const needsToggle = fullText.length > MAX_CHARS;
+  const teaser = needsToggle ? fullText.slice(0, MAX_CHARS).trimEnd() : fullText;
+  const remainder = needsToggle ? fullText.slice(MAX_CHARS) : '';
+
   return (
     <main className="container mx-auto px-4 py-8 product-page" data-page="product">
       <nav className="mb-4 text-sm text-gray-600">
@@ -171,9 +181,27 @@ export default async function ProductPage({
 
         <section>
           <h1 className="text-3xl font-bold">{product.title}</h1>
-          <p className="text-gray-600 mt-2">{product.description}</p>
 
-          <div className="mt-4 flex items-center gap-3">
+          {/* Short teaser + natively expandable remainder */}
+          <div className="mt-3 text-gray-700 text-[15px] leading-relaxed">
+            <p className="whitespace-pre-line">
+              {teaser}
+              {needsToggle && '…'}
+            </p>
+
+            {needsToggle && (
+              <details className="mt-1">
+                <summary className="inline cursor-pointer text-blue-700 hover:underline">
+                  More
+                </summary>
+                <div className="mt-2 whitespace-pre-line">
+                  {remainder}
+                </div>
+              </details>
+            )}
+          </div>
+
+          <div className="mt-6 flex items-center gap-3">
             <span className="text-2xl font-semibold">€{product.price.toFixed(2)}</span>
             {product.originalPrice > product.price && (
               <span className="line-through text-gray-400">

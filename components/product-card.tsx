@@ -10,11 +10,11 @@ type Product = {
   id: number | string;
   title: string;
   slug: string;
-  image?: string | null; // absolute URL or /images/... or undefined
+  image?: string | null;    // absolute URL or /images/... or undefined
   description?: string;
+  longDescription?: string; // <- use this when present
   price: number;
   images?: string[];
-  // ...other fields if you like
 };
 
 export default function ProductCard({ product }: { product: Product }) {
@@ -28,6 +28,16 @@ export default function ProductCard({ product }: { product: Product }) {
 
   const [src, setSrc] = React.useState<string>(computeSrc());
   const [open, setOpen] = React.useState(false);
+
+  // --- Read more / Show less state ---
+  const [expanded, setExpanded] = React.useState(false);
+  const fullText =
+    (product.longDescription ?? product.description ?? '').trim();
+  const MAX_CHARS = 120;
+  const needsToggle = fullText.length > MAX_CHARS;
+  const preview = needsToggle
+    ? fullText.slice(0, MAX_CHARS).trimEnd() + '…'
+    : fullText;
 
   const openQuickView = (e?: React.MouseEvent) => {
     e?.preventDefault();
@@ -45,7 +55,7 @@ export default function ProductCard({ product }: { product: Product }) {
             fill
             sizes="(min-width:1280px) 280px, (min-width:1024px) 25vw, (min-width:768px) 33vw, 100vw"
             className="object-cover transition-transform duration-300 group-hover:scale-105"
-            onError={() => setSrc('/images/placeholder-cover.jpg')} // put this file in /public/images/
+            onError={() => setSrc('/images/placeholder-cover.jpg')} // ensure this file exists
             priority={false}
             onClick={openQuickView}
           />
@@ -60,11 +70,10 @@ export default function ProductCard({ product }: { product: Product }) {
           </button>
         </div>
 
-        {/* footer area (title + View button) — keep light to avoid layout shifts */}
+        {/* title + View button */}
         <div className="flex items-start justify-between gap-3 p-4">
           <h3 className="line-clamp-2 font-semibold text-gray-900">{product.title}</h3>
 
-          {/* small “View” button that opens the modal */}
           <Button
             size="sm"
             variant="secondary"
@@ -75,6 +84,26 @@ export default function ProductCard({ product }: { product: Product }) {
             View
           </Button>
         </div>
+
+        {/* clamped description (separate row to avoid layout shifts) */}
+        {fullText && (
+          <div className="px-4 pb-4">
+            <p className="whitespace-pre-line text-sm leading-relaxed text-gray-700">
+              {expanded ? fullText : preview}
+            </p>
+
+            {needsToggle && (
+              <button
+                type="button"
+                onClick={() => setExpanded((v) => !v)}
+                className="mt-1 text-sm font-medium text-blue-700 hover:underline"
+                aria-expanded={expanded}
+              >
+                {expanded ? 'Show less' : 'More'}
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Quick-View modal */}
