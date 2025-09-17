@@ -19,7 +19,6 @@ const items: Item[] = [
   { id: "photography-prints", slug: "photography-prints", title: "Photography Prints",    price: 9.99, description: "Curated high-resolution prints." },
   { id: "mystery-thriller-novel", slug: "mystery-thriller-novel", title: "Moody Noir Poster", price: 7.99, description: "Atmospheric, cinematic artwork." },
   { id: "landscape-pack", slug: "landscape-pack", title: "Landscape Pack", price: 8.49, description: "Crisp outdoor scenes for décor." },
-  // add more; the expander will handle the rest
 ];
 
 const imgCandidates = (slug: string) => [
@@ -60,12 +59,17 @@ export default function PhotographyPrintsPage() {
               <div className="p-4">
                 <h2 className="text-xl font-semibold mb-2">{p.title}</h2>
 
-                {/* Inline “More / Less” under subtitle */}
-                <InlineMore text={p.description} lines={2} className="text-gray-600 text-sm mb-2" />
+                {/* Inline “More / Less” under subtitle (force show) */}
+                <InlineMore
+                  text={p.description}
+                  lines={2}
+                  minChars={1}
+                  className="text-gray-600 text-sm mb-2"
+                />
 
                 <p className="text-lg font-bold mb-3">{formatEUR(price)}</p>
 
-                {/* Blue View + Add to Cart (consistent with other categories) */}
+                {/* Blue View + Add to Cart */}
                 <ShopActions
                   item={{
                     id: slug,
