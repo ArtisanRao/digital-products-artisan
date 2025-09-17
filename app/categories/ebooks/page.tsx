@@ -129,12 +129,7 @@ export default function EbooksPage() {
                 key={id}
                 className="group rounded-2xl border bg-white overflow-hidden shadow transition hover:shadow-lg"
               >
-                <HoverableCover
-                  src={image}
-                  alt={title}
-                  ratio="3/2"
-                  fit="contain"
-                />
+                <HoverableCover src={image} alt={title} ratio="3/2" fit="contain" />
 
                 <div className="p-4">
                   <h2 className="text-xl font-semibold mb-2">{title}</h2>
