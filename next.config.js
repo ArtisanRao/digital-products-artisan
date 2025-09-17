@@ -1,5 +1,4 @@
 // next.config.js
-
 const withPWA = require("next-pwa")({
   dest: "public",
   register: true,
@@ -55,18 +54,27 @@ const assetNoIndexHeaders = [
   },
 
   // Favicons: allow caching but don't index
-  { source: "/favicon.ico", headers: [
+  {
+    source: "/favicon.ico",
+    headers: [
       { key: "X-Robots-Tag", value: "noindex" },
       { key: "Cache-Control", value: "public, max-age=604800, immutable" },
-    ]},
-  { source: "/favicon-48x48.png", headers: [
+    ],
+  },
+  {
+    source: "/favicon-48x48.png",
+    headers: [
       { key: "X-Robots-Tag", value: "noindex" },
       { key: "Cache-Control", value: "public, max-age=604800, immutable" },
-    ]},
-  { source: "/apple-touch-icon.png", headers: [
+    ],
+  },
+  {
+    source: "/apple-touch-icon.png",
+    headers: [
       { key: "X-Robots-Tag", value: "noindex" },
       { key: "Cache-Control", value: "public, max-age=604800, immutable" },
-    ]},
+    ],
+  },
 
   { source: "/sw.js", headers: [{ key: "X-Robots-Tag", value: "noindex" }, { key: "Cache-Control", value: "no-cache" }] },
   { source: "/workbox-:hash.js", headers: [{ key: "X-Robots-Tag", value: "noindex" }] },
@@ -83,9 +91,7 @@ const nextConfig = withPWA({
   reactStrictMode: true,
   poweredByHeader: false,
 
-  experimental: {
-    optimizeCss: true,
-  },
+  experimental: { optimizeCss: true },
 
   images: {
     formats: ["image/avif", "image/webp"],
@@ -115,7 +121,13 @@ const nextConfig = withPWA({
         permanent: true,
       },
 
-      // Your existing redirects
+      // ===== Legal: ensure old/alternate paths reach the live TOS =====
+      { source: "/terms", destination: "/terms-of-service", permanent: true },
+      { source: "/terms/", destination: "/terms-of-service", permanent: true },
+      { source: "/legal/terms", destination: "/terms-of-service", permanent: true },
+      { source: "/legal/terms/", destination: "/terms-of-service", permanent: true },
+
+      // Existing redirects
       { source: "/help-center", destination: "/help", permanent: true },
       { source: "/contact-us", destination: "/contact", permanent: true },
 
