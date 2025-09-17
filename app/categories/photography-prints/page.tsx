@@ -3,6 +3,7 @@
 import CategoryGrid from "@/components/categories/CategoryGrid";
 import HoverableCover from "@/components/ui/hoverable-cover";
 import ShopActions from "@/components/shop-actions";
+import InlineMore from "@/components/ui/inline-more";
 
 const CAT = "photography-prints";
 
@@ -38,9 +39,7 @@ export default function PhotographyPrintsPage() {
 
       <CategoryGrid
         items={items}
-        // two rows by default per breakpoint; reveals more with "Read more"
         renderItem={(p) => {
-          // normalize for strict TS (CategoryGrid’s Product has optional fields)
           const slug = p.slug ?? String(p.id);
           const price =
             typeof p.price === "number"
@@ -60,7 +59,10 @@ export default function PhotographyPrintsPage() {
 
               <div className="p-4">
                 <h2 className="text-xl font-semibold mb-2">{p.title}</h2>
-                <p className="text-gray-600 text-sm mb-2">{p.description}</p>
+
+                {/* Inline “More / Less” under subtitle */}
+                <InlineMore text={p.description} lines={2} className="text-gray-600 text-sm mb-2" />
+
                 <p className="text-lg font-bold mb-3">{formatEUR(price)}</p>
 
                 {/* Blue View + Add to Cart (consistent with other categories) */}
