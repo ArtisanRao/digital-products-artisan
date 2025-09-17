@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import Link from "next/link";
 import CoverImage from "@/components/ui/cover-image";
-import DescriptionClamp from "@/components/DescriptionClamp"; // ⬅️ text expander
+import InlineMore from "@/components/ui/inline-more"; // ⬅️ per-paragraph “More/Less”
 
 type CatInfo = { title: string; description: string; folder: string };
 
@@ -79,10 +79,14 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     return (
       <main className="container mx-auto px-4 py-16">
         <h1 className="text-3xl md:text-4xl font-bold mb-2">{pretty}</h1>
-        <DescriptionClamp
-          text={"We couldn’t find a dedicated page for this category yet. Explore best sellers below or visit all products."}
-          maxChars={160}
+
+        {/* Short teaser with inline More/Less (2 lines collapsed) */}
+        <InlineMore
+          text="We couldn’t find a dedicated page for this category yet. Explore best sellers below or visit all products."
+          lines={2}
+          className="text-gray-700"
         />
+
         <p className="mt-2">
           <Link href="/products" className="underline">Browse all products →</Link>
         </p>
@@ -96,8 +100,8 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     <main className="container mx-auto px-4 py-16">
       <h1 className="text-3xl md:text-4xl font-bold mb-2">{cat.title}</h1>
 
-      {/* Category description with “Read more / Show less” */}
-      <DescriptionClamp text={cat.description} maxChars={140} />
+      {/* Category description with inline “More / Less” */}
+      <InlineMore text={cat.description} lines={2} className="text-gray-700 mb-2" />
 
       {items.length ? (
         <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
