@@ -20,22 +20,34 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <head>
         <title>Digital Products Artisan</title>
+
+        {/* Mobile fit */}
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+        <link rel="canonical" href="https://digitalproductsartisan.com/" />
+
         <meta
           name="description"
           content="Premium handcrafted digital downloads for creators and entrepreneurs."
         />
 
-        {/* PWA / icons */}
-        <link rel="manifest" href="/manifest.json" />
+        {/* PWA / icons (served from /public) */}
         <meta name="theme-color" content="#ffffff" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="application-name" content="Digital Products Artisan" />
         <meta name="apple-mobile-web-app-title" content="Digital Products Artisan" />
-        <link rel="icon" href="/images/logo-new.png" sizes="32x32" type="image/png" />
-        <link rel="icon" href="/images/logo-new.png" sizes="192x192" type="image/png" />
-        <link rel="apple-touch-icon" href="/images/logo-new.png" />
+
+        {/* Favicons */}
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
+        <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/web-app-manifest-192x192.png" />
+        <link rel="icon" type="image/png" sizes="512x512" href="/web-app-manifest-512x512.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        <link rel="manifest" href="/site.webmanifest" />
 
         {/* Social */}
         <meta property="og:title" content="Digital Products Artisan" />
@@ -69,8 +81,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
 
         {/* --- Snipcart v3: CSS + preconnect --- */}
-        <link rel="preconnect" href="https://app.snipcart.com" />
-        <link rel="preconnect" href="https://cdn.snipcart.com" />
+        <link rel="preconnect" href="https://app.snipcart.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://cdn.snipcart.com" crossOrigin="anonymous" />
         <link
           rel="stylesheet"
           href="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.css"
@@ -80,7 +92,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={inter.className}>
         <AuthProvider>
           <CartProvider>
-            {/* Auto-detect & store currency (EUR by default in Snipcart container below) */}
+            {/* Auto-detect & store currency */}
             <AutoCurrency />
 
             {/* Site chrome */}
@@ -91,14 +103,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Toaster />
 
             {/* --- Snipcart v3: Script + Container --- */}
-            {/* Load after hydration so buttons become interactive */}
             <Script
               src="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.js"
               strategy="afterInteractive"
             />
-            {/* Hidden container enables the cart/checkout UI.
-                Currency set to EUR; Snipcart will still work with other currencies
-                if you switch it in code later. */}
             <div
               hidden
               id="snipcart"
@@ -106,12 +114,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               data-config-modal-style="side"
               data-currency="EUR"
             />
-
-            {/* (Optional) If you want to start the cart open for debugging:
-                <Script id="open-cart" strategy="afterInteractive">
-                  {`document.addEventListener('snipcart.ready', () => Snipcart.api.theme.cart.open())`}
-                </Script>
-            */}
           </CartProvider>
         </AuthProvider>
       </body>

@@ -53,8 +53,21 @@ const assetNoIndexHeaders = [
       { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
     ],
   },
-  { source: "/favicon.ico", headers: [{ key: "X-Robots-Tag", value: "noindex" }] },
-  { source: "/apple-touch-icon.png", headers: [{ key: "X-Robots-Tag", value: "noindex" }] },
+
+  // Favicons: allow caching but don't index
+  { source: "/favicon.ico", headers: [
+      { key: "X-Robots-Tag", value: "noindex" },
+      { key: "Cache-Control", value: "public, max-age=604800, immutable" },
+    ]},
+  { source: "/favicon-48x48.png", headers: [
+      { key: "X-Robots-Tag", value: "noindex" },
+      { key: "Cache-Control", value: "public, max-age=604800, immutable" },
+    ]},
+  { source: "/apple-touch-icon.png", headers: [
+      { key: "X-Robots-Tag", value: "noindex" },
+      { key: "Cache-Control", value: "public, max-age=604800, immutable" },
+    ]},
+
   { source: "/sw.js", headers: [{ key: "X-Robots-Tag", value: "noindex" }, { key: "Cache-Control", value: "no-cache" }] },
   { source: "/workbox-:hash.js", headers: [{ key: "X-Robots-Tag", value: "noindex" }] },
   { source: "/fallback-:hash.js", headers: [{ key: "X-Robots-Tag", value: "noindex" }] },
@@ -94,6 +107,15 @@ const nextConfig = withPWA({
 
   async redirects() {
     return [
+      // ===== Canonical host: force www → apex (SEO + favicon consistency) =====
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.digitalproductsartisan.com" }],
+        destination: "https://digitalproductsartisan.com/:path*",
+        permanent: true,
+      },
+
+      // Your existing redirects
       { source: "/help-center", destination: "/help", permanent: true },
       { source: "/contact-us", destination: "/contact", permanent: true },
 
