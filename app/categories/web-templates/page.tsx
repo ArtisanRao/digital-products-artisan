@@ -3,6 +3,7 @@
 import CategoryGrid from "@/components/categories/CategoryGrid";
 import HoverableCover from "@/components/ui/hoverable-cover";
 import ShopActions from "@/components/shop-actions";
+import InlineMore from "@/components/ui/inline-more";
 
 type Item = {
   id: string;        // stable key
@@ -31,7 +32,6 @@ const items: Item[] = [
   { id: "web-templates",     slug: "web-templates",     title: "Web Templates Bundle", price: 9.99, description: "Landing pages, blogs & more." },
   { id: "contract-templates", slug: "contract-templates", title: "Contract Templates",    price: 5.49, description: "Professional legal templates." },
   { id: "excel-tracker",      slug: "excel-tracker",      title: "Excel Tracker",         price: 4.99, description: "Track KPI, finances, goals." },
-  // add more; the expander will handle the rest
 ];
 
 const formatEUR = (n: number) =>
@@ -44,9 +44,7 @@ export default function WebTemplatesPage() {
 
       <CategoryGrid
         items={items}
-        // two rows by default per breakpoint; reveals more with "Read more"
         renderItem={(p) => {
-          // normalize for strict TS (CategoryGrid’s Product has optional fields)
           const slug = p.slug ?? String(p.id);
           const price =
             typeof p.price === "number"
@@ -62,11 +60,19 @@ export default function WebTemplatesPage() {
               key={String(p.id)}
               className="group overflow-hidden rounded-2xl border bg-white shadow transition hover:shadow-lg"
             >
-              <HoverableCover srcs={imgCandidates(slug)} alt={p.title} ratio="16/9" fit="contain" />
+              <HoverableCover
+                srcs={imgCandidates(slug)}
+                alt={p.title}
+                ratio="16/9"
+                fit="contain"
+              />
 
               <div className="p-4">
                 <h2 className="mb-2 text-xl font-semibold">{p.title}</h2>
-                <p className="mb-2 text-sm text-gray-600">{p.description}</p>
+
+                {/* Inline “More / Less” under subtitle */}
+                <InlineMore text={p.description} lines={2} className="mb-2 text-sm text-gray-600" />
+
                 <p className="mb-3 text-lg font-bold">{formatEUR(price)}</p>
 
                 {/* Blue View + Add to Cart buttons */}
