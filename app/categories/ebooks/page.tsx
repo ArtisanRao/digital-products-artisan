@@ -135,11 +135,15 @@ export default function EbooksPage() {
                   <h2 className="text-xl font-semibold mb-2">{title}</h2>
 
                   {/* Inline “More / Less” under subtitle */}
-                  <InlineMore text={description} lines={2} className="text-gray-600 text-sm mb-2" />
+                  <InlineMore
+                    text={description}
+                    lines={1}
+                    minChars={40}
+                    className="text-gray-600 text-sm mb-2"
+                  />
 
                   <p className="text-lg font-bold mb-3">{formatEUR(price)}</p>
 
-                  {/* Blue View + Add to Cart buttons */}
                   <ShopActions
                     item={{
                       ...(ebooks[i] as any),
