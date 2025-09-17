@@ -33,7 +33,7 @@ export async function generateMetadata({
     openGraph: {
       title: `${product.title} | Digital Products Artisan`,
       url: `https://digitalproductsartisan.com${canonical}`,
-      type: 'website', // ✅ 'product' is not allowed by Next.js types
+      type: 'website', // Next.js doesn't support 'product' here
       images: [{ url: absoluteImage }],
     },
     twitter: {
@@ -56,12 +56,27 @@ export default async function ProductPage({
 
   const canonicalAbs = `https://digitalproductsartisan.com/products/${id}`;
 
+  // Build absolute image list (prefer array if present)
+  const imagesRel = Array.isArray((product as any).images) && (product as any).images.length
+    ? (product as any).images
+    : [product.image];
+  const imagesAbs = imagesRel.map((src: string) =>
+    src.startsWith('http') ? src : `https://digitalproductsartisan.com${src}`
+  );
+
   // ---- JSON-LD: Product ----
+  const today = new Date();
+  const priceValidFrom = today.toISOString().slice(0, 10); // YYYY-MM-DD
+  const priceValidUntilDate = new Date(today);
+  priceValidUntilDate.setFullYear(priceValidUntilDate.getFullYear() + 1);
+  const priceValidUntil = priceValidUntilDate.toISOString().slice(0, 10); // YYYY-MM-DD
+
   const productLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.title,
-    image: [`https://digitalproductsartisan.com${product.image}`],
+    url: canonicalAbs,
+    image: imagesAbs,
     description: product.description,
     sku: String(product.id),
     brand: { '@type': 'Brand', name: 'Digital Products Artisan' },
@@ -69,8 +84,10 @@ export default async function ProductPage({
       '@type': 'Offer',
       url: canonicalAbs,
       priceCurrency: 'EUR',
-      price: product.price.toFixed(2),
+      price: product.price.toFixed(2), // string is fine/safe for JSON-LD
       availability: 'https://schema.org/InStock',
+      priceValidFrom,                  // ✅ added
+      priceValidUntil,                 // ✅ added (fixes warning)
     },
     aggregateRating: {
       '@type': 'AggregateRating',
