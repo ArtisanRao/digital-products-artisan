@@ -3,6 +3,7 @@
 import CategoryGrid from "@/components/categories/CategoryGrid";
 import HoverableCover from "@/components/ui/hoverable-cover";
 import ShopActions from "@/components/shop-actions";
+import InlineMore from "@/components/ui/inline-more";
 
 const CAT = "audio-samples";
 
@@ -16,7 +17,7 @@ type Item = {
 
 const items: Item[] = [
   { id: "audio-samples", slug: "audio-samples", title: "Audio Samples Bundle", price: 7.49, description: "Loops, SFX, and risers." },
-  { id: "sonic-spectrum", slug: "sonic-spectrum", title: "Sonic Spectrum",       price: 6.99, description: "Wide variety of textures." },
+  { id: "sonic-spectrum", slug: "sonic-spectrum", title: "Sonic Spectrum", price: 6.99, description: "Wide variety of textures." },
   { id: "animated-titles-and-animations", slug: "animated-titles-and-animations", title: "Animated Titles FX", price: 5.99, description: "Audio accents for titles." },
 ];
 
@@ -43,7 +44,6 @@ export default function AudioSamplesPage() {
       <CategoryGrid
         items={items}
         renderItem={(p) => {
-          // Ensure definite slug and numeric price for strict TS
           const slug = p.slug ?? String(p.id);
           const price =
             typeof p.price === "number"
@@ -63,7 +63,10 @@ export default function AudioSamplesPage() {
 
               <div className="p-4">
                 <h2 className="text-xl font-semibold mb-2">{p.title}</h2>
-                <p className="text-gray-600 text-sm mb-2">{p.description}</p>
+
+                {/* Inline “More / Less” under subtitle */}
+                <InlineMore text={p.description} lines={2} className="text-gray-600 text-sm mb-2" />
+
                 <p className="text-lg font-bold">{formatEUR(price)}</p>
 
                 <ShopActions
