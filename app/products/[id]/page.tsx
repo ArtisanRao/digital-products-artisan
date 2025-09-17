@@ -65,6 +65,12 @@ export default async function ProductPage({
     src.startsWith('http') ? src : `https://digitalproductsartisan.com${src}`
   );
 
+  // Optional “coverage” countries to satisfy Merchant warnings
+  const POLICY_COUNTRIES = [
+    'US','CA','GB','DE','FR','ES','IT','NL','SE','NO','FI','DK','IE',
+    'PT','PL','AT','BE','CH','AU','NZ'
+  ];
+
   // ---- JSON-LD: Product ----
   const today = new Date();
   const priceValidFrom = today.toISOString().slice(0, 10); // YYYY-MM-DD
@@ -85,22 +91,27 @@ export default async function ProductPage({
       '@type': 'Offer',
       url: canonicalAbs,
       priceCurrency: 'EUR',
-      price: product.price.toFixed(2), // string is fine/safe for JSON-LD
+      price: product.price.toFixed(2),
       availability: 'https://schema.org/InStock',
-      priceValidFrom,                  // ✅ keeps your date window
-      priceValidUntil,                 // ✅ keeps your date window
+      priceValidFrom,
+      priceValidUntil,
 
-      // ✅ NEW: clearly state digital goods have no returns (adjust if you allow returns)
+      // Returns not permitted (add coverage to silence optional warning)
       hasMerchantReturnPolicy: {
         '@type': 'MerchantReturnPolicy',
         returnPolicyCategory: 'https://schema.org/MerchantReturnNotPermitted',
+        applicableCountry: POLICY_COUNTRIES, // <— added
       },
 
-      // ✅ NEW: digital download → no physical shipping
+      // Digital download → no physical shipping (add destination to silence optional warning)
       shippingDetails: [
         {
           '@type': 'OfferShippingDetails',
           doesNotShip: true,
+          shippingDestination: {
+            '@type': 'DefinedRegion',
+            addressCountry: POLICY_COUNTRIES, // <— added
+          },
         },
       ],
     },
@@ -147,14 +158,11 @@ export default async function ProductPage({
   return (
     <main className="container mx-auto px-4 py-8">
       <nav className="mb-4 text-sm text-gray-600">
-        <Link href="/" className="hover:underline">
-          Home
-        </Link>{' '}
+        <Link href="/" className="hover:underline">Home</Link>{' '}
         <span>›</span>{' '}
-        <Link href="/products" className="hover:underline">
-          Products
-        </Link>{' '}
-        <span>›</span> <span aria-current="page">{product.title}</span>
+        <Link href="/products" className="hover:underline">Products</Link>{' '}
+        <span>›</span>{' '}
+        <span aria-current="page">{product.title}</span>
       </nav>
 
       <div className="grid lg:grid-cols-2 gap-8">
@@ -174,9 +182,7 @@ export default async function ProductPage({
           <p className="text-gray-600 mt-2">{product.description}</p>
 
           <div className="mt-4 flex items-center gap-3">
-            <span className="text-2xl font-semibold">
-              €{product.price.toFixed(2)}
-            </span>
+            <span className="text-2xl font-semibold">€{product.price.toFixed(2)}</span>
             {product.originalPrice > product.price && (
               <span className="line-through text-gray-400">
                 €{product.originalPrice.toFixed(2)}
