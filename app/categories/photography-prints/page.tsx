@@ -1,11 +1,26 @@
-'use client';
+"use client";
 
-import HoverableCover from '@/components/ui/hoverable-cover';
-import ShopActions from '@/components/shop-actions';
+import CategoryGrid from "@/components/categories/CategoryGrid";
+import HoverableCover from "@/components/ui/hoverable-cover";
+import ShopActions from "@/components/shop-actions";
 
-type Item = { slug: string; title: string; price: number; description: string };
+const CAT = "photography-prints";
 
-const CAT = 'photography-prints';
+type Item = {
+  id: string;        // stable key
+  slug: string;
+  title: string;
+  price: number;     // keep as number
+  description: string;
+};
+
+const items: Item[] = [
+  { id: "photography-prints", slug: "photography-prints", title: "Photography Prints",    price: 9.99, description: "Curated high-resolution prints." },
+  { id: "mystery-thriller-novel", slug: "mystery-thriller-novel", title: "Moody Noir Poster", price: 7.99, description: "Atmospheric, cinematic artwork." },
+  { id: "landscape-pack", slug: "landscape-pack", title: "Landscape Pack", price: 8.49, description: "Crisp outdoor scenes for décor." },
+  // add more; the expander will handle the rest
+];
+
 const imgCandidates = (slug: string) => [
   `/images/${CAT}/${slug}.jpg`,
   `/images/${CAT}/${slug}-cover.jpg`,
@@ -13,40 +28,47 @@ const imgCandidates = (slug: string) => [
   `/images/${slug}-cover.jpg`,
 ];
 
-export default function PhotographyPrintsPage() {
-  const items: Item[] = [
-    { slug: 'photography-prints', title: 'Photography Prints', price: 9.99, description: 'Curated high-resolution prints.' },
-    { slug: 'mystery-thriller-novel', title: 'Moody Noir Poster', price: 7.99, description: 'Atmospheric, cinematic artwork.' },
-    { slug: 'landscape-pack', title: 'Landscape Pack', price: 8.49, description: 'Crisp outdoor scenes for décor.' },
-  ];
+const formatEUR = (n: number) =>
+  new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
 
+export default function PhotographyPrintsPage() {
   return (
     <main className="max-w-7xl mx-auto px-4 py-12">
       <h1 className="text-4xl font-bold text-center mb-10">📸 Photography Prints</h1>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        {items.map((p) => {
-          // Best guess to use for cart/checkout imagery
-          const primaryImg = `/images/${CAT}/${p.slug}.jpg`;
+      <CategoryGrid
+        items={items}
+        // two rows by default per breakpoint; reveals more with "Read more"
+        renderItem={(p) => {
+          // normalize for strict TS (CategoryGrid’s Product has optional fields)
+          const slug = p.slug ?? String(p.id);
+          const price =
+            typeof p.price === "number"
+              ? p.price
+              : typeof p.price === "string"
+              ? parseFloat(p.price)
+              : 0;
+
+          const primaryImg = `/images/${CAT}/${slug}.jpg`;
 
           return (
             <div
-              key={p.slug}
+              key={String(p.id)}
               className="group rounded-2xl border bg-white overflow-hidden shadow transition hover:shadow-lg"
             >
-              <HoverableCover srcs={imgCandidates(p.slug)} alt={p.title} ratio="16/9" fit="contain" />
+              <HoverableCover srcs={imgCandidates(slug)} alt={p.title} ratio="16/9" fit="contain" />
 
               <div className="p-4">
                 <h2 className="text-xl font-semibold mb-2">{p.title}</h2>
                 <p className="text-gray-600 text-sm mb-2">{p.description}</p>
-                <p className="text-lg font-bold mb-3">€{p.price.toFixed(2)}</p>
+                <p className="text-lg font-bold mb-3">{formatEUR(price)}</p>
 
                 {/* Blue View + Add to Cart (consistent with other categories) */}
                 <ShopActions
                   item={{
-                    id: p.slug,
+                    id: slug,
                     title: p.title,
-                    price: p.price,
+                    price,
                     image: primaryImg,
                     description: p.description,
                   }}
@@ -54,8 +76,8 @@ export default function PhotographyPrintsPage() {
               </div>
             </div>
           );
-        })}
-      </div>
+        }}
+      />
     </main>
   );
 }
