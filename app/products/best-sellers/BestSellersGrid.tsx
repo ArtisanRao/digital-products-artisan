@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import CategoryGrid from "@/components/categories/CategoryGrid";
 import HoverableCover from "@/components/ui/hoverable-cover";
@@ -17,7 +17,14 @@ type Item = {
 const formatEUR = (n: number) =>
   new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
 
-/** Auto-redirect to /cart after Add to Cart (Snipcart or custom event) */
+const truncate = (s: string, max: number) => {
+  if (!s) return "";
+  if (s.length <= max) return s;
+  const clipped = s.slice(0, max);
+  return clipped.replace(/\s+\S*$/, "") + "…";
+};
+
+/** After "Add to Cart", go to /cart so the badge is immediately visible. */
 function CartAutoRedirect() {
   const router = useRouter();
   useEffect(() => {
@@ -32,49 +39,57 @@ function CartAutoRedirect() {
   return null;
 }
 
+function BestSellerCard({ p }: { p: Item }) {
+  const id = String(p.id);
+  const title = p.title;
+  const image = typeof p.image === "string" ? p.image : "/images/placeholder-cover.jpg";
+  const price =
+    typeof p.price === "number" ? p.price : typeof p.price === "string" ? parseFloat(p.price) : 0;
+
+  const [open, setOpen] = useState(false);
+  const maxChars = 110; // tweak as you like
+  const hasOverflow = (p.description || "").length > maxChars;
+  const shown = open ? p.description : truncate(p.description, maxChars);
+
+  return (
+    <div
+      key={id}
+      id={id}
+      className="group rounded-2xl border bg-white overflow-hidden shadow transition hover:shadow-lg"
+    >
+      <HoverableCover src={image} alt={title} ratio="3/2" fit="contain" />
+      <div className="p-4">
+        <h2 className="text-xl font-semibold mb-1">{title}</h2>
+
+        {/* Subtitle + inline "More" link (like your /products list) */}
+        <p className="text-gray-600 text-sm">{shown}</p>
+        {hasOverflow && (
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className="mt-1 text-sm font-medium text-blue-600 hover:underline"
+          >
+            {open ? "Less" : "More"}
+          </button>
+        )}
+
+        <p className="text-lg font-bold mt-2 mb-3">{formatEUR(price)}</p>
+
+        {/* Keep only BLUE actions (View -> /checkout, Add to Cart -> /cart) */}
+        <ShopActions item={{ id, title, price, image, description: p.description }} />
+      </div>
+    </div>
+  );
+}
+
 export default function BestSellersGrid({ items }: { items: Item[] }) {
   return (
     <>
       <CartAutoRedirect />
       <CategoryGrid
         items={items}
-        // Force a "Read more" on small lists: 1 item visible at first on all bps
-        collapsedCountByBp={{ base: 1, sm: 1, md: 1, lg: 1, xl: 1 }}
-        increment={4}
-        renderItem={(p) => {
-          const id = String(p.id);
-          const title = p.title;
-          const image = typeof p.image === "string" ? p.image : "/images/placeholder-cover.jpg";
-          const description = p.description ?? "";
-          const price =
-            typeof p.price === "number"
-              ? p.price
-              : typeof p.price === "string"
-              ? parseFloat(p.price)
-              : 0;
-
-          return (
-            <div
-              key={id}
-              id={id}
-              className="group rounded-2xl border bg-white overflow-hidden shadow transition hover:shadow-lg"
-            >
-              <HoverableCover src={image} alt={title} ratio="3/2" fit="contain" />
-
-              <div className="p-4">
-                <h2 className="text-xl font-semibold mb-1">{title}</h2>
-                <p className="text-gray-600 mb-2 text-sm">{description}</p>
-                <p className="text-lg font-bold mb-3">{formatEUR(price)}</p>
-
-                {/* Keep only the BLUE actions from ShopActions */}
-                <ShopActions
-                  item={{ id, title, price, image, description }}
-                  viewHref="/checkout"      // ← send “View” to Checkout
-                />
-              </div>
-            </div>
-          );
-        }}
+        expandAll                     // ← no grid-level "Read more" button
+        renderItem={(p) => <BestSellerCard p={p as Item} />}
       />
     </>
   );
