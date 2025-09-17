@@ -17,14 +17,7 @@ type Item = {
 const formatEUR = (n: number) =>
   new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
 
-const truncate = (s: string, max: number) => {
-  if (!s) return "";
-  if (s.length <= max) return s;
-  const clipped = s.slice(0, max);
-  return clipped.replace(/\s+\S*$/, "") + "…";
-};
-
-/** After "Add to Cart", go to /cart so the badge is immediately visible. */
+/** After Add to Cart, go to /cart so the badge is visible */
 function CartAutoRedirect() {
   const router = useRouter();
   useEffect(() => {
@@ -47,9 +40,6 @@ function BestSellerCard({ p }: { p: Item }) {
     typeof p.price === "number" ? p.price : typeof p.price === "string" ? parseFloat(p.price) : 0;
 
   const [open, setOpen] = useState(false);
-  const maxChars = 110; // tweak as you like
-  const hasOverflow = (p.description || "").length > maxChars;
-  const shown = open ? p.description : truncate(p.description, maxChars);
 
   return (
     <div
@@ -58,12 +48,13 @@ function BestSellerCard({ p }: { p: Item }) {
       className="group rounded-2xl border bg-white overflow-hidden shadow transition hover:shadow-lg"
     >
       <HoverableCover src={image} alt={title} ratio="3/2" fit="contain" />
+
       <div className="p-4">
         <h2 className="text-xl font-semibold mb-1">{title}</h2>
 
-        {/* Subtitle + inline "More" link (like your /products list) */}
-        <p className="text-gray-600 text-sm">{shown}</p>
-        {hasOverflow && (
+        {/* Subtitle + inline toggle, like /products: */}
+        <p className={`text-gray-600 text-sm ${open ? "" : "line-clamp-2"}`}>{p.description}</p>
+        {!!p.description && (
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
@@ -75,7 +66,7 @@ function BestSellerCard({ p }: { p: Item }) {
 
         <p className="text-lg font-bold mt-2 mb-3">{formatEUR(price)}</p>
 
-        {/* Keep only BLUE actions (View -> /checkout, Add to Cart -> /cart) */}
+        {/* Blue View (/checkout) + Add to Cart (/cart after add) */}
         <ShopActions item={{ id, title, price, image, description: p.description }} />
       </div>
     </div>
@@ -88,7 +79,7 @@ export default function BestSellersGrid({ items }: { items: Item[] }) {
       <CartAutoRedirect />
       <CategoryGrid
         items={items}
-        expandAll                     // ← no grid-level "Read more" button
+        expandAll                  // ← no grid-level “Read more” button
         renderItem={(p) => <BestSellerCard p={p as Item} />}
       />
     </>

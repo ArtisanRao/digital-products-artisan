@@ -12,9 +12,9 @@ export const metadata: Metadata = {
     url: "https://digitalproductsartisan.com/products/best-sellers",
     type: "website",
     images: [
-      { url: "https://digitalproductsartisan.com/products/chatgpt-guide.jpg" },
-      { url: "https://digitalproductsartisan.com/products/canva-pack.jpg" },
-      { url: "https://digitalproductsartisan.com/products/excel-tracker.jpg" },
+      { url: "https://digitalproductsartisan.com/images/mastering-chatgpt-for-business-cover.jpg" },
+      { url: "https://digitalproductsartisan.com/images/canva-templates-mega-pack-preview.jpg" },
+      { url: "https://digitalproductsartisan.com/images/excel-tracker-pro-layouts.jpg" },
     ],
   },
   twitter: {
@@ -32,21 +32,21 @@ const items = [
   {
     id: "chatgpt-business",
     title: "Mastering ChatGPT for Business",
-    image: "/products/chatgpt-guide.jpg",
+    image: "/images/mastering-chatgpt-for-business-cover.jpg",
     price: 9.99,
     description: "A detailed PDF guide to unlock AI productivity.",
   },
   {
     id: "canva-pack",
     title: "Canva Templates Mega Pack",
-    image: "/products/canva-pack.jpg",
+    image: "/images/canva-templates-mega-pack-preview.jpg",
     price: 14.99,
     description: "100+ drag-and-drop templates for social media.",
   },
   {
     id: "excel-tracker",
     title: "Excel Tracker Pro",
-    image: "/products/excel-tracker.jpg",
+    image: "/images/excel-tracker-pro-layouts.jpg",
     price: 7.99,
     description: "Track expenses, projects, and habits like a pro.",
   },
@@ -68,7 +68,8 @@ export default function BestSellersPage() {
           item: {
             "@type": "Product",
             name: "Mastering ChatGPT for Business",
-            image: "https://digitalproductsartisan.com/products/chatgpt-guide.jpg",
+            image:
+              "https://digitalproductsartisan.com/images/mastering-chatgpt-for-business-cover.jpg",
             description: "A detailed PDF guide to unlock AI productivity.",
             aggregateRating: { "@type": "AggregateRating", ratingValue: "4.8", reviewCount: "152" },
             review: [
@@ -93,7 +94,8 @@ export default function BestSellersPage() {
           item: {
             "@type": "Product",
             name: "Canva Templates Mega Pack",
-            image: "https://digitalproductsartisan.com/products/canva-pack.jpg",
+            image:
+              "https://digitalproductsartisan.com/images/canva-templates-mega-pack-preview.jpg",
             description: "100+ drag-and-drop templates for social media.",
             aggregateRating: { "@type": "AggregateRating", ratingValue: "4.7", reviewCount: "204" },
             review: [
@@ -118,7 +120,8 @@ export default function BestSellersPage() {
           item: {
             "@type": "Product",
             name: "Excel Tracker Pro",
-            image: "https://digitalproductsartisan.com/products/excel-tracker.jpg",
+            image:
+              "https://digitalproductsartisan.com/images/excel-tracker-pro-layouts.jpg",
             description: "Track expenses, projects, and habits with an all-in-one spreadsheet.",
             aggregateRating: { "@type": "AggregateRating", ratingValue: "4.6", reviewCount: "98" },
             review: [
@@ -144,11 +147,14 @@ export default function BestSellersPage() {
     <main className="p-8 max-w-5xl mx-auto">
       <h1 className="text-4xl font-bold mb-6 text-center">🔥 Best-Selling Digital Products</h1>
 
-      {/* Client grid with expander + actions */}
+      {/* Client grid with per-card More/Less + blue actions */}
       <BestSellersGrid items={items} />
 
       {/* SEO: JSON-LD */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
     </main>
   );
 }
