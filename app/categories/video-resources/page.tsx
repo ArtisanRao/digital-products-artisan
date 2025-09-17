@@ -21,7 +21,6 @@ const items: Item[] = [
   { id: "youtube-channel-kit", slug: "youtube-channel-kit",   title: "YouTube Channel Kit",       price: 6.49,  description: "Intros, end screens, thumbnails." },
 ];
 
-// Try multiple sensible filenames (category folder, root, and -cover variants)
 const imgCandidates = (slug: string) => [
   `/images/${CAT}/${slug}.jpg`,
   `/images/${CAT}/${slug}-cover.jpg`,
@@ -65,12 +64,17 @@ export default function VideoResourcesPage() {
               <div className="p-4">
                 <h2 className="text-xl font-semibold mb-2">{p.title}</h2>
 
-                {/* Inline “More / Less” under subtitle */}
-                <InlineMore text={p.description} lines={2} className="text-gray-600 text-sm mb-2" />
+                {/* Inline “More / Less” under subtitle — force show using minChars */}
+                <InlineMore
+                  text={p.description}
+                  lines={2}
+                  minChars={1}
+                  className="text-gray-600 text-sm mb-2"
+                />
 
                 <p className="text-lg font-bold">{formatEUR(price)}</p>
 
-                {/* Blue View + Add to Cart buttons */}
+                {/* View (checkout) + Add to Cart */}
                 <ShopActions
                   item={{
                     id: slug,
