@@ -15,10 +15,10 @@ type Item = {
 };
 
 const items: Item[] = [
-  { id: "audio-samples",  slug: "audio-samples",                  title: "Audio Samples Bundle", price: 7.49, description: "Loops, SFX, and risers." },
-  { id: "sonic-spectrum", slug: "sonic-spectrum",                 title: "Sonic Spectrum",       price: 6.99, description: "Wide variety of textures." },
-  { id: "animated-titles-and-animations", slug: "animated-titles-and-animations", title: "Animated Titles FX",   price: 5.99, description: "Audio accents for titles." },
-  // add more here; the grid will auto-expand with Read more
+  { id: "audio-samples", slug: "audio-samples", title: "Audio Samples Bundle", price: 7.49, description: "Loops, SFX, and risers." },
+  { id: "sonic-spectrum", slug: "sonic-spectrum", title: "Sonic Spectrum",       price: 6.99, description: "Wide variety of textures." },
+  { id: "animated-titles-and-animations", slug: "animated-titles-and-animations", title: "Animated Titles FX", price: 5.99, description: "Audio accents for titles." },
+  // add more as needed
 ];
 
 const imgCandidates = (slug: string) => [
@@ -42,16 +42,18 @@ export default function AudioSamplesPage() {
       <h1 className="text-4xl font-bold text-center mb-10">🎵 Audio Samples</h1>
 
       <CategoryGrid
-        // two rows by default per breakpoint (from the component’s defaults)
         items={items}
         renderItem={(p) => {
-          const primaryImg = `/images/${CAT}/${p.slug}.jpg`; // used for cart/checkout
+          // Guarantee a non-undefined slug for TS (CategoryGrid’s Product.slug is optional)
+          const slug = p.slug ?? String(p.id);
+          const primaryImg = `/images/${CAT}/${slug}.jpg`; // used for cart/checkout
+
           return (
             <div
               key={p.id}
               className="group rounded-2xl border bg-white overflow-hidden shadow transition hover:shadow-lg"
             >
-              <HoverableCover srcs={imgCandidates(p.slug)} alt={p.title} ratio="16/9" fit="contain" />
+              <HoverableCover srcs={imgCandidates(slug)} alt={p.title} ratio="16/9" fit="contain" />
 
               <div className="p-4">
                 <h2 className="text-xl font-semibold mb-2">{p.title}</h2>
@@ -60,7 +62,7 @@ export default function AudioSamplesPage() {
 
                 <ShopActions
                   item={{
-                    id: p.slug,
+                    id: slug,
                     title: p.title,
                     price: p.price,
                     image: primaryImg,
