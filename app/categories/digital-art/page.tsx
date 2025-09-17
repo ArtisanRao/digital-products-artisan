@@ -3,6 +3,7 @@
 import CategoryGrid from "@/components/categories/CategoryGrid";
 import HoverableCover from "@/components/ui/hoverable-cover";
 import ShopActions from "@/components/shop-actions";
+import InlineMore from "@/components/ui/inline-more";
 
 const CAT = "digital-art";
 
@@ -18,7 +19,6 @@ const items: Item[] = [
   { id: "digital-art", slug: "digital-art", title: "Digital Art Collection", price: 7.99, description: "High-res artwork for personal & commercial use." },
   { id: "abstract-art-pack", slug: "abstract-art-pack", title: "Abstract Art Pack", price: 6.49, description: "Bold shapes, gradients, and textures." },
   { id: "poster-collection", slug: "poster-collection", title: "Poster Collection", price: 8.49, description: "Print-ready poster designs in multiple sizes." },
-  // add more as needed
 ];
 
 const imgCandidates = (slug: string) => [
@@ -38,9 +38,7 @@ export default function DigitalArtPage() {
 
       <CategoryGrid
         items={items}
-        // shows two rows by default per breakpoint; reveals more with "Read more"
         renderItem={(p) => {
-          // Normalize types for strict TS (CategoryGrid's Product has optional fields)
           const slug = p.slug ?? String(p.id);
           const price =
             typeof p.price === "number"
@@ -60,10 +58,12 @@ export default function DigitalArtPage() {
 
               <div className="p-4">
                 <h2 className="mb-2 text-xl font-semibold">{p.title}</h2>
-                <p className="mb-2 text-sm text-gray-600">{p.description}</p>
+
+                {/* Inline “More / Less” under subtitle */}
+                <InlineMore text={p.description} lines={2} className="text-gray-600 text-sm mb-2" />
+
                 <p className="mb-3 text-lg font-bold">{formatEUR(price)}</p>
 
-                {/* Blue View + Add to Cart (consistent site-wide) */}
                 <ShopActions
                   item={{
                     id: slug,
