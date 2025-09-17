@@ -83,8 +83,13 @@ export default function FontsPage() {
               <div className="p-4">
                 <h2 className="mb-2 text-xl font-semibold">{p.title}</h2>
 
-                {/* Inline “More / Less” under subtitle */}
-                <InlineMore text={p.description} lines={2} className="mb-2 text-sm text-gray-600" />
+                {/* Inline “More / Less” under subtitle (force show) */}
+                <InlineMore
+                  text={p.description}
+                  lines={2}
+                  minChars={1}
+                  className="mb-2 text-sm text-gray-600"
+                />
 
                 <p className="mb-3 text-lg font-bold">{formatEUR(price)}</p>
 
