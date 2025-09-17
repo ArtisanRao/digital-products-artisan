@@ -1,21 +1,20 @@
-// app/categories/[slug]/page.tsx
 import fs from "node:fs";
 import path from "node:path";
 import Link from "next/link";
 import CoverImage from "@/components/ui/cover-image";
-import DescriptionClamp from "@/components/DescriptionClamp"; // ⬅️ add expander
+import DescriptionClamp from "@/components/DescriptionClamp"; // ⬅️ text expander
 
 type CatInfo = { title: string; description: string; folder: string };
 
 // Map new slugs + legacy slugs → display info + physical folder under /public/images/<folder>
 const CATEGORIES: Record<string, CatInfo> = {
   // New
-  ebooks:              { title: "eBooks",             description: "Digital books, guides, and educational content.",            folder: "ebooks" },
-  templates:           { title: "Templates",          description: "Design templates and graphics ready to use.",               folder: "templates" },
-  "marketing-tools":   { title: "Marketing Tools",    description: "Prompts, swipe files, and growth resources for marketing.", folder: "marketing-tools" },
-  "printable-planners":{ title: "Printable Planners", description: "Digital planners, journals, and productivity tools.",       folder: "printable-planners" },
-  "social-media-kits": { title: "Social Media Kits",  description: "Packaged posts, graphics, and assets for social channels.", folder: "social-media-kits" },
-  "photography-prints":{ title: "Photography Prints", description: "High-quality photo prints, presets, and media assets.",     folder: "photography-prints" },
+  ebooks:               { title: "eBooks",             description: "Digital books, guides, and educational content.",            folder: "ebooks" },
+  templates:            { title: "Templates",          description: "Design templates and graphics ready to use.",               folder: "templates" },
+  "marketing-tools":    { title: "Marketing Tools",    description: "Prompts, swipe files, and growth resources for marketing.", folder: "marketing-tools" },
+  "printable-planners": { title: "Printable Planners", description: "Digital planners, journals, and productivity tools.",       folder: "printable-planners" },
+  "social-media-kits":  { title: "Social Media Kits",  description: "Packaged posts, graphics, and assets for social channels.", folder: "social-media-kits" },
+  "photography-prints": { title: "Photography Prints", description: "High-quality photo prints, presets, and media assets.",     folder: "photography-prints" },
 
   // Legacy → point to the new folders above
   "ebooks-guides":       { title: "eBooks",             description: "Digital books, guides, and educational content.",            folder: "ebooks" },
@@ -31,9 +30,11 @@ export function generateStaticParams() {
   return Object.keys(CATEGORIES).map((slug) => ({ slug }));
 }
 
-// Next 15: params is a Promise
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+// Works on Next 14 (object) and 15 (Promise) by using a union and always awaiting
+type ParamsMaybePromise = { slug: string } | Promise<{ slug: string }>;
+
+export async function generateMetadata({ params }: { params: ParamsMaybePromise }) {
+  const { slug } = await (params as any);
   const cat = CATEGORIES[slug];
   const title = cat ? `${cat.title} | Digital Products Artisan` : "Digital Products | Digital Products Artisan";
   const description = cat?.description ?? "Browse our curated digital products.";
@@ -62,8 +63,8 @@ function listFolderImages(folder: string) {
   }
 }
 
-export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+export default async function CategoryPage({ params }: { params: ParamsMaybePromise }) {
+  const { slug } = await (params as any);
   const cat = CATEGORIES[slug];
 
   if (!cat) {
@@ -71,12 +72,8 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     return (
       <main className="container mx-auto px-4 py-16">
         <h1 className="text-3xl md:text-4xl font-bold mb-2">{pretty}</h1>
-
-        {/* Short teaser with expander just in case this grows later */}
         <DescriptionClamp
-          text={
-            "We couldn’t find a dedicated page for this category yet. Explore best sellers below or visit all products."
-          }
+          text={"We couldn’t find a dedicated page for this category yet. Explore best sellers below or visit all products."}
           maxChars={160}
         />
         <p className="mt-2">
