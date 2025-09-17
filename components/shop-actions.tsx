@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Eye, ShoppingCart } from "lucide-react";
-import { getPreferredCurrency } from "@/lib/currency";
+import { useRouter } from "next/navigation";
 import { useCart } from "@/contexts/cart-context";
 
 type Item = {
@@ -14,19 +14,35 @@ type Item = {
   fileUrl?: string;
 };
 
-export default function ShopActions({ item }: { item: Item }) {
+type Props = {
+  item: Item;
+  /** Where the blue “View” should go. Default: /checkout */
+  viewHref?: string;
+  /** After adding, go to /cart so the badge is visible. Default: true */
+  goToCartAfterAdd?: boolean;
+};
+
+export default function ShopActions({
+  item,
+  viewHref = "/checkout",
+  goToCartAfterAdd = true,
+}: Props) {
+  const router = useRouter();
   const cart = (useCart?.() ?? {}) as any;
 
   const persistAndBroadcast = (items: any[]) => {
+    if (typeof window === "undefined") return;
     localStorage.setItem("cart", JSON.stringify(items));
     const count = items.reduce((n, i) => n + Number(i.quantity || 1), 0);
     localStorage.setItem("cartCount", String(count));
     try {
       window.dispatchEvent(new CustomEvent("cart:updated", { detail: { count, items } }));
+      window.dispatchEvent(new CustomEvent("cart:item-added", { detail: { item, count } }));
     } catch {}
   };
 
   const addToLocalCart = () => {
+    if (typeof window === "undefined") return;
     let items: any[] = [];
     try {
       items = JSON.parse(localStorage.getItem("cart") || "[]");
@@ -51,6 +67,7 @@ export default function ShopActions({ item }: { item: Item }) {
   };
 
   const add = () => {
+    // best-effort: support any cart context shape
     (cart.addItem ?? cart.add ?? cart.actions?.addItem)?.({
       id: String(item.id),
       name: item.title,
@@ -63,48 +80,29 @@ export default function ShopActions({ item }: { item: Item }) {
       quantity: 1,
     });
     (cart.openCart ?? cart.open ?? cart.actions?.openCart)?.();
+
     addToLocalCart();
+    if (goToCartAfterAdd) router.push("/cart");
   };
 
-  const buyNow = async () => {
-    addToLocalCart();
-
-    const currency = (getPreferredCurrency?.() || "eur").toLowerCase();
-
-    const resp = await fetch("/api/checkout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        lines: [
-          { id: item.id, name: item.title, price: item.price, image: item.image, quantity: 1 },
-        ],
-        currency,
-      }),
-    });
-
-    try {
-      const data = await resp.json();
-      if (resp.ok && data?.url) window.location.href = data.url;
-      else console.error("Checkout error:", data);
-    } catch (e) {
-      console.error(e);
-    }
+  const view = () => {
+    router.push(viewHref);
   };
 
   return (
     <div className="mt-3 flex items-center gap-2">
-      {/* VIEW — now same blue style as Add to Cart */}
+      {/* VIEW — blue button linking to /checkout (or custom viewHref) */}
       <Button
         type="button"
-        onClick={buyNow}
+        onClick={view}
         className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
-        aria-label="View / Buy now"
+        aria-label="View / Checkout"
       >
         <Eye className="h-4 w-4 text-white" />
         View
       </Button>
 
-      {/* ADD TO CART — unchanged visual (blue) */}
+      {/* ADD TO CART — add + open cart + go to /cart */}
       <Button
         type="button"
         onClick={add}
