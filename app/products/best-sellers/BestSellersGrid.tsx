@@ -18,11 +18,7 @@ type Item = {
 const formatEUR = (n: number) =>
   new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
 
-/**
- * After "Add to Cart", push to /cart to show the badge counter/front-and-center.
- * Works with Snipcart (`snipcart.item.added`) or a custom event (`cart:item-added`).
- * Remove this effect if you prefer to stay on the same page after adding.
- */
+/** Auto-redirect to /cart after adding an item (Snipcart or custom event) */
 function CartAutoRedirect() {
   const router = useRouter();
   useEffect(() => {
@@ -44,11 +40,22 @@ export default function BestSellersGrid({ items }: { items: Item[] }) {
       <CategoryGrid
         items={items}
         renderItem={(p) => {
-          const { id, title, image, price, description } = p;
+          // Normalize fields from CategoryGrid.Product (id | number, price: number | string | undefined, etc.)
+          const anchorId = String(p.id);
+          const title = p.title;
+          const image = typeof p.image === "string" ? p.image : "/images/placeholder-cover.jpg";
+          const description = p.description ?? "";
+          const price =
+            typeof p.price === "number"
+              ? p.price
+              : typeof p.price === "string"
+              ? parseFloat(p.price)
+              : 0;
+
           return (
             <div
-              key={id}
-              id={id}
+              key={anchorId}
+              id={anchorId}
               className="group rounded-2xl border bg-white overflow-hidden shadow transition hover:shadow-lg"
             >
               <HoverableCover src={image} alt={title} ratio="3/2" fit="contain" />
@@ -58,7 +65,6 @@ export default function BestSellersGrid({ items }: { items: Item[] }) {
                 <p className="text-gray-600 mb-2 text-sm">{description}</p>
                 <p className="text-lg font-bold mb-3">{formatEUR(price)}</p>
 
-                {/* Actions: View (Checkout) + Add to Cart */}
                 <div className="flex gap-2">
                   <Link
                     href="/checkout"
@@ -68,8 +74,7 @@ export default function BestSellersGrid({ items }: { items: Item[] }) {
                   </Link>
 
                   <ShopActions
-                    item={{ id, title, price, image, description }}
-                    // if your ShopActions supports props like onAdded, you can navigate there too.
+                    item={{ id: anchorId, title, price, image, description }}
                   />
                 </div>
               </div>
