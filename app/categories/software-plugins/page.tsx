@@ -3,6 +3,7 @@
 import CategoryGrid from "@/components/categories/CategoryGrid";
 import HoverableCover from "@/components/ui/hoverable-cover";
 import ShopActions from "@/components/shop-actions";
+import InlineMore from "@/components/ui/inline-more";
 
 type Item = {
   id: string;
@@ -52,7 +53,6 @@ export default function SoftwarePluginsPage() {
 
       <CategoryGrid
         items={items}
-        // two rows by default per breakpoint; reveals more with "Read more"
         renderItem={(p, i) => {
           const id = String(p.id);
           const slug = p.slug ?? id;
@@ -75,10 +75,13 @@ export default function SoftwarePluginsPage() {
 
               <div className="p-4">
                 <h2 className="text-xl font-semibold mb-2">{title}</h2>
-                <p className="text-gray-600 text-sm mb-2">{description}</p>
+
+                {/* Inline “More / Less” under subtitle */}
+                <InlineMore text={description} lines={2} className="text-gray-600 text-sm mb-2" />
+
                 <p className="text-lg font-bold mb-3">{formatEUR(price)}</p>
 
-                {/* Keeps your checkout flow (ShopActions should wire to Snipcart/Stripe as you set up) */}
+                {/* Keeps your checkout flow (ShopActions wires to View/Cart) */}
                 <ShopActions
                   item={{
                     ...(items[i] as any),
