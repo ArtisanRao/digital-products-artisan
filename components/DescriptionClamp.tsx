@@ -1,42 +1,57 @@
 'use client';
 
-import Link from 'next/link';
 import * as React from 'react';
+import Link from 'next/link';
+
+type Props = {
+  text: string;
+  maxChars?: number;
+  className?: string;
+  /** Optional link to the full details page; shown as a CTA when collapsed */
+  href?: string;
+  moreLabel?: string;
+  lessLabel?: string;
+};
 
 export default function DescriptionClamp({
   text,
   maxChars = 160,
+  className = '',
   href,
-}: {
-  text: string;
-  maxChars?: number;
-  href: string;
-}) {
-  const clean = (text || '').trim();
-  if (!clean) return null;
+  moreLabel = 'More',
+  lessLabel = 'Show less',
+}: Props) {
+  const [expanded, setExpanded] = React.useState(false);
 
-  const needs = clean.length > maxChars;
-  const teaser = needs ? clean.slice(0, maxChars).trimEnd() : clean;
-  const rest = needs ? clean.slice(maxChars) : '';
+  const safe = (text ?? '').toString().trim();
+  if (!safe) return null;
+
+  const needsToggle = safe.length > maxChars;
+  const preview = needsToggle ? safe.slice(0, maxChars).trimEnd() + '…' : safe;
 
   return (
-    <div className="text-[15px] leading-relaxed text-gray-700">
-      <p className="whitespace-pre-line">
-        {teaser}
-        {needs && '… '}
-        {needs && (
-          <Link href={href} className="text-blue-700 hover:underline">
-            Read more
-          </Link>
-        )}
+    <div className={className}>
+      <p className="whitespace-pre-line text-sm leading-relaxed text-gray-700">
+        {expanded ? safe : preview}
       </p>
-      {/* If you prefer the expandable inline block instead of linking to PDP:
-      {needs && (
-        <details className="mt-1">
-          <summary className="inline cursor-pointer text-blue-700 hover:underline">More</summary>
-          <div className="mt-2 whitespace-pre-line">{rest}</div>
-        </details>
-      )} */}
+
+      {needsToggle && (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="mt-1 text-sm font-medium text-blue-700 hover:underline"
+          aria-expanded={expanded}
+        >
+          {expanded ? lessLabel : moreLabel}
+        </button>
+      )}
+
+      {/* Optional CTA to full page when collapsed */}
+      {!expanded && href && (
+        <Link href={href} className="ml-3 text-sm text-blue-700 hover:underline">
+          Full details
+        </Link>
+      )}
     </div>
   );
 }
