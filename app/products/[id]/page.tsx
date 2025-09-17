@@ -57,9 +57,10 @@ export default async function ProductPage({
   const canonicalAbs = `https://digitalproductsartisan.com/products/${id}`;
 
   // Build absolute image list (prefer array if present)
-  const imagesRel = Array.isArray((product as any).images) && (product as any).images.length
-    ? (product as any).images
-    : [product.image];
+  const imagesRel =
+    Array.isArray((product as any).images) && (product as any).images.length
+      ? (product as any).images
+      : [product.image];
   const imagesAbs = imagesRel.map((src: string) =>
     src.startsWith('http') ? src : `https://digitalproductsartisan.com${src}`
   );
@@ -86,8 +87,22 @@ export default async function ProductPage({
       priceCurrency: 'EUR',
       price: product.price.toFixed(2), // string is fine/safe for JSON-LD
       availability: 'https://schema.org/InStock',
-      priceValidFrom,                  // ✅ added
-      priceValidUntil,                 // ✅ added (fixes warning)
+      priceValidFrom,                  // ✅ keeps your date window
+      priceValidUntil,                 // ✅ keeps your date window
+
+      // ✅ NEW: clearly state digital goods have no returns (adjust if you allow returns)
+      hasMerchantReturnPolicy: {
+        '@type': 'MerchantReturnPolicy',
+        returnPolicyCategory: 'https://schema.org/MerchantReturnNotPermitted',
+      },
+
+      // ✅ NEW: digital download → no physical shipping
+      shippingDetails: [
+        {
+          '@type': 'OfferShippingDetails',
+          doesNotShip: true,
+        },
+      ],
     },
     aggregateRating: {
       '@type': 'AggregateRating',
@@ -108,18 +123,38 @@ export default async function ProductPage({
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, item: { '@id': 'https://digitalproductsartisan.com/', name: 'Home' } },
-      { '@type': 'ListItem', position: 2, item: { '@id': 'https://digitalproductsartisan.com/products', name: 'Products' } },
-      { '@type': 'ListItem', position: 3, item: { '@id': canonicalAbs, name: product.title } },
+      {
+        '@type': 'ListItem',
+        position: 1,
+        item: { '@id': 'https://digitalproductsartisan.com/', name: 'Home' },
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        item: {
+          '@id': 'https://digitalproductsartisan.com/products',
+          name: 'Products',
+        },
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        item: { '@id': canonicalAbs, name: product.title },
+      },
     ],
   };
 
   return (
     <main className="container mx-auto px-4 py-8">
       <nav className="mb-4 text-sm text-gray-600">
-        <Link href="/" className="hover:underline">Home</Link> <span>›</span>{' '}
-        <Link href="/products" className="hover:underline">Products</Link> <span>›</span>{' '}
-        <span aria-current="page">{product.title}</span>
+        <Link href="/" className="hover:underline">
+          Home
+        </Link>{' '}
+        <span>›</span>{' '}
+        <Link href="/products" className="hover:underline">
+          Products
+        </Link>{' '}
+        <span>›</span> <span aria-current="page">{product.title}</span>
       </nav>
 
       <div className="grid lg:grid-cols-2 gap-8">
@@ -139,21 +174,34 @@ export default async function ProductPage({
           <p className="text-gray-600 mt-2">{product.description}</p>
 
           <div className="mt-4 flex items-center gap-3">
-            <span className="text-2xl font-semibold">€{product.price.toFixed(2)}</span>
+            <span className="text-2xl font-semibold">
+              €{product.price.toFixed(2)}
+            </span>
             {product.originalPrice > product.price && (
-              <span className="line-through text-gray-400">€{product.originalPrice.toFixed(2)}</span>
+              <span className="line-through text-gray-400">
+                €{product.originalPrice.toFixed(2)}
+              </span>
             )}
           </div>
 
           <div className="mt-6">
-            <AddToCartButton productId={product.id} className="bg-black text-white hover:bg-black/90" />
+            <AddToCartButton
+              productId={product.id}
+              className="bg-black text-white hover:bg-black/90"
+            />
           </div>
         </section>
       </div>
 
       {/* SEO: JSON-LD */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbsLd) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbsLd) }}
+      />
     </main>
   );
 }
