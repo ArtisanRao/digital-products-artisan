@@ -1,12 +1,26 @@
-'use client';
+"use client";
 
-import HoverableCover from '@/components/ui/hoverable-cover';
-import ShopActions from '@/components/shop-actions';
+import CategoryGrid from "@/components/categories/CategoryGrid";
+import HoverableCover from "@/components/ui/hoverable-cover";
+import ShopActions from "@/components/shop-actions";
 
-type Item = { slug: string; title: string; price: number; description: string };
-const CAT = 'audio-samples';
+const CAT = "audio-samples";
 
-// Try multiple filename candidates (category folder, root, and -cover variants)
+type Item = {
+  id: string;
+  slug: string;
+  title: string;
+  price: number;
+  description: string;
+};
+
+const items: Item[] = [
+  { id: "audio-samples",  slug: "audio-samples",                  title: "Audio Samples Bundle", price: 7.49, description: "Loops, SFX, and risers." },
+  { id: "sonic-spectrum", slug: "sonic-spectrum",                 title: "Sonic Spectrum",       price: 6.99, description: "Wide variety of textures." },
+  { id: "animated-titles-and-animations", slug: "animated-titles-and-animations", title: "Animated Titles FX",   price: 5.99, description: "Audio accents for titles." },
+  // add more here; the grid will auto-expand with Read more
+];
+
 const imgCandidates = (slug: string) => [
   `/images/${CAT}/${slug}.jpg`,
   `/images/${CAT}/${slug}-cover.jpg`,
@@ -19,25 +33,22 @@ const imgCandidates = (slug: string) => [
   `/images/placeholder-cover.jpg`,
 ];
 
-export default function AudioSamplesPage() {
-  const items: Item[] = [
-    { slug: 'audio-samples',                 title: 'Audio Samples Bundle', price: 7.49, description: 'Loops, SFX, and risers.' },
-    { slug: 'sonic-spectrum',                title: 'Sonic Spectrum',       price: 6.99, description: 'Wide variety of textures.' },
-    { slug: 'animated-titles-and-animations',title: 'Animated Titles FX',   price: 5.99, description: 'Audio accents for titles.' },
-  ];
+const formatEUR = (n: number) =>
+  new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
 
+export default function AudioSamplesPage() {
   return (
     <main className="max-w-7xl mx-auto px-4 py-12">
       <h1 className="text-4xl font-bold text-center mb-10">🎵 Audio Samples</h1>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        {items.map((p) => {
-          // Primary path used for cart/checkout image
-          const primaryImg = `/images/${CAT}/${p.slug}.jpg`;
-
+      <CategoryGrid
+        // two rows by default per breakpoint (from the component’s defaults)
+        items={items}
+        renderItem={(p) => {
+          const primaryImg = `/images/${CAT}/${p.slug}.jpg`; // used for cart/checkout
           return (
             <div
-              key={p.slug}
+              key={p.id}
               className="group rounded-2xl border bg-white overflow-hidden shadow transition hover:shadow-lg"
             >
               <HoverableCover srcs={imgCandidates(p.slug)} alt={p.title} ratio="16/9" fit="contain" />
@@ -45,9 +56,8 @@ export default function AudioSamplesPage() {
               <div className="p-4">
                 <h2 className="text-xl font-semibold mb-2">{p.title}</h2>
                 <p className="text-gray-600 text-sm mb-2">{p.description}</p>
-                <p className="text-lg font-bold">€{p.price.toFixed(2)}</p>
+                <p className="text-lg font-bold">{formatEUR(p.price)}</p>
 
-                {/* Blue View + Add to Cart buttons */}
                 <ShopActions
                   item={{
                     id: p.slug,
@@ -60,8 +70,8 @@ export default function AudioSamplesPage() {
               </div>
             </div>
           );
-        })}
-      </div>
+        }}
+      />
     </main>
   );
 }
