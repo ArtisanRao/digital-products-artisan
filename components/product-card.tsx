@@ -10,9 +10,9 @@ type Product = {
   id: number | string;
   title: string;
   slug: string;
-  image?: string | null;    // absolute URL or /images/... or undefined
+  image?: string | null;    // absolute URL or /images/...
   description?: string;
-  longDescription?: string; // <- use this when present
+  longDescription?: string; // preferred when present
   price: number;
   images?: string[];
 };
@@ -20,9 +20,8 @@ type Product = {
 export default function ProductCard({ product }: { product: Product }) {
   // Compute a safe initial src and fallbacks
   const computeSrc = () => {
-    if (product.image && product.image.startsWith('http')) return product.image;
-    if (product.image && product.image.startsWith('/')) return product.image;
-    // slug-based local default (place a file at /public/images/products/<slug>/cover.jpg)
+    if (product.image?.startsWith('http')) return product.image;
+    if (product.image?.startsWith('/')) return product.image;
     return `/images/products/${product.slug}/cover.jpg`;
   };
 
@@ -31,18 +30,18 @@ export default function ProductCard({ product }: { product: Product }) {
 
   // --- Read more / Show less state ---
   const [expanded, setExpanded] = React.useState(false);
-  const fullText =
-    (product.longDescription ?? product.description ?? '').trim();
-  const MAX_CHARS = 120;
+  const fullText = (product.longDescription ?? product.description ?? '').trim();
+  const MAX_CHARS = 140;
   const needsToggle = fullText.length > MAX_CHARS;
-  const preview = needsToggle
-    ? fullText.slice(0, MAX_CHARS).trimEnd() + '…'
-    : fullText;
+  const preview = needsToggle ? fullText.slice(0, MAX_CHARS).trimEnd() + '…' : fullText;
 
   const openQuickView = (e?: React.MouseEvent) => {
     e?.preventDefault();
     setOpen(true);
   };
+
+  // ID to tie button to paragraph for a11y
+  const descId = React.useId();
 
   return (
     <>
@@ -55,7 +54,7 @@ export default function ProductCard({ product }: { product: Product }) {
             fill
             sizes="(min-width:1280px) 280px, (min-width:1024px) 25vw, (min-width:768px) 33vw, 100vw"
             className="object-cover transition-transform duration-300 group-hover:scale-105"
-            onError={() => setSrc('/images/placeholder-cover.jpg')} // ensure this file exists
+            onError={() => setSrc('/images/placeholder-cover.jpg')}
             priority={false}
             onClick={openQuickView}
           />
@@ -88,7 +87,7 @@ export default function ProductCard({ product }: { product: Product }) {
         {/* clamped description (separate row to avoid layout shifts) */}
         {fullText && (
           <div className="px-4 pb-4">
-            <p className="whitespace-pre-line text-sm leading-relaxed text-gray-700">
+            <p id={descId} className="whitespace-pre-line text-sm leading-relaxed text-gray-700">
               {expanded ? fullText : preview}
             </p>
 
@@ -98,6 +97,7 @@ export default function ProductCard({ product }: { product: Product }) {
                 onClick={() => setExpanded((v) => !v)}
                 className="mt-1 text-sm font-medium text-blue-700 hover:underline"
                 aria-expanded={expanded}
+                aria-controls={descId}
               >
                 {expanded ? 'Show less' : 'More'}
               </button>
