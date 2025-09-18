@@ -10,9 +10,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Star, Search, Filter, Grid, List } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import HoverableCover from '@/components/ui/hoverable-cover';         // ⬅️ bring back hover cover
 import { products, type Product } from '@/data/products';
-import ProductActions from '@/components/product-actions'; // unified blue actions
-import DescriptionClamp from '@/components/DescriptionClamp'; // ⬅️ NEW
+import ProductActions from '@/components/product-actions';
+import DescriptionClamp from '@/components/DescriptionClamp';
 
 const baseCategories = [
   'AI & ChatGPT Guides',
@@ -48,16 +49,11 @@ const sortOptions = [
   { value: 'rating', label: 'Highest Rated' },
 ];
 
-// --- helpers ---
 const formatPrice = (value: number, currency: string = 'EUR', locale: string = 'de-DE') =>
   new Intl.NumberFormat(locale, { style: 'currency', currency }).format(value);
 
 const slugify = (s: string) =>
-  s
-    .toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/[^a-z0-9\-]/g, '')
-    .replace(/\-+/g, '-');
+  s.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '').replace(/\-+/g, '-');
 
 export default function ProductsPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -80,7 +76,7 @@ export default function ProductsPage() {
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
       const q = searchQuery.toLowerCase();
-      const text = (product.longDescription ?? product.description ?? '').toLowerCase(); // ⬅️ include longDescription
+      const text = (product.longDescription ?? product.description ?? '').toLowerCase();
       const matchesSearch = product.title.toLowerCase().includes(q) || text.includes(q);
       const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
       const matchesPrice = product.price >= priceRange.min && product.price <= priceRange.max;
@@ -290,139 +286,179 @@ export default function ProductsPage() {
           {/* Products List */}
           {viewMode === 'grid' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {sortedProducts.map((product, idx) => (
-                <Card key={product.id} className="group hover:shadow-lg transition-shadow duration-300" tabIndex={0}>
-                  <CardHeader className="p-0">
-                    <div className="relative overflow-hidden rounded-t-lg">
-                      <Link href={`/products/${product.id}`} aria-label={`View ${product.title}`}>
-                        <div className="relative w-full h-48 md:h-56 bg-white">
-                          <Image
-                            src={product.image || '/placeholder.svg'}
-                            alt={product.title}
-                            fill
-                            className="object-contain"
-                            sizes="(min-width:1280px) 33vw, (min-width:768px) 50vw, 100vw"
-                            priority={idx < 3}
-                          />
-                        </div>
-                      </Link>
-                      {product.bestseller && (
-                        <Badge className="absolute top-3 left-3 bg-yellow-400 text-black font-semibold">
-                          Bestseller
-                        </Badge>
-                      )}
-                    </div>
-                  </CardHeader>
+              {sortedProducts.map((product, idx) => {
+                // 👉 Build cover + additional mockups (deduped)
+                const coverSrcs = Array.from(
+                  new Set([product.image, ...(((product as any).images ?? []) as string[])].filter(Boolean))
+                );
 
-                  <CardContent className="p-4">
-                    <Link
-                      href={`/products/${product.id}`}
-                      className="hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-sm"
-                    >
-                      <CardTitle className="text-lg font-semibold line-clamp-2">{product.title}</CardTitle>
+                return (
+                  <Card key={product.id} className="group hover:shadow-lg transition-shadow duration-300" tabIndex={0}>
+                    <CardHeader className="p-0">
+                      <div className="relative overflow-hidden rounded-t-lg">
+                        <Link href={`/products/${product.id}`} aria-label={`View ${product.title}`}>
+                          <HoverableCover srcs={coverSrcs} alt={product.title} ratio="16/9" fit="contain" />
+                        </Link>
+                        {product.bestseller && (
+                          <Badge className="absolute top-3 left-3 bg-yellow-400 text-black font-semibold">
+                            Bestseller
+                          </Badge>
+                        )}
+                      </div>
+                    </CardHeader>
+
+                    <CardContent className="p-4">
+                      <Link
+                        href={`/products/${product.id}`}
+                        className="hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-sm"
+                      >
+                        <CardTitle className="text-lg font-semibold line-clamp-2">{product.title}</CardTitle>
+                      </Link>
+
+                      <DescriptionClamp
+                        text={(product as any).longDescription ?? product.description ?? ''}
+                        maxChars={120}
+                        className="text-sm text-gray-600"
+                      />
+
+                      {/* 👇 extra mockup thumbnails */}
+                      {coverSrcs.length > 1 && (
+                        <div className="mt-3 grid grid-cols-3 gap-2">
+                          {coverSrcs.slice(1, 4).map((thumb) => (
+                            <Link href={`/products/${product.id}`} key={thumb} aria-label="View details">
+                              <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-gray-50">
+                                <Image
+                                  src={thumb}
+                                  alt={`${product.title} mockup`}
+                                  fill
+                                  className="object-cover"
+                                  sizes="120px"
+                                  loading={idx < 3 ? 'eager' : 'lazy'}
+                                />
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="mt-3 flex items-center space-x-2">
+                        <Star className="w-4 h-4 text-yellow-400" aria-hidden />
+                        <span className="text-sm font-medium text-gray-800">{product.rating}</span>
+                        <span className="text-sm text-gray-500">({product.reviews})</span>
+                      </div>
+                    </CardContent>
+
+                    <CardFooter className="p-4 flex items-center justify-between gap-3">
+                      <div>
+                        <span className="text-lg font-semibold text-gray-900">
+                          {formatPrice(product.price)}
+                        </span>
+                        {product.originalPrice > product.price && (
+                          <span className="line-through text-gray-400 ml-2">
+                            {formatPrice(product.originalPrice)}
+                          </span>
+                        )}
+                      </div>
+
+                      <ProductActions
+                        id={product.id}
+                        title={product.title}
+                        price={product.price}
+                        image={product.image}
+                        size="sm"
+                        className="shrink-0"
+                      />
+                    </CardFooter>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <ul className="space-y-4">
+              {sortedProducts.map((product) => {
+                const coverSrcs = Array.from(
+                  new Set([product.image, ...(((product as any).images ?? []) as string[])].filter(Boolean))
+                );
+
+                return (
+                  <li
+                    key={product.id}
+                    className="flex items-center space-x-4 p-4 border rounded-lg hover:shadow-md transition-shadow duration-300"
+                    tabIndex={0}
+                  >
+                    <Link href={`/products/${product.id}`} className="flex-shrink-0" aria-label={`View ${product.title}`}>
+                      <div className="relative w-[120px] h-[90px] bg-white rounded-md">
+                        <Image
+                          src={product.image || '/placeholder.svg'}
+                          alt={product.title}
+                          fill
+                          className="object-contain"
+                          sizes="120px"
+                          priority={false}
+                        />
+                      </div>
                     </Link>
 
-                    {/* ⬇️ Read more / Show less on cards */}
-                    <DescriptionClamp
-                      text={(product as any).longDescription ?? product.description ?? ''}
-                      maxChars={120}
-                      className="text-sm text-gray-600"
-                    />
+                    <div className="flex-1 min-w-0">
+                      <Link href={`/products/${product.id}`} className="hover:underline">
+                        <h3 className="text-lg font-semibold truncate">{product.title}</h3>
+                      </Link>
 
-                    <div className="mt-3 flex items-center space-x-2">
-                      <Star className="w-4 h-4 text-yellow-400" aria-hidden />
-                      <span className="text-sm font-medium text-gray-800">{product.rating}</span>
-                      <span className="text-sm text-gray-500">({product.reviews})</span>
+                      <DescriptionClamp
+                        text={(product as any).longDescription ?? product.description ?? ''}
+                        maxChars={160}
+                        className="text-sm text-gray-600"
+                      />
+
+                      {/* small inline thumbs on list rows too */}
+                      {coverSrcs.length > 1 && (
+                        <div className="mt-2 flex gap-2">
+                          {coverSrcs.slice(1, 4).map((thumb) => (
+                            <Link href={`/products/${product.id}`} key={thumb} aria-label="View details">
+                              <div className="relative w-14 h-10 rounded-md overflow-hidden bg-gray-50">
+                                <Image
+                                  src={thumb}
+                                  alt={`${product.title} mockup`}
+                                  fill
+                                  className="object-cover"
+                                  sizes="56px"
+                                  loading="lazy"
+                                />
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="flex items-center space-x-2 mt-2">
+                        <Star className="w-4 h-4 text-yellow-400" aria-hidden />
+                        <span className="text-sm font-medium text-gray-800">{product.rating}</span>
+                        <span className="text-sm text-gray-500">({product.reviews})</span>
+                      </div>
                     </div>
-                  </CardContent>
 
-                  <CardFooter className="p-4 flex items-center justify-between gap-3">
-                    <div>
+                    <div className="flex flex-col items-end space-y-2">
                       <span className="text-lg font-semibold text-gray-900">
                         {formatPrice(product.price)}
                       </span>
                       {product.originalPrice > product.price && (
-                        <span className="line-through text-gray-400 ml-2">
+                        <span className="line-through text-gray-400">
                           {formatPrice(product.originalPrice)}
                         </span>
                       )}
-                    </div>
 
-                    {/* Compact blue actions */}
-                    <ProductActions
-                      id={product.id}
-                      title={product.title}
-                      price={product.price}
-                      image={product.image}
-                      size="sm"
-                      className="shrink-0"
-                    />
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <ul className="space-y-4">
-              {sortedProducts.map((product, idx) => (
-                <li
-                  key={product.id}
-                  className="flex items-center space-x-4 p-4 border rounded-lg hover:shadow-md transition-shadow duration-300"
-                  tabIndex={0}
-                >
-                  <Link href={`/products/${product.id}`} className="flex-shrink-0" aria-label={`View ${product.title}`}>
-                    <div className="relative w-[120px] h-[90px] bg-white rounded-md">
-                      <Image
-                        src={product.image || '/placeholder.svg'}
-                        alt={product.title}
-                        fill
-                        className="object-contain"
-                        sizes="120px"
-                        priority={idx < 3}
+                      <ProductActions
+                        id={product.id}
+                        title={product.title}
+                        price={product.price}
+                        image={product.image}
+                        size="sm"
+                        className="justify-end"
                       />
                     </div>
-                  </Link>
-
-                  <div className="flex-1 min-w-0">
-                    <Link href={`/products/${product.id}`} className="hover:underline">
-                      <h3 className="text-lg font-semibold truncate">{product.title}</h3>
-                    </Link>
-
-                    {/* ⬇️ Read more / Show less on list rows */}
-                    <DescriptionClamp
-                      text={(product as any).longDescription ?? product.description ?? ''}
-                      maxChars={160}
-                      className="text-sm text-gray-600"
-                    />
-
-                    <div className="flex items-center space-x-2 mt-1">
-                      <Star className="w-4 h-4 text-yellow-400" aria-hidden />
-                      <span className="text-sm font-medium text-gray-800">{product.rating}</span>
-                      <span className="text-sm text-gray-500">({product.reviews})</span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col items-end space-y-2">
-                    <span className="text-lg font-semibold text-gray-900">
-                      {formatPrice(product.price)}
-                    </span>
-                    {product.originalPrice > product.price && (
-                      <span className="line-through text-gray-400">
-                        {formatPrice(product.originalPrice)}
-                      </span>
-                    )}
-
-                    {/* Compact blue actions on list rows too */}
-                    <ProductActions
-                      id={product.id}
-                      title={product.title}
-                      price={product.price}
-                      image={product.image}
-                      size="sm"
-                      className="justify-end"
-                    />
-                  </div>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>
