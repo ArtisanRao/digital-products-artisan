@@ -1,18 +1,20 @@
+// components/ui/inline-more.tsx
 "use client";
 
 import * as React from "react";
 
 type Props = {
   text?: string | null;
-  /** lines shown when collapsed (defaults to 2) */
   lines?: 1 | 2 | 3 | 4;
   className?: string;
   moreLabel?: string;
   lessLabel?: string;
-  /** NEW: show the toggle if text length >= minChars, even if it doesn't overflow lines */
   minChars?: number;
-  /** NEW: force showing the toggle regardless of overflow/length */
   alwaysShow?: boolean;
+
+  // NEW
+  forceLink?: boolean;         // alias for alwaysShow
+  linkClassName?: string;      // style the “More/Less” button
 };
 
 export default function InlineMore({
@@ -23,6 +25,8 @@ export default function InlineMore({
   lessLabel = "Less",
   minChars,
   alwaysShow = false,
+  forceLink = false,                 // NEW
+  linkClassName,                     // NEW
 }: Props) {
   const [open, setOpen] = React.useState(false);
   const [canToggle, setCanToggle] = React.useState(false);
@@ -37,10 +41,13 @@ export default function InlineMore({
       const lineHeight = parseFloat(lhStr) || 20;
       const maxHeight = lineHeight * lines;
 
-      const overflowByLines = el.scrollHeight - 1 > maxHeight; // small fudge
+      const overflowByLines = el.scrollHeight - 1 > maxHeight;
       const overflowByChars = (minChars ?? 0) > 0 && (text?.length ?? 0) >= (minChars ?? 0);
 
-      setCanToggle(Boolean(alwaysShow || overflowByLines || overflowByChars));
+      // forceLink behaves like alwaysShow
+      const force = alwaysShow || forceLink;
+
+      setCanToggle(Boolean(force || overflowByLines || overflowByChars));
     };
 
     compute();
@@ -51,7 +58,7 @@ export default function InlineMore({
       ro.disconnect();
       window.removeEventListener("resize", compute);
     };
-  }, [text, lines, minChars, alwaysShow]);
+  }, [text, lines, minChars, alwaysShow, forceLink]);
 
   if (!text) return null;
 
@@ -66,6 +73,9 @@ export default function InlineMore({
       ? "line-clamp-4"
       : "line-clamp-2";
 
+  const toggleClasses =
+    linkClassName ?? "mt-1 text-sm font-medium text-blue-600 hover:underline";
+
   return (
     <div>
       <p ref={pRef} className={`${className} ${clampClass}`}>{text}</p>
@@ -73,7 +83,7 @@ export default function InlineMore({
         <button
           type="button"
           onClick={() => setOpen(v => !v)}
-          className="mt-1 text-sm font-medium text-blue-600 hover:underline"
+          className={toggleClasses}
           aria-expanded={open}
         >
           {open ? lessLabel : moreLabel}
