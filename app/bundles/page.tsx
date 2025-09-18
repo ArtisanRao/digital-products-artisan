@@ -8,10 +8,17 @@ import Link from "next/link";
 import Image from "next/image";
 import InlineMore from "@/components/ui/inline-more";
 
+// helper to make a clean URL slug for details/checkout
+const slugify = (s: string) =>
+  s
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)+/g, "");
+
 const bundles = [
   {
     id: 1,
-    slug: "complete-creator-bundle",
     title: "Complete Creator Bundle",
     description: "Everything you need to start and grow your creative business",
     price: 79.99,
@@ -36,7 +43,6 @@ const bundles = [
   },
   {
     id: 2,
-    slug: "social-media-master-pack",
     title: "Social Media Master Pack",
     description: "Templates and guides for dominating social media platforms",
     price: 49.99,
@@ -58,7 +64,6 @@ const bundles = [
   },
   {
     id: 3,
-    slug: "business-starter-bundle",
     title: "Business Starter Bundle",
     description: "Essential tools and resources for new entrepreneurs",
     price: 59.99,
@@ -81,7 +86,6 @@ const bundles = [
   },
   {
     id: 4,
-    slug: "ai-productivity-suite",
     title: "AI Productivity Suite",
     description: "Harness the power of AI for maximum productivity",
     price: 39.99,
@@ -113,110 +117,115 @@ export default function BundlesPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-        {bundles.map((bundle) => (
-          <Card key={bundle.id} className="group hover:shadow-xl transition-all duration-300">
-            <CardHeader className="p-0">
-              <div className="relative overflow-hidden rounded-t-lg">
-                {/* Cover */}
-                <div className="relative w-full aspect-[16/9] bg-gray-100">
-                  <Image
-                    src={bundle.image}
-                    alt={bundle.title}
-                    fill
-                    sizes="(max-width:768px) 100vw, (max-width:1200px) 50vw, 33vw"
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
-                    priority={false}
-                  />
-                </div>
+        {bundles.map((bundle) => {
+          const bundleSlug = slugify(bundle.title);
 
-                {bundle.popular && (
-                  <Badge className="absolute top-3 left-3 bg-gradient-to-r from-purple-600 to-pink-600">
-                    Most Popular
-                  </Badge>
-                )}
-                <div className="absolute top-3 right-3 bg-red-500 text-white px-2 py-1 rounded-full text-sm font-bold">
-                  -{bundle.savings}%
-                </div>
-              </div>
-            </CardHeader>
+          return (
+            <Card key={bundle.id} className="group hover:shadow-xl transition-all duration-300">
+              <CardHeader className="p-0">
+                <div className="relative overflow-hidden rounded-t-lg">
+                  {/* Cover */}
+                  <div className="relative w-full aspect-[16/9] bg-gray-100">
+                    <Image
+                      src={bundle.image}
+                      alt={bundle.title}
+                      fill
+                      sizes="(max-width:768px) 100vw, (max-width:1200px) 50vw, 33vw"
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      priority={false}
+                    />
+                  </div>
 
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center space-x-2">
-                  <Package className="w-5 h-5 text-purple-600" />
-                  <span className="text-sm text-gray-600">{bundle.itemCount} Products</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                  <span className="text-sm text-gray-600">{bundle.rating}</span>
-                  <span className="text-sm text-gray-400">({bundle.reviews})</span>
-                </div>
-              </div>
-
-              <CardTitle className="text-xl mb-2">{bundle.title}</CardTitle>
-
-              {/* Tiny inline More/Less under subtitle */}
-              <InlineMore
-                text={bundle.description}
-                lines={2}
-                className="text-gray-600 mb-4"
-                moreLabel="More"
-                lessLabel="Less"
-              />
-
-              <div className="mb-4">
-                <h4 className="font-semibold text-gray-900 mb-2">What's included:</h4>
-                <ul className="space-y-1">
-                  {bundle.items.slice(0, 4).map((item, index) => (
-                    <li key={index} className="text-sm text-gray-600 flex items-center">
-                      <div className="w-1.5 h-1.5 bg-purple-600 rounded-full mr-2" />
-                      {item}
-                    </li>
-                  ))}
-                  {bundle.items.length > 4 && (
-                    <li className="text-sm text-purple-600 font-medium">
-                      + {bundle.items.length - 4} more items
-                    </li>
+                  {bundle.popular && (
+                    <Badge className="absolute top-3 left-3 bg-gradient-to-r from-purple-600 to-pink-600">
+                      Most Popular
+                    </Badge>
                   )}
-                </ul>
-              </div>
-
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-3">
-                  <span className="text-2xl font-bold text-gray-900">${bundle.price}</span>
-                  <span className="text-lg text-gray-500 line-through">${bundle.originalPrice}</span>
-                  <Badge variant="secondary" className="bg-green-100 text-green-700">
-                    <Percent className="w-3 h-3 mr-1" />
-                    Save ${(bundle.originalPrice - bundle.price).toFixed(2)}
-                  </Badge>
+                  <div className="absolute top-3 right-3 bg-red-500 text-white px-2 py-1 rounded-full text-sm font-bold">
+                    -{bundle.savings}%
+                  </div>
                 </div>
-                <div className="flex items-center text-sm text-gray-500">
-                  <Download className="w-4 h-4 mr-1" />
-                  {bundle.downloads}
+              </CardHeader>
+
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center space-x-2">
+                    <Package className="w-5 h-5 text-purple-600" />
+                    <span className="text-sm text-gray-600">{bundle.itemCount} Products</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                    <span className="text-sm text-gray-600">{bundle.rating}</span>
+                    <span className="text-sm text-gray-400">({bundle.reviews})</span>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
 
-            {/* More space between the buttons */}
-            <CardFooter className="p-6 pt-0 space-y-4 flex flex-col">
-              {/* Redirect to Checkout page */}
-              <Button
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-                asChild
-              >
-                <Link href={`/checkout?bundle=${bundle.slug}`}>Get This Bundle</Link>
-              </Button>
+                <CardTitle className="text-xl mb-2">{bundle.title}</CardTitle>
 
-              {/* Blue background + white text; link to bundle details page */}
-              <Button
-                className="w-full bg-blue-600 text-white hover:bg-blue-700"
-                asChild
-              >
-                <Link href={`/bundles/${bundle.slug}`}>View Details</Link>
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
+                {/* Tiny InlineMore under subtitle */}
+                <InlineMore
+                  text={bundle.description}
+                  lines={2}
+                  className="text-gray-600 text-sm mb-4"
+                  moreLabel="More"
+                  lessLabel="Less"
+                />
+
+                <div className="mb-4">
+                  <h4 className="font-semibold text-gray-900 mb-2">What's included:</h4>
+                  <ul className="space-y-1">
+                    {bundle.items.slice(0, 4).map((item, index) => (
+                      <li key={index} className="text-sm text-gray-600 flex items-center">
+                        <div className="w-1.5 h-1.5 bg-purple-600 rounded-full mr-2" />
+                        {item}
+                      </li>
+                    ))}
+                    {bundle.items.length > 4 && (
+                      <li className="text-sm text-purple-600 font-medium">+ {bundle.items.length - 4} more items</li>
+                    )}
+                  </ul>
+                </div>
+
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    <span className="text-2xl font-bold text-gray-900">${bundle.price}</span>
+                    <span className="text-lg text-gray-500 line-through">${bundle.originalPrice}</span>
+                    <Badge variant="secondary" className="bg-green-100 text-green-700">
+                      <Percent className="w-3 h-3 mr-1" />
+                      Save ${(bundle.originalPrice - bundle.price).toFixed(2)}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center text-sm text-gray-500">
+                    <Download className="w-4 h-4 mr-1" />
+                    {bundle.downloads}
+                  </div>
+                </div>
+              </CardContent>
+
+              {/* SIDE-BY-SIDE CTAs */}
+              <CardFooter className="p-6 pt-0">
+                <div className="w-full grid grid-cols-2 gap-3">
+                  {/* View details → Full product page */}
+                  <Button asChild className="w-full bg-blue-600 text-white hover:bg-blue-700">
+                    <Link href={`/bundles/${bundleSlug}`} prefetch>
+                      View details
+                    </Link>
+                  </Button>
+
+                  {/* Get this bundle → Checkout */}
+                  <Button
+                    asChild
+                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                  >
+                    <Link href={`/checkout?bundle=${bundleSlug}`} prefetch>
+                      Get this bundle
+                    </Link>
+                  </Button>
+                </div>
+              </CardFooter>
+            </Card>
+          );
+        })}
       </div>
 
       {/* Bundle FAQ */}
