@@ -94,16 +94,15 @@ export function generateStaticParams() {
   return BUNDLES.map((b) => ({ slug: b.slug }));
 }
 
-// --- Next 14/15 compatible params typing ---
+// ✅ Next 15-compatible typing: params is a Promise
 type Params = { slug: string };
-type ParamsMaybePromise = Params | Promise<Params>;
 
 export default async function BundleDetailsPage({
   params,
 }: {
-  params: ParamsMaybePromise;
+  params: Promise<Params>;
 }) {
-  const { slug } = await (params as Promise<Params>);
+  const { slug } = await params;
   const bundle = BUNDLES.find((b) => b.slug === slug);
   if (!bundle) return notFound();
 
@@ -144,13 +143,14 @@ export default async function BundleDetailsPage({
           </div>
 
           <div className="flex gap-3">
+            {/* You can wire this to your checkout/CreateSession endpoint later */}
             <Button
               className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
               asChild
             >
-              {/* You can wire a dedicated server action later; this keeps UX consistent */}
-              <Link href="/bundles">Get This Bundle</Link>
+              <Link href={`/checkout?bundle=${bundle.slug}`}>Get This Bundle</Link>
             </Button>
+
             <Button variant="outline" asChild className="flex-1">
               <Link href="/bundles">Back to Bundles</Link>
             </Button>
