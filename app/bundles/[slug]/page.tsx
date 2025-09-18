@@ -94,14 +94,17 @@ export function generateStaticParams() {
   return BUNDLES.map((b) => ({ slug: b.slug }));
 }
 
-async function buyNow(bundle: Bundle) {
-  "use server";
-  // (You can wire a server action here later if you prefer. For now,
-  // the main Buy Now flow lives on the grid page button.)
-}
+// --- Next 14/15 compatible params typing ---
+type Params = { slug: string };
+type ParamsMaybePromise = Params | Promise<Params>;
 
-export default function BundleDetailsPage({ params }: { params: { slug: string } }) {
-  const bundle = BUNDLES.find((b) => b.slug === params.slug);
+export default async function BundleDetailsPage({
+  params,
+}: {
+  params: ParamsMaybePromise;
+}) {
+  const { slug } = await (params as Promise<Params>);
+  const bundle = BUNDLES.find((b) => b.slug === slug);
   if (!bundle) return notFound();
 
   return (
@@ -145,7 +148,7 @@ export default function BundleDetailsPage({ params }: { params: { slug: string }
               className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
               asChild
             >
-              {/* If you later add a dedicated checkout server action on this page, replace this link. */}
+              {/* You can wire a dedicated server action later; this keeps UX consistent */}
               <Link href="/bundles">Get This Bundle</Link>
             </Button>
             <Button variant="outline" asChild className="flex-1">
