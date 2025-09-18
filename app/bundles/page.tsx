@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,53 +9,155 @@ import Link from "next/link";
 import Image from "next/image";
 import InlineMore from "@/components/ui/inline-more";
 
+type Bundle = {
+  id: number;
+  title: string;
+  description: string;
+  price: number;
+  originalPrice: number;
+  savings: number;
+  rating: number;
+  reviews: number;
+  downloads: number;
+  itemCount: number;
+  items: string[];
+  image: string;
+  popular: boolean;
+};
+
 const slugify = (s: string) =>
   s.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
 
 const formatEUR = (n: number) =>
   new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
 
-const bundles = [/* … your bundle objects unchanged … */];
+const bundles: Bundle[] = [
+  {
+    id: 1,
+    title: "Complete Creator Bundle",
+    description: "Everything you need to start and grow your creative business",
+    price: 79.99,
+    originalPrice: 149.99,
+    savings: 47,
+    rating: 4.9,
+    reviews: 156,
+    downloads: 890,
+    itemCount: 8,
+    items: [
+      "Ultimate AI Prompt Pack",
+      "Canva Template Bundle",
+      "Digital Marketing Ebook",
+      "Notion Productivity System",
+      "Instagram Story Templates",
+      "Brand Identity Kit",
+      "Content Calendar Template",
+      "Email Marketing Templates",
+    ],
+    image: "/images/bundles/complete-creator-bundle-cover.jpg",
+    popular: true,
+  },
+  {
+    id: 2,
+    title: "Social Media Master Pack",
+    description: "Templates and guides for dominating social media platforms",
+    price: 49.99,
+    originalPrice: 89.99,
+    savings: 44,
+    rating: 4.8,
+    reviews: 203,
+    downloads: 567,
+    itemCount: 5,
+    items: [
+      "Instagram Story Templates",
+      "Facebook Post Templates",
+      "LinkedIn Content Kit",
+      "Social Media Strategy Guide",
+      "Hashtag Research Tool",
+    ],
+    image: "/images/bundles/social-media-master-pack-cover.jpg",
+    popular: false,
+  },
+  {
+    id: 3,
+    title: "Business Starter Bundle",
+    description: "Essential tools and resources for new entrepreneurs",
+    price: 59.99,
+    originalPrice: 119.99,
+    savings: 50,
+    rating: 4.7,
+    reviews: 134,
+    downloads: 445,
+    itemCount: 6,
+    items: [
+      "Business Plan Template",
+      "Financial Planning Spreadsheet",
+      "Legal Document Templates",
+      "Marketing Strategy Guide",
+      "Pitch Deck Template",
+      "Brand Guidelines Template",
+    ],
+    image: "/images/bundles/business-starter-bundle-cover.jpg",
+    popular: false,
+  },
+  {
+    id: 4,
+    title: "AI Productivity Suite",
+    description: "Harness the power of AI for maximum productivity",
+    price: 39.99,
+    originalPrice: 79.99,
+    savings: 50,
+    rating: 4.9,
+    reviews: 298,
+    downloads: 1100,
+    itemCount: 4,
+    items: [
+      "Ultimate AI Prompt Pack",
+      "ChatGPT Workflow Templates",
+      "AI Writing Assistant Guide",
+      "Automation Setup Templates",
+    ],
+    image: "/images/bundles/ai-productivity-suite-cover.jpg",
+    popular: true,
+  },
+];
 
 export default function BundlesPage() {
   const [loadingSlug, setLoadingSlug] = useState<string | null>(null);
 
-  async function handleCheckout(bundle: (typeof bundles)[number]) {
+  const handleCheckout = async (bundle: Bundle) => {
+    const slug = `bundle:${slugify(bundle.title)}`;
     try {
-      setLoadingSlug(bundle.title);
-      // POST JSON body that your API expects (BodyLines shape)
+      setLoadingSlug(slug);
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          currency: "eur",
           lines: [
             {
-              id: `bundle:${slugify(bundle.title)}`,
+              id: slug, // not in catalog: handled by /api/checkout "lines"
               name: bundle.title,
-              price: bundle.price,          // server will prefer catalog, but this is fine as fallback
+              price: bundle.price,
               image: bundle.image,
               quantity: 1,
             },
           ],
+          currency: "eur",
         }),
       });
-
       const data = await res.json();
-      if (!res.ok || !data?.url) {
-        console.error("Checkout failed:", data);
-        alert(data?.error || "Unable to start checkout.");
-        return;
+      if (res.ok && data.url) {
+        window.location.href = data.url; // Stripe Checkout
+      } else {
+        console.error("Checkout failed:", data?.error || data);
+        alert("Sorry—couldn't start checkout. Please try again.");
       }
-      // Redirect to Stripe Checkout
-      window.location.href = data.url;
     } catch (e) {
       console.error(e);
-      alert("Checkout error. Please try again.");
+      alert("Network error starting checkout.");
     } finally {
       setLoadingSlug(null);
     }
-  }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -69,6 +171,7 @@ export default function BundlesPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
         {bundles.map((bundle) => {
           const bundleSlug = slugify(bundle.title);
+          const loading = loadingSlug === `bundle:${bundleSlug}`;
 
           return (
             <Card key={bundle.id} className="group hover:shadow-xl transition-all duration-300">
@@ -81,6 +184,7 @@ export default function BundlesPage() {
                       fill
                       sizes="(max-width:768px) 100vw, (max-width:1200px) 50vw, 33vw"
                       className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      priority={false}
                     />
                   </div>
 
@@ -110,10 +214,10 @@ export default function BundlesPage() {
 
                 <CardTitle className="text-xl mb-2">{bundle.title}</CardTitle>
 
-                {/* Tiny InlineMore always renders toggler (even if short) by using lines=1 */}
+                {/* Tiny InlineMore under subtitle */}
                 <InlineMore
                   text={bundle.description}
-                  lines={1}
+                  lines={2}
                   className="text-gray-600 text-sm mb-4"
                   moreLabel="More"
                   lessLabel="Less"
@@ -138,9 +242,7 @@ export default function BundlesPage() {
 
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-3">
-                    <span className="text-2xl font-bold text-gray-900">
-                      {formatEUR(bundle.price)}
-                    </span>
+                    <span className="text-2xl font-bold text-gray-900">{formatEUR(bundle.price)}</span>
                     <span className="text-lg text-gray-500 line-through">
                       {formatEUR(bundle.originalPrice)}
                     </span>
@@ -159,18 +261,21 @@ export default function BundlesPage() {
               {/* SIDE-BY-SIDE CTAs */}
               <CardFooter className="p-6 pt-0">
                 <div className="w-full grid grid-cols-2 gap-3">
-                  {/* View details → static bundle page you created */}
+                  {/* View details → Full product page */}
                   <Button asChild className="w-full bg-blue-600 text-white hover:bg-blue-700">
-                    <Link href={`/bundles/${bundleSlug}`}>View details</Link>
+                    <Link href={`/bundles/${bundleSlug}`} prefetch>
+                      View details
+                    </Link>
                   </Button>
 
-                  {/* Get this bundle → POST JSON then redirect to session.url */}
+                  {/* Get this bundle → POST /api/checkout (no login redirect) */}
                   <Button
+                    type="button"
+                    disabled={loading}
                     onClick={() => handleCheckout(bundle)}
-                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-70"
-                    disabled={loadingSlug === bundle.title}
+                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                   >
-                    {loadingSlug === bundle.title ? "Starting checkout…" : "Get this bundle"}
+                    {loading ? "Starting checkout…" : "Get this bundle"}
                   </Button>
                 </div>
               </CardFooter>
@@ -179,7 +284,39 @@ export default function BundlesPage() {
         })}
       </div>
 
-      {/* FAQ … unchanged */}
+      {/* Bundle FAQ */}
+      <div className="bg-gray-50 rounded-lg p-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Bundle FAQ</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h3 className="font-semibold text-gray-900 mb-2">How do bundles work?</h3>
+            <p className="text-gray-600 text-sm">
+              Bundles combine multiple related products at a significant discount. You get instant access to all items
+              with a single purchase.
+            </p>
+          </div>
+          <div>
+            <h3 className="font-semibold text-gray-900 mb-2">Can I buy individual items?</h3>
+            <p className="text-gray-600 text-sm">
+              Yes! All items in bundles are available individually, but you'll save more by purchasing the complete
+              bundle.
+            </p>
+          </div>
+          <div>
+            <h3 className="font-semibold text-gray-900 mb-2">Do I get updates?</h3>
+            <p className="text-gray-600 text-sm">
+              Bundle purchases include lifetime access and any future updates to the included products.
+            </p>
+          </div>
+          <div>
+            <h3 className="font-semibold text-gray-900 mb-2">What if I already own some items?</h3>
+            <p className="text-gray-600 text-sm">
+              Contact our support team for a custom discount if you already own products included in a bundle you want
+              to purchase.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
