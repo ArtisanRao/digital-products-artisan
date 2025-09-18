@@ -16,6 +16,9 @@ const slugify = (s: string) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)+/g, "");
 
+const formatEUR = (n: number) =>
+  new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
+
 const bundles = [
   {
     id: 1,
@@ -120,6 +123,20 @@ export default function BundlesPage() {
         {bundles.map((bundle) => {
           const bundleSlug = slugify(bundle.title);
 
+          // Build a public checkout GET URL (avoids auth redirect)
+          const checkoutHref =
+            `/api/checkout?` +
+            new URLSearchParams({
+              id: `bundle:${bundleSlug}`,
+              name: bundle.title,
+              price: String(bundle.price),
+              image: bundle.image,
+              quantity: "1",
+              currency: "eur",
+              // success: `/bundles/${bundleSlug}?success=1`,
+              // cancel: `/bundles/${bundleSlug}?canceled=1`,
+            }).toString();
+
           return (
             <Card key={bundle.id} className="group hover:shadow-xl transition-all duration-300">
               <CardHeader className="p-0">
@@ -181,18 +198,24 @@ export default function BundlesPage() {
                       </li>
                     ))}
                     {bundle.items.length > 4 && (
-                      <li className="text-sm text-purple-600 font-medium">+ {bundle.items.length - 4} more items</li>
+                      <li className="text-sm text-purple-600 font-medium">
+                        + {bundle.items.length - 4} more items
+                      </li>
                     )}
                   </ul>
                 </div>
 
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-3">
-                    <span className="text-2xl font-bold text-gray-900">${bundle.price}</span>
-                    <span className="text-lg text-gray-500 line-through">${bundle.originalPrice}</span>
+                    <span className="text-2xl font-bold text-gray-900">
+                      {formatEUR(bundle.price)}
+                    </span>
+                    <span className="text-lg text-gray-500 line-through">
+                      {formatEUR(bundle.originalPrice)}
+                    </span>
                     <Badge variant="secondary" className="bg-green-100 text-green-700">
                       <Percent className="w-3 h-3 mr-1" />
-                      Save ${(bundle.originalPrice - bundle.price).toFixed(2)}
+                      Save {formatEUR(bundle.originalPrice - bundle.price)}
                     </Badge>
                   </div>
                   <div className="flex items-center text-sm text-gray-500">
@@ -212,12 +235,12 @@ export default function BundlesPage() {
                     </Link>
                   </Button>
 
-                  {/* Get this bundle → Checkout */}
+                  {/* Get this bundle → Public checkout GET (avoids auth-gated /checkout) */}
                   <Button
                     asChild
                     className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                   >
-                    <Link href={`/checkout?bundle=${bundleSlug}`} prefetch>
+                    <Link href={checkoutHref} prefetch={false}>
                       Get this bundle
                     </Link>
                   </Button>

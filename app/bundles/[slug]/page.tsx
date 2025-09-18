@@ -94,8 +94,11 @@ export function generateStaticParams() {
   return BUNDLES.map((b) => ({ slug: b.slug }));
 }
 
-// ✅ Next 15-compatible typing: params is a Promise
+// Next 15: params is a Promise
 type Params = { slug: string };
+
+const formatEUR = (n: number) =>
+  new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
 
 export default async function BundleDetailsPage({
   params,
@@ -105,6 +108,26 @@ export default async function BundleDetailsPage({
   const { slug } = await params;
   const bundle = BUNDLES.find((b) => b.slug === slug);
   if (!bundle) return notFound();
+
+  // Build a GET checkout URL (public, no auth)
+  // Your /api/checkout GET handler should:
+  //  - parse these query params
+  //  - create a checkout session
+  //  - 303 redirect to the provider URL
+  const checkoutUrl =
+    `/api/checkout?` +
+    new URLSearchParams({
+      // treat bundle as a single line item
+      id: `bundle:${bundle.slug}`,
+      name: bundle.title,
+      price: String(bundle.price),
+      image: bundle.image,
+      quantity: "1",
+      currency: "eur",
+      // optional: you can add a successUrl/cancelUrl if your route supports them
+      // success: `/bundles/${bundle.slug}?success=1`,
+      // cancel:  `/bundles/${bundle.slug}?canceled=1`,
+    }).toString();
 
   return (
     <main className="container mx-auto px-4 py-12">
@@ -126,11 +149,14 @@ export default async function BundleDetailsPage({
             ⭐ {bundle.rating} ({bundle.reviews} reviews)
           </div>
 
-          <InlineMore text={bundle.description} lines={3} className="text-gray-700 mb-4" />
+          {/* Tiny InlineMore directly under the subtitle */}
+          <InlineMore text={bundle.description} lines={2} className="text-gray-700 text-sm mb-4" />
 
           <div className="flex items-center gap-3 mb-6">
-            <span className="text-2xl font-bold">€{bundle.price.toFixed(2)}</span>
-            <span className="text-lg text-gray-500 line-through">€{bundle.originalPrice.toFixed(2)}</span>
+            <span className="text-2xl font-bold">{formatEUR(bundle.price)}</span>
+            <span className="text-lg text-gray-500 line-through">
+              {formatEUR(bundle.originalPrice)}
+            </span>
           </div>
 
           <div className="mb-6">
@@ -142,15 +168,17 @@ export default async function BundleDetailsPage({
             </ul>
           </div>
 
+          {/* Actions side-by-side */}
           <div className="flex gap-3">
-            {/* You can wire this to your checkout/CreateSession endpoint later */}
+            {/* Get This Bundle → public checkout GET (no auth redirect) */}
             <Button
-              className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
               asChild
+              className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
             >
-              <Link href={`/checkout?bundle=${bundle.slug}`}>Get This Bundle</Link>
+              <Link href={checkoutUrl}>Get This Bundle</Link>
             </Button>
 
+            {/* Back to list */}
             <Button variant="outline" asChild className="flex-1">
               <Link href="/bundles">Back to Bundles</Link>
             </Button>
