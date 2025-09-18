@@ -134,7 +134,7 @@ export default function BundlesPage() {
         body: JSON.stringify({
           lines: [
             {
-              id: slug, // not in catalog: handled by /api/checkout "lines"
+              id: slug,
               name: bundle.title,
               price: bundle.price,
               image: bundle.image,
@@ -146,7 +146,7 @@ export default function BundlesPage() {
       });
       const data = await res.json();
       if (res.ok && data.url) {
-        window.location.href = data.url; // Stripe Checkout
+        window.location.href = data.url;
       } else {
         console.error("Checkout failed:", data?.error || data);
         alert("Sorry—couldn't start checkout. Please try again.");
@@ -218,9 +218,11 @@ export default function BundlesPage() {
                 <InlineMore
                   text={bundle.description}
                   lines={2}
-                  className="text-gray-600 text-sm mb-4"
+                  className="text-gray-600 text-sm mb-1"
                   moreLabel="More"
                   lessLabel="Less"
+                  forceLink
+                  linkClassName="mt-1 text-xs font-medium text-blue-600 hover:underline"
                 />
 
                 <div className="mb-4">
@@ -261,7 +263,7 @@ export default function BundlesPage() {
               {/* SIDE-BY-SIDE CTAs */}
               <CardFooter className="p-6 pt-0">
                 <div className="w-full grid grid-cols-2 gap-3">
-                  {/* View details → Full product page */}
+                  {/* View details → full product page */}
                   <Button asChild className="w-full bg-blue-600 text-white hover:bg-blue-700">
                     <Link href={`/bundles/${bundleSlug}`} prefetch>
                       View details
