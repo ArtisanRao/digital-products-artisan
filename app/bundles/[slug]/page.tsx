@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import InlineMore from "@/components/ui/inline-more";
 import Link from "next/link";
+import CheckoutButton from "@/components/checkout/CheckoutButton";
+import SimpleGallery from "@/components/ui/simple-gallery";
 
 type Bundle = {
   slug: string;
@@ -10,8 +12,8 @@ type Bundle = {
   description: string;
   price: number;
   originalPrice: number;
-  image: string;      // primary image
-  images?: string[];  // optional extra mockups for the gallery
+  image: string;
+  images?: string[];          // ← optional extra mockups
   items: string[];
   rating: number;
   reviews: number;
@@ -25,7 +27,12 @@ const BUNDLES: Bundle[] = [
     price: 79.99,
     originalPrice: 149.99,
     image: "/images/bundles/complete-creator-bundle-cover.jpg",
-    images: ["/images/bundles/complete-creator-bundle-cover.jpg"], // add more mockups as you have them
+    images: [
+      "/images/bundles/complete-creator-bundle-cover.jpg",
+      // add more mockups when you have them:
+      // "/images/bundles/complete-creator-bundle-2.jpg",
+      // "/images/bundles/complete-creator-bundle-3.jpg",
+    ],
     items: [
       "Ultimate AI Prompt Pack",
       "Canva Template Bundle",
@@ -99,7 +106,7 @@ export function generateStaticParams() {
   return BUNDLES.map((b) => ({ slug: b.slug }));
 }
 
-// Next 15: params is a Promise
+// Next 15 compatible
 type Params = { slug: string };
 
 const formatEUR = (n: number) =>
@@ -114,70 +121,40 @@ export default async function BundleDetailsPage({
   const bundle = BUNDLES.find((b) => b.slug === slug);
   if (!bundle) return notFound();
 
-  // gallery list (falls back to single image)
-  const images = bundle.images?.length ? bundle.images : [bundle.image];
-
-  // Public GET checkout URL (your /api/checkout GET handler should create the session & 303 redirect)
-  const checkoutUrl =
-    `/api/checkout?` +
-    new URLSearchParams({
-      id: `bundle:${bundle.slug}`,
-      name: bundle.title,
-      price: String(bundle.price),
-      image: bundle.image,
-      quantity: "1",
-      currency: "eur",
-    }).toString();
+  const gallery = bundle.images?.length ? bundle.images : [bundle.image];
 
   return (
     <main className="container mx-auto px-4 py-12">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* LEFT: cover + thumbnails */}
+        {/* Left: nicer fit + optional thumbnails */}
+        <SimpleGallery
+          images={gallery}
+          alt={bundle.title}
+          className="rounded-xl border bg-white p-2"
+          ratioClass="aspect-[3/2]"        // consistent with product cards
+          object="contain"                 // no more cropped cover
+        />
+
+        {/* Right: details */}
         <div>
-          <div className="relative w-full aspect-[3/2] rounded-xl overflow-hidden bg-white border">
-            <Image
-              src={images[0]}
-              alt={bundle.title}
-              fill
-              sizes="(max-width:1024px) 100vw, 50vw"
-              className="object-contain p-3"
-              priority
-            />
+          <h1 className="text-3xl md:text-4xl font-bold mb-2">{bundle.title}</h1>
+          <div className="text-sm text-gray-600 mb-2">
+            ⭐ {bundle.rating} ({bundle.reviews} reviews)
           </div>
 
-          {images.length > 1 && (
-            <div className="mt-3 grid grid-cols-4 sm:grid-cols-5 gap-2">
-              {images.slice(1).map((src) => (
-                <div key={src} className="relative aspect-[4/3] rounded-lg overflow-hidden bg-white border">
-                  <Image
-                    src={src}
-                    alt={`${bundle.title} mockup`}
-                    fill
-                    className="object-contain p-2"
-                    sizes="(max-width:1024px) 20vw, 10vw"
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* RIGHT: details */}
-        <div>
-          <h1 className="text-3xl md:text-4xl font-bold mb-1">{bundle.title}</h1>
-          <div className="text-sm text-gray-600 mb-4">⭐ {bundle.rating} ({bundle.reviews} reviews)</div>
-
-          {/* Tiny InlineMore directly under the subtitle */}
+          {/* Force the tiny “More” link even for short blurbs */}
           <InlineMore
             text={bundle.description}
             lines={2}
+            minChars={1}
             className="text-gray-700 text-sm mb-4"
-            minChars={40}   // show the link even if it doesn't strictly overflow
           />
 
           <div className="flex items-center gap-3 mb-6">
             <span className="text-2xl font-bold">{formatEUR(bundle.price)}</span>
-            <span className="text-lg text-gray-500 line-through">{formatEUR(bundle.originalPrice)}</span>
+            <span className="text-lg text-gray-500 line-through">
+              {formatEUR(bundle.originalPrice)}
+            </span>
           </div>
 
           <div className="mb-6">
@@ -189,13 +166,16 @@ export default async function BundleDetailsPage({
             </ul>
           </div>
 
+          {/* Actions side-by-side */}
           <div className="flex gap-3">
-            <Button
-              asChild
-              className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-            >
-              <Link href={checkoutUrl}>Get This Bundle</Link>
-            </Button>
+            {/* POST to /api/checkout – avoids the GET 405 */}
+            <CheckoutButton
+              id={`bundle:${bundle.slug}`}
+              name={bundle.title}
+              price={bundle.price}
+              image={bundle.image}
+              className="flex-1"
+            />
 
             <Button variant="outline" asChild className="flex-1">
               <Link href="/bundles">Back to Bundles</Link>
