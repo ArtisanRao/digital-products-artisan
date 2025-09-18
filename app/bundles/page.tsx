@@ -8,7 +8,7 @@ import Link from "next/link";
 import Image from "next/image";
 import InlineMore from "@/components/ui/inline-more";
 
-// helper to make a clean URL slug for details/checkout
+// helper to make a clean URL slug for details
 const slugify = (s: string) =>
   s
     .toLowerCase()
@@ -123,20 +123,6 @@ export default function BundlesPage() {
         {bundles.map((bundle) => {
           const bundleSlug = slugify(bundle.title);
 
-          // Build a public checkout GET URL (avoids auth redirect)
-          const checkoutHref =
-            `/api/checkout?` +
-            new URLSearchParams({
-              id: `bundle:${bundleSlug}`,
-              name: bundle.title,
-              price: String(bundle.price),
-              image: bundle.image,
-              quantity: "1",
-              currency: "eur",
-              // success: `/bundles/${bundleSlug}?success=1`,
-              // cancel: `/bundles/${bundleSlug}?canceled=1`,
-            }).toString();
-
           return (
             <Card key={bundle.id} className="group hover:shadow-xl transition-all duration-300">
               <CardHeader className="p-0">
@@ -179,10 +165,10 @@ export default function BundlesPage() {
 
                 <CardTitle className="text-xl mb-2">{bundle.title}</CardTitle>
 
-                {/* Tiny InlineMore under subtitle */}
+                {/* Tiny InlineMore under subtitle – show a small 'More' link */}
                 <InlineMore
                   text={bundle.description}
-                  lines={2}
+                  lines={1}
                   className="text-gray-600 text-sm mb-4"
                   moreLabel="More"
                   lessLabel="Less"
@@ -235,15 +221,25 @@ export default function BundlesPage() {
                     </Link>
                   </Button>
 
-                  {/* Get this bundle → Public checkout GET (avoids auth-gated /checkout) */}
-                  <Button
-                    asChild
-                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-                  >
-                    <Link href={checkoutHref} prefetch={false}>
+                  {/* Get this bundle → POST to /api/checkout (avoids 405/login redirect) */}
+                  <form action="/api/checkout" method="POST" className="w-full">
+                    <input type="hidden" name="type" value="bundle" />
+                    <input type="hidden" name="slug" value={bundleSlug} />
+                    <input type="hidden" name="id" value={`bundle:${bundleSlug}`} />
+                    <input type="hidden" name="name" value={bundle.title} />
+                    <input type="hidden" name="image" value={bundle.image} />
+                    {/* cents if your API expects integer amount; otherwise price */}
+                    <input type="hidden" name="amount" value={Math.round(bundle.price * 100)} />
+                    <input type="hidden" name="price" value={bundle.price.toFixed(2)} />
+                    <input type="hidden" name="currency" value="eur" />
+                    <input type="hidden" name="quantity" value="1" />
+                    <Button
+                      type="submit"
+                      className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                    >
                       Get this bundle
-                    </Link>
-                  </Button>
+                    </Button>
+                  </form>
                 </div>
               </CardFooter>
             </Card>
