@@ -1,4 +1,4 @@
-﻿import { CategoryPage, generateCategoryMetadata } from "../_category";
+﻿import CategoryPage, { generateCategoryMetadata } from "../_category";
 
 export const metadata = generateCategoryMetadata("keto-and-diet-guides");
 export default function Page() {
