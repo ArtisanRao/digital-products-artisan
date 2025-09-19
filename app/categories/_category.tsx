@@ -134,4 +134,3 @@ function CategoryPage({ slug }: { slug: string }) {
 }
 
 export default CategoryPage;
-export default CategoryPage;
