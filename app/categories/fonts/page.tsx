@@ -5,17 +5,42 @@ import HoverableCover from "@/components/ui/hoverable-cover";
 import ShopActions from "@/components/shop-actions";
 import InlineMore from "@/components/ui/inline-more";
 
+const CAT = "fonts";
+
 type Item = {
-  id: string;        // stable key
+  id: string;          // ensure an id so CategoryGrid keys cleanly
   slug: string;
   title: string;
-  price: number;     // keep as number
+  price: number;       // keep as number here
   description: string;
 };
 
-const CAT = "web-templates";
+const items: Item[] = [
+  {
+    id: "modern-sans-font",
+    slug: "modern-sans-font",
+    title: "Modern Sans Font",
+    price: 4.99,
+    description: "Clean geometric sans — perfect for UI and branding.",
+  },
+  {
+    id: "handwritten-script-font",
+    slug: "handwritten-script-font",
+    title: "Handwritten Script",
+    price: 5.49,
+    description: "Casual, friendly script with elegant alternates.",
+  },
+  {
+    id: "display-title-font",
+    slug: "display-title-font",
+    title: "Display Title Font",
+    price: 5.99,
+    description: "Bold headline display with personality.",
+  },
+  // add more; expander will handle the rest
+];
 
-// Try multiple sensible filenames: category folder, root, and -cover variants
+// Try multiple sensible filenames (category folder, root, -cover variants) + safe fallbacks
 const imgCandidates = (slug: string) => [
   `/images/${CAT}/${slug}.jpg`,
   `/images/${CAT}/${slug}-cover.jpg`,
@@ -23,24 +48,17 @@ const imgCandidates = (slug: string) => [
   `/images/${slug}-cover.jpg`,
   `/images/${CAT}/cover.jpg`,
   `/images/${CAT}-cover.jpg`,
-  `/images/${CAT}.jpg`,
-  `/images/web-templates-cover.jpg`,
+  `/images/fonts-cover.jpg`,
   `/images/placeholder-cover.jpg`,
-];
-
-const items: Item[] = [
-  { id: "web-templates",     slug: "web-templates",     title: "Web Templates Bundle", price: 9.99, description: "Landing pages, blogs & more." },
-  { id: "contract-templates", slug: "contract-templates", title: "Contract Templates",    price: 5.49, description: "Professional legal templates." },
-  { id: "excel-tracker",      slug: "excel-tracker",      title: "Excel Tracker",         price: 4.99, description: "Track KPI, finances, goals." },
 ];
 
 const formatEUR = (n: number) =>
   new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
 
-export default function WebTemplatesPage() {
+export default function FontsPage() {
   return (
     <main className="mx-auto max-w-7xl px-4 py-12">
-      <h1 className="mb-10 text-center text-4xl font-bold">🌐 Web Templates</h1>
+      <h1 className="mb-10 text-center text-4xl font-bold">🔤 Fonts</h1>
 
       <CategoryGrid
         items={items}
@@ -60,17 +78,12 @@ export default function WebTemplatesPage() {
               key={String(p.id)}
               className="group overflow-hidden rounded-2xl border bg-white shadow transition hover:shadow-lg"
             >
-              <HoverableCover
-                srcs={imgCandidates(slug)}
-                alt={p.title}
-                ratio="16/9"
-                fit="contain"
-              />
+              <HoverableCover srcs={imgCandidates(slug)} alt={p.title} ratio="16/9" fit="contain" />
 
               <div className="p-4">
                 <h2 className="mb-2 text-xl font-semibold">{p.title}</h2>
 
-                {/* Inline “More / Less” under subtitle — always show using minChars */}
+                {/* Inline “More / Less” under subtitle (force show) */}
                 <InlineMore
                   text={p.description}
                   lines={2}
@@ -80,7 +93,7 @@ export default function WebTemplatesPage() {
 
                 <p className="mb-3 text-lg font-bold">{formatEUR(price)}</p>
 
-                {/* View + Add to Cart */}
+                {/* Blue View + Add to Cart (consistent site-wide) */}
                 <ShopActions
                   item={{
                     id: slug,

@@ -5,6 +5,8 @@ import HoverableCover from "@/components/ui/hoverable-cover";
 import ShopActions from "@/components/shop-actions";
 import InlineMore from "@/components/ui/inline-more";
 
+const CAT = "video-resources";
+
 type Item = {
   id: string;        // stable key
   slug: string;
@@ -13,9 +15,12 @@ type Item = {
   description: string;
 };
 
-const CAT = "web-templates";
+const items: Item[] = [
+  { id: "video-resources", slug: "video-resources",           title: "Video Resources Hub",       price: 8.99,  description: "B-roll, lower thirds, overlays." },
+  { id: "stock-footage-mega-bundle", slug: "stock-footage-mega-bundle", title: "Stock Footage Mega Bundle", price: 12.99, description: "Huge, royalty-free stock set." },
+  { id: "youtube-channel-kit", slug: "youtube-channel-kit",   title: "YouTube Channel Kit",       price: 6.49,  description: "Intros, end screens, thumbnails." },
+];
 
-// Try multiple sensible filenames: category folder, root, and -cover variants
 const imgCandidates = (slug: string) => [
   `/images/${CAT}/${slug}.jpg`,
   `/images/${CAT}/${slug}-cover.jpg`,
@@ -24,23 +29,17 @@ const imgCandidates = (slug: string) => [
   `/images/${CAT}/cover.jpg`,
   `/images/${CAT}-cover.jpg`,
   `/images/${CAT}.jpg`,
-  `/images/web-templates-cover.jpg`,
+  `/images/video-resources-cover.jpg`,
   `/images/placeholder-cover.jpg`,
-];
-
-const items: Item[] = [
-  { id: "web-templates",     slug: "web-templates",     title: "Web Templates Bundle", price: 9.99, description: "Landing pages, blogs & more." },
-  { id: "contract-templates", slug: "contract-templates", title: "Contract Templates",    price: 5.49, description: "Professional legal templates." },
-  { id: "excel-tracker",      slug: "excel-tracker",      title: "Excel Tracker",         price: 4.99, description: "Track KPI, finances, goals." },
 ];
 
 const formatEUR = (n: number) =>
   new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
 
-export default function WebTemplatesPage() {
+export default function VideoResourcesPage() {
   return (
-    <main className="mx-auto max-w-7xl px-4 py-12">
-      <h1 className="mb-10 text-center text-4xl font-bold">🌐 Web Templates</h1>
+    <main className="max-w-7xl mx-auto px-4 py-12">
+      <h1 className="text-4xl font-bold text-center mb-10">🎥 Video Resources</h1>
 
       <CategoryGrid
         items={items}
@@ -58,29 +57,24 @@ export default function WebTemplatesPage() {
           return (
             <div
               key={String(p.id)}
-              className="group overflow-hidden rounded-2xl border bg-white shadow transition hover:shadow-lg"
+              className="group rounded-2xl border bg-white overflow-hidden shadow transition hover:shadow-lg"
             >
-              <HoverableCover
-                srcs={imgCandidates(slug)}
-                alt={p.title}
-                ratio="16/9"
-                fit="contain"
-              />
+              <HoverableCover srcs={imgCandidates(slug)} alt={p.title} ratio="16/9" fit="contain" />
 
               <div className="p-4">
-                <h2 className="mb-2 text-xl font-semibold">{p.title}</h2>
+                <h2 className="text-xl font-semibold mb-2">{p.title}</h2>
 
-                {/* Inline “More / Less” under subtitle — always show using minChars */}
+                {/* Inline “More / Less” under subtitle — force show using minChars */}
                 <InlineMore
                   text={p.description}
                   lines={2}
                   minChars={1}
-                  className="mb-2 text-sm text-gray-600"
+                  className="text-gray-600 text-sm mb-2"
                 />
 
-                <p className="mb-3 text-lg font-bold">{formatEUR(price)}</p>
+                <p className="text-lg font-bold">{formatEUR(price)}</p>
 
-                {/* View + Add to Cart */}
+                {/* View (checkout) + Add to Cart */}
                 <ShopActions
                   item={{
                     id: slug,
