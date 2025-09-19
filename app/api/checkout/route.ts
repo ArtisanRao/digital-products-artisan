@@ -11,7 +11,8 @@ function getStripe(): Stripe {
   if (_stripe) return _stripe;
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) throw new Error("STRIPE_SECRET_KEY is not set");
-  _stripe = new Stripe(key, { apiVersion: "2024-06-20" });
+  // Let the SDK use its pinned API version to avoid TS mismatch
+  _stripe = new Stripe(key);
   return _stripe;
 }
 
