@@ -143,7 +143,7 @@ const nextConfig = withPWA({
       { source: "/category/:slug", destination: "/categories/:slug", permanent: true },
       { source: "/category/:slug/", destination: "/categories/:slug", permanent: true },
 
-      // ===== Category slug changes (old ⇒ new) =====
+      // ===== Category slug changes kept =====
       { source: "/categories/digital-art",         destination: "/categories/ai-and-chatgpt-guides",          permanent: true },
       { source: "/categories/printable-planners",  destination: "/categories/planners-and-productivity",      permanent: true },
       { source: "/categories/photography-prints",  destination: "/categories/self-help-and-how-to",           permanent: true },
@@ -152,9 +152,8 @@ const nextConfig = withPWA({
       { source: "/categories/templates",           destination: "/categories/complete-shop-packages",         permanent: true },
       { source: "/categories/ebooks",              destination: "/categories/health-and-fitness-ebooks",      permanent: true },
 
-      // Restored top-level categories: REMOVE hijacks
-      // (was fonts -> keto-and-diet-guides, icons -> passive-income-and-side-hustles)
-      // Helpful forwards from old subpaths:
+      // ===== Restore top-level Fonts & Icons (remove previous hijacks) =====
+      // Helpful forwards from the old subpaths:
       { source: "/categories/web-templates/fonts", destination: "/categories/fonts", permanent: true },
       { source: "/categories/web-templates/icons", destination: "/categories/icons", permanent: true },
     ];
