@@ -13,6 +13,8 @@ const categories = [
   { name: "📖 Self-Help & How-To",            slug: "self-help-and-how-to",           image: "/images/photography-prints-cover.jpg",     desc: "Actionable guides and practical skills for everyday life." },
   { name: "🥗 Keto & Diet Guides",            slug: "keto-and-diet-guides",           image: "/images/fonts-cover.jpg",                  desc: "Meal plans, shopping lists, and nutrition tracking." },
   { name: "💼 Passive Income & Side Hustles", slug: "passive-income-and-side-hustles", image: "/images/icons-cover.jpg",                  desc: "Blueprints, checklists, and kits to start earning online." },
+  { name: "🔤 Fonts",                          slug: "fonts",                           image: "/images/fonts-cover.jpg",                  desc: "Display, serif, sans and script fonts for your projects." },
+  { name: "🔘 Icons",                          slug: "icons",                           image: "/images/icons-cover.jpg",                  desc: "Clean, scalable icon packs for UI and branding." },
   { name: "🌐 Web Templates",                 slug: "web-templates",                  image: "/images/web-templates-cover.jpg",          desc: "Website templates, UI kits, and themes." },
   { name: "🎬 Video Courses & Training",      slug: "video-courses-and-training",     image: "/images/video-resources-cover.jpg",        desc: "Step-by-step video lessons, screenflows, and workshops." },
   { name: "🏷️ PLR & MRR Bundles",            slug: "plr-and-mrr-bundles",            image: "/images/audio-samples-cover.jpg",          desc: "Rebrandable products with resale rights to grow fast." },
