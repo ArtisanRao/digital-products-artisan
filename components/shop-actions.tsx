@@ -1,3 +1,4 @@
+// components/shop-actions.tsx
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -20,12 +21,9 @@ type Props = {
   viewHref?: string;
   /** After adding, optionally go to /cart so the badge is visible. Default: false (stay put) */
   goToCartAfterAdd?: boolean;
-
-  /** Show a Buy button that opens Stripe Checkout (optional; default off) */
+  /** Show a Buy button that opens Stripe Checkout */
   buyEnabled?: boolean;
-  /** Label for the Buy button */
   buyLabel?: string;
-  /** Quantity used when buying directly */
   buyQty?: number;
 };
 
@@ -33,7 +31,7 @@ export default function ShopActions({
   item,
   viewHref,
   goToCartAfterAdd = false,
-  buyEnabled = false,
+  buyEnabled = true,          // <-- DEFAULT: show Buy everywhere
   buyLabel = "Buy",
   buyQty = 1,
 }: Props) {
@@ -122,14 +120,14 @@ export default function ShopActions({
         onClick={view}
         variant="default"
         className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
-        style={{ backgroundColor: "#2563eb", color: "#fff" }} // guard vs theme overrides
+        style={{ backgroundColor: "#2563eb", color: "#fff" }}
         aria-label={`View ${item.title}`}
       >
         <Eye className="h-4 w-4 text-white" />
         View
       </Button>
 
-      {/* BUY — open Stripe Checkout (optional) */}
+      {/* BUY — open Stripe Checkout (now ON by default) */}
       {buyEnabled && (
         <Button
           type="button"
@@ -151,7 +149,7 @@ export default function ShopActions({
         aria-label={`Add ${item.title} to cart`}
       >
         <ShoppingCart className="h-4 w-4 text-white" />
-        Add to Cart
+        Add to cart
       </Button>
     </div>
   );
