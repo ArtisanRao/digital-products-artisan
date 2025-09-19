@@ -8,7 +8,6 @@ import InlineMore from "@/components/ui/inline-more";
 import { Button } from "@/components/ui/button";
 import ShopActions from "@/components/shop-actions";
 
-// TODO: replace with your real data source
 const PRODUCTS: Record<
   string,
   { title: string; price: number; images: string[]; description: string }
@@ -27,7 +26,6 @@ const PRODUCTS: Record<
 };
 
 export default function ProductPage() {
-  // ✅ In client components, read dynamic route via useParams()
   const params = useParams<{ slug: string }>();
   const slug = String(params?.slug ?? "");
   const p = PRODUCTS[slug];
@@ -40,28 +38,24 @@ export default function ProductPage() {
     );
   }
 
-  // Local Buy handler (opens Stripe Checkout via /api/checkout)
+  const images = p.images?.length ? p.images : ["/images/placeholder-cover.jpg"];
+
   const handleBuy = async () => {
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // If your checkout expects id, pass slug; adjust server to map slugs if needed
         body: JSON.stringify({ productId: slug, qty: 1 }),
       });
       const data = await res.json();
       if (data?.url) window.location.href = data.url;
-    } catch {
-      // optional: toast
-    }
+    } catch {}
   };
 
-  const images = p.images?.length ? p.images : ["/images/placeholder-cover.jpg"];
-
   return (
-    <main className="max-w-6xl mx-auto px-4 py-10 grid lg:grid-cols-[1.2fr_.8fr] gap-8">
+    <main className="max-w-6xl mx-auto px-4 py-10 grid lg:grid-cols-[1.2fr_.8fr] gap-8 isolate">
       {/* Left: gallery */}
-      <section className="space-y-4">
+      <section className="space-y-4 relative z-0">
         <div className="relative aspect-[4/3] rounded-xl border overflow-hidden bg-white">
           <Image
             src={images[0]}
@@ -83,13 +77,12 @@ export default function ProductPage() {
         )}
       </section>
 
-      {/* Right: info */}
-      <section>
-        {/* Clickable title */}
-        <h1 className="text-3xl font-bold relative z-10">
+      {/* Right: info (raised above any overlay) */}
+      <section className="relative z-20 pointer-events-auto">
+        <h1 className="text-3xl font-bold">
           <Link
             href={`/products/${slug}`}
-            className="underline decoration-transparent hover:decoration-current focus:decoration-current"
+            className="underline decoration-transparent hover:decoration-current focus:decoration-current pointer-events-auto relative z-30"
             aria-label={`Open product page for ${p.title}`}
           >
             {p.title}
@@ -103,27 +96,29 @@ export default function ProductPage() {
         </div>
 
         <div className="mt-6 flex flex-wrap gap-3">
-          {/* BUY — opens Stripe Checkout */}
+          {/* BUY — Stripe Checkout */}
           <Button
             type="button"
             onClick={handleBuy}
-            className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500 pointer-events-auto relative z-30"
           >
             Buy
           </Button>
 
-          {/* View + Add to cart (stay put) */}
-          <ShopActions
-            item={{
-              id: slug,
-              title: p.title,
-              price: p.price,
-              image: images[0],
-              description: p.description,
-            }}
-            viewHref={`/products/${slug}`}
-            goToCartAfterAdd={false}
-          />
+          {/* View + Add to cart */}
+          <div className="pointer-events-auto relative z-30">
+            <ShopActions
+              item={{
+                id: slug,
+                title: p.title,
+                price: p.price,
+                image: images[0],
+                description: p.description,
+              }}
+              viewHref={`/products/${slug}`}
+              goToCartAfterAdd={false}
+            />
+          </div>
         </div>
 
         <ul className="mt-6 text-sm text-gray-600 list-disc pl-5 space-y-1">

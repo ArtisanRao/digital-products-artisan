@@ -27,7 +27,6 @@ const PRODUCTS: Record<
 };
 
 export default function ProductPage() {
-  // ✅ In client components, get the dynamic segment via useParams()
   const params = useParams<{ id: string }>();
   const id = String(params?.id ?? "");
   const p = PRODUCTS[id];
@@ -58,9 +57,9 @@ export default function ProductPage() {
   const images = p.images?.length ? p.images : ["/images/placeholder-cover.jpg"];
 
   return (
-    <main className="max-w-6xl mx-auto px-4 py-10 grid lg:grid-cols-[1.2fr_.8fr] gap-8">
-      {/* Left: gallery */}
-      <section className="space-y-4">
+    <main className="max-w-6xl mx-auto px-4 py-10 grid lg:grid-cols-[1.2fr_.8fr] gap-8 isolate">
+      {/* Left: gallery (kept below) */}
+      <section className="space-y-4 relative z-0">
         <div className="relative aspect-[4/3] rounded-xl border overflow-hidden bg-white">
           <Image
             src={images[0]}
@@ -85,13 +84,13 @@ export default function ProductPage() {
         )}
       </section>
 
-      {/* Right: info */}
-      <section>
-        {/* Clickable title; z-10 ensures nothing overlays it */}
-        <h1 className="text-3xl font-bold relative z-10">
+      {/* Right: info (raised & clickable) */}
+      <section className="relative z-20 pointer-events-auto">
+        {/* Clickable title */}
+        <h1 className="text-3xl font-bold">
           <Link
             href={`/products/${id}`}
-            className="underline decoration-transparent hover:decoration-current focus:decoration-current"
+            className="underline decoration-transparent hover:decoration-current focus:decoration-current pointer-events-auto relative z-30"
             aria-label={`Open product page for ${p.title}`}
           >
             {p.title}
@@ -105,27 +104,29 @@ export default function ProductPage() {
         </div>
 
         <div className="mt-6 flex flex-wrap gap-3">
-          {/* BUY — opens Stripe Checkout (always visible here) */}
+          {/* BUY — Stripe Checkout */}
           <Button
             type="button"
             onClick={handleBuy}
-            className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500 pointer-events-auto relative z-30"
           >
             Buy
           </Button>
 
-          {/* Existing actions (View + Add to cart) */}
-          <ShopActions
-            item={{
-              id,
-              title: p.title,
-              price: p.price,
-              image: images[0],
-              description: p.description,
-            }}
-            viewHref={`/products/${id}`}
-            goToCartAfterAdd={false}
-          />
+          {/* View + Add to cart */}
+          <div className="pointer-events-auto relative z-30">
+            <ShopActions
+              item={{
+                id,
+                title: p.title,
+                price: p.price,
+                image: images[0],
+                description: p.description,
+              }}
+              viewHref={`/products/${id}`}
+              goToCartAfterAdd={false}
+            />
+          </div>
         </div>
 
         <ul className="mt-6 text-sm text-gray-600 list-disc pl-5 space-y-1">
