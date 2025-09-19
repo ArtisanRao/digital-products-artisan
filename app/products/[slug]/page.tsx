@@ -3,6 +3,7 @@
 
 import Image from "next/image";
 import InlineMore from "@/components/ui/inline-more";
+import { Button } from "@/components/ui/button";
 import ShopActions from "@/components/shop-actions";
 
 // TODO: replace with your real data source
@@ -40,6 +41,21 @@ export default async function ProductPage({
       </main>
     );
   }
+
+  // Local Buy handler (opens Stripe Checkout via /api/checkout)
+  const handleBuy = async () => {
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: slug, qty: 1 }),
+      });
+      const data = await res.json();
+      if (data?.url) window.location.href = data.url;
+    } catch {
+      // optional: toast an error
+    }
+  };
 
   return (
     <main className="max-w-6xl mx-auto px-4 py-10 grid lg:grid-cols-[1.2fr_.8fr] gap-8">
@@ -82,11 +98,17 @@ export default async function ProductPage({
           <InlineMore text={p.description} lines={3} minChars={80} />
         </div>
 
-        <div className="mt-6 flex gap-3">
-          {/* ShopActions now renders:
-              - View (blue)
-              - Buy (opens Stripe Checkout)
-              - Add to cart (stays put) */}
+        <div className="mt-6 flex flex-wrap gap-3">
+          {/* BUY — opens Stripe Checkout (always visible here) */}
+          <Button
+            type="button"
+            onClick={handleBuy}
+            className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
+          >
+            Buy
+          </Button>
+
+          {/* ShopActions (View + Add to cart; Buy can be enabled there too if desired) */}
           <ShopActions
             item={{
               id: slug,
@@ -97,8 +119,6 @@ export default async function ProductPage({
             }}
             viewHref={`/products/${slug}`}
             goToCartAfterAdd={false}
-            buyEnabled
-            buyLabel="Buy"
           />
         </div>
 
