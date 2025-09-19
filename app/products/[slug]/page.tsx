@@ -27,12 +27,12 @@ const PRODUCTS: Record<
 
 type Params = { id: string };
 
-export default async function ProductPage({
+export default function ProductPage({
   params,
 }: {
-  params: Promise<Params>;
+  params: Params; // ✅ no Promise here
 }) {
-  const { id } = await params;
+  const { id } = params; // ✅ no await needed
   const p = PRODUCTS[id];
 
   if (!p) {
@@ -58,13 +58,15 @@ export default async function ProductPage({
     }
   };
 
+  const images = p.images?.length ? p.images : ["/images/placeholder-cover.jpg"];
+
   return (
     <main className="max-w-6xl mx-auto px-4 py-10 grid lg:grid-cols-[1.2fr_.8fr] gap-8">
       {/* Left: gallery */}
       <section className="space-y-4">
         <div className="relative aspect-[4/3] rounded-xl border overflow-hidden bg-white">
           <Image
-            src={p.images[0]}
+            src={images[0]}
             alt={p.title}
             fill
             priority
@@ -72,16 +74,18 @@ export default async function ProductPage({
             className="object-contain"
           />
         </div>
-        <div className="grid grid-cols-3 gap-3">
-          {p.images.slice(1).map((src) => (
-            <div
-              key={src}
-              className="relative aspect-[4/3] rounded-lg border overflow-hidden bg-white"
-            >
-              <Image src={src} alt={p.title} fill sizes="33vw" className="object-contain" />
-            </div>
-          ))}
-        </div>
+        {images.length > 1 && (
+          <div className="grid grid-cols-3 gap-3">
+            {images.slice(1).map((src) => (
+              <div
+                key={src}
+                className="relative aspect-[4/3] rounded-lg border overflow-hidden bg-white"
+              >
+                <Image src={src} alt={p.title} fill sizes="33vw" className="object-contain" />
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Right: info */}
@@ -119,7 +123,7 @@ export default async function ProductPage({
               id,
               title: p.title,
               price: p.price,
-              image: p.images[0],
+              image: images[0],
               description: p.description,
             }}
             viewHref={`/products/${id}`}

@@ -1,9 +1,12 @@
 ﻿// app/products/[id]/page.tsx
+"use client";
+
+import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
+import { Button } from "@/components/ui/button";
 import ShopActions from "@/components/shop-actions";
-import BuyNowButton from "@/components/buy-now-button";
 
 // TODO: replace with your real data source
 const PRODUCTS: Record<
@@ -23,12 +26,10 @@ const PRODUCTS: Record<
   },
 };
 
-export default function ProductPage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  const { id } = params;
+export default function ProductPage() {
+  // ✅ In client components, get the dynamic segment via useParams()
+  const params = useParams<{ id: string }>();
+  const id = String(params?.id ?? "");
   const p = PRODUCTS[id];
 
   if (!p) {
@@ -39,7 +40,22 @@ export default function ProductPage({
     );
   }
 
-  const images = Array.isArray(p.images) && p.images.length ? p.images : ["/images/placeholder-cover.jpg"];
+  // Local Buy handler (opens Stripe Checkout via /api/checkout)
+  const handleBuy = async () => {
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: id, qty: 1 }),
+      });
+      const data = await res.json();
+      if (data?.url) window.location.href = data.url;
+    } catch {
+      // optional: toast an error
+    }
+  };
+
+  const images = p.images?.length ? p.images : ["/images/placeholder-cover.jpg"];
 
   return (
     <main className="max-w-6xl mx-auto px-4 py-10 grid lg:grid-cols-[1.2fr_.8fr] gap-8">
@@ -58,7 +74,10 @@ export default function ProductPage({
         {images.length > 1 && (
           <div className="grid grid-cols-3 gap-3">
             {images.slice(1).map((src) => (
-              <div key={src} className="relative aspect-[4/3] rounded-lg border overflow-hidden bg-white">
+              <div
+                key={src}
+                className="relative aspect-[4/3] rounded-lg border overflow-hidden bg-white"
+              >
                 <Image src={src} alt={p.title} fill sizes="33vw" className="object-contain" />
               </div>
             ))}
@@ -68,7 +87,7 @@ export default function ProductPage({
 
       {/* Right: info */}
       <section>
-        {/* Clickable title; z-10 ensures no overlay blocks the click */}
+        {/* Clickable title; z-10 ensures nothing overlays it */}
         <h1 className="text-3xl font-bold relative z-10">
           <Link
             href={`/products/${id}`}
@@ -86,8 +105,14 @@ export default function ProductPage({
         </div>
 
         <div className="mt-6 flex flex-wrap gap-3">
-          {/* BUY — opens Stripe Checkout */}
-          <BuyNowButton productId={id} />
+          {/* BUY — opens Stripe Checkout (always visible here) */}
+          <Button
+            type="button"
+            onClick={handleBuy}
+            className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
+          >
+            Buy
+          </Button>
 
           {/* Existing actions (View + Add to cart) */}
           <ShopActions
