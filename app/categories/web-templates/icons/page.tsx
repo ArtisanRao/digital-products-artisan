@@ -1,4 +1,4 @@
-﻿import { CategoryPage, generateCategoryMetadata } from "../../_category";
+﻿import CategoryPage, { generateCategoryMetadata } from "../../_category";
 
 export const metadata = generateCategoryMetadata("web-templates/icons");
 export default function Page() {
