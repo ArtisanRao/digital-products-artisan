@@ -16,19 +16,22 @@ type Item = {
 
 type Props = {
   item: Item;
-  /** Where the blue “View” should go. Default: /checkout */
+  /** Where the blue “View” should go. Default: /products/:id */
   viewHref?: string;
-  /** After adding, go to /cart so the badge is visible. Default: true */
+  /** After adding, optionally go to /cart so the badge is visible. Default: false (stay put) */
   goToCartAfterAdd?: boolean;
 };
 
 export default function ShopActions({
   item,
-  viewHref = "/checkout",
-  goToCartAfterAdd = true,
+  viewHref,
+  goToCartAfterAdd = false,
 }: Props) {
   const router = useRouter();
   const cart = (useCart?.() ?? {}) as any;
+
+  const productHref =
+    viewHref ?? `/products/${encodeURIComponent(String(item.id))}`;
 
   const persistAndBroadcast = (items: any[]) => {
     if (typeof window === "undefined") return;
@@ -47,6 +50,7 @@ export default function ShopActions({
     try {
       items = JSON.parse(localStorage.getItem("cart") || "[]");
     } catch {}
+
     const idx = items.findIndex((x) => String(x.id) === String(item.id));
     if (idx >= 0) {
       items[idx].quantity = Number(items[idx].quantity || 1) + 1;
@@ -59,7 +63,7 @@ export default function ShopActions({
         image: item.image,
         description: item.description,
         fileGuid: item.fileUrl,
-        url: "/categories",
+        url: productHref, // stable product URL
         quantity: 1,
       });
     }
@@ -67,7 +71,7 @@ export default function ShopActions({
   };
 
   const add = () => {
-    // best-effort: support any cart context shape
+    // best-effort: support any cart context shape WITHOUT redirecting/opening
     (cart.addItem ?? cart.add ?? cart.actions?.addItem)?.({
       id: String(item.id),
       name: item.title,
@@ -76,40 +80,41 @@ export default function ShopActions({
       image: item.image,
       description: item.description,
       fileUrl: item.fileUrl,
-      url: "/categories",
+      url: productHref,
       quantity: 1,
     });
-    (cart.openCart ?? cart.open ?? cart.actions?.openCart)?.();
 
     addToLocalCart();
+
+    // Stay put by default; only navigate if explicitly enabled
     if (goToCartAfterAdd) router.push("/cart");
   };
 
   const view = () => {
-    router.push(viewHref);
+    router.push(productHref);
   };
 
   return (
     <div className="mt-3 flex items-center gap-2">
-      {/* VIEW — blue button linking to /checkout (or custom viewHref) */}
+      {/* VIEW — go to product page (no login) */}
       <Button
         type="button"
         onClick={view}
-        className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
-        aria-label="View / Checkout"
+        className="gap-2 bg-gray-100 text-gray-900 hover:bg-gray-200 focus-visible:ring-2 focus-visible:ring-blue-500"
+        aria-label={`View ${item.title}`}
       >
-        <Eye className="h-4 w-4 text-white" />
+        <Eye className="h-4 w-4" />
         View
       </Button>
 
-      {/* ADD TO CART — add + open cart + go to /cart */}
+      {/* ADD TO CART — add silently, stay put (no checkout redirect) */}
       <Button
         type="button"
         onClick={add}
         className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
-        aria-label="Add to cart"
+        aria-label={`Add ${item.title} to cart`}
       >
-        <ShoppingCart className="h-4 w-4 text-white" />
+        <ShoppingCart className="h-4 w-4" />
         Add to Cart
       </Button>
     </div>
