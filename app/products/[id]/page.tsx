@@ -1,6 +1,8 @@
-﻿"use client";
+﻿// app/products/[id]/page.tsx
+"use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
 import { Button } from "@/components/ui/button";
 import ShopActions from "@/components/shop-actions";
@@ -84,7 +86,17 @@ export default async function ProductPage({
 
       {/* Right: info */}
       <section>
-        <h1 className="text-3xl font-bold">{p.title}</h1>
+        {/* Clickable title; z-10 ensures no overlay blocks the click */}
+        <h1 className="text-3xl font-bold relative z-10">
+          <Link
+            href={`/products/${id}`}
+            className="underline decoration-transparent hover:decoration-current focus:decoration-current"
+            aria-label={`Open product page for ${p.title}`}
+          >
+            {p.title}
+          </Link>
+        </h1>
+
         <div className="mt-2 text-2xl font-semibold">€{p.price.toFixed(2)}</div>
 
         <div className="mt-3 text-gray-700">

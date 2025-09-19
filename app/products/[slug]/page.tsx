@@ -1,7 +1,8 @@
-// app/products/[slug]/page.tsx
+// app/products/[id]/page.tsx
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
 import { Button } from "@/components/ui/button";
 import ShopActions from "@/components/shop-actions";
@@ -24,15 +25,15 @@ const PRODUCTS: Record<
   },
 };
 
-type Params = { slug: string };
+type Params = { id: string };
 
 export default async function ProductPage({
   params,
 }: {
   params: Promise<Params>;
 }) {
-  const { slug } = await params;
-  const p = PRODUCTS[slug];
+  const { id } = await params;
+  const p = PRODUCTS[id];
 
   if (!p) {
     return (
@@ -48,7 +49,7 @@ export default async function ProductPage({
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId: slug, qty: 1 }),
+        body: JSON.stringify({ productId: id, qty: 1 }),
       });
       const data = await res.json();
       if (data?.url) window.location.href = data.url;
@@ -77,13 +78,7 @@ export default async function ProductPage({
               key={src}
               className="relative aspect-[4/3] rounded-lg border overflow-hidden bg-white"
             >
-              <Image
-                src={src}
-                alt={p.title}
-                fill
-                sizes="33vw"
-                className="object-contain"
-              />
+              <Image src={src} alt={p.title} fill sizes="33vw" className="object-contain" />
             </div>
           ))}
         </div>
@@ -91,7 +86,17 @@ export default async function ProductPage({
 
       {/* Right: info */}
       <section>
-        <h1 className="text-3xl font-bold">{p.title}</h1>
+        {/* Make title clickable; z-10 ensures nothing overlays it */}
+        <h1 className="text-3xl font-bold relative z-10">
+          <Link
+            href={`/products/${id}`}
+            className="underline decoration-transparent hover:decoration-current focus:decoration-current"
+            aria-label={`Open product page for ${p.title}`}
+          >
+            {p.title}
+          </Link>
+        </h1>
+
         <div className="mt-2 text-2xl font-semibold">€{p.price.toFixed(2)}</div>
 
         <div className="mt-3 text-gray-700">
@@ -108,16 +113,16 @@ export default async function ProductPage({
             Buy
           </Button>
 
-          {/* ShopActions (View + Add to cart; Buy can be enabled there too if desired) */}
+          {/* Existing actions (View + Add to cart) */}
           <ShopActions
             item={{
-              id: slug,
+              id,
               title: p.title,
               price: p.price,
               image: p.images[0],
               description: p.description,
             }}
-            viewHref={`/products/${slug}`}
+            viewHref={`/products/${id}`}
             goToCartAfterAdd={false}
           />
         </div>
