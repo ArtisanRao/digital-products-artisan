@@ -8,7 +8,6 @@ type CatInfo = { title: string; description: string; folder: string };
 
 // Slug → UI text + folder under /public/images/<folder>
 const CATEGORIES: Record<string, CatInfo> = {
-  // Renamed/new
   "ai-and-chatgpt-guides":      { title: "AI & ChatGPT Guides",      description: "Guides, prompt engineering, and AI workflows for creators and businesses.", folder: "ai-and-chatgpt-guides" },
   "planners-and-productivity":  { title: "Planners & Productivity",  description: "Digital planners, journals, and simple systems to stay focused and consistent.", folder: "planners-and-productivity" },
   "self-help-and-how-to":       { title: "Self-Help & How-To",       description: "Step-by-step guides and practical playbooks to learn, improve, and ship.", folder: "self-help-and-how-to" },
@@ -20,7 +19,6 @@ const CATEGORIES: Record<string, CatInfo> = {
   "passive-income-and-side-hustles": { title: "Passive Income & Side Hustles", description: "Blueprints, checklists, and assets to launch and scale micro-businesses.", folder: "passive-income-and-side-hustles" },
   "prompt-packs-and-ai-tools":  { title: "Prompt Packs & AI Tools",  description: "Ready-to-use prompt packs, automations, and utility kits for AI.", folder: "prompt-packs-and-ai-tools" },
 
-  // Existing unchanged groups
   "marketing-tools":   { title: "Marketing Tools",   description: "Prompts, swipe files, and growth resources for marketing.", folder: "marketing-tools" },
   "social-media-kits": { title: "Social Media Kits", description: "Packaged posts, graphics, and assets for social channels.", folder: "social-media-kits" },
   "software-plugins":  { title: "Software Plugins",  description: "Utilities and add-ons to extend your workflows.", folder: "software-plugins" },
@@ -39,7 +37,7 @@ function listFolderImages(folder: string) {
       .readdirSync(dir, { withFileTypes: true })
       .filter((d) => d.isFile() && /\.(png|jpe?g|webp|avif|gif)$/i.test(d.name))
       .map((d) => ({
-        src: \/images/\/\\,
+        src: `/images/${folder}/${d.name}`,
         title: d.name.replace(/\.[^.]+$/, "").replace(/[-_]/g, " "),
       }))
       .sort((a, b) => a.src.localeCompare(b.src, undefined, { numeric: true }));
@@ -50,7 +48,7 @@ function listFolderImages(folder: string) {
 
 export function generateCategoryMetadata(slug: string) {
   const cat = CATEGORIES[slug];
-  const title = cat ? \\ | Digital Products Artisan\ : "Digital Products | Digital Products Artisan";
+  const title = cat ? `${cat.title} | Digital Products Artisan` : "Digital Products | Digital Products Artisan";
   const description = cat?.description ?? "Browse our curated digital products.";
   return {
     title,
