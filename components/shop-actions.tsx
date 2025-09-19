@@ -100,10 +100,10 @@ export default function ShopActions({
       <Button
         type="button"
         onClick={view}
-        className="gap-2 bg-gray-100 text-gray-900 hover:bg-gray-200 focus-visible:ring-2 focus-visible:ring-blue-500"
+        className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
         aria-label={`View ${item.title}`}
       >
-        <Eye className="h-4 w-4" />
+        <Eye className="h-4 w-4 text-white" />
         View
       </Button>
 
@@ -114,7 +114,7 @@ export default function ShopActions({
         className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
         aria-label={`Add ${item.title} to cart`}
       >
-        <ShoppingCart className="h-4 w-4" />
+        <ShoppingCart className="h-4 w-4 text-white" />
         Add to Cart
       </Button>
     </div>
