@@ -1,6 +1,7 @@
-// app/products/[id]/page.tsx
+// app/products/[slug]/page.tsx
 "use client";
 
+import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
@@ -12,7 +13,7 @@ const PRODUCTS: Record<
   string,
   { title: string; price: number; images: string[]; description: string }
 > = {
-  "1": {
+  "buy-this-complete-shop": {
     title: "Buy This Complete Shop – PLR MRR Digital Product",
     price: 42.99,
     images: [
@@ -25,15 +26,11 @@ const PRODUCTS: Record<
   },
 };
 
-type Params = { id: string };
-
-export default function ProductPage({
-  params,
-}: {
-  params: Params; // ✅ no Promise here
-}) {
-  const { id } = params; // ✅ no await needed
-  const p = PRODUCTS[id];
+export default function ProductPage() {
+  // ✅ In client components, read dynamic route via useParams()
+  const params = useParams<{ slug: string }>();
+  const slug = String(params?.slug ?? "");
+  const p = PRODUCTS[slug];
 
   if (!p) {
     return (
@@ -49,12 +46,13 @@ export default function ProductPage({
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId: id, qty: 1 }),
+        // If your checkout expects id, pass slug; adjust server to map slugs if needed
+        body: JSON.stringify({ productId: slug, qty: 1 }),
       });
       const data = await res.json();
       if (data?.url) window.location.href = data.url;
     } catch {
-      // optional: toast an error
+      // optional: toast
     }
   };
 
@@ -77,10 +75,7 @@ export default function ProductPage({
         {images.length > 1 && (
           <div className="grid grid-cols-3 gap-3">
             {images.slice(1).map((src) => (
-              <div
-                key={src}
-                className="relative aspect-[4/3] rounded-lg border overflow-hidden bg-white"
-              >
+              <div key={src} className="relative aspect-[4/3] rounded-lg border overflow-hidden bg-white">
                 <Image src={src} alt={p.title} fill sizes="33vw" className="object-contain" />
               </div>
             ))}
@@ -90,10 +85,10 @@ export default function ProductPage({
 
       {/* Right: info */}
       <section>
-        {/* Make title clickable; z-10 ensures nothing overlays it */}
+        {/* Clickable title */}
         <h1 className="text-3xl font-bold relative z-10">
           <Link
-            href={`/products/${id}`}
+            href={`/products/${slug}`}
             className="underline decoration-transparent hover:decoration-current focus:decoration-current"
             aria-label={`Open product page for ${p.title}`}
           >
@@ -108,7 +103,7 @@ export default function ProductPage({
         </div>
 
         <div className="mt-6 flex flex-wrap gap-3">
-          {/* BUY — opens Stripe Checkout (always visible here) */}
+          {/* BUY — opens Stripe Checkout */}
           <Button
             type="button"
             onClick={handleBuy}
@@ -117,16 +112,16 @@ export default function ProductPage({
             Buy
           </Button>
 
-          {/* Existing actions (View + Add to cart) */}
+          {/* View + Add to cart (stay put) */}
           <ShopActions
             item={{
-              id,
+              id: slug,
               title: p.title,
               price: p.price,
               image: images[0],
               description: p.description,
             }}
-            viewHref={`/products/${id}`}
+            viewHref={`/products/${slug}`}
             goToCartAfterAdd={false}
           />
         </div>
