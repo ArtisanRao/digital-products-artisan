@@ -70,3 +70,5 @@ export function onCurrencyChange(handler: (currency: Currency) => void) {
   window.addEventListener("currency:change", listener as EventListener);
   return () => window.removeEventListener("currency:change", listener as EventListener);
 }
+
+// no-op: trigger deploy 2025-09-20T01:34:49
