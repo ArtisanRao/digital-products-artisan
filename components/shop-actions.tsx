@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useCart } from "@/contexts/cart-context";
 
 type Item = {
-  id: string;
+  id: string | number;
   title: string;
   price: number;
   image: string;
@@ -20,12 +20,22 @@ type Props = {
   viewHref?: string;
   /** After adding, optionally go to /cart so the badge is visible. Default: false (stay put) */
   goToCartAfterAdd?: boolean;
+
+  /** Show a Buy button that opens Stripe Checkout (optional; default off) */
+  buyEnabled?: boolean;
+  /** Label for the Buy button */
+  buyLabel?: string;
+  /** Quantity used when buying directly */
+  buyQty?: number;
 };
 
 export default function ShopActions({
   item,
   viewHref,
   goToCartAfterAdd = false,
+  buyEnabled = false,
+  buyLabel = "Buy",
+  buyQty = 1,
 }: Props) {
   const router = useRouter();
   const cart = (useCart?.() ?? {}) as any;
@@ -92,20 +102,45 @@ export default function ShopActions({
     router.push(productHref);
   };
 
+  const buy = async () => {
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: item.id, qty: buyQty }),
+      });
+      const data = await res.json();
+      if (data?.url) window.location.href = data.url;
+    } catch {}
+  };
+
   return (
-    <div className="mt-3 flex items-center gap-2">
+    <div className="mt-3 flex flex-wrap items-center gap-2">
       {/* VIEW — force blue/white */}
       <Button
         type="button"
         onClick={view}
         variant="default"
         className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
-        style={{ backgroundColor: "#2563eb", color: "#fff" }} // final guard vs theme overrides
+        style={{ backgroundColor: "#2563eb", color: "#fff" }} // guard vs theme overrides
         aria-label={`View ${item.title}`}
       >
         <Eye className="h-4 w-4 text-white" />
         View
       </Button>
+
+      {/* BUY — open Stripe Checkout (optional) */}
+      {buyEnabled && (
+        <Button
+          type="button"
+          onClick={buy}
+          variant="default"
+          className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
+          aria-label={`Buy ${item.title} now`}
+        >
+          {buyLabel}
+        </Button>
+      )}
 
       {/* ADD TO CART — add silently, stay put */}
       <Button

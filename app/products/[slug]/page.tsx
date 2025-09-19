@@ -3,17 +3,13 @@
 
 import Image from "next/image";
 import InlineMore from "@/components/ui/inline-more";
-import { Button } from "@/components/ui/button";
 import ShopActions from "@/components/shop-actions";
-import StripeBuyButton from "@/components/stripe-buy-button";
 
 // TODO: replace with your real data source
-const PRODUCTS: Record<string, {
-  title: string;
-  price: number;
-  images: string[];
-  description: string;
-}> = {
+const PRODUCTS: Record<
+  string,
+  { title: string; price: number; images: string[]; description: string }
+> = {
   "1": {
     title: "Buy This Complete Shop – PLR MRR Digital Product",
     price: 42.99,
@@ -61,8 +57,17 @@ export default async function ProductPage({
         </div>
         <div className="grid grid-cols-3 gap-3">
           {p.images.slice(1).map((src) => (
-            <div key={src} className="relative aspect-[4/3] rounded-lg border overflow-hidden bg-white">
-              <Image src={src} alt={p.title} fill sizes="33vw" className="object-contain" />
+            <div
+              key={src}
+              className="relative aspect-[4/3] rounded-lg border overflow-hidden bg-white"
+            >
+              <Image
+                src={src}
+                alt={p.title}
+                fill
+                sizes="33vw"
+                className="object-contain"
+              />
             </div>
           ))}
         </div>
@@ -78,10 +83,10 @@ export default async function ProductPage({
         </div>
 
         <div className="mt-6 flex gap-3">
-          {/* New: Buy button (opens Stripe Checkout) */}
-          <StripeBuyButton productId={slug} className="min-w-[110px]" label="Buy" />
-
-          {/* Keep your on-page Add to Cart */}
+          {/* ShopActions now renders:
+              - View (blue)
+              - Buy (opens Stripe Checkout)
+              - Add to cart (stays put) */}
           <ShopActions
             item={{
               id: slug,
@@ -92,6 +97,8 @@ export default async function ProductPage({
             }}
             viewHref={`/products/${slug}`}
             goToCartAfterAdd={false}
+            buyEnabled
+            buyLabel="Buy"
           />
         </div>
 
