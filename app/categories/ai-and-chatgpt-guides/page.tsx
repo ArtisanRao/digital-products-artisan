@@ -1,4 +1,4 @@
-﻿import { CategoryPage, generateCategoryMetadata } from "../_category";
+﻿import CategoryPage, { generateCategoryMetadata } from "../_category";
 
 export const metadata = generateCategoryMetadata("ai-and-chatgpt-guides");
 export default function Page() {
