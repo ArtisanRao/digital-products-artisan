@@ -142,6 +142,17 @@ const nextConfig = withPWA({
 
       { source: "/category/:slug", destination: "/categories/:slug", permanent: true },
       { source: "/category/:slug/", destination: "/categories/:slug", permanent: true },
+
+      // ===== Category slug changes (old ⇒ new) =====
+      { source: "/categories/digital-art",         destination: "/categories/ai-and-chatgpt-guides",          permanent: true },
+      { source: "/categories/printable-planners",  destination: "/categories/planners-and-productivity",      permanent: true },
+      { source: "/categories/photography-prints",  destination: "/categories/self-help-and-how-to",           permanent: true },
+      { source: "/categories/audio-samples",       destination: "/categories/plr-and-mrr-bundles",            permanent: true },
+      { source: "/categories/video-resources",     destination: "/categories/video-courses-and-training",     permanent: true },
+      { source: "/categories/templates",           destination: "/categories/complete-shop-packages",         permanent: true },
+      { source: "/categories/ebooks",              destination: "/categories/health-and-fitness-ebooks",      permanent: true },
+      { source: "/categories/fonts",               destination: "/categories/keto-and-diet-guides",           permanent: true },
+      { source: "/categories/icons",               destination: "/categories/passive-income-and-side-hustles", permanent: true },
     ];
   },
 });
