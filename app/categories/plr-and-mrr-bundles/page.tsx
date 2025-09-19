@@ -1,4 +1,4 @@
-﻿import { CategoryPage, generateCategoryMetadata } from "../_category";
+﻿import CategoryPage, { generateCategoryMetadata } from "../_category";
 
 export const metadata = generateCategoryMetadata("plr-and-mrr-bundles");
 export default function Page() {
