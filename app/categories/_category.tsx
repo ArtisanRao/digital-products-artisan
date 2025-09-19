@@ -30,37 +30,17 @@ const CATEGORIES: Record<string, CatInfo> = {
   "web-templates/fonts": { title: "Fonts", description: "Display, serif, sans, and script fonts for polished projects.", folder: "web-templates/fonts" },
   "web-templates/icons": { title: "Icons", description: "Clean, scalable icon packs for UI and branding.", folder: "web-templates/icons" },
 
-  // Optional legacy → point to closest new locations (keep if old links exist)
+  // Legacy aliases -> closest new locations
   "digital-art":        { title: "AI & ChatGPT Guides",      description: "Legacy route; forwarded to AI & ChatGPT Guides.",      folder: "ai-and-chatgpt-guides" },
-  "printable-planners": { title: "Planners & Productivity",  description: "Legacy route; forwarded to Planners & Productivity.",   folder: "planners-and-productivity" },
-  "photography-prints": { title: "Self-Help & How-To",       description: "Legacy route; forwarded to Self-Help & How-To.",        folder: "self-help-and-how-to" },
+  "printable-planners": { title: "Planners & Productivity",  description: "Legacy route; forwarded to Planners & Productivity.",  folder: "planners-and-productivity" },
+  "photography-prints": { title: "Self-Help & How-To",       description: "Legacy route; forwarded to Self-Help & How-To.",       folder: "self-help-and-how-to" },
   "audio-samples":      { title: "PLR & MRR Bundles",        description: "Legacy route; forwarded to PLR & MRR Bundles.",        folder: "plr-and-mrr-bundles" },
-  "video-resources":    { title: "Video Courses & Training", description: "Legacy route; forwarded to Video Courses & Training.",   folder: "video-courses-and-training" },
-  "templates":          { title: "Complete Shop Packages",   description: "Legacy route; forwarded to Complete Shop Packages.",     folder: "complete-shop-packages" },
-  "ebooks":             { title: "Health & Fitness eBooks",  description: "Legacy route; forwarded to Health & Fitness eBooks.",    folder: "health-and-fitness-ebooks" },
-  "fonts":              { title: "Keto & Diet Guides",       description: "Legacy route; forwarded to Keto & Diet Guides.",         folder: "keto-and-diet-guides" },
+  "video-resources":    { title: "Video Courses & Training", description: "Legacy route; forwarded to Video Courses & Training.",  folder: "video-courses-and-training" },
+  "templates":          { title: "Complete Shop Packages",   description: "Legacy route; forwarded to Complete Shop Packages.",    folder: "complete-shop-packages" },
+  "ebooks":             { title: "Health & Fitness eBooks",  description: "Legacy route; forwarded to Health & Fitness eBooks.",   folder: "health-and-fitness-ebooks" },
+  "fonts":              { title: "Keto & Diet Guides",       description: "Legacy route; forwarded to Keto & Diet Guides.",        folder: "keto-and-diet-guides" },
   "icons":              { title: "Passive Income & Side Hustles", description: "Legacy route; forwarded to Passive Income & Side Hustles.", folder: "passive-income-and-side-hustles" },
 };
-
-// Pre-render all known slugs
-export function generateStaticParams() {
-  return Object.keys(CATEGORIES).map((slug) => ({ slug }));
-}
-
-type Params = { slug: string };
-
-export async function generateMetadata({ params }: { params: Promise<Params> }) {
-  const { slug } = await params;
-  const cat = CATEGORIES[slug];
-  const title = cat ? `${cat.title} | Digital Products Artisan` : "Digital Products | Digital Products Artisan";
-  const description = cat?.description ?? "Browse our curated digital products.";
-  return {
-    title,
-    description,
-    openGraph: { title, description, type: "website" },
-    twitter: { card: "summary_large_image", title, description },
-  };
-}
 
 // Read all images in /public/images/<folder>
 function listFolderImages(folder: string) {
@@ -79,8 +59,20 @@ function listFolderImages(folder: string) {
   }
 }
 
-export default async function CategoryPage({ params }: { params: Promise<Params> }) {
-  const { slug } = await params;
+export function generateCategoryMetadata(slug: string) {
+  const cat = CATEGORIES[slug];
+  const title = cat ? `${cat.title} | Digital Products Artisan` : "Digital Products | Digital Products Artisan";
+  const description = cat?.description ?? "Browse our curated digital products.";
+  return {
+    title,
+    description,
+    openGraph: { title, description, type: "website" },
+    twitter: { card: "summary_large_image", title, description },
+  };
+}
+
+// ---- component ----
+function CategoryPage({ slug }: { slug: string }) {
   const cat = CATEGORIES[slug];
 
   if (!cat) {
@@ -88,15 +80,12 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     return (
       <main className="container mx-auto px-4 py-16">
         <h1 className="text-3xl md:text-4xl font-bold mb-2">{pretty}</h1>
-
-        {/* Inline More/Less (force link when text is at least ~40 chars) */}
         <InlineMore
           text="We couldn’t find a dedicated page for this category yet. Explore best sellers below or visit all products."
           lines={1}
           minChars={40}
           className="text-gray-700"
         />
-
         <p className="mt-2">
           <Link href="/products" className="underline">Browse all products →</Link>
         </p>
@@ -109,8 +98,6 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
   return (
     <main className="container mx-auto px-4 py-16">
       <h1 className="text-3xl md:text-4xl font-bold mb-2">{cat.title}</h1>
-
-      {/* Category description with inline “More / Less” (same behavior as eBooks) */}
       <InlineMore text={cat.description} lines={1} minChars={40} className="text-gray-700 mb-2" />
 
       {items.length ? (
@@ -145,3 +132,6 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     </main>
   );
 }
+
+export default CategoryPage;
+export { CategoryPage, generateCategoryMetadata };
