@@ -63,7 +63,7 @@ export default function ShopActions({
         image: item.image,
         description: item.description,
         fileGuid: item.fileUrl,
-        url: productHref, // stable product URL
+        url: productHref,
         quantity: 1,
       });
     }
@@ -71,7 +71,6 @@ export default function ShopActions({
   };
 
   const add = () => {
-    // best-effort: support any cart context shape WITHOUT redirecting/opening
     (cart.addItem ?? cart.add ?? cart.actions?.addItem)?.({
       id: String(item.id),
       name: item.title,
@@ -86,7 +85,6 @@ export default function ShopActions({
 
     addToLocalCart();
 
-    // Stay put by default; only navigate if explicitly enabled
     if (goToCartAfterAdd) router.push("/cart");
   };
 
@@ -96,21 +94,24 @@ export default function ShopActions({
 
   return (
     <div className="mt-3 flex items-center gap-2">
-      {/* VIEW — go to product page (no login) */}
+      {/* VIEW — force blue/white */}
       <Button
         type="button"
         onClick={view}
+        variant="default"
         className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
+        style={{ backgroundColor: "#2563eb", color: "#fff" }} // final guard vs theme overrides
         aria-label={`View ${item.title}`}
       >
         <Eye className="h-4 w-4 text-white" />
         View
       </Button>
 
-      {/* ADD TO CART — add silently, stay put (no checkout redirect) */}
+      {/* ADD TO CART — add silently, stay put */}
       <Button
         type="button"
         onClick={add}
+        variant="default"
         className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
         aria-label={`Add ${item.title} to cart`}
       >
