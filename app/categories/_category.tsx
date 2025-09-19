@@ -134,4 +134,4 @@ function CategoryPage({ slug }: { slug: string }) {
 }
 
 export default CategoryPage;
-export { CategoryPage, generateCategoryMetadata };
+export default CategoryPage;
