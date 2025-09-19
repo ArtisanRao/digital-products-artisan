@@ -6,30 +6,30 @@ import HoverableCover from "@/components/ui/hoverable-cover";
 import ShopActions from "@/components/shop-actions";
 import InlineMore from "@/components/ui/inline-more";
 
-export default function MarketingToolsPage() {
+export default function PromptPacksAndAIToolsPage() {
   const items = [
     {
-      id: "essential-marketing-tools",
-      title: "Essential Marketing Tools",
+      id: "essential-marketing-prompts",
+      title: "Essential Marketing Prompts",
       image: "/images/marketing-tools-cover.jpg",
       price: 6.99,
-      description: "Prompts, swipe files & frameworks.",
+      description: "High-converting prompts for ads, emails & landing pages.",
       fileUrl: "/downloads/essential-marketing-tools.zip",
     },
     {
-      id: "email-templates-pack",
-      title: "Email Templates Pack",
+      id: "email-prompts-pack",
+      title: "Email Prompts Pack",
       image: "/images/email-templates-cover.jpg",
       price: 5.49,
-      description: "Proven sequences that convert.",
+      description: "Sequences for welcome, nurture, launches & promos.",
       fileUrl: "/downloads/email-templates-pack.zip",
     },
     {
-      id: "facebook-ad-templates",
-      title: "Facebook Ad Templates",
+      id: "facebook-ads-prompt-studio",
+      title: "Facebook Ads Prompt Studio",
       image: "/images/facebook-ad-templates-cover.jpg",
       price: 5.99,
-      description: "Ready-to-run ad creatives & copy.",
+      description: "Creative & copy prompts for cold, warm, and remarketing.",
       fileUrl: "/downloads/facebook-ad-templates.zip",
     },
   ];
@@ -40,15 +40,15 @@ export default function MarketingToolsPage() {
   return (
     <>
       <Head>
-        <title>Marketing Tools | Digital Products Artisan</title>
+        <title>Prompt Packs & AI Tools | Digital Products Artisan</title>
         <meta
           name="description"
-          content="Prompts, swipe files, templates and frameworks to grow your brand."
+          content="Curated prompt packs, automations, and AI utilities to speed up writing, research, marketing and more."
         />
       </Head>
 
       <main className="max-w-7xl mx-auto px-4 py-12">
-        <h1 className="text-4xl font-bold text-center mb-10">🧾 Marketing Tools</h1>
+        <h1 className="text-4xl font-bold text-center mb-10">🧠 Prompt Packs & AI Tools</h1>
 
         <CategoryGrid
           items={items}

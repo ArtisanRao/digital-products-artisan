@@ -5,7 +5,7 @@ import HoverableCover from "@/components/ui/hoverable-cover";
 import ShopActions from "@/components/shop-actions";
 import InlineMore from "@/components/ui/inline-more";
 
-const CAT = "icons";
+const IMG_FOLDER = "icons"; // keep using existing images for now
 
 type Item = {
   id: string;          // stable key
@@ -16,20 +16,37 @@ type Item = {
 };
 
 const items: Item[] = [
-  { id: "minimal-icons-pack",  slug: "minimal-icons-pack",  title: "Minimal Icons Pack",  price: 4.99, description: "Clean, consistent 24px line icons for interfaces." },
-  { id: "business-icons-pack", slug: "business-icons-pack", title: "Business Icons Pack", price: 5.49, description: "Office, finance & analytics icons for dashboards." },
-  { id: "social-icons-pack",   slug: "social-icons-pack",   title: "Social Media Icons",  price: 3.99, description: "Brand-safe logos in multiple styles and sizes." },
+  {
+    id: "printables-side-hustle-kit",
+    slug: "printables-side-hustle-kit",
+    title: "Printables Side-Hustle Kit",
+    price: 4.99,
+    description: "Launch fast with 50 editable templates + storefront checklist.",
+  },
+  {
+    id: "etsy-starter-system",
+    slug: "etsy-starter-system",
+    title: "Etsy Starter System",
+    price: 5.49,
+    description: "SEO tags, listing copy, mockup frames, and pricing cheatsheets.",
+  },
+  {
+    id: "ai-gig-blueprints",
+    slug: "ai-gig-blueprints",
+    title: "AI Gig Blueprints",
+    price: 3.99,
+    description: "Service SOPs + prompts for thumbnails, captions, and blog briefs.",
+  },
 ];
 
 // Try multiple sensible filenames (category folder, root, -cover variants) + safe fallbacks
 const imgCandidates = (slug: string) => [
-  `/images/${CAT}/${slug}.jpg`,
-  `/images/${CAT}/${slug}-cover.jpg`,
+  `/images/${IMG_FOLDER}/${slug}.jpg`,
+  `/images/${IMG_FOLDER}/${slug}-cover.jpg`,
   `/images/${slug}.jpg`,
   `/images/${slug}-cover.jpg`,
-  `/images/${CAT}/cover.jpg`,
-  `/images/${CAT}-cover.jpg`,
-  `/images/${CAT}.jpg`,
+  `/images/${IMG_FOLDER}/cover.jpg`,
+  `/images/${IMG_FOLDER}-cover.jpg`,
   `/images/icons-cover.jpg`,
   `/images/placeholder-cover.jpg`,
 ];
@@ -37,10 +54,10 @@ const imgCandidates = (slug: string) => [
 const formatEUR = (n: number) =>
   new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
 
-export default function IconsPage() {
+export default function PassiveIncomeAndSideHustlesPage() {
   return (
     <main className="mx-auto max-w-7xl px-4 py-12">
-      <h1 className="mb-10 text-center text-4xl font-bold">🔘 Icons</h1>
+      <h1 className="mb-10 text-center text-4xl font-bold">💼 Passive Income & Side Hustles</h1>
 
       <CategoryGrid
         items={items}
@@ -53,21 +70,26 @@ export default function IconsPage() {
               ? parseFloat(p.price)
               : 0;
 
-          const primaryImg = `/images/${CAT}/${slug}.jpg`;
+          const primaryImg = `/images/${IMG_FOLDER}/${slug}.jpg`;
 
           return (
             <div
               key={String(p.id)}
               className="group overflow-hidden rounded-2xl border bg-white shadow transition hover:shadow-lg"
             >
-              {/* Square looks best for icon sets */}
-              <HoverableCover srcs={imgCandidates(slug)} alt={p.title} ratio="1/1" fit="contain" />
+              {/* 16:9 suits product kits better than square */}
+              <HoverableCover srcs={imgCandidates(slug)} alt={p.title} ratio="16/9" fit="contain" />
 
               <div className="p-4">
                 <h2 className="mb-2 text-xl font-semibold">{p.title}</h2>
 
                 {/* Inline “More / Less” under subtitle (force show) */}
-                <InlineMore text={p.description} lines={2} minChars={1} className="mb-2 text-sm text-gray-600" />
+                <InlineMore
+                  text={p.description}
+                  lines={2}
+                  minChars={1}
+                  className="mb-2 text-sm text-gray-600"
+                />
 
                 <p className="mb-3 text-lg font-bold">{formatEUR(price)}</p>
 
