@@ -151,8 +151,12 @@ const nextConfig = withPWA({
       { source: "/categories/video-resources",     destination: "/categories/video-courses-and-training",     permanent: true },
       { source: "/categories/templates",           destination: "/categories/complete-shop-packages",         permanent: true },
       { source: "/categories/ebooks",              destination: "/categories/health-and-fitness-ebooks",      permanent: true },
-      { source: "/categories/fonts",               destination: "/categories/keto-and-diet-guides",           permanent: true },
-      { source: "/categories/icons",               destination: "/categories/passive-income-and-side-hustles", permanent: true },
+
+      // Restored top-level categories: REMOVE hijacks
+      // (was fonts -> keto-and-diet-guides, icons -> passive-income-and-side-hustles)
+      // Helpful forwards from old subpaths:
+      { source: "/categories/web-templates/fonts", destination: "/categories/fonts", permanent: true },
+      { source: "/categories/web-templates/icons", destination: "/categories/icons", permanent: true },
     ];
   },
 });
