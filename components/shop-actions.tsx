@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Eye, ShoppingCart } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -37,6 +38,8 @@ export default function ShopActions({
 }: Props) {
   const router = useRouter();
   const cart = (useCart?.() ?? {}) as any;
+  const [buyLoading, setBuyLoading] = React.useState(false);
+  const [addLoading, setAddLoading] = React.useState(false);
 
   const productHref =
     viewHref ?? `/products/${encodeURIComponent(String(item.id))}`;
@@ -79,39 +82,67 @@ export default function ShopActions({
   };
 
   const add = () => {
-    (cart.addItem ?? cart.add ?? cart.actions?.addItem)?.({
-      id: String(item.id),
-      name: item.title,
-      title: item.title,
-      price: item.price,
-      image: item.image,
-      description: item.description,
-      fileUrl: item.fileUrl,
-      url: productHref,
-      quantity: 1,
-    });
+    if (addLoading) return;
+    setAddLoading(true);
+    try {
+      (cart.addItem ?? cart.add ?? cart.actions?.addItem)?.({
+        id: String(item.id),
+        name: item.title,
+        title: item.title,
+        price: item.price,
+        image: item.image,
+        description: item.description,
+        fileUrl: item.fileUrl,
+        url: productHref,
+        quantity: 1,
+      });
 
-    addToLocalCart();
-
-    if (goToCartAfterAdd) router.push("/cart");
+      addToLocalCart();
+      if (goToCartAfterAdd) router.push("/cart");
+    } finally {
+      setAddLoading(false);
+    }
   };
 
-  const view = () => {
-    router.push(productHref);
-  };
+  const view = () => router.push(productHref);
 
   const buy = async () => {
+    if (buyLoading) return;
+    setBuyLoading(true);
     try {
-      const currency = getPreferredCurrency?.() ?? "usd";
+      // Make sure productId is numeric for the API route
+      const productId = Number(item.id);
+      if (!Number.isFinite(productId)) {
+        throw new Error("Invalid product id for checkout.");
+      }
+
+      const currency = String(getPreferredCurrency?.() ?? "USD").toUpperCase();
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId: item.id, qty: buyQty, currency }),
+        body: JSON.stringify({ productId, qty: buyQty, currency }),
       });
-      const data = await res.json();
-      if (data?.url) window.location.href = data.url;
-    } catch {}
+
+      const raw = await res.text();
+      let data: any = {};
+      try { data = JSON.parse(raw); } catch {}
+
+      if (!res.ok || !data?.url) {
+        const message = data?.error || raw || `Checkout failed (HTTP ${res.status})`;
+        throw new Error(message);
+      }
+
+      window.location.href = data.url; // → Stripe Checkout
+    } catch (e: any) {
+      console.error("Buy error:", e);
+      alert(e?.message || "Sorry—couldn't start checkout.");
+    } finally {
+      setBuyLoading(false);
+    }
   };
+
+  const btnClass =
+    "gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500";
 
   return (
     <div className="mt-3 flex flex-wrap items-center gap-2 isolate z-20 pointer-events-auto">
@@ -120,8 +151,7 @@ export default function ShopActions({
         type="button"
         onClick={view}
         variant="default"
-        className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
-        style={{ backgroundColor: "#2563eb", color: "#fff" }}
+        className={btnClass}
         aria-label={`View ${item.title}`}
       >
         <Eye className="h-4 w-4 text-white" />
@@ -133,11 +163,12 @@ export default function ShopActions({
         <Button
           type="button"
           onClick={buy}
+          disabled={buyLoading}
           variant="default"
-          className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
+          className={btnClass}
           aria-label={`Buy ${item.title} now`}
         >
-          {buyLabel}
+          {buyLoading ? "Redirecting…" : buyLabel}
         </Button>
       )}
 
@@ -145,12 +176,13 @@ export default function ShopActions({
       <Button
         type="button"
         onClick={add}
+        disabled={addLoading}
         variant="default"
-        className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
+        className={btnClass}
         aria-label={`Add ${item.title} to cart`}
       >
         <ShoppingCart className="h-4 w-4 text-white" />
-        Add to cart
+        {addLoading ? "Adding…" : "Add to cart"}
       </Button>
     </div>
   );

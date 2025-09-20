@@ -7,7 +7,7 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import InlineMore from "@/components/ui/inline-more";
 import { Button } from "@/components/ui/button";
-import ShopActions from "@/components/shop-actions";
+import AddToCartButton from "@/components/add-to-cart-button"; //⬅️ NEW
 import { products, productsById } from "@/data/products";
 import { getPreferredCurrency } from "@/lib/currency";
 
@@ -119,14 +119,14 @@ export default function ProductPageBySlug() {
   const imgs: string[] = (p.images?.length ? p.images : [p.image]).filter(Boolean) as string[];
   const cover = imgs[0] ?? "/images/placeholder-cover.jpg";
 
-  // ✅ TS-safe currency handling (coerce to 'EUR' | 'USD')
+  // TS-safe currency handling for display
   const currencyRaw = getPreferredCurrency();
   const currency = String(currencyRaw).toUpperCase() as "EUR" | "USD";
   const locale = currency === "EUR" ? "de-DE" : "en-US";
   const display = new Intl.NumberFormat(locale, { style: "currency", currency }).format(p.price);
 
   const handleBuy = async () => {
-    if (buyLoading) return; // prevent double-clicks
+    if (buyLoading) return;
     setBuyLoading(true);
     try {
       const res = await fetch("/api/checkout", {
@@ -137,14 +137,14 @@ export default function ProductPageBySlug() {
 
       const raw = await res.text();
       let data: any = {};
-      try { data = JSON.parse(raw); } catch { /* tolerate non-JSON errors */ }
+      try { data = JSON.parse(raw); } catch {}
 
       if (!res.ok || !data?.url) {
         const message = data?.error || raw || `Checkout failed (HTTP ${res.status})`;
         throw new Error(message);
       }
 
-      window.location.href = data.url as string;
+      window.location.href = data.url as string; // → Stripe Checkout
     } catch (err: any) {
       console.error("Checkout error:", err);
       alert(err?.message || "Sorry—couldn't start checkout.");
@@ -179,6 +179,13 @@ export default function ProductPageBySlug() {
         </div>
 
         <div className="mt-6 flex flex-wrap gap-3" style={{ position: "relative", zIndex: 61, pointerEvents: "auto" }}>
+          {/* Add to cart — now blue to match Buy */}
+          <AddToCartButton
+            productId={p.id}
+            className="bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
+          />
+
+          {/* Buy — redirects to Checkout */}
           <Button
             type="button"
             onClick={handleBuy}
@@ -188,19 +195,6 @@ export default function ProductPageBySlug() {
           >
             {buyLoading ? "Redirecting..." : "Buy"}
           </Button>
-
-          <ShopActions
-            item={{
-              id: String(p.id),
-              title: p.title,
-              price: p.price,
-              image: cover,
-              description: p.description,
-            }}
-            viewHref={canonicalHref}
-            goToCartAfterAdd={false}
-            buyEnabled={false}
-          />
         </div>
 
         <ul className="mt-6 list-disc space-y-1 pl-5 text-sm text-gray-600">
