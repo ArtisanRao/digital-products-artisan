@@ -37,7 +37,6 @@ const items: Item[] = [
     price: 5.49,
     description: "Track income, expenses and savings with printable sheets.",
   },
-  // add more; expander will handle the rest
 ];
 
 // Multiple sensible filenames (+ fallbacks)
@@ -72,6 +71,7 @@ export default function PlannersAndProductivityPage() {
               : 0;
 
           const primaryImg = `/images/${IMG_FOLDER}/${slug}.jpg`;
+          const detailHref = `/products/${encodeURIComponent(slug)}`; // ← single product URL
 
           return (
             <div
@@ -102,6 +102,8 @@ export default function PlannersAndProductivityPage() {
                     image: primaryImg,
                     description: p.description,
                   }}
+                  viewHref={detailHref}          // ← make “View” go to single product page
+                  goToCartAfterAdd={false}
                 />
               </div>
             </div>
