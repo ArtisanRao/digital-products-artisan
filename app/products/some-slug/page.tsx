@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useParams } from "next/navigation";
 import Image from "next/image";
@@ -12,7 +12,7 @@ import { products, productsById } from "@/data/products";
 function findProduct(idOrSlug: string) {
   const asNum = Number(idOrSlug);
   if (Number.isFinite(asNum)) {
-    const byId = productsById?.[asNum];
+    const byId = (productsById as any)?.[asNum];
     if (byId) return byId;
     const byIdLinear = products.find((p) => Number(p.id) === asNum);
     if (byIdLinear) return byIdLinear;
@@ -25,9 +25,9 @@ function findProduct(idOrSlug: string) {
   );
 }
 
-export default function ProductPage() {
-  const params = useParams<{ id: string }>();
-  const handle = String(params?.id ?? "");
+export default function ProductPageBySlug() {
+  const params = useParams<{ slug: string }>();
+  const handle = String(params?.slug ?? "");
   const p = findProduct(handle);
 
   if (!p) {
@@ -80,7 +80,7 @@ export default function ProductPage() {
 
       {/* Right: info */}
       <section className="isolate">
-        {/* Make sure the title is actually clickable */}
+        {/* Clickable title on top of any overlays */}
         <h1 className="text-3xl font-bold relative z-20 pointer-events-auto">
           <Link
             href={`/products/${encodeURIComponent(String(p.id))}`}
@@ -92,7 +92,7 @@ export default function ProductPage() {
         </h1>
 
         <div className="mt-2 text-2xl font-semibold">
-          {new Intl.NumberFormat("de-DE",{style:"currency",currency:"EUR"}).format(p.price)}
+          {new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(p.price)}
         </div>
 
         <div className="mt-3 text-gray-700">
@@ -100,6 +100,7 @@ export default function ProductPage() {
         </div>
 
         <div className="mt-6 flex flex-wrap gap-3 relative z-20 pointer-events-auto">
+          {/* BUY — opens Stripe Checkout */}
           <Button
             type="button"
             onClick={handleBuy}
@@ -108,6 +109,7 @@ export default function ProductPage() {
             Buy
           </Button>
 
+          {/* View + Add to cart (stay put) */}
           <ShopActions
             item={{
               id: String(p.id),
@@ -118,7 +120,7 @@ export default function ProductPage() {
             }}
             viewHref={`/products/${encodeURIComponent(String(p.id))}`}
             goToCartAfterAdd={false}
-            buyEnabled={false} // Buy button is already shown above
+            buyEnabled={false} // Buy button is already present above
           />
         </div>
 
