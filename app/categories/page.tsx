@@ -5,17 +5,43 @@ import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
 import { CATEGORIES } from "@/data/categories";
 
-/** Try multiple filenames, then a default placeholder. */
-function CategoryCover({ slug, alt }: { slug: string; alt: string }) {
-  const candidates = [
-    `/images/categories/${slug}/cover.png`, // prefer PNG (what you just added)
+/** Try an override, then multiple filename patterns in both folders, then default. */
+function CategoryCover({
+  slug,
+  alt,
+  overrideSrc,
+}: {
+  slug: string;
+  alt: string;
+  overrideSrc?: string;
+}) {
+  const ver = process.env.NEXT_PUBLIC_ASSET_VERSION ?? "v1";
+
+  // If you pass an explicit image in data/categories.ts, try that first.
+  const candidates: string[] = [
+    ...(overrideSrc ? [overrideSrc] : []),
+
+    // Preferred structure: per-category folder
+    `/images/categories/${slug}/cover.webp`,
+    `/images/categories/${slug}/cover.avif`,
+    `/images/categories/${slug}/cover.png`,
     `/images/categories/${slug}/cover.jpg`,
+    `/images/categories/${slug}/hero.webp`,
+    `/images/categories/${slug}/hero.avif`,
     `/images/categories/${slug}/hero.png`,
     `/images/categories/${slug}/hero.jpg`,
+
+    // Flat structure: single file in /public/images
+    `/images/${slug}.webp`,
+    `/images/${slug}.avif`,
+    `/images/${slug}.png`,
+    `/images/${slug}.jpg`,
   ];
-  const fallback = "/images/categories/_default/cover.png"; // make sure this exists
+
+  const fallback = "/images/categories/_default/cover.png"; // ensure this exists
   const [idx, setIdx] = useState(0);
-  const src = idx < candidates.length ? candidates[idx] : fallback;
+  const pick = idx < candidates.length ? candidates[idx] : fallback;
+  const src = `${pick}?${ver}`;
 
   return (
     <img
@@ -24,7 +50,6 @@ function CategoryCover({ slug, alt }: { slug: string; alt: string }) {
       className="aspect-[16/9] w-full rounded-none object-cover md:aspect-[3/2]"
       loading="lazy"
       decoding="async"
-      referrerPolicy="no-referrer"
       onError={() => setIdx((i) => i + 1)}
     />
   );
@@ -65,11 +90,14 @@ const descBySlug: Record<string, string> = {
 };
 
 export default function CategoriesPage() {
-  const categories = CATEGORIES.map(({ label, slug }) => ({
-    name: `${emojiBySlug[slug] ?? "📁"} ${label}`,
-    slug,
-    desc: descBySlug[slug] ?? label,
-    plainLabel: label,
+  // If you add { image: "/images/<something>.webp" } per category in data/categories.ts,
+  // we’ll use it as overrideSrc automatically.
+  const categories = CATEGORIES.map((c: any) => ({
+    name: `${emojiBySlug[c.slug] ?? "📁"} ${c.label}`,
+    slug: c.slug,
+    desc: descBySlug[c.slug] ?? c.label,
+    plainLabel: c.label,
+    overrideSrc: typeof c.image === "string" ? c.image : undefined,
   }));
 
   return (
@@ -84,7 +112,11 @@ export default function CategoriesPage() {
             aria-label={`Browse ${category.plainLabel}`}
             className="group block overflow-hidden rounded-2xl border bg-white shadow transition-all duration-300 hover:-translate-y-1 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2"
           >
-            <CategoryCover slug={category.slug} alt={category.plainLabel} />
+            <CategoryCover
+              slug={category.slug}
+              alt={category.plainLabel}
+              overrideSrc={category.overrideSrc}
+            />
 
             <div className="p-4">
               <h2 className="text-xl font-semibold transition-colors group-hover:text-blue-600">
