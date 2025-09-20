@@ -54,6 +54,7 @@ export default function WebTemplatesPage() {
               : 0;
 
           const primaryImg = `/images/${CAT}/${slug}.jpg`;
+          const detailHref = `/products/${encodeURIComponent(slug)}`; // ← single product page
 
           return (
             <div
@@ -89,6 +90,8 @@ export default function WebTemplatesPage() {
                     image: primaryImg,
                     description: p.description,
                   }}
+                  viewHref={detailHref}       // ← View routes to product page
+                  goToCartAfterAdd={false}    // stay on grid after adding
                 />
               </div>
             </div>
