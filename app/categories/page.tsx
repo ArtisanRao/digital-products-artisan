@@ -1,9 +1,33 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import CoverImage from "@/components/ui/cover-image";
 import InlineMore from "@/components/ui/inline-more";
 import { CATEGORIES } from "@/data/categories";
+
+/** Try multiple filenames, then a default placeholder. */
+function CategoryCover({ slug, alt }: { slug: string; alt: string }) {
+  const candidates = [
+    `/images/categories/${slug}/cover.jpg`,
+    `/images/categories/${slug}/cover.png`,
+    `/images/categories/${slug}/hero.jpg`,
+    `/images/categories/${slug}/hero.png`,
+  ];
+  const fallback = "/images/categories/_default/cover.jpg"; // add this once
+  const [idx, setIdx] = useState(0);
+  const src = idx < candidates.length ? candidates[idx] : fallback;
+
+  return (
+    // use plain <img> so we can swap on error reliably
+    <img
+      src={src}
+      alt={alt}
+      className="aspect-[16/9] w-full rounded-none object-cover md:aspect-[3/2]"
+      loading="lazy"
+      onError={() => setIdx((i) => i + 1)}
+    />
+  );
+}
 
 // Emoji per category slug
 const emojiBySlug: Record<string, string> = {
@@ -39,44 +63,33 @@ const descBySlug: Record<string, string> = {
   "icons": "Clean, scalable icons for UI & brand.",
 };
 
-// Derive image path; one convention
-const imageFor = (slug: string) => `/images/categories/${slug}/cover.jpg`;
-
 export default function CategoriesPage() {
   const categories = CATEGORIES.map(({ label, slug }) => ({
     name: `${emojiBySlug[slug] ?? "📁"} ${label}`,
     slug,
-    image: imageFor(slug),
     desc: descBySlug[slug] ?? label,
     plainLabel: label,
   }));
 
   return (
     <main className="max-w-7xl mx-auto px-4 py-12">
-      <h1 className="text-4xl font-bold text-center mb-12">🗂️ All Categories</h1>
+      <h1 className="mb-12 text-center text-4xl font-bold">🗂️ All Categories</h1>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
         {categories.map((category) => (
           <Link
             key={category.slug}
             href={`/categories/${category.slug}`}
             aria-label={`Browse ${category.plainLabel}`}
-            className="group block rounded-2xl border overflow-hidden bg-white shadow transition-all duration-300 hover:-translate-y-1 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2"
+            className="group block overflow-hidden rounded-2xl border bg-white shadow transition-all duration-300 hover:-translate-y-1 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2"
           >
-            <CoverImage
-              src={category.image}
-              alt={category.plainLabel}
-              ratio="16/9"
-              fit="cover"
-              paddingClass="p-0"
-              roundedClass="rounded-none"
-              className="md:aspect-[3/2]"
-              sizes="(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw"
-            />
+            <CategoryCover slug={category.slug} alt={category.plainLabel} />
+
             <div className="p-4">
               <h2 className="text-xl font-semibold transition-colors group-hover:text-blue-600">
                 {category.name}
               </h2>
+
               <InlineMore
                 text={category.desc}
                 lines={2}
