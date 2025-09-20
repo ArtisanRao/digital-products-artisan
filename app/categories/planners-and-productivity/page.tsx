@@ -102,7 +102,7 @@ export default function PlannersAndProductivityPage() {
                     image: primaryImg,
                     description: p.description,
                   }}
-                  viewHref={detailHref}          // ← make “View” go to single product page
+                  viewHref={detailHref}          // ← “View” goes to single product page
                   goToCartAfterAdd={false}
                 />
               </div>
