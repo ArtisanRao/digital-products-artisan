@@ -69,19 +69,23 @@ export default function AddToCartButton({
   }, [productId]);
 
   const handleClick = async () => {
+    if (adding) return;
     setAdding(true);
     try { add(); } finally { setAdding(false); }
   };
+
+  const base =
+    "gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500";
 
   return (
     <Button
       onClick={handleClick}
       disabled={adding}
       size={size}
-      className={`bg-black text-white hover:bg-black/90 ${className}`}
+      className={`${base} ${className}`}
       aria-label="Add to cart"
     >
-      <ShoppingCart className="w-4 h-4 mr-2" />
+      <ShoppingCart className="w-4 h-4 mr-2 text-white" />
       {adding ? "Adding…" : children ?? "Add to cart"}
     </Button>
   );
