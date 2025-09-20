@@ -65,6 +65,7 @@ export default function CompleteShopPackagesPage() {
               ? parseFloat(p.price)
               : 0;
           const image = typeof p.image === "string" ? p.image : primary(slug);
+          const detailHref = `/products/${encodeURIComponent(slug)}`; // ← single product page
 
           return (
             <div
@@ -87,7 +88,7 @@ export default function CompleteShopPackagesPage() {
 
                 <p className="text-lg font-bold mb-3">{formatEUR(price)}</p>
 
-                {/* View (checkout) + Add to Cart (opens cart with badge) */}
+                {/* View (detail) + Add to Cart */}
                 <ShopActions
                   item={{
                     id: slug,
@@ -96,6 +97,8 @@ export default function CompleteShopPackagesPage() {
                     image,
                     description: p.description,
                   }}
+                  viewHref={detailHref}     // ← View goes to product page
+                  goToCartAfterAdd={false}
                 />
               </div>
             </div>
