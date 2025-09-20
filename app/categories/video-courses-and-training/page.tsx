@@ -49,6 +49,7 @@ export default function VideoCoursesAndTrainingPage() {
             typeof p.price === "string" ? parseFloat(p.price) : 0;
 
           const primaryImg = `/images/${IMG_FOLDER}/${slug}.jpg`;
+          const detailHref = `/products/${encodeURIComponent(slug)}`; // ← single product page
 
           return (
             <div
@@ -70,7 +71,7 @@ export default function VideoCoursesAndTrainingPage() {
 
                 <p className="text-lg font-bold">{formatEUR(price)}</p>
 
-                {/* View (checkout) + Add to Cart */}
+                {/* View (detail) + Add to Cart */}
                 <ShopActions
                   item={{
                     id: slug,
@@ -79,6 +80,8 @@ export default function VideoCoursesAndTrainingPage() {
                     image: primaryImg,
                     description: p.description,
                   }}
+                  viewHref={detailHref}     // ← View routes to product page
+                  goToCartAfterAdd={false}  // stay on grid after adding
                 />
               </div>
             </div>
