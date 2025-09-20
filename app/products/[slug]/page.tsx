@@ -9,6 +9,7 @@ import InlineMore from "@/components/ui/inline-more";
 import { Button } from "@/components/ui/button";
 import ShopActions from "@/components/shop-actions";
 import { products, productsById } from "@/data/products";
+import { getPreferredCurrency } from "@/lib/currency"; // ⬅️ include currency so EUR enables Klarna
 
 function findProduct(idOrSlug: string) {
   const asNum = Number(idOrSlug);
@@ -104,6 +105,8 @@ export default function ProductPageBySlug() {
   const handle = String(params?.slug ?? "");
   const p = findProduct(handle);
 
+  const [buyLoading, setBuyLoading] = React.useState(false);
+
   if (!p) {
     return (
       <main className="mx-auto max-w-6xl px-4 py-12">
@@ -116,15 +119,32 @@ export default function ProductPageBySlug() {
   const cover = imgs[0] ?? "/images/placeholder-cover.jpg";
 
   const handleBuy = async () => {
+    if (buyLoading) return; // prevent double-clicks
+    setBuyLoading(true);
     try {
+      const currency = getPreferredCurrency(); // 👈 pass through so EUR can enable Klarna, etc.
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId: p.id, qty: 1 }),
+        body: JSON.stringify({ productId: p.id, qty: 1, currency }),
       });
-      const data = await res.json();
-      if (data?.url) window.location.href = data.url;
-    } catch {}
+
+      const raw = await res.text();
+      let data: any = {};
+      try { data = JSON.parse(raw); } catch { /* tolerate non-JSON errors */ }
+
+      if (!res.ok || !data?.url) {
+        const message = data?.error || raw || `Checkout failed (HTTP ${res.status})`;
+        throw new Error(message);
+      }
+
+      window.location.href = data.url as string;
+    } catch (err: any) {
+      console.error("Checkout error:", err);
+      alert(err?.message || "Sorry—couldn't start checkout.");
+    } finally {
+      setBuyLoading(false);
+    }
   };
 
   return (
@@ -133,14 +153,8 @@ export default function ProductPageBySlug() {
         <ProductGallery images={imgs} alt={p.title} />
       </section>
 
-      <section
-        className="isolate"
-        style={{ position: "relative", zIndex: 60, pointerEvents: "auto" }}
-      >
-        <h1
-          className="text-4xl font-extrabold leading-tight"
-          style={{ position: "relative", zIndex: 61, pointerEvents: "auto" }}
-        >
+      <section className="isolate" style={{ position: "relative", zIndex: 60, pointerEvents: "auto" }}>
+        <h1 className="text-4xl font-extrabold leading-tight" style={{ position: "relative", zIndex: 61, pointerEvents: "auto" }}>
           <Link
             href={`/products/${encodeURIComponent(String(p.id))}`}
             className="underline decoration-transparent hover:decoration-current focus:decoration-current"
@@ -158,17 +172,15 @@ export default function ProductPageBySlug() {
           <InlineMore text={p.description ?? ""} lines={3} minChars={80} />
         </div>
 
-        <div
-          className="mt-6 flex flex-wrap gap-3"
-          style={{ position: "relative", zIndex: 61, pointerEvents: "auto" }}
-        >
+        <div className="mt-6 flex flex-wrap gap-3" style={{ position: "relative", zIndex: 61, pointerEvents: "auto" }}>
           <Button
             type="button"
             onClick={handleBuy}
+            disabled={buyLoading}
             className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
             style={{ pointerEvents: "auto" }}
           >
-            Buy
+            {buyLoading ? "Redirecting..." : "Buy"}
           </Button>
 
           <ShopActions
