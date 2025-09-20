@@ -48,6 +48,7 @@ export default function DigitalArtPage() {
               : 0;
 
           const primaryImg = `/images/${CAT}/${slug}.jpg`;
+          const detailHref = `/products/${encodeURIComponent(slug)}`; // ← single product page
 
           return (
             <div
@@ -77,6 +78,8 @@ export default function DigitalArtPage() {
                     image: primaryImg,
                     description: p.description,
                   }}
+                  viewHref={detailHref}      {/* View → product page */}
+                  goToCartAfterAdd={false}
                 />
               </div>
             </div>
