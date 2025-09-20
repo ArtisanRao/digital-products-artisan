@@ -1,6 +1,3 @@
-# From repo root (if you're in app\categories, run: Set-Location ..\..)
-
-@'
 const withPWA = require("next-pwa")({
   dest: "public",
   register: true,
@@ -115,7 +112,7 @@ const nextConfig = withPWA({
 
   async redirects() {
     return [
-      // ===== Canonical host: force www → apex (SEO + favicon consistency) =====
+      // ===== Canonical host: force www ? apex (SEO + favicon consistency) =====
       {
         source: "/:path*",
         has: [{ type: "host", value: "www.digitalproductsartisan.com" }],
@@ -163,8 +160,3 @@ const nextConfig = withPWA({
 });
 
 module.exports = nextConfig;
-'@ | Set-Content -Path .\next.config.js -Encoding utf8
-
-git add .\next.config.js
-git commit -m "chore(next): update CSP, headers, and redirects incl. canonical host + category forwards"
-git push origin main
