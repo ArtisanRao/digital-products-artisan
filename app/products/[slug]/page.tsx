@@ -6,7 +6,7 @@ import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
 import { Button } from "@/components/ui/button";
 import ShopActions from "@/components/shop-actions";
-import ProductGallery from "@/components/ProductGallery";
+import ProductGallery from "@/components/product-gallery";
 import { products, productsById } from "@/data/products";
 
 function findProduct(idOrSlug: string) {
