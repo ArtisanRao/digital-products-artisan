@@ -3,23 +3,54 @@
 import Link from "next/link";
 import CoverImage from "@/components/ui/cover-image";
 import InlineMore from "@/components/ui/inline-more";
+import { CATEGORIES } from "@/data/categories";
 
-const categories = [
-  { name: "📚 eBooks",             slug: "ebooks",               image: "/images/ebooks-cover.jpg",               desc: "Digital books, guides, and educational content." },
-  { name: "🎨 Digital Art",        slug: "digital-art",          image: "/images/digital-art-cover.jpg",          desc: "Illustrations, posters, wallpapers and creative assets." },
-  { name: "🧾 Templates",          slug: "business-templates",   image: "/images/business-templates-cover.jpg",   desc: "Design templates and graphics ready to use." },
-  { name: "📥 Marketing Tools",    slug: "marketing-tools",      image: "/images/marketing-tools-cover.jpg",      desc: "Prompts, swipe files, and growth resources for marketing." },
-  { name: "🗓️ Printable Planners", slug: "printable-planners",   image: "/images/printable-planners-cover.jpg",   desc: "Digital planners, journals, and productivity tools." },
-  { name: "📸 Photography Prints", slug: "photography-prints",   image: "/images/photography-prints-cover.jpg",   desc: "High-quality photo prints, presets, and media assets." },
-  { name: "🔤 Fonts",              slug: "fonts",                image: "/images/fonts-cover.jpg",                desc: "Display, serif, sans and script fonts for your projects." },
-  { name: "🔘 Icons",              slug: "icons",                image: "/images/icons-cover.jpg",                desc: "Clean, scalable icon packs for UI and branding." },
-  { name: "🌐 Web Templates",      slug: "web-templates",        image: "/images/web-templates-cover.jpg",        desc: "Website templates, UI kits, and themes." },
-  { name: "🎥 Video Resources",    slug: "video-resources",      image: "/images/video-resources-cover.jpg",      desc: "Stock footage, overlays, LUTs, and templates." },
-  { name: "🎵 Audio Samples",      slug: "audio-samples",        image: "/images/audio-samples-cover.jpg",        desc: "Loops, one-shots, SFX and music beds for creators." },
-  { name: "📱 Social Media Kits",  slug: "social-media-kits",    image: "/images/social-media-kits-cover.jpg",    desc: "Packaged posts, graphics, and assets for social channels." },
-];
+// Emoji per category slug
+const emojiBySlug: Record<string, string> = {
+  "ai-chatgpt-guides": "🤖",
+  "planners-productivity": "🗓️",
+  "self-help-how-to": "📘",
+  "plr-mrr-bundles": "📦",
+  "video-courses-training": "🎥",
+  "complete-shop-packages": "🧰",
+  "health-fitness-ebooks": "📚",
+  "keto-diet-guides": "🥑",
+  "passive-income-side-hustles": "💸",
+  "web-templates": "🌐",
+  "prompt-packs-ai-tools": "🧠",
+  "fonts": "🔤",
+  "icons": "🔘",
+};
+
+// Short description per category slug
+const descBySlug: Record<string, string> = {
+  "ai-chatgpt-guides": "Playbooks, prompts, and AI workflows.",
+  "planners-productivity": "Planners, journals, and focus tools.",
+  "self-help-how-to": "Guides to improve skills and habits.",
+  "plr-mrr-bundles": "Rebrand & resell with PLR/MRR licenses.",
+  "video-courses-training": "Step-by-step video lessons & workshops.",
+  "complete-shop-packages": "Turnkey store bundles ready to sell.",
+  "health-fitness-ebooks": "Wellness, strength, and habit guides.",
+  "keto-diet-guides": "Meal plans, recipes, and trackers.",
+  "passive-income-side-hustles": "Systems and strategies to earn online.",
+  "web-templates": "Site themes, UI kits, and components.",
+  "prompt-packs-ai-tools": "Reusable prompt packs and utilities.",
+  "fonts": "Display, serif, sans & script collections.",
+  "icons": "Clean, scalable icons for UI & brand.",
+};
+
+// Derive image path; keep everything in one convention
+const imageFor = (slug: string) => `/images/categories/${slug}/cover.jpg`;
 
 export default function CategoriesPage() {
+  const categories = CATEGORIES.map(({ label, slug }) => ({
+    name: `${emojiBySlug[slug] ?? "📁"} ${label}`,
+    slug,
+    image: imageFor(slug),
+    desc: descBySlug[slug] ?? label,
+    plainLabel: label,
+  }));
+
   return (
     <main className="max-w-7xl mx-auto px-4 py-12">
       <h1 className="text-4xl font-bold text-center mb-12">🗂️ All Categories</h1>
@@ -29,7 +60,7 @@ export default function CategoriesPage() {
           <Link
             key={category.slug}
             href={`/categories/${category.slug}`}
-            aria-label={`Browse ${category.name}`}
+            aria-label={`Browse ${category.plainLabel}`}
             className="
               group block rounded-2xl border overflow-hidden bg-white
               shadow transition-all duration-300
@@ -39,10 +70,10 @@ export default function CategoriesPage() {
           >
             <CoverImage
               src={category.image}
-              alt={category.name}
+              alt={category.plainLabel}
               ratio="16/9"
-              fit="contain"
-              paddingClass="p-2"
+              fit="cover"
+              paddingClass="p-0"
               roundedClass="rounded-none"
               className="md:aspect-[3/2]"
               sizes="(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw"
@@ -52,11 +83,10 @@ export default function CategoriesPage() {
                 {category.name}
               </h2>
 
-              {/* Inline “more / less” under the subtitle */}
               <InlineMore
                 text={category.desc}
                 lines={2}
-                minChars={1}                 // always show the toggle
+                minChars={1}
                 className="mt-1 text-sm text-gray-600"
                 moreLabel="more"
                 lessLabel="less"
