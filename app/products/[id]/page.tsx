@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { products } from '@/data/products';
 import AddToCartButton from '@/components/add-to-cart-button';
 import ProductGallery from '@/components/product-gallery'; // ⬅️ restore gallery
+import BuyNowButton from '@/components/buy-now-button';     // ⬅️ client Buy button (uses /api/checkout)
 
 export const revalidate = 3600;
 
@@ -33,7 +34,7 @@ export async function generateMetadata({
     openGraph: {
       title: `${product.title} | Digital Products Artisan`,
       url: `https://digitalproductsartisan.com${canonical}`,
-      type: 'website', // Next.js doesn't support 'product' here
+      type: 'website',
       images: [{ url: absoluteImage }],
     },
     twitter: {
@@ -199,11 +200,19 @@ export default async function ProductPage({
             )}
           </div>
 
-          <div className="mt-6">
+          {/* Actions */}
+          <div className="mt-6 flex flex-wrap gap-3">
             <AddToCartButton
               productId={product.id}
               className="bg-black text-white hover:bg-black/90"
             />
+            <BuyNowButton
+              productId={product.id}
+              qty={1}
+              className="bg-blue-600 text-white hover:bg-blue-700"
+            >
+              Buy
+            </BuyNowButton>
           </div>
         </section>
       </div>

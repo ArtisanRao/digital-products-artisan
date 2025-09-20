@@ -3,35 +3,43 @@ import Stripe from "stripe";
 
 /** Map productId -> Stripe Price IDs by currency */
 const PRICE_BY_PRODUCT: Record<number, { USD?: string; EUR?: string }> = {
-  // TODO: fill these with your real prices
-  1: { EUR: "price_1S4qZbLRZXb99FYz8MhczfRW" },
+  1: { EUR: "price_1S4qZbLRZXb99FYz8MhczfRW" }, // TODO: add USD/EUR for each product you sell
 };
 
 const SUPPORTED = new Set(["USD", "EUR"]);
 
+/** Small helpers */
+const asInt = (v: unknown, fallback = 1) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? Math.max(1, Math.floor(n)) : fallback;
+};
+const asCurrency = (v: unknown, fallback: "USD" | "EUR" = "USD") =>
+  String(v || fallback).toUpperCase();
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
-    const productId = Number(body?.productId);
-    const qty = Math.max(1, Number(body?.qty ?? 1));
-    const currency = String(body?.currency || "USD").toUpperCase();
+    const productId = asInt(body?.productId, NaN);
+    const qty = asInt(body?.qty, 1);
+    const currency = asCurrency(body?.currency);
 
     if (!process.env.STRIPE_SECRET_KEY) {
       return NextResponse.json({ error: "Missing STRIPE_SECRET_KEY" }, { status: 500 });
     }
-    if (!productId || Number.isNaN(productId)) {
+    if (!Number.isFinite(productId)) {
       return NextResponse.json({ error: "Invalid productId" }, { status: 400 });
     }
     if (!SUPPORTED.has(currency)) {
       return NextResponse.json({ error: `Unsupported currency: ${currency}` }, { status: 400 });
     }
 
-    // Let the SDK use its own pinned apiVersion to avoid TS mismatch
+    // Use SDK's pinned API version (avoid TS mismatch)
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
     const priceId =
       (currency === "EUR" ? PRICE_BY_PRODUCT[productId]?.EUR : PRICE_BY_PRODUCT[productId]?.USD) ||
-      PRICE_BY_PRODUCT[productId]?.USD || PRICE_BY_PRODUCT[productId]?.EUR;
+      PRICE_BY_PRODUCT[productId]?.USD ||
+      PRICE_BY_PRODUCT[productId]?.EUR;
 
     if (!priceId) {
       return NextResponse.json(
@@ -40,14 +48,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const origin = req.headers.get("origin") || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    const origin =
+      req.headers.get("origin") ||
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      "http://localhost:3000";
+
     const cancelPath = `/products/${productId}`;
     const successPath = `/thank-you`;
 
-    // ✅ Use explicit payment_method_types to satisfy older typings
+    // Use explicit types to satisfy older Stripe typings; add Klarna when EUR
     const payment_method_types =
-      currency === "EUR" ? (["card", "klarna"] as Stripe.Checkout.SessionCreateParams.PaymentMethodType[])
-                         : (["card"] as Stripe.Checkout.SessionCreateParams.PaymentMethodType[]);
+      currency === "EUR"
+        ? (["card", "klarna"] as Stripe.Checkout.SessionCreateParams.PaymentMethodType[])
+        : (["card"] as Stripe.Checkout.SessionCreateParams.PaymentMethodType[]);
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -55,6 +68,10 @@ export async function POST(req: NextRequest) {
       line_items: [{ price: priceId, quantity: qty }],
       allow_promotion_codes: true,
       automatic_tax: { enabled: true },
+      billing_address_collection: "auto",     // fine for digital; change to 'required' if needed
+      submit_type: "pay",                      // nicer button copy in Stripe Checkout
+      client_reference_id: String(productId),  // handy for reconciling
+      metadata: { productId: String(productId), currency, qty: String(qty) },
       success_url: `${origin}${successPath}?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}${cancelPath}`,
     });
@@ -62,6 +79,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ url: session.url });
   } catch (err: any) {
     console.error("Checkout route error:", err);
-    return NextResponse.json({ error: err?.message || "Checkout error" }, { status: 500 });
+    // Surface a concise, user-safe message
+    const message = err?.message || "Checkout error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

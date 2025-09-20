@@ -9,7 +9,7 @@ import InlineMore from "@/components/ui/inline-more";
 import { Button } from "@/components/ui/button";
 import ShopActions from "@/components/shop-actions";
 import { products, productsById } from "@/data/products";
-import { getPreferredCurrency } from "@/lib/currency"; // ⬅️ include currency so EUR enables Klarna
+import { getPreferredCurrency } from "@/lib/currency";
 
 function findProduct(idOrSlug: string) {
   const asNum = Number(idOrSlug);
@@ -40,6 +40,7 @@ function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [n]);
 
   return (
@@ -118,11 +119,17 @@ export default function ProductPageBySlug() {
   const imgs: string[] = (p.images?.length ? p.images : [p.image]).filter(Boolean) as string[];
   const cover = imgs[0] ?? "/images/placeholder-cover.jpg";
 
+  // format price using the user's preferred currency (affects display only)
+  const currency = getPreferredCurrency();
+  const display = new Intl.NumberFormat(
+    currency === "EUR" ? "de-DE" : "en-US",
+    { style: "currency", currency }
+  ).format(p.price);
+
   const handleBuy = async () => {
     if (buyLoading) return; // prevent double-clicks
     setBuyLoading(true);
     try {
-      const currency = getPreferredCurrency(); // 👈 pass through so EUR can enable Klarna, etc.
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -147,6 +154,8 @@ export default function ProductPageBySlug() {
     }
   };
 
+  const canonicalHref = `/products/${encodeURIComponent(String(p.slug ?? p.id))}`;
+
   return (
     <main className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 py-8 lg:grid-cols-[1.2fr_.8fr]">
       <section style={{ zIndex: 1, position: "relative" }}>
@@ -156,7 +165,7 @@ export default function ProductPageBySlug() {
       <section className="isolate" style={{ position: "relative", zIndex: 60, pointerEvents: "auto" }}>
         <h1 className="text-4xl font-extrabold leading-tight" style={{ position: "relative", zIndex: 61, pointerEvents: "auto" }}>
           <Link
-            href={`/products/${encodeURIComponent(String(p.id))}`}
+            href={canonicalHref}
             className="underline decoration-transparent hover:decoration-current focus:decoration-current"
             style={{ pointerEvents: "auto" }}
           >
@@ -164,9 +173,7 @@ export default function ProductPageBySlug() {
           </Link>
         </h1>
 
-        <div className="mt-4 text-3xl font-semibold">
-          {new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(p.price)}
-        </div>
+        <div className="mt-4 text-3xl font-semibold">{display}</div>
 
         <div className="mt-4 text-gray-700">
           <InlineMore text={p.description ?? ""} lines={3} minChars={80} />
@@ -191,7 +198,7 @@ export default function ProductPageBySlug() {
               image: cover,
               description: p.description,
             }}
-            viewHref={`/products/${encodeURIComponent(String(p.id))}`}
+            viewHref={canonicalHref}
             goToCartAfterAdd={false}
             buyEnabled={false}
           />
