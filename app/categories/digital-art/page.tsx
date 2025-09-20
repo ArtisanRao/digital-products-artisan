@@ -48,7 +48,7 @@ export default function DigitalArtPage() {
               : 0;
 
           const primaryImg = `/images/${CAT}/${slug}.jpg`;
-          const detailHref = `/products/${encodeURIComponent(slug)}`; // ← single product page
+          const detailHref = `/products/${encodeURIComponent(slug)}`;
 
           return (
             <div
@@ -70,6 +70,7 @@ export default function DigitalArtPage() {
 
                 <p className="mb-3 text-lg font-bold">{formatEUR(price)}</p>
 
+                {/* View should go to the single product page; Add to cart is blue/white via ShopActions */}
                 <ShopActions
                   item={{
                     id: slug,
@@ -78,7 +79,7 @@ export default function DigitalArtPage() {
                     image: primaryImg,
                     description: p.description,
                   }}
-                  viewHref={detailHref}      {/* View → product page */}
+                  viewHref={detailHref}
                   goToCartAfterAdd={false}
                 />
               </div>
