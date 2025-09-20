@@ -5,7 +5,9 @@ import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
 import { CATEGORIES } from "@/data/categories";
 
-/** Prefer flat /images/<slug>.jpg, then folder jpgs, then png/webp, then default. */
+/** Prefer /images/<slug>.jpg, then folder jpgs, then png/webp, then default.
+ *  Also expose which URL is being tried via data attributes for debugging.
+ */
 function CategoryCover({
   slug,
   alt,
@@ -15,19 +17,20 @@ function CategoryCover({
   alt: string;
   overrideSrc?: string;
 }) {
-  const ver = process.env.NEXT_PUBLIC_ASSET_VERSION ?? "v3";
+  // bump this string to force-bust caches when you add/rename files
+  const ver = process.env.NEXT_PUBLIC_ASSET_VERSION ?? "v6";
 
   const candidates: string[] = [
     ...(overrideSrc ? [overrideSrc] : []),
 
-    // 1) Flat .jpg cover — your setup
+    // 1) Flat jpg (what you said you have)
     `/images/${slug}.jpg`,
 
-    // 2) Per-category folder .jpg variants
+    // 2) Per-category folder jpgs
     `/images/categories/${slug}/cover.jpg`,
     `/images/categories/${slug}/hero.jpg`,
 
-    // 3) Optional png/webp fallbacks (in case some differ)
+    // 3) Optional png/webp fallbacks
     `/images/${slug}.png`,
     `/images/${slug}.webp`,
     `/images/categories/${slug}/cover.png`,
@@ -40,18 +43,27 @@ function CategoryCover({
   const src = `${pick}?${ver}`;
 
   return (
-    <img
-      src={src}
-      alt={alt}
-      className="aspect-[16/9] w-full rounded-none object-cover md:aspect-[3/2]"
-      loading="lazy"
-      decoding="async"
-      onError={() => setIdx((i) => i + 1)}
-    />
+    <div className="relative">
+      <img
+        src={src}
+        alt={alt}
+        className="aspect-[16/9] w-full rounded-none object-cover md:aspect-[3/2]"
+        loading="lazy"
+        decoding="async"
+        onError={() => setIdx((i) => i + 1)}
+        data-current-src={pick}           // ← inspect this in DevTools
+        title={pick}                      // ← hover to see which URL is used
+      />
+      {process.env.NODE_ENV !== "production" && (
+        <div className="pointer-events-none absolute bottom-1 right-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-white">
+          {pick}
+        </div>
+      )}
+    </div>
   );
 }
 
-// Emoji per category slug
+// Emojis
 const emojiBySlug: Record<string, string> = {
   "ai-chatgpt-guides": "🤖",
   "planners-productivity": "🗓️",
@@ -68,7 +80,7 @@ const emojiBySlug: Record<string, string> = {
   "icons": "🔘",
 };
 
-// Short description per category slug
+// Descriptions
 const descBySlug: Record<string, string> = {
   "ai-chatgpt-guides": "Playbooks, prompts, and AI workflows.",
   "planners-productivity": "Planners, journals, and focus tools.",
@@ -86,7 +98,7 @@ const descBySlug: Record<string, string> = {
 };
 
 export default function CategoriesPage() {
-  // If you add { image: "/images/custom-name.jpg" } in data/categories.ts, it will be used first.
+  // Optional: add { image: "/images/custom-name.jpg" } per category in data/categories.ts
   const categories = CATEGORIES.map((c: any) => ({
     name: `${emojiBySlug[c.slug] ?? "📁"} ${c.label}`,
     slug: c.slug,
@@ -112,12 +124,10 @@ export default function CategoriesPage() {
               alt={category.plainLabel}
               overrideSrc={category.overrideSrc}
             />
-
             <div className="p-4">
               <h2 className="text-xl font-semibold transition-colors group-hover:text-blue-600">
                 {category.name}
               </h2>
-
               <InlineMore
                 text={category.desc}
                 lines={2}
