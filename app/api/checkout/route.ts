@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { products } from "@/data/products"; // ← use your local catalog
+import { products } from "@/data/products";
 
 const SUPPORTED = new Set(["USD", "EUR"]);
 
@@ -28,14 +28,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Unknown product ${productId}` }, { status: 400 });
     }
 
-    // Build absolute URLs
     const origin = req.headers.get("origin") || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
     const imageRel = (Array.isArray((product as any).images) ? (product as any).images[0] : product.image) || "";
     const imageAbs = imageRel?.startsWith("http") ? imageRel : `${origin}${imageRel || ""}`;
 
-    // Stripe expects lowercase ISO currency ("eur", "usd")
-    const currencyLc = currency.toLowerCase() as Stripe.Checkout.SessionCreateParams.LineItem.PriceData.Currency;
-    const unit_amount = Math.round(Number(product.price) * 100); // €12.34 -> 1234
+    // Lowercase ISO code for Stripe ("eur" | "usd"); avoid TS type that doesn't exist in your SDK
+    const currencyLc = currency === "EUR" ? "eur" : "usd";
+    const unit_amount = Math.round(Number(product.price) * 100);
 
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -51,7 +50,7 @@ export async function POST(req: NextRequest) {
         {
           quantity: qty,
           price_data: {
-            currency: currencyLc,
+            currency: currencyLc,      // ← just a lowercase string
             unit_amount,
             product_data: {
               name: product.title,
@@ -78,7 +77,6 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// Optional: reject accidental GETs (your logs showed 405s already)
 export async function GET() {
   return NextResponse.json({ error: "Method Not Allowed" }, { status: 405 });
 }
