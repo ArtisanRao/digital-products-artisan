@@ -100,7 +100,6 @@ If you have any questions, please contact me and I will be more than happy to he
     downloads: 1500,
     bestseller: true,
     image: "/images/products/buy-this-complete-shop/cover.jpg",
-    // Secure file served via /api/download
     downloadPath: "private/buy-this-complete-shop/main.pdf",
   },
   {
@@ -220,7 +219,7 @@ Instant digital download; read on any device.`,
 export const products: Product[] = RAW_PRODUCTS.map((p) => {
   const newLabel = normalizeCategoryLabel(p.category);
   const ensuredSlug =
-    p.categorySlug ?? labelToSlugAny(p.category) ?? labelToSlugAny(newLabel);
+    labelToSlugAny(p.category) ?? labelToSlugAny(newLabel);
 
   // dev warning to help you gradually clean up RAW_PRODUCTS
   if (process.env.NODE_ENV !== "production" && p.category in LEGACY_CATEGORY_MAP) {
