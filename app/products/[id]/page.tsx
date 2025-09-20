@@ -3,8 +3,8 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { products } from '@/data/products';
 import AddToCartButton from '@/components/add-to-cart-button';
-import ProductGallery from '@/components/product-gallery'; // ⬅️ restore gallery
-import BuyNowButton from '@/components/buy-now-button';     // ⬅️ client Buy button (uses /api/checkout)
+import ProductGallery from '@/components/product-gallery';
+import BuyNowButton from '@/components/buy-now-button';
 
 export const revalidate = 3600;
 
@@ -57,7 +57,6 @@ export default async function ProductPage({
 
   const canonicalAbs = `https://digitalproductsartisan.com/products/${id}`;
 
-  // Build image list for gallery
   const imagesRel =
     Array.isArray((product as any).images) && (product as any).images.length
       ? (product as any).images
@@ -68,18 +67,16 @@ export default async function ProductPage({
     src.startsWith('http') ? src : `https://digitalproductsartisan.com${src}`
   );
 
-  // Optional “coverage” countries to satisfy Merchant warnings
   const POLICY_COUNTRIES = [
     'US','CA','GB','DE','FR','ES','IT','NL','SE','NO','FI','DK','IE',
     'PT','PL','AT','BE','CH','AU','NZ'
   ];
 
-  // ---- JSON-LD: Product ----
   const today = new Date();
-  const priceValidFrom = today.toISOString().slice(0, 10); // YYYY-MM-DD
+  const priceValidFrom = today.toISOString().slice(0, 10);
   const priceValidUntilDate = new Date(today);
   priceValidUntilDate.setFullYear(priceValidUntilDate.getFullYear() + 1);
-  const priceValidUntil = priceValidUntilDate.toISOString().slice(0, 10); // YYYY-MM-DD
+  const priceValidUntil = priceValidUntilDate.toISOString().slice(0, 10);
 
   const productLd = {
     '@context': 'https://schema.org',
@@ -128,7 +125,6 @@ export default async function ProductPage({
     ],
   };
 
-  // ---- JSON-LD: Breadcrumbs ----
   const breadcrumbsLd = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -139,7 +135,6 @@ export default async function ProductPage({
     ],
   };
 
-  // ---------- Read more / Show less (server-only; no client JS) ----------
   const fullText =
     ((product as any).longDescription as string | undefined)?.trim() ||
     product.description ||
@@ -160,7 +155,6 @@ export default async function ProductPage({
       </nav>
 
       <div className="grid lg:grid-cols-2 gap-8">
-        {/* Gallery with left-side thumbnail rail */}
         <div className="w-full">
           <ProductGallery images={galleryImages} alt={product.title} />
         </div>
@@ -168,7 +162,6 @@ export default async function ProductPage({
         <section>
           <h1 className="text-3xl font-bold">{product.title}</h1>
 
-          {/* Short teaser + natively expandable remainder */}
           <div className="mt-3 text-gray-700 text-[15px] leading-relaxed">
             <p className="whitespace-pre-line">
               {teaser}
@@ -202,14 +195,17 @@ export default async function ProductPage({
 
           {/* Actions */}
           <div className="mt-6 flex flex-wrap gap-3">
+            {/* Blue/white Add to cart */}
             <AddToCartButton
               productId={product.id}
-              className="bg-black text-white hover:bg-black/90"
+              className="bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
             />
+
+            {/* Buy → Stripe Checkout */}
             <BuyNowButton
               productId={product.id}
               qty={1}
-              className="bg-blue-600 text-white hover:bg-blue-700"
+              className="bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
             >
               Buy
             </BuyNowButton>
@@ -217,7 +213,6 @@ export default async function ProductPage({
         </section>
       </div>
 
-      {/* SEO: JSON-LD */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productLd) }}
