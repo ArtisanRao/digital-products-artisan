@@ -39,7 +39,6 @@ const items: Item[] = [
   },
 ];
 
-// Try multiple sensible filenames (category folder, root, -cover variants) + safe fallbacks
 const imgCandidates = (slug: string) => [
   `/images/${IMG_FOLDER}/${slug}.jpg`,
   `/images/${IMG_FOLDER}/${slug}-cover.jpg`,
@@ -71,6 +70,7 @@ export default function PassiveIncomeAndSideHustlesPage() {
               : 0;
 
           const primaryImg = `/images/${IMG_FOLDER}/${slug}.jpg`;
+          const detailHref = `/products/${encodeURIComponent(slug)}`; // ← route to single product page
 
           return (
             <div
@@ -83,7 +83,6 @@ export default function PassiveIncomeAndSideHustlesPage() {
               <div className="p-4">
                 <h2 className="mb-2 text-xl font-semibold">{p.title}</h2>
 
-                {/* Inline “More / Less” under subtitle (force show) */}
                 <InlineMore
                   text={p.description}
                   lines={2}
@@ -102,6 +101,8 @@ export default function PassiveIncomeAndSideHustlesPage() {
                     image: primaryImg,
                     description: p.description,
                   }}
+                  viewHref={detailHref}   // ← View → product detail
+                  goToCartAfterAdd={false}
                 />
               </div>
             </div>
