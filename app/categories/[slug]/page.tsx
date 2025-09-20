@@ -8,40 +8,28 @@ type CatInfo = { title: string; description: string; folder: string };
 
 // Slug → UI text + folder under /public/images/<folder>
 const CATEGORIES: Record<string, CatInfo> = {
-  // ===== New canonical slugs =====
-  "health-and-fitness-ebooks":      { title: "Health & Fitness eBooks",       description: "Digital books, guides, and educational content.",            folder: "ebooks" },
-  "ai-and-chatgpt-guides":          { title: "AI & ChatGPT Guides",           description: "Step-by-step tutorials, playbooks, and use-cases for AI.",   folder: "digital-art" },
-  "complete-shop-packages":         { title: "Complete Shop Packages",        description: "Ready-to-sell, rebrandable bundles for instant storefronts.", folder: "templates" },
-  "marketing-tools":                { title: "Marketing Tools",               description: "Prompts, swipe files, and growth resources for marketing.",  folder: "marketing-tools" },
-  "planners-and-productivity":      { title: "Planners & Productivity",       description: "Digital planners, journals, and productivity tools.",        folder: "printable-planners" },
-  "self-help-and-how-to":           { title: "Self-Help & How-To",            description: "Actionable guides and practical skills for everyday life.",  folder: "photography-prints" },
-  "keto-and-diet-guides":           { title: "Keto & Diet Guides",            description: "Meal plans, shopping lists, and nutrition tracking.",        folder: "fonts" },
-  "passive-income-and-side-hustles":{ title: "Passive Income & Side Hustles", description: "Blueprints, checklists, and kits to start earning online.",  folder: "icons" },
-  "web-templates":                  { title: "Web Templates",                 description: "Website templates, UI kits, and themes.",                    folder: "web-templates" },
-  "video-courses-and-training":     { title: "Video Courses & Training",      description: "Step-by-step video lessons, screenflows, and workshops.",   folder: "video-resources" },
-  "plr-and-mrr-bundles":            { title: "PLR & MRR Bundles",             description: "Rebrandable products with resale rights to grow fast.",      folder: "audio-samples" },
-  "social-media-kits":              { title: "Social Media Kits",             description: "Packaged posts, graphics, and assets for social channels.",  folder: "social-media-kits" },
-  "prompt-packs-and-ai-tools":      { title: "Prompt Packs & AI Tools",       description: "Curated prompt packs, automations, and AI utilities.",       folder: "marketing-tools" },
+  // New
+  ebooks:               { title: "eBooks",             description: "Digital books, guides, and educational content.",            folder: "ebooks" },
+  "digital-art":        { title: "Digital Art",        description: "Illustrations, posters, wallpapers and creative assets.",   folder: "digital-art" },
+  templates:            { title: "Templates",          description: "Design templates and graphics ready to use.",               folder: "templates" },
+  "marketing-tools":    { title: "Marketing Tools",    description: "Prompts, swipe files, and growth resources for marketing.", folder: "marketing-tools" },
+  "printable-planners": { title: "Printable Planners", description: "Digital planners, journals, and productivity tools.",       folder: "printable-planners" },
+  "photography-prints": { title: "Photography Prints", description: "High-quality photo prints, presets, and media assets.",     folder: "photography-prints" },
+  fonts:                { title: "Fonts",              description: "Display, serif, sans and script fonts for your projects.",  folder: "fonts" },
+  icons:                { title: "Icons",              description: "Clean, scalable icon packs for UI and branding.",           folder: "icons" },
+  "web-templates":      { title: "Web Templates",      description: "Website templates, UI kits, and themes.",                   folder: "web-templates" },
+  "video-resources":    { title: "Video Resources",    description: "Stock footage, overlays, LUTs, and templates.",             folder: "video-resources" },
+  "audio-samples":      { title: "Audio Samples",      description: "Loops, one-shots, SFX and music beds for creators.",        folder: "audio-samples" },
+  "social-media-kits":  { title: "Social Media Kits",  description: "Packaged posts, graphics, and assets for social channels.", folder: "social-media-kits" },
 
-  // ===== Legacy slugs → still render (plus server redirects in next.config.js) =====
-  ebooks:               { title: "Health & Fitness eBooks",       description: "Digital books, guides, and educational content.",            folder: "ebooks" },
-  "digital-art":        { title: "AI & ChatGPT Guides",           description: "Step-by-step tutorials, playbooks, and use-cases for AI.",   folder: "digital-art" },
-  templates:            { title: "Complete Shop Packages",        description: "Ready-to-sell, rebrandable bundles for instant storefronts.", folder: "templates" },
-  "printable-planners": { title: "Planners & Productivity",       description: "Digital planners, journals, and productivity tools.",        folder: "printable-planners" },
-  "photography-prints": { title: "Self-Help & How-To",            description: "Actionable guides and practical skills for everyday life.",  folder: "photography-prints" },
-  fonts:                { title: "Keto & Diet Guides",            description: "Meal plans, shopping lists, and nutrition tracking.",        folder: "fonts" },
-  icons:                { title: "Passive Income & Side Hustles", description: "Blueprints, checklists, and kits to start earning online.",  folder: "icons" },
-  "video-resources":    { title: "Video Courses & Training",      description: "Step-by-step video lessons, screenflows, and workshops.",   folder: "video-resources" },
-  "audio-samples":      { title: "PLR & MRR Bundles",             description: "Rebrandable products with resale rights to grow fast.",      folder: "audio-samples" },
-
-  // Older alternates you had
-  "ebooks-guides":       { title: "Health & Fitness eBooks",       description: "Digital books, guides, and educational content.",            folder: "ebooks" },
-  "templates-graphics":  { title: "Complete Shop Packages",        description: "Ready-to-sell, rebrandable bundles for instant storefronts.", folder: "templates" },
-  "business-templates":  { title: "Complete Shop Packages",        description: "Ready-to-sell, rebrandable bundles for instant storefronts.", folder: "templates" },
-  "ai-prompts":          { title: "Prompt Packs & AI Tools",       description: "Curated prompt packs, automations, and AI utilities.",       folder: "marketing-tools" },
-  "planners-organizers": { title: "Planners & Productivity",       description: "Digital planners, journals, and productivity tools.",        folder: "printable-planners" },
-  "code-development":    { title: "Social Media Kits",             description: "Packaged posts, graphics, and assets for social channels.",  folder: "social-media-kits" },
-  "photography-media":   { title: "Self-Help & How-To",            description: "Actionable guides and practical skills for everyday life.",  folder: "photography-prints" },
+  // Legacy → forward to new
+  "ebooks-guides":       { title: "eBooks",             description: "Digital books, guides, and educational content.",            folder: "ebooks" },
+  "templates-graphics":  { title: "Templates",          description: "Design templates and graphics ready to use.",               folder: "templates" },
+  "business-templates":  { title: "Templates",          description: "Design templates and graphics ready to use.",               folder: "templates" },
+  "ai-prompts":          { title: "Marketing Tools",    description: "Prompts, swipe files, and growth resources for marketing.", folder: "marketing-tools" },
+  "planners-organizers": { title: "Printable Planners", description: "Digital planners, journals, and productivity tools.",       folder: "printable-planners" },
+  "code-development":    { title: "Social Media Kits",  description: "Packaged posts, graphics, and assets for social channels.", folder: "social-media-kits" },
+  "photography-media":   { title: "Photography Prints", description: "High-quality photo prints, presets, and media assets.",     folder: "photography-prints" },
 };
 
 // Pre-render all known slugs
@@ -112,7 +100,7 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     <main className="container mx-auto px-4 py-16">
       <h1 className="text-3xl md:text-4xl font-bold mb-2">{cat.title}</h1>
 
-      {/* Category description with inline “More / Less” */}
+      {/* Category description with inline “More / Less” (same behavior as eBooks) */}
       <InlineMore text={cat.description} lines={1} minChars={40} className="text-gray-700 mb-2" />
 
       {items.length ? (

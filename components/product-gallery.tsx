@@ -10,38 +10,56 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 
-type Props = { images: string[]; alt?: string };
-const PLACEHOLDER = '/images/placeholder-cover.jpg';
+type Props = {
+  images: string[];
+  alt?: string;
+};
 
 export default function ProductGallery({ images, alt = 'Product image' }: Props) {
-  const safeImages = React.useMemo(
-    () => (images?.filter(Boolean)?.length ? images.filter(Boolean) : [PLACEHOLDER]),
-    [images]
-  );
-
   const [index, setIndex] = React.useState(0);
   const [open, setOpen] = React.useState(false);
-  const len = safeImages.length;
-  const prev = React.useCallback(() => setIndex(i => (i - 1 + len) % len), [len]);
-  const next = React.useCallback(() => setIndex(i => (i + 1) % len), [len]);
 
-  // Preload neighbors
+  const len = images.length;
+
+  const prev = React.useCallback(() => {
+    setIndex((i) => (i - 1 + len) % len);
+  }, [len]);
+
+  const next = React.useCallback(() => {
+    setIndex((i) => (i + 1) % len);
+  }, [len]);
+
+  // ---- SPEED: Preload neighbors (and first few on mount) ----
   const loaded = React.useRef<Set<number>>(new Set());
-  const preload = React.useCallback((idxs: number[]) => {
-    if (typeof window === 'undefined') return;
-    idxs.forEach(i0 => {
-      const i = ((i0 % len) + len) % len;
-      if (!loaded.current.has(i)) {
-        const img = new window.Image();
-        img.src = safeImages[i];
-        loaded.current.add(i);
-      }
-    });
-  }, [safeImages, len]);
-  React.useEffect(() => { if (len) preload([0,1,2]); }, [len, preload]);
-  React.useEffect(() => { if (len) preload([index-1, index+1]); }, [index, len, preload]);
 
-  // Keyboard in fullscreen
+  const preload = React.useCallback(
+    (idxs: number[]) => {
+      idxs.forEach((i) => {
+        const j = ((i % len) + len) % len; // clamp
+        if (!loaded.current.has(j)) {
+          const img = new window.Image();
+          img.src = images[j];
+          loaded.current.add(j);
+        }
+      });
+    },
+    [images, len]
+  );
+
+  // Preload first 3 on mount
+  React.useEffect(() => {
+    if (typeof window === 'undefined' || !len) return;
+    preload([0, 1, 2]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [len]);
+
+  // Always keep neighbors warm
+  React.useEffect(() => {
+    if (typeof window === 'undefined' || !len) return;
+    preload([index - 1, index + 1]);
+  }, [index, len, preload]);
+
+  // Keyboard support in fullscreen
   React.useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -53,24 +71,24 @@ export default function ProductGallery({ images, alt = 'Product image' }: Props)
     return () => window.removeEventListener('keydown', onKey);
   }, [open, prev, next]);
 
-  const current = safeImages[index] ?? PLACEHOLDER;
+  const current = images[index] ?? images[0];
 
   return (
     <>
-      <div className="grid w-full items-start gap-4 grid-cols-[80px,1fr] sm:grid-cols-[96px,1fr] relative z-0 product-gallery-block">
+      <div className="grid grid-cols-[80px,1fr] sm:grid-cols-[96px,1fr] gap-4 w-full items-start">
         {/* Thumbnails */}
-        <div className="sticky top-4 z-10 w-20 sm:w-24 self-start flex flex-col gap-3 pointer-events-auto">
-          {safeImages.map((src, i) => {
+        <div className="flex flex-col gap-3 w-20 sm:w-24 sticky top-4 self-start z-20">
+          {images.map((src, i) => {
             const active = i === index;
             return (
               <button
                 key={src + i}
-                type="button"
                 onClick={() => setIndex(i)}
-                onMouseEnter={() => setIndex(i)}
                 className={[
                   'relative aspect-square overflow-hidden rounded-md border transition ring-offset-2',
-                  active ? 'ring-2 ring-blue-600 border-blue-200' : 'hover:shadow-sm border-gray-200',
+                  active
+                    ? 'ring-2 ring-blue-600 border-blue-200'
+                    : 'hover:shadow-sm border-gray-200',
                 ].join(' ')}
                 aria-label={`Show image ${i + 1}`}
               >
@@ -80,111 +98,108 @@ export default function ProductGallery({ images, alt = 'Product image' }: Props)
                   fill
                   sizes="96px"
                   className="object-cover"
-                  onError={(e) => { (e.currentTarget as any).src = PLACEHOLDER; }}
                 />
               </button>
             );
           })}
         </div>
 
-        {/* Main viewer — IMPORTANT: ignore pointer events by default */}
-        <div className="relative w-full max-w-full overflow-hidden rounded-lg border bg-white pointer-events-none">
-          {/* Fullscreen trigger */}
+        {/* Main image / viewer */}
+        <div className="relative w-full max-w-full overflow-hidden rounded-lg border bg-white">
+          {/* Expand */}
           <button
-            type="button"
             onClick={() => setOpen(true)}
-            className="absolute right-3 top-3 z-30 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/90 shadow-md hover:bg-white pointer-events-auto"
+            className="absolute top-3 right-3 z-30 inline-flex items-center justify-center rounded-full w-10 h-10 bg-white/90 shadow-md hover:bg-white"
             aria-label="Open fullscreen"
           >
-            <Maximize2 className="h-5 w-5" />
+            <Maximize2 className="w-5 h-5" />
           </button>
 
-          {/* Prev / Next */}
+          {/* Prev / Next on page */}
           {len > 1 && (
             <>
               <button
-                type="button"
                 onClick={prev}
-                className="absolute left-3 top-1/2 z-30 -translate-y-1/2 inline-flex h-11 w-11 items-center justify-center rounded-full bg-neutral-800/90 text-white shadow-md hover:bg-neutral-900 focus:outline-none pointer-events-auto"
+                className="absolute left-3 top-1/2 -translate-y-1/2 z-30 inline-flex items-center justify-center rounded-full w-11 h-11 bg-neutral-800/90 text-white shadow-md hover:bg-neutral-900 focus:outline-none"
                 aria-label="Previous image"
               >
-                <ChevronLeft className="h-5 w-5" />
+                <ChevronLeft className="w-5 h-5" />
               </button>
               <button
-                type="button"
                 onClick={next}
-                className="absolute right-3 top-1/2 z-30 -translate-y-1/2 inline-flex h-11 w-11 items-center justify-center rounded-full bg-neutral-800/90 text-white shadow-md hover:bg-neutral-900 focus:outline-none pointer-events-auto"
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-30 inline-flex items-center justify-center rounded-full w-11 h-11 bg-neutral-800/90 text-white shadow-md hover:bg-neutral-900 focus:outline-none"
                 aria-label="Next image"
               >
-                <ChevronRight className="h-5 w-5" />
+                <ChevronRight className="w-5 h-5" />
               </button>
             </>
           )}
 
+          {/* Main image: eager + priority for instant paint */}
           <div className="w-full">
             <Image
-              key={current}
+              key={current}                // ensure swap without reusing node
               src={current}
               alt={alt}
               width={1600}
               height={1200}
-              className="h-auto w-full object-contain transition-transform duration-300 hover:scale-[1.02]"
+              className="w-full h-auto object-contain"
               loading="eager"
               priority
-              onError={(e) => { (e.currentTarget as any).src = PLACEHOLDER; }}
             />
           </div>
         </div>
       </div>
 
-      {/* Fullscreen dialog unchanged */}
+      {/* FULLSCREEN viewer */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="z-[100] h-screen w-screen max-w-none border-none bg-transparent p-0 shadow-none" aria-describedby={undefined}>
+        <DialogContent
+          className="z-[100] p-0 bg-transparent border-none shadow-none max-w-none w-screen h-screen"
+          aria-describedby={undefined}
+        >
           <DialogTitle className="sr-only">{alt}</DialogTitle>
           <DialogDescription className="sr-only">Fullscreen preview</DialogDescription>
 
-          <div className="relative flex h-full w-full items-center justify-center bg-black/80">
+          <div className="relative w-full h-full bg-black/80 flex items-center justify-center">
+            {/* Close */}
             <button
-              type="button"
               onClick={() => setOpen(false)}
-              className="absolute right-4 top-4 z-[120] inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/95 text-gray-800 shadow-lg hover:bg-white"
+              className="absolute top-4 right-4 z-[120] inline-flex items-center justify-center rounded-full w-12 h-12 bg-white/95 text-gray-800 shadow-lg hover:bg-white"
               aria-label="Close fullscreen"
             >
-              <X className="h-7 w-7" />
+              <X className="w-7 h-7" />
             </button>
 
+            {/* Prev / Next in fullscreen */}
             {len > 1 && (
               <>
                 <button
-                  type="button"
                   onClick={prev}
-                  className="absolute left-4 top-1/2 z-[120] -translate-y-1/2 inline-flex h-12 w-12 items-center justify-center rounded-full bg-neutral-800/90 text-white shadow-lg hover:bg-neutral-900 focus:outline-none"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-[120] inline-flex items-center justify-center rounded-full w-12 h-12 bg-neutral-800/90 text-white shadow-lg hover:bg-neutral-900 focus:outline-none"
                   aria-label="Previous image"
                 >
-                  <ChevronLeft className="h-6 w-6" />
+                  <ChevronLeft className="w-6 h-6" />
                 </button>
                 <button
-                  type="button"
                   onClick={next}
-                  className="absolute right-4 top-1/2 z-[120] -translate-y-1/2 inline-flex h-12 w-12 items-center justify-center rounded-full bg-neutral-800/90 text-white shadow-lg hover:bg-neutral-900 focus:outline-none"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-[120] inline-flex items-center justify-center rounded-full w-12 h-12 bg-neutral-800/90 text-white shadow-lg hover:bg-neutral-900 focus:outline-none"
                   aria-label="Next image"
                 >
-                  <ChevronRight className="h-6 w-6" />
+                  <ChevronRight className="w-6 h-6" />
                 </button>
               </>
             )}
 
-            <div className="relative h-auto w-auto max-h-[85vh] max-w-[95vw]">
+            <div className="relative max-w-[95vw] max-h-[85vh] w-auto h-auto">
               <Image
                 key={`fs-${current}`}
                 src={current}
                 alt={alt}
                 width={1800}
                 height={1400}
-                className="h-auto w-auto max-h-[85vh] max-w-[95vw] rounded-lg object-contain shadow-2xl"
+                className="w-auto max-w-[95vw] h-auto max-h-[85vh] object-contain rounded-lg shadow-2xl"
                 loading="eager"
                 priority
-                onError={(e) => { (e.currentTarget as any).src = PLACEHOLDER; }}
               />
             </div>
           </div>

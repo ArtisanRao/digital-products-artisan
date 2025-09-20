@@ -5,23 +5,22 @@ import HoverableCover from "@/components/ui/hoverable-cover";
 import ShopActions from "@/components/shop-actions";
 import InlineMore from "@/components/ui/inline-more";
 
-const CAT = "icons";
+const CAT = "video-resources";
 
 type Item = {
-  id: string;          // stable key
+  id: string;        // stable key
   slug: string;
   title: string;
-  price: number;       // keep as number here
+  price: number;     // keep as number
   description: string;
 };
 
 const items: Item[] = [
-  { id: "minimal-icons-pack",  slug: "minimal-icons-pack",  title: "Minimal Icons Pack",  price: 4.99, description: "Clean, consistent 24px line icons for interfaces." },
-  { id: "business-icons-pack", slug: "business-icons-pack", title: "Business Icons Pack", price: 5.49, description: "Office, finance & analytics icons for dashboards." },
-  { id: "social-icons-pack",   slug: "social-icons-pack",   title: "Social Media Icons",  price: 3.99, description: "Brand-safe logos in multiple styles and sizes." },
+  { id: "video-resources", slug: "video-resources",           title: "Video Resources Hub",       price: 8.99,  description: "B-roll, lower thirds, overlays." },
+  { id: "stock-footage-mega-bundle", slug: "stock-footage-mega-bundle", title: "Stock Footage Mega Bundle", price: 12.99, description: "Huge, royalty-free stock set." },
+  { id: "youtube-channel-kit", slug: "youtube-channel-kit",   title: "YouTube Channel Kit",       price: 6.49,  description: "Intros, end screens, thumbnails." },
 ];
 
-// Try multiple sensible filenames (category folder, root, -cover variants) + safe fallbacks
 const imgCandidates = (slug: string) => [
   `/images/${CAT}/${slug}.jpg`,
   `/images/${CAT}/${slug}-cover.jpg`,
@@ -30,17 +29,17 @@ const imgCandidates = (slug: string) => [
   `/images/${CAT}/cover.jpg`,
   `/images/${CAT}-cover.jpg`,
   `/images/${CAT}.jpg`,
-  `/images/icons-cover.jpg`,
+  `/images/video-resources-cover.jpg`,
   `/images/placeholder-cover.jpg`,
 ];
 
 const formatEUR = (n: number) =>
   new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
 
-export default function IconsPage() {
+export default function VideoResourcesPage() {
   return (
-    <main className="mx-auto max-w-7xl px-4 py-12">
-      <h1 className="mb-10 text-center text-4xl font-bold">🔘 Icons</h1>
+    <main className="max-w-7xl mx-auto px-4 py-12">
+      <h1 className="text-4xl font-bold text-center mb-10">🎥 Video Resources</h1>
 
       <CategoryGrid
         items={items}
@@ -58,20 +57,24 @@ export default function IconsPage() {
           return (
             <div
               key={String(p.id)}
-              className="group overflow-hidden rounded-2xl border bg-white shadow transition hover:shadow-lg"
+              className="group rounded-2xl border bg-white overflow-hidden shadow transition hover:shadow-lg"
             >
-              {/* Square looks best for icon sets */}
-              <HoverableCover srcs={imgCandidates(slug)} alt={p.title} ratio="1/1" fit="contain" />
+              <HoverableCover srcs={imgCandidates(slug)} alt={p.title} ratio="16/9" fit="contain" />
 
               <div className="p-4">
-                <h2 className="mb-2 text-xl font-semibold">{p.title}</h2>
+                <h2 className="text-xl font-semibold mb-2">{p.title}</h2>
 
-                {/* Inline “More / Less” under subtitle (force show) */}
-                <InlineMore text={p.description} lines={2} minChars={1} className="mb-2 text-sm text-gray-600" />
+                {/* Inline “More / Less” under subtitle — force show using minChars */}
+                <InlineMore
+                  text={p.description}
+                  lines={2}
+                  minChars={1}
+                  className="text-gray-600 text-sm mb-2"
+                />
 
-                <p className="mb-3 text-lg font-bold">{formatEUR(price)}</p>
+                <p className="text-lg font-bold">{formatEUR(price)}</p>
 
-                {/* Blue View + Add to Cart (consistent site-wide) */}
+                {/* View (checkout) + Add to Cart */}
                 <ShopActions
                   item={{
                     id: slug,

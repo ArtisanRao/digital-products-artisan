@@ -10,7 +10,6 @@ import { Toaster } from "@/components/ui/toaster";
 import LiveChat from "@/components/live-chat";
 import AutoCurrency from "@/components/auto-currency";
 import Script from "next/script";
-import PwaReloader from "@/components/pwa-reloader"; // ⬅️ auto-refresh on new service worker
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -91,9 +90,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
 
       <body className={inter.className}>
-        {/* Ensures users get the newest JS/CSS after deploys */}
-        <PwaReloader />
-
         <AuthProvider>
           <CartProvider>
             {/* Auto-detect & store currency */}

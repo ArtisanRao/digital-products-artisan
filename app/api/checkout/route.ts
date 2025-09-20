@@ -11,7 +11,6 @@ function getStripe(): Stripe {
   if (_stripe) return _stripe;
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) throw new Error("STRIPE_SECRET_KEY is not set");
-  // Let the SDK use its pinned API version to avoid TS mismatch
   _stripe = new Stripe(key);
   return _stripe;
 }
@@ -24,7 +23,7 @@ type BodyLines = {
   lines: Array<{
     id: number | string;
     name?: string;
-    price?: number;  // fallback only; catalog wins if present
+    price?: number;     // client-supplied fallback; ignored if we find a catalog match
     image?: string;
     quantity?: number;
   }>;
@@ -33,24 +32,15 @@ type BodyLines = {
 type Body = BodySingle | BodyCart | BodyLines;
 // ───────────────────────────────────────────────────────────────────────────────
 
-const MAX_QTY_PER_LINE = 50;
-
-const EU = new Set([
-  "AT","BE","BG","HR","CY","CZ","DK","EE","FI","FR","DE","GR","HU","IE","IT",
-  "LV","LT","LU","MT","NL","PL","PT","RO","SK","SI","ES","SE",
-]);
-
-function toInt(n: unknown, fallback = 1) {
+function toInt(n: any, fallback = 1) {
   const v = Number(n);
-  if (!Number.isFinite(v)) return fallback;
-  const iv = Math.max(1, Math.min(Math.floor(v), MAX_QTY_PER_LINE));
-  return iv;
+  return Number.isFinite(v) && v > 0 ? Math.floor(v) : fallback;
 }
-function toMoney(n: unknown) {
+function toMoney(n: any) {
   const v = Number(n);
   return Number.isFinite(v) && v >= 0 ? v : 0;
 }
-function isNumericLike(v: unknown) {
+function isNumericLike(v: any) {
   return typeof v === "number" || (typeof v === "string" && /^[0-9]+$/.test(v));
 }
 function findCatalog(idOrSlug: number | string) {
@@ -61,10 +51,16 @@ function findCatalog(idOrSlug: number | string) {
   const slug = String(idOrSlug).toLowerCase();
   return (
     products.find((p) => String(p.slug).toLowerCase() === slug) ||
-    products.find((p) => String(p.id) === slug) ||
+    products.find((p) => String(p.id) === slug) || // super fallback
     null
   );
 }
+
+// Minimal EU set for Klarna eligibility
+const EU = new Set([
+  "AT","BE","BG","HR","CY","CZ","DK","EE","FI","FR","DE","GR","HU","IE","IT",
+  "LV","LT","LU","MT","NL","PL","PT","RO","SK","SI","ES","SE",
+]);
 
 function decideCurrency(request: Request, bodyCurrency?: string): "usd" | "eur" {
   const v = String(bodyCurrency || "").toLowerCase();
@@ -75,41 +71,44 @@ function decideCurrency(request: Request, bodyCurrency?: string): "usd" | "eur" 
     request.headers.get("cf-ipcountry") ||
     "";
 
-  return EU.has(country.toUpperCase()) ? "eur" : "usd";
+  if (EU.has(country.toUpperCase())) return "eur";
+  return "usd";
 }
 
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as Body;
+
+    // Decide currency (client hint or EU geo)
     const currency = decideCurrency(req, (body as any).currency);
 
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
     const stripe = getStripe();
 
     // ───────────────────────────────────────────────────────────────────────────
+    // Build Stripe line_items from one of the accepted body shapes
     let line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
     let singleKnownProductUrl: string | null = null;
 
     if ("lines" in (body as any) && Array.isArray((body as BodyLines).lines)) {
-      // New: client-provided "lines"
+      // New shape: "lines" from client
       const fromLines = (body as BodyLines).lines
         .map((ln) => {
           const qty = toInt(ln.quantity, 1);
           if (qty <= 0) return null;
 
+          // Try to map to your catalog first (authoritative price & name)
           const cat = findCatalog(ln.id);
-          const name = cat?.title ?? ln.name ?? `Item ${String(ln.id ?? "")}`;
+          const useName = cat?.title ?? ln.name ?? `Item ${String(ln.id ?? "")}`;
           const unitAmount =
             cat ? Math.round(cat.price * 100) : Math.round(toMoney(ln.price) * 100);
-          if (!name || unitAmount <= 0) return null;
+
+          if (!useName || unitAmount <= 0) return null;
 
           const img = (cat?.images?.[0] ?? cat?.image ?? ln.image) || "";
-          const absoluteImage = img
-            ? img.startsWith("http")
-              ? img
-              : `${baseUrl}${img}`
-            : undefined;
+          const absoluteImage = img ? (img.startsWith("http") ? img : `${baseUrl}${img}`) : undefined;
 
+          // If it's a single-known product, remember its page for cancel_url
           if ((body as BodyLines).lines.length === 1 && cat) {
             singleKnownProductUrl = `${baseUrl}/products/${cat.id}`;
           }
@@ -120,7 +119,7 @@ export async function POST(req: Request) {
               currency,
               unit_amount: unitAmount,
               product_data: {
-                name,
+                name: useName,
                 images: absoluteImage ? [absoluteImage] : [],
                 metadata: {
                   from: "client-lines",
@@ -135,7 +134,7 @@ export async function POST(req: Request) {
 
       line_items = fromLines;
     } else {
-      // Legacy: single item or cart
+      // Legacy shapes: single or cart -> resolve entirely from catalog
       const items: Array<{ productId: number | string; qty: number }> = Array.isArray(
         (body as BodyCart).cart
       )
@@ -169,13 +168,15 @@ export async function POST(req: Request) {
 
       line_items = chosen.map(({ p, qty }) => {
         const firstImage = p.images?.[0] ?? p.image;
-        const absoluteImage = firstImage?.startsWith("http") ? firstImage : `${baseUrl}${firstImage ?? ""}`;
+        const absoluteImage = firstImage?.startsWith("http")
+          ? firstImage
+          : `${baseUrl}${firstImage ?? ""}`;
 
         return {
           quantity: qty,
           price_data: {
-            currency,
-            unit_amount: Math.round(p.price * 100),
+            currency,                               // USD by default; EUR in EU / if chosen
+            unit_amount: Math.round(p.price * 100), // same numeric amount in chosen currency
             product_data: {
               name: p.title,
               images: absoluteImage ? [absoluteImage] : [],
@@ -190,7 +191,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No purchasable line items." }, { status: 400 });
     }
 
-    // Enable card everywhere; add Klarna + PayPal only for EUR (if enabled on your account)
+    // Explicitly list allowed methods (blocks Link by omission).
+    // Apple Pay / Google Pay come through "card" automatically when eligible.
     const payment_method_types =
       currency === "eur"
         ? (["card", "paypal", "klarna"] as const)
@@ -200,7 +202,6 @@ export async function POST(req: Request) {
       mode: "payment",
       line_items,
       payment_method_types: payment_method_types as unknown as Stripe.Checkout.SessionCreateParams.PaymentMethodType[],
-      allow_promotion_codes: true,
       success_url: `${baseUrl}/order-confirmation?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: singleKnownProductUrl ?? `${baseUrl}/cart`,
       billing_address_collection: "required",
@@ -209,9 +210,14 @@ export async function POST(req: Request) {
     };
 
     const session = await stripe.checkout.sessions.create(params);
+
     if (!session.url) {
-      return NextResponse.json({ error: "Unable to create checkout session (no URL)" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Unable to create checkout session (no URL)" },
+        { status: 500 }
+      );
     }
+
     return NextResponse.json({ url: session.url, currencyUsed: currency });
   } catch (err: any) {
     console.error("Checkout error:", {
