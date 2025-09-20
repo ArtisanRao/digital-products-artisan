@@ -72,6 +72,7 @@ export default function FontsPage() {
               : 0;
 
           const primaryImg = `/images/${CAT}/${slug}.jpg`;
+          const detailHref = `/products/${encodeURIComponent(slug)}`; // ← product page
 
           return (
             <div
@@ -102,6 +103,8 @@ export default function FontsPage() {
                     image: primaryImg,
                     description: p.description,
                   }}
+                  viewHref={detailHref}      // ← View → single product page
+                  goToCartAfterAdd={false}
                 />
               </div>
             </div>
