@@ -28,7 +28,7 @@ function findProduct(idOrSlug: string) {
   );
 }
 
-/** Thumbnail rail + main viewer with prev/next + hover zoom */
+/** Thumbnail rail + main viewer with prev/next + hover zoom (left rail layout) */
 function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
   const safe = images?.length ? images : ["/images/placeholder-cover.jpg"];
   const [idx, setIdx] = React.useState(0);
@@ -46,9 +46,9 @@ function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
   }, [n]);
 
   return (
-    <div className="grid grid-cols-[86px_1fr] gap-4 lg:gap-6">
-      {/* Left rail */}
-      <div className="flex max-h-[560px] flex-col gap-3 overflow-auto pr-1">
+    <div className="grid grid-cols-[86px_1fr] gap-4 lg:gap-6 relative z-0">
+      {/* Left rail (thumbnails) */}
+      <div className="flex max-h-[560px] flex-col gap-3 overflow-auto pr-1 z-10">
         {safe.map((src, i) => {
           const active = i === idx;
           return (
@@ -65,14 +65,20 @@ function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
                   : "border-gray-200 hover:border-blue-300",
               ].join(" ")}
             >
-              <Image src={src} alt={`${alt} — preview ${i + 1}`} fill sizes="86px" className="object-cover" />
+              <Image
+                src={src}
+                alt={`${alt} — preview ${i + 1}`}
+                fill
+                sizes="86px"
+                className="object-cover"
+              />
             </button>
           );
         })}
       </div>
 
       {/* Main viewer */}
-      <div className="relative isolate rounded-2xl border bg-white">
+      <div className="relative isolate rounded-2xl border bg-white z-[1]">
         <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl">
           <Image
             key={safe[idx]}
@@ -86,24 +92,28 @@ function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
         </div>
 
         {/* Prev */}
-        <button
-          type="button"
-          onClick={() => go(-1)}
-          aria-label="Previous image"
-          className="pointer-events-auto absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white focus:outline-none"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </button>
+        {n > 1 && (
+          <button
+            type="button"
+            onClick={() => go(-1)}
+            aria-label="Previous image"
+            className="pointer-events-auto absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white focus:outline-none z-10"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+        )}
 
         {/* Next */}
-        <button
-          type="button"
-          onClick={() => go(1)}
-          aria-label="Next image"
-          className="pointer-events-auto absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white focus:outline-none"
-        >
-          <ChevronRight className="h-5 w-5" />
-        </button>
+        {n > 1 && (
+          <button
+            type="button"
+            onClick={() => go(1)}
+            aria-label="Next image"
+            className="pointer-events-auto absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white focus:outline-none z-10"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        )}
       </div>
     </div>
   );
@@ -140,12 +150,12 @@ export default function ProductPageBySlug() {
   return (
     <main className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 py-8 lg:grid-cols-[1.2fr_.8fr]">
       {/* LEFT: gallery with rail + prev/next */}
-      <section>
+      <section className="relative z-0">
         <ProductGallery images={imgs} alt={p.title} />
       </section>
 
       {/* RIGHT: info */}
-      <section className="isolate">
+      <section className="relative z-20 pointer-events-auto isolate">
         {/* Title is clickable and on top of overlays */}
         <h1 className="relative z-20 text-4xl font-extrabold leading-tight pointer-events-auto">
           <Link
@@ -169,7 +179,7 @@ export default function ProductPageBySlug() {
           <Button
             type="button"
             onClick={handleBuy}
-            className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500 pointer-events-auto"
           >
             Buy
           </Button>
@@ -185,7 +195,7 @@ export default function ProductPageBySlug() {
             }}
             viewHref={`/products/${encodeURIComponent(String(p.id))}`}
             goToCartAfterAdd={false}
-            buyEnabled={false} // we already render a Buy button above
+            buyEnabled={false} // Buy rendered above
           />
         </div>
 
