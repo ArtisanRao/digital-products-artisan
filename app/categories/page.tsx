@@ -8,22 +8,23 @@ import { CATEGORIES } from "@/data/categories";
 /** Try multiple filenames, then a default placeholder. */
 function CategoryCover({ slug, alt }: { slug: string; alt: string }) {
   const candidates = [
+    `/images/categories/${slug}/cover.png`, // prefer PNG (what you just added)
     `/images/categories/${slug}/cover.jpg`,
-    `/images/categories/${slug}/cover.png`,
-    `/images/categories/${slug}/hero.jpg`,
     `/images/categories/${slug}/hero.png`,
+    `/images/categories/${slug}/hero.jpg`,
   ];
-  const fallback = "/images/categories/_default/cover.jpg"; // add this once
+  const fallback = "/images/categories/_default/cover.png"; // make sure this exists
   const [idx, setIdx] = useState(0);
   const src = idx < candidates.length ? candidates[idx] : fallback;
 
   return (
-    // use plain <img> so we can swap on error reliably
     <img
       src={src}
       alt={alt}
       className="aspect-[16/9] w-full rounded-none object-cover md:aspect-[3/2]"
       loading="lazy"
+      decoding="async"
+      referrerPolicy="no-referrer"
       onError={() => setIdx((i) => i + 1)}
     />
   );
