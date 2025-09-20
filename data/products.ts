@@ -1,36 +1,40 @@
 // data/products.ts
-import { imageManifest } from "./image-manifest"
+import { imageManifest } from "./image-manifest";
+import { normalizeCategoryLabel, labelToSlugAny, LEGACY_CATEGORY_MAP } from "./category-utils";
 
 export type Product = {
-  id: number
-  slug: string
-  title: string
-  description: string            // short blurb for cards/SEO
-  longDescription?: string       // 🆕 detailed copy for quick-view & PDP
-  price: number
-  originalPrice: number
-  category: string
-  tags: string[]
-  rating: number
-  reviews: number
-  downloads: number
-  bestseller?: boolean
-  image: string
-  images?: string[]              // gallery images (from manifest)
-  downloadPath?: string          // repo-relative path under /private (e.g. "private/slug/file.pdf")
-}
+  id: number;
+  slug: string;
+  title: string;
+  description: string;           // short blurb for cards/SEO
+  longDescription?: string;      // detailed copy for quick-view & PDP
+  price: number;
+  originalPrice: number;
+  category: string;              // always normalized on export
+  categorySlug?: string;         // auto-filled from registry when possible
+  tags: string[];
+  rating: number;
+  reviews: number;
+  downloads: number;
+  bestseller?: boolean;
+  image: string;
+  images?: string[];             // gallery images (from manifest)
+  downloadPath?: string;         // repo-relative path under /private (e.g. "private/slug/file.pdf")
+};
 
 // Put any filename containing "cover" first
 function coverFirst(list: string[] | undefined): string[] | undefined {
-  if (!list?.length) return list
-  const covers: string[] = []
-  const others: string[] = []
-  for (const p of list) (/cover/i.test(p) ? covers : others).push(p)
-  return covers.length ? [...covers, ...others] : list
+  if (!list?.length) return list;
+  const covers: string[] = [];
+  const others: string[] = [];
+  for (const p of list) (/cover/i.test(p) ? covers : others).push(p);
+  return covers.length ? [...covers, ...others] : list;
 }
 
-// Base product data (image is a fallback if no manifest)
-const base: Omit<Product, "images">[] = [
+// ---------------------------------------------------------------------------
+// RAW (un-normalized) product data. Keep as-is; normalization happens below.
+// ---------------------------------------------------------------------------
+const RAW_PRODUCTS: Omit<Product, "images" | "categorySlug">[] = [
   {
     id: 1,
     slug: "buy-this-complete-shop",
@@ -207,18 +211,40 @@ Instant digital download; read on any device.`,
     image: "/images/products/make-money-as-you-sleep/cover.jpg",
     downloadPath: "private/make-money-as-you-sleep/book.pdf",
   },
-]
+];
 
-// Attach manifest images & pick cover
-export const products: Product[] = base.map((p) => {
-  const fromManifest = coverFirst(imageManifest[p.slug])
-  const images = fromManifest?.length ? fromManifest : [p.image]
+// ---------------------------------------------------------------------------
+// NORMALIZED export (safety net): categories & slugs are canonical here.
+// Also attaches image-manifest galleries and picks a cover.
+// ---------------------------------------------------------------------------
+export const products: Product[] = RAW_PRODUCTS.map((p) => {
+  const newLabel = normalizeCategoryLabel(p.category);
+  const ensuredSlug =
+    p.categorySlug ?? labelToSlugAny(p.category) ?? labelToSlugAny(newLabel);
+
+  // dev warning to help you gradually clean up RAW_PRODUCTS
+  if (process.env.NODE_ENV !== "production" && p.category in LEGACY_CATEGORY_MAP) {
+    // eslint-disable-next-line no-console
+    console.warn("[LegacyCategory] Normalized:", {
+      id: p.id,
+      title: p.title,
+      oldLabel: p.category,
+      normalizedTo: newLabel,
+      slug: ensuredSlug,
+    });
+  }
+
+  const fromManifest = coverFirst(imageManifest[p.slug]);
+  const images = fromManifest?.length ? fromManifest : [p.image];
+
   return {
     ...p,
+    category: newLabel,
+    categorySlug: ensuredSlug,
     image: images[0],
     images,
-  }
-})
+  };
+});
 
-export const productsById = Object.fromEntries(products.map((p) => [p.id, p])) as Record<number, Product>
-export const productsBySlug = Object.fromEntries(products.map((p) => [p.slug, p])) as Record<string, Product>
+export const productsById = Object.fromEntries(products.map((p) => [p.id, p])) as Record<number, Product>;
+export const productsBySlug = Object.fromEntries(products.map((p) => [p.slug, p])) as Record<string, Product>;
