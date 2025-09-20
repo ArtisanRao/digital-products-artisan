@@ -72,6 +72,7 @@ export default function PrintablePlannersPage() {
               : 0;
 
           const primaryImg = `/images/${CAT}/${slug}.jpg`;
+          const detailHref = `/products/${encodeURIComponent(slug)}`; // ← single product page
 
           return (
             <div
@@ -102,6 +103,8 @@ export default function PrintablePlannersPage() {
                     image: primaryImg,
                     description: p.description,
                   }}
+                  viewHref={detailHref}
+                  goToCartAfterAdd={false}
                 />
               </div>
             </div>
