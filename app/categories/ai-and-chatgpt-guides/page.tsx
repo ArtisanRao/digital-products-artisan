@@ -69,6 +69,7 @@ export default function AIAndChatGPTGuidesPage() {
               : 0;
 
           const primaryImg = `/images/${IMG_FOLDER}/${slug}.jpg`;
+          const detailHref = `/products/${encodeURIComponent(slug)}`; // ⬅️ single product page
 
           return (
             <div
@@ -98,6 +99,10 @@ export default function AIAndChatGPTGuidesPage() {
                     image: primaryImg,
                     description: p.description,
                   }}
+                  viewHref={detailHref}          // ⬅️ View goes to the product page
+                  goToCartAfterAdd={false}
+                  // If these items don't have numeric productIds in your catalog, consider:
+                  // buyEnabled={false}
                 />
               </div>
             </div>
