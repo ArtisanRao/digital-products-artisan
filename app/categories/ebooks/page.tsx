@@ -124,6 +124,8 @@ export default function EbooksPage() {
                 ? parseFloat(p.price)
                 : Number((ebooks[i] as any)?.price ?? 0);
 
+            const detailHref = `/products/${encodeURIComponent(id)}`; // ← single product page
+
             return (
               <div
                 key={id}
@@ -153,6 +155,10 @@ export default function EbooksPage() {
                       price,
                       description,
                     }}
+                    viewHref={detailHref}     // ← View goes to the product page
+                    goToCartAfterAdd={false}
+                    // If your checkout expects numeric product IDs only, consider disabling buy here:
+                    // buyEnabled={false}
                   />
                 </div>
               </div>
