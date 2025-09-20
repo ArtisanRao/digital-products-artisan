@@ -63,10 +63,14 @@ export default function PLRandMRRBundlesPage() {
         renderItem={(p) => {
           const slug = p.slug ?? String(p.id);
           const price =
-            typeof p.price === "number" ? p.price :
-            typeof p.price === "string" ? parseFloat(p.price) : 0;
+            typeof p.price === "number"
+              ? p.price
+              : typeof p.price === "string"
+              ? parseFloat(p.price)
+              : 0;
 
           const primaryImg = `/images/${IMG_FOLDER}/${slug}.jpg`;
+          const detailHref = `/products/${encodeURIComponent(slug)}`; // ← single product page
 
           return (
             <div
@@ -96,6 +100,8 @@ export default function PLRandMRRBundlesPage() {
                     image: primaryImg,
                     description: p.description,
                   }}
+                  viewHref={detailHref}
+                  goToCartAfterAdd={false}
                 />
               </div>
             </div>
