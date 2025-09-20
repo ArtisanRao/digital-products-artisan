@@ -53,6 +53,7 @@ export default function AudioSamplesPage() {
               : 0;
 
           const primaryImg = `/images/${CAT}/${slug}.jpg`;
+          const detailHref = `/products/${encodeURIComponent(slug)}`; // ← single product page
 
           return (
             <div
@@ -82,6 +83,8 @@ export default function AudioSamplesPage() {
                     image: primaryImg,
                     description: p.description,
                   }}
+                  viewHref={detailHref}        // ← View goes to product page
+                  goToCartAfterAdd={false}
                 />
               </div>
             </div>
