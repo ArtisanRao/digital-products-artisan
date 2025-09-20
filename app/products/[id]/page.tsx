@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import ShopActions from "@/components/shop-actions";
 import ProductGallery from "@/components/product-gallery";
 
-// demo data …
+// demo data â€¦
 const PRODUCTS: Record<string, { title: string; price: number; images: string[]; description: string }> = {
   "1": {
     title: "Buy This Complete Shop - PLR MRR Digital Product: Resell Ebooks, Courses, Prompts & More.",
