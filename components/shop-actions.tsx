@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Eye, ShoppingCart } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/contexts/cart-context";
+import { getPreferredCurrency } from "@/lib/currency";
 
 type Item = {
-  id: string;
+  id: string | number;
   title: string;
   price: number;
   image: string;
@@ -16,19 +17,29 @@ type Item = {
 
 type Props = {
   item: Item;
-  /** Where the blue “View” should go. Default: /checkout */
+  /** Where “View” should go. Default: /products/:id */
   viewHref?: string;
-  /** After adding, go to /cart so the badge is visible. Default: true */
+  /** Stay put by default; only go to /cart if true */
   goToCartAfterAdd?: boolean;
+  /** OPTIONAL: show/hide Buy button (some pages render their own Buy) */
+  buyEnabled?: boolean;
+  buyLabel?: string;
+  buyQty?: number;
 };
 
 export default function ShopActions({
   item,
-  viewHref = "/checkout",
-  goToCartAfterAdd = true,
+  viewHref,
+  goToCartAfterAdd = false,
+  buyEnabled = true,
+  buyLabel = "Buy",
+  buyQty = 1,
 }: Props) {
   const router = useRouter();
   const cart = (useCart?.() ?? {}) as any;
+
+  const productHref =
+    viewHref ?? `/products/${encodeURIComponent(String(item.id))}`;
 
   const persistAndBroadcast = (items: any[]) => {
     if (typeof window === "undefined") return;
@@ -47,6 +58,7 @@ export default function ShopActions({
     try {
       items = JSON.parse(localStorage.getItem("cart") || "[]");
     } catch {}
+
     const idx = items.findIndex((x) => String(x.id) === String(item.id));
     if (idx >= 0) {
       items[idx].quantity = Number(items[idx].quantity || 1) + 1;
@@ -59,7 +71,7 @@ export default function ShopActions({
         image: item.image,
         description: item.description,
         fileGuid: item.fileUrl,
-        url: "/categories",
+        url: productHref,
         quantity: 1,
       });
     }
@@ -67,7 +79,6 @@ export default function ShopActions({
   };
 
   const add = () => {
-    // best-effort: support any cart context shape
     (cart.addItem ?? cart.add ?? cart.actions?.addItem)?.({
       id: String(item.id),
       name: item.title,
@@ -76,41 +87,70 @@ export default function ShopActions({
       image: item.image,
       description: item.description,
       fileUrl: item.fileUrl,
-      url: "/categories",
+      url: productHref,
       quantity: 1,
     });
-    (cart.openCart ?? cart.open ?? cart.actions?.openCart)?.();
 
     addToLocalCart();
+
     if (goToCartAfterAdd) router.push("/cart");
   };
 
   const view = () => {
-    router.push(viewHref);
+    router.push(productHref);
+  };
+
+  const buy = async () => {
+    try {
+      const currency = getPreferredCurrency?.() ?? "usd";
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: item.id, qty: buyQty, currency }),
+      });
+      const data = await res.json();
+      if (data?.url) window.location.href = data.url;
+    } catch {}
   };
 
   return (
-    <div className="mt-3 flex items-center gap-2">
-      {/* VIEW — blue button linking to /checkout (or custom viewHref) */}
+    <div className="mt-3 flex flex-wrap items-center gap-2 isolate z-20 pointer-events-auto">
+      {/* VIEW — blue/white, always clickable */}
       <Button
         type="button"
         onClick={view}
+        variant="default"
         className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
-        aria-label="View / Checkout"
+        style={{ backgroundColor: "#2563eb", color: "#fff" }}
+        aria-label={`View ${item.title}`}
       >
         <Eye className="h-4 w-4 text-white" />
         View
       </Button>
 
-      {/* ADD TO CART — add + open cart + go to /cart */}
+      {/* BUY — open Stripe Checkout (optional) */}
+      {buyEnabled && (
+        <Button
+          type="button"
+          onClick={buy}
+          variant="default"
+          className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
+          aria-label={`Buy ${item.title} now`}
+        >
+          {buyLabel}
+        </Button>
+      )}
+
+      {/* ADD TO CART — add silently, stay put */}
       <Button
         type="button"
         onClick={add}
+        variant="default"
         className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
-        aria-label="Add to cart"
+        aria-label={`Add ${item.title} to cart`}
       >
         <ShoppingCart className="h-4 w-4 text-white" />
-        Add to Cart
+        Add to cart
       </Button>
     </div>
   );
