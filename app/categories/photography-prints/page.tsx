@@ -48,6 +48,7 @@ export default function PhotographyPrintsPage() {
               : 0;
 
           const primaryImg = `/images/${CAT}/${slug}.jpg`;
+          const detailHref = `/products/${encodeURIComponent(slug)}`; // ← route to single product page
 
           return (
             <div
@@ -78,6 +79,8 @@ export default function PhotographyPrintsPage() {
                     image: primaryImg,
                     description: p.description,
                   }}
+                  viewHref={detailHref}
+                  goToCartAfterAdd={false}
                 />
               </div>
             </div>
