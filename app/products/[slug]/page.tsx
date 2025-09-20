@@ -1,4 +1,3 @@
-// app/products/[slug]/page.tsx
 "use client";
 
 import * as React from "react";
@@ -28,13 +27,12 @@ function findProduct(idOrSlug: string) {
   );
 }
 
-/** Thumbnail rail + main viewer with prev/next + hover zoom (left rail layout) */
+/** Left thumbnails + main viewer; image layer is pointer-events-none so it can't block clicks */
 function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
   const safe = images?.length ? images : ["/images/placeholder-cover.jpg"];
   const [idx, setIdx] = React.useState(0);
   const n = safe.length;
-
-  const go = (delta: number) => setIdx((i) => (i + delta + n) % n);
+  const go = (d: number) => setIdx((i) => (i + d + n) % n);
 
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -43,12 +41,11 @@ function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [n]);
 
   return (
     <div className="relative z-0 grid grid-cols-[86px_1fr] gap-4 lg:gap-6">
-      {/* Left rail (thumbnails) */}
+      {/* Thumbs rail */}
       <div className="z-10 flex max-h-[560px] flex-col gap-3 overflow-auto pr-1">
         {safe.map((src, i) => {
           const active = i === idx;
@@ -79,8 +76,9 @@ function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
       </div>
 
       {/* Main viewer */}
-      <div className="relative z-[1] isolate rounded-2xl border bg-white">
-        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl">
+      <div className="relative isolate z-[1] rounded-2xl border bg-white">
+        {/* IMAGE LAYER (cannot intercept clicks) */}
+        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl pointer-events-none">
           <Image
             key={safe[idx]}
             src={safe[idx]}
@@ -92,28 +90,26 @@ function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
           />
         </div>
 
-        {/* Prev */}
+        {/* CONTROLS (remain clickable) */}
         {n > 1 && (
-          <button
-            type="button"
-            onClick={() => go(-1)}
-            aria-label="Previous image"
-            className="pointer-events-auto absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white focus:outline-none z-10"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-        )}
-
-        {/* Next */}
-        {n > 1 && (
-          <button
-            type="button"
-            onClick={() => go(1)}
-            aria-label="Next image"
-            className="pointer-events-auto absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white focus:outline-none z-10"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={() => go(-1)}
+              aria-label="Previous image"
+              className="pointer-events-auto absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white focus:outline-none z-10"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => go(1)}
+              aria-label="Next image"
+              className="pointer-events-auto absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white focus:outline-none z-10"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          </>
         )}
       </div>
     </div>
@@ -145,25 +141,22 @@ export default function ProductPageBySlug() {
       });
       const data = await res.json();
       if (data?.url) window.location.href = data.url;
-    } catch {
-      // no-op
-    }
+    } catch {}
   };
 
   return (
     <main
       data-page="product"
-      className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 py-8 lg:grid-cols-[1.2fr_.8fr]"
+      className="relative mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 py-8 lg:grid-cols-[1.2fr_.8fr]"
     >
-      {/* LEFT: gallery with rail + prev/next */}
+      {/* LEFT */}
       <section className="relative z-0">
         <ProductGallery images={imgs} alt={p.title} />
       </section>
 
-      {/* RIGHT: info (kept above gallery; ensure clicks work) */}
-      <section className="relative z-20 isolate pointer-events-auto">
-        {/* Title is clickable and on top of overlays */}
-        <h1 className="relative z-20 pointer-events-auto text-4xl font-extrabold leading-tight">
+      {/* RIGHT (raised z-index; interactive) */}
+      <section className="relative z-40 pointer-events-auto isolate">
+        <h1 className="relative z-20 text-4xl font-extrabold leading-tight">
           <Link
             href={`/products/${encodeURIComponent(String(p.id))}`}
             className="underline decoration-transparent hover:decoration-current focus:decoration-current"
@@ -181,7 +174,6 @@ export default function ProductPageBySlug() {
         </div>
 
         <div className="relative z-20 mt-6 flex flex-wrap gap-3 pointer-events-auto">
-          {/* BUY — Stripe Checkout */}
           <Button
             type="button"
             onClick={handleBuy}
@@ -190,7 +182,6 @@ export default function ProductPageBySlug() {
             Buy
           </Button>
 
-          {/* VIEW + ADD TO CART (stays put; badge updates via cart context/localStorage) */}
           <ShopActions
             item={{
               id: String(p.id),
@@ -201,7 +192,7 @@ export default function ProductPageBySlug() {
             }}
             viewHref={`/products/${encodeURIComponent(String(p.id))}`}
             goToCartAfterAdd={false}
-            buyEnabled={false} // Buy rendered above
+            buyEnabled={false}
           />
         </div>
 

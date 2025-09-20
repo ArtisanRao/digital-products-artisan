@@ -1,5 +1,4 @@
-﻿// app/products/[id]/page.tsx
-"use client";
+﻿"use client";
 
 import { useParams } from "next/navigation";
 import Image from "next/image";
@@ -10,7 +9,7 @@ import InlineMore from "@/components/ui/inline-more";
 import { Button } from "@/components/ui/button";
 import ShopActions from "@/components/shop-actions";
 
-// --- demo data (replace with your real source) ---
+// Demo data
 const PRODUCTS: Record<
   string,
   { title: string; price: number; images: string[]; description: string }
@@ -31,15 +30,12 @@ const PRODUCTS: Record<
   },
 };
 
-// ──────────────────────────────────────────────────────────
-// Small in-file gallery component (left rail + main viewer)
-// ──────────────────────────────────────────────────────────
+/** Same gallery structure: image layer is pointer-events-none, controls clickable */
 function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
-  const safeImages = images?.length ? images : ["/images/placeholder-cover.jpg"];
+  const safe = images?.length ? images : ["/images/placeholder-cover.jpg"];
   const [idx, setIdx] = React.useState(0);
-  const count = safeImages.length;
-
-  const go = (delta: number) => setIdx((i) => (i + delta + count) % count);
+  const n = safe.length;
+  const go = (d: number) => setIdx((i) => (i + d + n) % n);
 
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -48,14 +44,12 @@ function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [count]);
+  }, [n]);
 
   return (
-    <div className="grid grid-cols-[86px_1fr] gap-4 lg:gap-6 z-0">
-      {/* Left thumbnail rail */}
-      <div className="flex max-h-[560px] flex-col gap-3 overflow-auto pr-1">
-        {safeImages.map((src, i) => {
+    <div className="relative z-0 grid grid-cols-[86px_1fr] gap-4 lg:gap-6">
+      <div className="z-10 flex max-h-[560px] flex-col gap-3 overflow-auto pr-1">
+        {safe.map((src, i) => {
           const active = i === idx;
           return (
             <button
@@ -63,35 +57,31 @@ function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
               type="button"
               onMouseEnter={() => setIdx(i)}
               onClick={() => setIdx(i)}
+              aria-label={`Preview image ${i + 1}`}
               className={[
                 "relative aspect-square w-[86px] overflow-hidden rounded-xl border transition",
                 active
                   ? "ring-2 ring-blue-500 border-transparent"
                   : "border-gray-200 hover:border-blue-300",
               ].join(" ")}
-              aria-label={`Preview image ${i + 1}`}
             >
               <Image
                 src={src}
                 alt={`${alt} — preview ${i + 1}`}
                 fill
-                className="object-cover"
                 sizes="86px"
-                onError={(e) => {
-                  (e.currentTarget as any).src = "/images/placeholder-cover.jpg";
-                }}
+                className="object-cover"
               />
             </button>
           );
         })}
       </div>
 
-      {/* Main image with hover zoom + prev/next */}
-      <div className="relative isolate rounded-2xl border bg-white">
-        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl">
+      <div className="relative isolate z-[1] rounded-2xl border bg-white">
+        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl pointer-events-none">
           <Image
-            key={safeImages[idx]} // force re-animate on swap
-            src={safeImages[idx]}
+            key={safe[idx]}
+            src={safe[idx]}
             alt={alt}
             fill
             priority={idx === 0}
@@ -100,31 +90,30 @@ function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
           />
         </div>
 
-        {/* Prev */}
-        <button
-          type="button"
-          onClick={() => go(-1)}
-          className="pointer-events-auto absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white focus:outline-none"
-          aria-label="Previous image"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </button>
-
-        {/* Next */}
-        <button
-          type="button"
-          onClick={() => go(1)}
-          className="pointer-events-auto absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white focus:outline-none"
-          aria-label="Next image"
-        >
-          <ChevronRight className="h-5 w-5" />
-        </button>
+        {n > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={() => go(-1)}
+              className="pointer-events-auto absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white focus:outline-none z-10"
+              aria-label="Previous image"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => go(1)}
+              className="pointer-events-auto absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white focus:outline-none z-10"
+              aria-label="Next image"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
 }
-
-// ──────────────────────────────────────────────────────────
 
 export default function ProductPage() {
   const params = useParams<{ id: string }>();
@@ -139,7 +128,6 @@ export default function ProductPage() {
     );
   }
 
-  // Open Stripe Checkout
   const handleBuy = async () => {
     try {
       const res = await fetch("/api/checkout", {
@@ -149,25 +137,22 @@ export default function ProductPage() {
       });
       const data = await res.json();
       if (data?.url) window.location.href = data.url;
-    } catch {
-      // no-op
-    }
+    } catch {}
   };
 
   return (
     <main
       data-page="product"
-      className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 py-8 lg:grid-cols-[1.2fr_.8fr]"
+      className="relative mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 py-8 lg:grid-cols-[1.2fr_.8fr]"
     >
-      {/* LEFT: gallery (thumbnail rail + main) */}
-      <section className="z-0">
+      {/* LEFT */}
+      <section className="relative z-0">
         <ProductGallery images={p.images} alt={p.title} />
       </section>
 
-      {/* RIGHT: details (force on-top, always clickable) */}
-      <section className="isolate content-click-layer">
-        {/* Clickable title to self (keeps ‘View’ parity) */}
-        <h1 className="relative z-20 pointer-events-auto text-4xl font-extrabold leading-tight">
+      {/* RIGHT */}
+      <section className="relative z-40 pointer-events-auto isolate">
+        <h1 className="relative z-20 text-4xl font-extrabold leading-tight">
           <Link
             href={`/products/${id}`}
             className="underline decoration-transparent hover:decoration-current focus:decoration-current"
@@ -188,7 +173,6 @@ export default function ProductPage() {
         </div>
 
         <div className="relative z-20 mt-6 flex flex-wrap gap-3 pointer-events-auto">
-          {/* Buy -> Stripe checkout */}
           <Button
             type="button"
             onClick={handleBuy}
@@ -197,7 +181,6 @@ export default function ProductPage() {
             Buy
           </Button>
 
-          {/* View + Add to cart (stays put with badge updates) */}
           <ShopActions
             item={{
               id,
@@ -208,6 +191,7 @@ export default function ProductPage() {
             }}
             viewHref={`/products/${id}`}
             goToCartAfterAdd={false}
+            buyEnabled={false}
           />
         </div>
 
