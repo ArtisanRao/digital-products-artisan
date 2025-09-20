@@ -39,7 +39,7 @@ const descBySlug: Record<string, string> = {
   "icons": "Clean, scalable icons for UI & brand.",
 };
 
-// Derive image path; keep everything in one convention
+// Derive image path; one convention
 const imageFor = (slug: string) => `/images/categories/${slug}/cover.jpg`;
 
 export default function CategoriesPage() {
@@ -61,12 +61,7 @@ export default function CategoriesPage() {
             key={category.slug}
             href={`/categories/${category.slug}`}
             aria-label={`Browse ${category.plainLabel}`}
-            className="
-              group block rounded-2xl border overflow-hidden bg-white
-              shadow transition-all duration-300
-              hover:-translate-y-1 hover:shadow-xl
-              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2
-            "
+            className="group block rounded-2xl border overflow-hidden bg-white shadow transition-all duration-300 hover:-translate-y-1 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2"
           >
             <CoverImage
               src={category.image}
@@ -82,7 +77,6 @@ export default function CategoriesPage() {
               <h2 className="text-xl font-semibold transition-colors group-hover:text-blue-600">
                 {category.name}
               </h2>
-
               <InlineMore
                 text={category.desc}
                 lines={2}
