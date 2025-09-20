@@ -31,7 +31,11 @@ const securityHeaders = [
   { key: "X-Frame-Options", value: "SAMEORIGIN" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  { key: "Permissions-Policy", value: "accelerometer=(), autoplay=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=(), interest-cohort=()" },
+  {
+    key: "Permissions-Policy",
+    value:
+      "accelerometer=(), autoplay=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=(), interest-cohort=()",
+  },
   { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains; preload" },
   { key: "Origin-Agent-Cluster", value: "?1" },
 ];
@@ -144,18 +148,31 @@ const baseConfig = {
       { source: "/category/:slug", destination: "/categories/:slug", permanent: true },
       { source: "/category/:slug/", destination: "/categories/:slug", permanent: true },
 
-      // Category slug changes
-      { source: "/categories/digital-art",        destination: "/categories/ai-and-chatgpt-guides",       permanent: true },
-      { source: "/categories/printable-planners", destination: "/categories/planners-and-productivity",   permanent: true },
-      { source: "/categories/photography-prints", destination: "/categories/self-help-and-how-to",        permanent: true },
-      { source: "/categories/audio-samples",      destination: "/categories/plr-and-mrr-bundles",         permanent: true },
-      { source: "/categories/video-resources",    destination: "/categories/video-courses-and-training",  permanent: true },
+      /** ---------- CATEGORY SLUG CHANGES (match data/categories.ts) ---------- */
+      // Renames:
+      { source: "/categories/digital-art",        destination: "/categories/ai-chatgpt-guides",           permanent: true },
+      { source: "/categories/printable-planners", destination: "/categories/planners-productivity",       permanent: true },
+      { source: "/categories/photography-prints", destination: "/categories/self-help-how-to",            permanent: true },
+      { source: "/categories/audio-templates",    destination: "/categories/plr-mrr-bundles",             permanent: true },
+      { source: "/categories/video-resources",    destination: "/categories/video-courses-training",      permanent: true },
       { source: "/categories/templates",          destination: "/categories/complete-shop-packages",      permanent: true },
-      { source: "/categories/ebooks",             destination: "/categories/health-and-fitness-ebooks",   permanent: true },
+      { source: "/categories/ebooks",             destination: "/categories/health-fitness-ebooks",       permanent: true },
+      { source: "/categories/fonts",              destination: "/categories/keto-diet-guides",            permanent: true },
+      { source: "/categories/icons",              destination: "/categories/passive-income-side-hustles", permanent: true },
 
-      // Restore top-level Fonts & Icons (forward from old subpaths)
-      { source: "/categories/web-templates/fonts", destination: "/categories/fonts", permanent: true },
-      { source: "/categories/web-templates/icons", destination: "/categories/icons", permanent: true },
+      // New top-level categories (helpful forwards if nested variants existed)
+      { source: "/categories/web-templates/fonts",  destination: "/categories/fonts",  permanent: true },
+      { source: "/categories/web-templates/icons",  destination: "/categories/icons",  permanent: true },
+
+      // Preserve earlier variants/typos if they were ever live
+      { source: "/categories/audio-samples",                destination: "/categories/plr-mrr-bundles",             permanent: true },
+      { source: "/categories/ai-and-chatgpt-guides",       destination: "/categories/ai-chatgpt-guides",           permanent: true },
+      { source: "/categories/planners-and-productivity",   destination: "/categories/planners-productivity",        permanent: true },
+      { source: "/categories/self-help-and-how-to",        destination: "/categories/self-help-how-to",            permanent: true },
+      { source: "/categories/plr-and-mrr-bundles",         destination: "/categories/plr-mrr-bundles",             permanent: true },
+      { source: "/categories/video-courses-and-training",  destination: "/categories/video-courses-training",       permanent: true },
+      { source: "/categories/complete-shop-packages",      destination: "/categories/complete-shop-packages",       permanent: true }, // idempotent
+      { source: "/categories/health-and-fitness-ebooks",   destination: "/categories/health-fitness-ebooks",        permanent: true },
     ];
   },
 };
