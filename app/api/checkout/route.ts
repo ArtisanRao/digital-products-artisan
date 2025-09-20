@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Unsupported currency: ${currency}` }, { status: 400 });
     }
 
-    // ⬇️ Do NOT set apiVersion — let SDK use its pinned default to avoid TS mismatch
+    // Let the SDK use its own pinned apiVersion to avoid TS mismatch
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
     const priceId =
@@ -44,13 +44,17 @@ export async function POST(req: NextRequest) {
     const cancelPath = `/products/${productId}`;
     const successPath = `/thank-you`;
 
-    // Let Stripe decide eligible methods (card, Klarna, etc.) based on price + locale
+    // ✅ Use explicit payment_method_types to satisfy older typings
+    const payment_method_types =
+      currency === "EUR" ? (["card", "klarna"] as Stripe.Checkout.SessionCreateParams.PaymentMethodType[])
+                         : (["card"] as Stripe.Checkout.SessionCreateParams.PaymentMethodType[]);
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
+      payment_method_types,
       line_items: [{ price: priceId, quantity: qty }],
       allow_promotion_codes: true,
       automatic_tax: { enabled: true },
-      automatic_payment_methods: { enabled: true },
       success_url: `${origin}${successPath}?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}${cancelPath}`,
     });
