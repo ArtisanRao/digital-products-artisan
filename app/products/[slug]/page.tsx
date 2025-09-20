@@ -1,47 +1,40 @@
-﻿// app/products/[id]/page.tsx
+// app/products/[slug]/page.tsx
 "use client";
 
+import * as React from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import InlineMore from "@/components/ui/inline-more";
 import { Button } from "@/components/ui/button";
 import ShopActions from "@/components/shop-actions";
+import { products, productsById } from "@/data/products";
 
-// --- demo data (replace with your real source) ---
-const PRODUCTS: Record<
-  string,
-  { title: string; price: number; images: string[]; description: string }
-> = {
-  "1": {
-    title:
-      "Buy This Complete Shop - PLR MRR Digital Product: Resell Ebooks, Courses, Prompts & More.",
-    price: 42.99,
-    images: [
-      "/images/complete-shop-1.jpg",
-      "/images/complete-shop-2.jpg",
-      "/images/complete-shop-3.jpg",
-      "/images/complete-shop-4.jpg",
-      "/images/complete-shop-5.jpg",
-    ],
-    description:
-      "Complete, rights-included digital shop bundle. Rebrand and resell ebooks, courses, prompts, templates, and more.",
-  },
-};
+/** Find a product by numeric id or slug (case-insensitive) */
+function findProduct(idOrSlug: string) {
+  const asNum = Number(idOrSlug);
+  if (Number.isFinite(asNum)) {
+    const byId = (productsById as any)?.[asNum];
+    if (byId) return byId;
+    const byIdLinear = products.find((p) => Number(p.id) === asNum);
+    if (byIdLinear) return byIdLinear;
+  }
+  const slug = idOrSlug.toLowerCase();
+  return (
+    products.find((p) => String(p.slug).toLowerCase() === slug) ||
+    products.find((p) => String(p.id) === idOrSlug) ||
+    null
+  );
+}
 
-// ──────────────────────────────────────────────────────────
-// Small in-file gallery component (left rail + main viewer)
-// ──────────────────────────────────────────────────────────
+/** Thumbnail rail + main viewer with prev/next + hover zoom */
 function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
-  const safeImages = images?.length ? images : ["/images/placeholder-cover.jpg"];
+  const safe = images?.length ? images : ["/images/placeholder-cover.jpg"];
   const [idx, setIdx] = React.useState(0);
-  const count = safeImages.length;
+  const n = safe.length;
 
-  const go = (delta: number) => {
-    setIdx((i) => (i + delta + count) % count);
-  };
+  const go = (delta: number) => setIdx((i) => (i + delta + n) % n);
 
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -50,13 +43,13 @@ function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [count]);
+  }, [n]);
 
   return (
     <div className="grid grid-cols-[86px_1fr] gap-4 lg:gap-6">
-      {/* Left thumbnail rail */}
+      {/* Left rail */}
       <div className="flex max-h-[560px] flex-col gap-3 overflow-auto pr-1">
-        {safeImages.map((src, i) => {
+        {safe.map((src, i) => {
           const active = i === idx;
           return (
             <button
@@ -64,35 +57,26 @@ function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
               type="button"
               onMouseEnter={() => setIdx(i)}
               onClick={() => setIdx(i)}
+              aria-label={`Preview image ${i + 1}`}
               className={[
                 "relative aspect-square w-[86px] overflow-hidden rounded-xl border transition",
                 active
                   ? "ring-2 ring-blue-500 border-transparent"
                   : "border-gray-200 hover:border-blue-300",
               ].join(" ")}
-              aria-label={`Preview image ${i + 1}`}
             >
-              <Image
-                src={src}
-                alt={`${alt} — preview ${i + 1}`}
-                fill
-                className="object-cover"
-                sizes="86px"
-                onError={(e) => {
-                  (e.currentTarget as any).src = "/images/placeholder-cover.jpg";
-                }}
-              />
+              <Image src={src} alt={`${alt} — preview ${i + 1}`} fill sizes="86px" className="object-cover" />
             </button>
           );
         })}
       </div>
 
-      {/* Main image with hover zoom + prev/next */}
+      {/* Main viewer */}
       <div className="relative isolate rounded-2xl border bg-white">
         <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl">
           <Image
-            key={safeImages[idx]} // force re-animate on swap
-            src={safeImages[idx]}
+            key={safe[idx]}
+            src={safe[idx]}
             alt={alt}
             fill
             priority={idx === 0}
@@ -105,8 +89,8 @@ function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
         <button
           type="button"
           onClick={() => go(-1)}
-          className="pointer-events-auto absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white focus:outline-none"
           aria-label="Previous image"
+          className="pointer-events-auto absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white focus:outline-none"
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
@@ -115,8 +99,8 @@ function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
         <button
           type="button"
           onClick={() => go(1)}
-          className="pointer-events-auto absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white focus:outline-none"
           aria-label="Next image"
+          className="pointer-events-auto absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white focus:outline-none"
         >
           <ChevronRight className="h-5 w-5" />
         </button>
@@ -125,12 +109,10 @@ function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
   );
 }
 
-// ──────────────────────────────────────────────────────────
-
-export default function ProductPage() {
-  const params = useParams<{ id: string }>();
-  const id = String(params?.id ?? "");
-  const p = PRODUCTS[id];
+export default function ProductPageBySlug() {
+  const params = useParams<{ slug: string }>();
+  const handle = String(params?.slug ?? "");
+  const p = findProduct(handle);
 
   if (!p) {
     return (
@@ -140,34 +122,34 @@ export default function ProductPage() {
     );
   }
 
-  // Open Stripe Checkout
+  const imgs: string[] = (p.images?.length ? p.images : [p.image]).filter(Boolean) as string[];
+  const cover = imgs[0] ?? "/images/placeholder-cover.jpg";
+
   const handleBuy = async () => {
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId: id, qty: 1 }),
+        body: JSON.stringify({ productId: p.id, qty: 1 }),
       });
       const data = await res.json();
       if (data?.url) window.location.href = data.url;
-    } catch {
-      // no-op
-    }
+    } catch {}
   };
 
   return (
     <main className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 py-8 lg:grid-cols-[1.2fr_.8fr]">
-      {/* LEFT: gallery (thumbnail rail + main) */}
+      {/* LEFT: gallery with rail + prev/next */}
       <section>
-        <ProductGallery images={p.images} alt={p.title} />
+        <ProductGallery images={imgs} alt={p.title} />
       </section>
 
-      {/* RIGHT: details */}
-      <section className="relative">
-        {/* Clickable title to self (keeps ‘View’ parity) */}
-        <h1 className="relative z-20 text-4xl font-extrabold leading-tight">
+      {/* RIGHT: info */}
+      <section className="isolate">
+        {/* Title is clickable and on top of overlays */}
+        <h1 className="relative z-20 text-4xl font-extrabold leading-tight pointer-events-auto">
           <Link
-            href={`/products/${id}`}
+            href={`/products/${encodeURIComponent(String(p.id))}`}
             className="underline decoration-transparent hover:decoration-current focus:decoration-current"
           >
             {p.title}
@@ -175,18 +157,15 @@ export default function ProductPage() {
         </h1>
 
         <div className="mt-4 text-3xl font-semibold">
-          {new Intl.NumberFormat("de-DE", {
-            style: "currency",
-            currency: "EUR",
-          }).format(p.price)}
+          {new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(p.price)}
         </div>
 
         <div className="mt-4 text-gray-700">
-          <InlineMore text={p.description} lines={3} minChars={80} />
+          <InlineMore text={p.description ?? ""} lines={3} minChars={80} />
         </div>
 
-        <div className="mt-6 flex flex-wrap gap-3">
-          {/* Buy -> Stripe checkout */}
+        <div className="relative z-20 mt-6 flex flex-wrap gap-3 pointer-events-auto">
+          {/* BUY — Stripe Checkout */}
           <Button
             type="button"
             onClick={handleBuy}
@@ -195,17 +174,18 @@ export default function ProductPage() {
             Buy
           </Button>
 
-          {/* View + Add to cart (stays put with badge updates) */}
+          {/* VIEW + ADD TO CART (stays put; badge updates via cart context/localStorage) */}
           <ShopActions
             item={{
-              id,
+              id: String(p.id),
               title: p.title,
               price: p.price,
-              image: p.images[0],
+              image: cover,
               description: p.description,
             }}
-            viewHref={`/products/${id}`}
+            viewHref={`/products/${encodeURIComponent(String(p.id))}`}
             goToCartAfterAdd={false}
+            buyEnabled={false} // we already render a Buy button above
           />
         </div>
 
