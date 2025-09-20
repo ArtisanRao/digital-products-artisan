@@ -1,4 +1,7 @@
-﻿const withPWA = require("next-pwa")({
+# From repo root (if you're in app\categories, run: Set-Location ..\..)
+
+@'
+const withPWA = require("next-pwa")({
   dest: "public",
   register: true,
   skipWaiting: true,
@@ -160,3 +163,8 @@ const nextConfig = withPWA({
 });
 
 module.exports = nextConfig;
+'@ | Set-Content -Path .\next.config.js -Encoding utf8
+
+git add .\next.config.js
+git commit -m "chore(next): update CSP, headers, and redirects incl. canonical host + category forwards"
+git push origin main
