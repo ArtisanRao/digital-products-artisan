@@ -119,12 +119,11 @@ export default function ProductPageBySlug() {
   const imgs: string[] = (p.images?.length ? p.images : [p.image]).filter(Boolean) as string[];
   const cover = imgs[0] ?? "/images/placeholder-cover.jpg";
 
-  // format price using the user's preferred currency (affects display only)
-  const currency = getPreferredCurrency();
-  const display = new Intl.NumberFormat(
-    currency === "EUR" ? "de-DE" : "en-US",
-    { style: "currency", currency }
-  ).format(p.price);
+  // ✅ TS-safe currency handling (coerce to 'EUR' | 'USD')
+  const currencyRaw = getPreferredCurrency();
+  const currency = String(currencyRaw).toUpperCase() as "EUR" | "USD";
+  const locale = currency === "EUR" ? "de-DE" : "en-US";
+  const display = new Intl.NumberFormat(locale, { style: "currency", currency }).format(p.price);
 
   const handleBuy = async () => {
     if (buyLoading) return; // prevent double-clicks
