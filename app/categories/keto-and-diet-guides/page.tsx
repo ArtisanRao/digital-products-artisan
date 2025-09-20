@@ -72,6 +72,7 @@ export default function KetoAndDietGuidesPage() {
               : 0;
 
           const primaryImg = `/images/${IMG_FOLDER}/${slug}.jpg`;
+          const detailHref = `/products/${encodeURIComponent(slug)}`; // ← single product page
 
           return (
             <div
@@ -102,6 +103,8 @@ export default function KetoAndDietGuidesPage() {
                     image: primaryImg,
                     description: p.description,
                   }}
+                  viewHref={detailHref}   // ← View → product page
+                  goToCartAfterAdd={false}
                 />
               </div>
             </div>
