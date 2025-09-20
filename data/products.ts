@@ -39,9 +39,9 @@ const RAW_PRODUCTS: Omit<Product, "images" | "categorySlug">[] = [
     id: 1,
     slug: "buy-this-complete-shop",
     title:
-      "Buy This Complete Shop - PLR MRR Digital Product: Resell Ebooks, Courses, Prompts & More.",
+      "Buy This Complete Shop - PLR MRR Digital Product: Resell Health & Fitness eBooks, Courses, Prompts & More.",
     description:
-      "Complete, rights-included digital shop bundle. Rebrand and resell ebooks, courses, prompts, templates, and more.",
+      "Complete, rights-included digital shop bundle. Rebrand and resell Health & Fitness eBooks, courses, prompts, Complete Shop Packages, and more.",
     longDescription: `✸ Buy my complete Shop with PLR / MRR Rights ✸ 
 
 You have here the opportunity to buy my complete shop with a big discount!! This Bundle is way more worth than 100 USD!
@@ -143,13 +143,13 @@ Details:
 Inside:
 • Playbooks for products, funnels, audience & automation  
 • Realistic growth plans and tools stack recommendations  
-• Free bonus: quickstart checklist & templates
+• Free bonus: quickstart checklist & Complete Shop Packages
 
 Delivery:
 • Instant digital download (PDF) — no shipping`,
     price: 28.99,
     originalPrice: 0,
-    category: "Ebooks (Miscellaneous)",
+    category: "Health & Fitness eBooks (Miscellaneous)",
     tags: ["Wealth", "Business", "Strategy", "Guide"],
     rating: 4.6,
     reviews: 95,
