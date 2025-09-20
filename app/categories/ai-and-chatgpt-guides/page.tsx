@@ -99,10 +99,9 @@ export default function AIAndChatGPTGuidesPage() {
                     image: primaryImg,
                     description: p.description,
                   }}
-                  viewHref={detailHref}          // ⬅️ View goes to the product page
+                  viewHref={detailHref}      // ⬅️ View goes to the product page
                   goToCartAfterAdd={false}
-                  // If these items don't have numeric productIds in your catalog, consider:
-                  // buyEnabled={false}
+                  buyEnabled={false}          // ⬅️ disable Buy here (slugs ≠ numeric productId)
                 />
               </div>
             </div>
