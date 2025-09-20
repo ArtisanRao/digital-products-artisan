@@ -7,8 +7,9 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import InlineMore from "@/components/ui/inline-more";
 import { Button } from "@/components/ui/button";
-import ShopActions from "@/components/shop-actions";
+import AddToCartButton from "@/components/add-to-cart-button"; //⬅️ NEW
 import { products, productsById } from "@/data/products";
+import { getPreferredCurrency } from "@/lib/currency";
 
 function findProduct(idOrSlug: string) {
   const asNum = Number(idOrSlug);
@@ -39,6 +40,7 @@ function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [n]);
 
   return (
@@ -104,6 +106,8 @@ export default function ProductPageBySlug() {
   const handle = String(params?.slug ?? "");
   const p = findProduct(handle);
 
+  const [buyLoading, setBuyLoading] = React.useState(false);
+
   if (!p) {
     return (
       <main className="mx-auto max-w-6xl px-4 py-12">
@@ -115,17 +119,41 @@ export default function ProductPageBySlug() {
   const imgs: string[] = (p.images?.length ? p.images : [p.image]).filter(Boolean) as string[];
   const cover = imgs[0] ?? "/images/placeholder-cover.jpg";
 
+  // TS-safe currency handling for display
+  const currencyRaw = getPreferredCurrency();
+  const currency = String(currencyRaw).toUpperCase() as "EUR" | "USD";
+  const locale = currency === "EUR" ? "de-DE" : "en-US";
+  const display = new Intl.NumberFormat(locale, { style: "currency", currency }).format(p.price);
+
   const handleBuy = async () => {
+    if (buyLoading) return;
+    setBuyLoading(true);
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId: p.id, qty: 1 }),
+        body: JSON.stringify({ productId: p.id, qty: 1, currency }),
       });
-      const data = await res.json();
-      if (data?.url) window.location.href = data.url;
-    } catch {}
+
+      const raw = await res.text();
+      let data: any = {};
+      try { data = JSON.parse(raw); } catch {}
+
+      if (!res.ok || !data?.url) {
+        const message = data?.error || raw || `Checkout failed (HTTP ${res.status})`;
+        throw new Error(message);
+      }
+
+      window.location.href = data.url as string; // → Stripe Checkout
+    } catch (err: any) {
+      console.error("Checkout error:", err);
+      alert(err?.message || "Sorry—couldn't start checkout.");
+    } finally {
+      setBuyLoading(false);
+    }
   };
+
+  const canonicalHref = `/products/${encodeURIComponent(String(p.slug ?? p.id))}`;
 
   return (
     <main className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 py-8 lg:grid-cols-[1.2fr_.8fr]">
@@ -133,16 +161,10 @@ export default function ProductPageBySlug() {
         <ProductGallery images={imgs} alt={p.title} />
       </section>
 
-      <section
-        className="isolate"
-        style={{ position: "relative", zIndex: 60, pointerEvents: "auto" }}
-      >
-        <h1
-          className="text-4xl font-extrabold leading-tight"
-          style={{ position: "relative", zIndex: 61, pointerEvents: "auto" }}
-        >
+      <section className="isolate" style={{ position: "relative", zIndex: 60, pointerEvents: "auto" }}>
+        <h1 className="text-4xl font-extrabold leading-tight" style={{ position: "relative", zIndex: 61, pointerEvents: "auto" }}>
           <Link
-            href={`/products/${encodeURIComponent(String(p.id))}`}
+            href={canonicalHref}
             className="underline decoration-transparent hover:decoration-current focus:decoration-current"
             style={{ pointerEvents: "auto" }}
           >
@@ -150,39 +172,29 @@ export default function ProductPageBySlug() {
           </Link>
         </h1>
 
-        <div className="mt-4 text-3xl font-semibold">
-          {new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(p.price)}
-        </div>
+        <div className="mt-4 text-3xl font-semibold">{display}</div>
 
         <div className="mt-4 text-gray-700">
           <InlineMore text={p.description ?? ""} lines={3} minChars={80} />
         </div>
 
-        <div
-          className="mt-6 flex flex-wrap gap-3"
-          style={{ position: "relative", zIndex: 61, pointerEvents: "auto" }}
-        >
+        <div className="mt-6 flex flex-wrap gap-3" style={{ position: "relative", zIndex: 61, pointerEvents: "auto" }}>
+          {/* Add to cart — now blue to match Buy */}
+          <AddToCartButton
+            productId={p.id}
+            className="bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
+          />
+
+          {/* Buy — redirects to Checkout */}
           <Button
             type="button"
             onClick={handleBuy}
+            disabled={buyLoading}
             className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
             style={{ pointerEvents: "auto" }}
           >
-            Buy
+            {buyLoading ? "Redirecting..." : "Buy"}
           </Button>
-
-          <ShopActions
-            item={{
-              id: String(p.id),
-              title: p.title,
-              price: p.price,
-              image: cover,
-              description: p.description,
-            }}
-            viewHref={`/products/${encodeURIComponent(String(p.id))}`}
-            goToCartAfterAdd={false}
-            buyEnabled={false}
-          />
         </div>
 
         <ul className="mt-6 list-disc space-y-1 pl-5 text-sm text-gray-600">
