@@ -39,9 +39,7 @@ function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
   const [idx, setIdx] = React.useState(0);
   const count = safeImages.length;
 
-  const go = (delta: number) => {
-    setIdx((i) => (i + delta + count) % count);
-  };
+  const go = (delta: number) => setIdx((i) => (i + delta + count) % count);
 
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -50,10 +48,11 @@ function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [count]);
 
   return (
-    <div className="grid grid-cols-[86px_1fr] gap-4 lg:gap-6">
+    <div className="grid grid-cols-[86px_1fr] gap-4 lg:gap-6 z-0">
       {/* Left thumbnail rail */}
       <div className="flex max-h-[560px] flex-col gap-3 overflow-auto pr-1">
         {safeImages.map((src, i) => {
@@ -156,16 +155,19 @@ export default function ProductPage() {
   };
 
   return (
-    <main className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 py-8 lg:grid-cols-[1.2fr_.8fr]">
+    <main
+      data-page="product"
+      className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 py-8 lg:grid-cols-[1.2fr_.8fr]"
+    >
       {/* LEFT: gallery (thumbnail rail + main) */}
-      <section>
+      <section className="z-0">
         <ProductGallery images={p.images} alt={p.title} />
       </section>
 
-      {/* RIGHT: details */}
-      <section className="relative">
+      {/* RIGHT: details (force on-top, always clickable) */}
+      <section className="isolate content-click-layer">
         {/* Clickable title to self (keeps ‘View’ parity) */}
-        <h1 className="relative z-20 text-4xl font-extrabold leading-tight">
+        <h1 className="relative z-20 pointer-events-auto text-4xl font-extrabold leading-tight">
           <Link
             href={`/products/${id}`}
             className="underline decoration-transparent hover:decoration-current focus:decoration-current"
@@ -185,7 +187,7 @@ export default function ProductPage() {
           <InlineMore text={p.description} lines={3} minChars={80} />
         </div>
 
-        <div className="mt-6 flex flex-wrap gap-3">
+        <div className="relative z-20 mt-6 flex flex-wrap gap-3 pointer-events-auto">
           {/* Buy -> Stripe checkout */}
           <Button
             type="button"

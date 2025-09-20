@@ -43,12 +43,13 @@ function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [n]);
 
   return (
-    <div className="grid grid-cols-[86px_1fr] gap-4 lg:gap-6 relative z-0">
+    <div className="relative z-0 grid grid-cols-[86px_1fr] gap-4 lg:gap-6">
       {/* Left rail (thumbnails) */}
-      <div className="flex max-h-[560px] flex-col gap-3 overflow-auto pr-1 z-10">
+      <div className="z-10 flex max-h-[560px] flex-col gap-3 overflow-auto pr-1">
         {safe.map((src, i) => {
           const active = i === idx;
           return (
@@ -78,7 +79,7 @@ function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
       </div>
 
       {/* Main viewer */}
-      <div className="relative isolate rounded-2xl border bg-white z-[1]">
+      <div className="relative z-[1] isolate rounded-2xl border bg-white">
         <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl">
           <Image
             key={safe[idx]}
@@ -144,20 +145,25 @@ export default function ProductPageBySlug() {
       });
       const data = await res.json();
       if (data?.url) window.location.href = data.url;
-    } catch {}
+    } catch {
+      // no-op
+    }
   };
 
   return (
-    <main className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 py-8 lg:grid-cols-[1.2fr_.8fr]">
+    <main
+      data-page="product"
+      className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 py-8 lg:grid-cols-[1.2fr_.8fr]"
+    >
       {/* LEFT: gallery with rail + prev/next */}
       <section className="relative z-0">
         <ProductGallery images={imgs} alt={p.title} />
       </section>
 
-      {/* RIGHT: info */}
-      <section className="relative z-20 pointer-events-auto isolate">
+      {/* RIGHT: info (kept above gallery; ensure clicks work) */}
+      <section className="relative z-20 isolate pointer-events-auto">
         {/* Title is clickable and on top of overlays */}
-        <h1 className="relative z-20 text-4xl font-extrabold leading-tight pointer-events-auto">
+        <h1 className="relative z-20 pointer-events-auto text-4xl font-extrabold leading-tight">
           <Link
             href={`/products/${encodeURIComponent(String(p.id))}`}
             className="underline decoration-transparent hover:decoration-current focus:decoration-current"
@@ -179,7 +185,7 @@ export default function ProductPageBySlug() {
           <Button
             type="button"
             onClick={handleBuy}
-            className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500 pointer-events-auto"
+            className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
           >
             Buy
           </Button>

@@ -198,3 +198,32 @@
     height: auto !important;
   }
 }
+
+/* ===== Overlay & Click-Through Safeguards =====
+   Prevent hidden/inactive overlays from blocking clicks and
+   give a helper class to force interactivity on top layers. */
+[hidden],
+[aria-hidden="true"] {
+  pointer-events: none !important;
+}
+
+/* Snipcart closed/hidden states */
+#snipcart[hidden],
+.snipcart-cart--hidden,
+.snipcart-sidecart__container[style*="display: none"],
+.snipcart-modal[aria-hidden="true"],
+.snipcart__overlay[aria-hidden="true"] {
+  pointer-events: none !important;
+}
+
+/* Radix/Shadcn dialogs/tooltips when closed */
+[data-state="closed"] {
+  pointer-events: none !important;
+}
+
+/* Ensure interactive zones sit above stray overlays */
+.content-click-layer {
+  position: relative;
+  z-index: 100 !important;
+  pointer-events: auto !important;
+}
