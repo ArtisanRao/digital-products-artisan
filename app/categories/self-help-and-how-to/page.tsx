@@ -49,6 +49,7 @@ export default function SelfHelpAndHowToPage() {
               : 0;
 
           const primaryImg = `/images/${IMG_FOLDER}/${slug}.jpg`;
+          const detailHref = `/products/${encodeURIComponent(slug)}`; // ← route to single product page
 
           return (
             <div
@@ -79,6 +80,8 @@ export default function SelfHelpAndHowToPage() {
                     image: primaryImg,
                     description: p.description,
                   }}
+                  viewHref={detailHref}      // ← View → product detail
+                  goToCartAfterAdd={false}
                 />
               </div>
             </div>
