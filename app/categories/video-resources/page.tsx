@@ -53,6 +53,7 @@ export default function VideoResourcesPage() {
               : 0;
 
           const primaryImg = `/images/${CAT}/${slug}.jpg`;
+          const detailHref = `/products/${encodeURIComponent(slug)}`; // ← single product page
 
           return (
             <div
@@ -74,7 +75,7 @@ export default function VideoResourcesPage() {
 
                 <p className="text-lg font-bold">{formatEUR(price)}</p>
 
-                {/* View (checkout) + Add to Cart */}
+                {/* View (detail) + Add to Cart */}
                 <ShopActions
                   item={{
                     id: slug,
@@ -83,6 +84,8 @@ export default function VideoResourcesPage() {
                     image: primaryImg,
                     description: p.description,
                   }}
+                  viewHref={detailHref}       // ← View routes to product page
+                  goToCartAfterAdd={false}    // stay on grid after adding
                 />
               </div>
             </div>
