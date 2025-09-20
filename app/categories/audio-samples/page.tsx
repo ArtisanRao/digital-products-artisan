@@ -85,6 +85,7 @@ export default function AudioSamplesPage() {
                   }}
                   viewHref={detailHref}        // ← View goes to product page
                   goToCartAfterAdd={false}
+                  buyEnabled={false}           // ← disable Buy (no numeric productId/Stripe mapping)
                 />
               </div>
             </div>
