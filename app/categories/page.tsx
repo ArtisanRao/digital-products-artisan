@@ -5,7 +5,7 @@ import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
 import { CATEGORIES } from "@/data/categories";
 
-/** Try an override, then multiple filename patterns in both folders, then default. */
+/** Prefer flat /images/<slug>.jpg, then folder jpgs, then png/webp, then default. */
 function CategoryCover({
   slug,
   alt,
@@ -15,30 +15,26 @@ function CategoryCover({
   alt: string;
   overrideSrc?: string;
 }) {
-  const ver = process.env.NEXT_PUBLIC_ASSET_VERSION ?? "v1";
+  const ver = process.env.NEXT_PUBLIC_ASSET_VERSION ?? "v3";
 
-  // If you pass an explicit image in data/categories.ts, try that first.
   const candidates: string[] = [
     ...(overrideSrc ? [overrideSrc] : []),
 
-    // Preferred structure: per-category folder
-    `/images/categories/${slug}/cover.webp`,
-    `/images/categories/${slug}/cover.avif`,
-    `/images/categories/${slug}/cover.png`,
+    // 1) Flat .jpg cover — your setup
+    `/images/${slug}.jpg`,
+
+    // 2) Per-category folder .jpg variants
     `/images/categories/${slug}/cover.jpg`,
-    `/images/categories/${slug}/hero.webp`,
-    `/images/categories/${slug}/hero.avif`,
-    `/images/categories/${slug}/hero.png`,
     `/images/categories/${slug}/hero.jpg`,
 
-    // Flat structure: single file in /public/images
-    `/images/${slug}.webp`,
-    `/images/${slug}.avif`,
+    // 3) Optional png/webp fallbacks (in case some differ)
     `/images/${slug}.png`,
-    `/images/${slug}.jpg`,
+    `/images/${slug}.webp`,
+    `/images/categories/${slug}/cover.png`,
+    `/images/categories/${slug}/cover.webp`,
   ];
 
-  const fallback = "/images/categories/_default/cover.png"; // ensure this exists
+  const fallback = "/images/categories/_default/cover.jpg";
   const [idx, setIdx] = useState(0);
   const pick = idx < candidates.length ? candidates[idx] : fallback;
   const src = `${pick}?${ver}`;
@@ -90,8 +86,7 @@ const descBySlug: Record<string, string> = {
 };
 
 export default function CategoriesPage() {
-  // If you add { image: "/images/<something>.webp" } per category in data/categories.ts,
-  // we’ll use it as overrideSrc automatically.
+  // If you add { image: "/images/custom-name.jpg" } in data/categories.ts, it will be used first.
   const categories = CATEGORIES.map((c: any) => ({
     name: `${emojiBySlug[c.slug] ?? "📁"} ${c.label}`,
     slug: c.slug,
