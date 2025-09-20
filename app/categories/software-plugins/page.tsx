@@ -65,6 +65,8 @@ export default function SoftwarePluginsPage() {
               ? parseFloat(p.price)
               : Number((items[i] as any)?.price ?? 0);
 
+          const detailHref = `/products/${encodeURIComponent(slug)}`; // ← single product page
+
           return (
             <div
               key={id}
@@ -94,6 +96,8 @@ export default function SoftwarePluginsPage() {
                     price,
                     description,
                   }}
+                  viewHref={detailHref}       // ← View → product detail
+                  goToCartAfterAdd={false}    // stay on grid after add
                 />
               </div>
             </div>
