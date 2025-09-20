@@ -88,7 +88,7 @@ export default function CompleteShopPackagesPage() {
 
                 <p className="text-lg font-bold mb-3">{formatEUR(price)}</p>
 
-                {/* View (detail) + Add to Cart */}
+                {/* View (detail) + Add to Cart; disable Buy (no Stripe mapping for slugs) */}
                 <ShopActions
                   item={{
                     id: slug,
@@ -99,6 +99,7 @@ export default function CompleteShopPackagesPage() {
                   }}
                   viewHref={detailHref}     // ← View goes to product page
                   goToCartAfterAdd={false}
+                  buyEnabled={false}        // ← prevent Checkout button here
                 />
               </div>
             </div>
