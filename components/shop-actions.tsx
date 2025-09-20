@@ -1,7 +1,5 @@
-// components/shop-actions.tsx
 "use client";
 
-import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Eye, ShoppingCart } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -40,40 +38,25 @@ export default function ShopActions({
   const router = useRouter();
   const cart = (useCart?.() ?? {}) as any;
 
-  // UI safety: prevent double clicks
-  const [adding, setAdding] = React.useState(false);
-  const [buying, setBuying] = React.useState(false);
-  const [navigating, setNavigating] = React.useState(false);
-
-  const productHref = viewHref ?? `/products/${encodeURIComponent(String(item.id))}`;
-
-  const stop = (e: React.MouseEvent) => {
-    // Make sure parent clickable layers never swallow these
-    e.preventDefault();
-    e.stopPropagation();
-  };
+  const productHref =
+    viewHref ?? `/products/${encodeURIComponent(String(item.id))}`;
 
   const persistAndBroadcast = (items: any[]) => {
     if (typeof window === "undefined") return;
+    localStorage.setItem("cart", JSON.stringify(items));
+    const count = items.reduce((n, i) => n + Number(i.quantity || 1), 0);
+    localStorage.setItem("cartCount", String(count));
     try {
-      localStorage.setItem("cart", JSON.stringify(items));
-      const count = items.reduce((n, i) => n + Number(i.quantity || 1), 0);
-      localStorage.setItem("cartCount", String(count));
       window.dispatchEvent(new CustomEvent("cart:updated", { detail: { count, items } }));
       window.dispatchEvent(new CustomEvent("cart:item-added", { detail: { item, count } }));
-    } catch {
-      /* no-op */
-    }
+    } catch {}
   };
 
   const addToLocalCart = () => {
     if (typeof window === "undefined") return;
     let items: any[] = [];
-    try {
-      items = JSON.parse(localStorage.getItem("cart") || "[]");
-    } catch {
-      items = [];
-    }
+    try { items = JSON.parse(localStorage.getItem("cart") || "[]"); } catch {}
+
     const idx = items.findIndex((x) => String(x.id) === String(item.id));
     if (idx >= 0) {
       items[idx].quantity = Number(items[idx].quantity || 1) + 1;
@@ -93,48 +76,28 @@ export default function ShopActions({
     persistAndBroadcast(items);
   };
 
-  const add = async (e: React.MouseEvent) => {
-    stop(e);
-    if (adding) return;
-    setAdding(true);
-    try {
-      // Best-effort: support any cart context shape WITHOUT redirecting/opening
-      (cart.addItem ?? cart.add ?? cart.actions?.addItem)?.({
-        id: String(item.id),
-        name: item.title,
-        title: item.title,
-        price: item.price,
-        image: item.image,
-        description: item.description,
-        fileUrl: item.fileUrl,
-        url: productHref,
-        quantity: 1,
-      });
+  const add = () => {
+    (cart.addItem ?? cart.add ?? cart.actions?.addItem)?.({
+      id: String(item.id),
+      name: item.title,
+      title: item.title,
+      price: item.price,
+      image: item.image,
+      description: item.description,
+      fileUrl: item.fileUrl,
+      url: productHref,
+      quantity: 1,
+    });
 
-      addToLocalCart();
-
-      if (goToCartAfterAdd) router.push("/cart");
-    } finally {
-      setAdding(false);
-    }
+    addToLocalCart();
+    if (goToCartAfterAdd) router.push("/cart");
   };
 
-  const view = async (e: React.MouseEvent) => {
-    stop(e);
-    if (navigating) return;
-    setNavigating(true);
-    try {
-      router.push(productHref);
-    } finally {
-      // Small delay prevents rapid double-activations if overlays exist
-      setTimeout(() => setNavigating(false), 150);
-    }
+  const view = () => {
+    router.push(productHref);
   };
 
-  const buy = async (e: React.MouseEvent) => {
-    stop(e);
-    if (buying) return;
-    setBuying(true);
+  const buy = async () => {
     try {
       const currency = getPreferredCurrency?.() ?? "usd";
       const res = await fetch("/api/checkout", {
@@ -142,69 +105,52 @@ export default function ShopActions({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ productId: item.id, qty: buyQty, currency }),
       });
-
-      // Handle non-JSON or error responses gracefully
-      const text = await res.text();
-      let data: any;
-      try {
-        data = JSON.parse(text);
-      } catch {
-        data = {};
-      }
-      if (!res.ok || !data?.url) {
-        // Don’t throw UI errors at users; just fail silently (or wire a toast here)
-        return;
-      }
-      window.location.href = data.url as string;
-    } finally {
-      setBuying(false);
-    }
+      const data = await res.json();
+      if (data?.url) window.location.href = data.url;
+    } catch {}
   };
 
   return (
-    <div className="mt-3 flex flex-wrap items-center gap-2 isolate z-20 pointer-events-auto">
-      {/* VIEW — go to product details page; forced blue/white */}
+    <div
+      className="mt-3 flex flex-wrap items-center gap-2 isolate"
+      // ⬇ absolute click-safety
+      style={{ position: "relative", zIndex: 60, pointerEvents: "auto" }}
+    >
       <Button
         type="button"
         onClick={view}
-        disabled={navigating}
         variant="default"
         className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
-        style={{ backgroundColor: "#2563eb", color: "#fff" }}
+        style={{ backgroundColor: "#2563eb", color: "#fff", pointerEvents: "auto" }}
         aria-label={`View ${item.title}`}
-        data-role="view-button"
       >
         <Eye className="h-4 w-4 text-white" />
-        {navigating ? "Opening…" : "View"}
+        View
       </Button>
 
-      {/* BUY — open Stripe Checkout */}
       {buyEnabled && (
         <Button
           type="button"
           onClick={buy}
-          disabled={buying}
           variant="default"
           className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
+          style={{ pointerEvents: "auto" }}
           aria-label={`Buy ${item.title} now`}
-          data-role="buy-button"
         >
-          {buying ? "Redirecting…" : buyLabel}
+          {buyLabel}
         </Button>
       )}
 
-      {/* ADD TO CART — add silently, stay put (badge updates via events) */}
       <Button
         type="button"
         onClick={add}
-        disabled={adding}
         variant="default"
         className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
+        style={{ pointerEvents: "auto" }}
         aria-label={`Add ${item.title} to cart`}
-        data-role="add-to-cart-button"
       >
         <ShoppingCart className="h-4 w-4 text-white" />
-        {adding ? "Adding…" : "Add to cart"}
+        Add to cart
       </Button>
     </div>
   );
