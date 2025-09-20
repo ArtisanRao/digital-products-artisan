@@ -64,6 +64,8 @@ export default function MarketingToolsPage() {
                 ? parseFloat(p.price)
                 : Number((items[i] as any)?.price ?? 0);
 
+            const detailHref = `/products/${encodeURIComponent(id)}`; // ← single product page
+
             return (
               <div
                 key={id}
@@ -84,7 +86,7 @@ export default function MarketingToolsPage() {
 
                   <p className="text-lg font-bold mb-3">{formatEUR(price)}</p>
 
-                  {/* keep original fields so checkout/download logic remains intact */}
+                  {/* View now routes to product detail; blue buttons handled in ShopActions */}
                   <ShopActions
                     item={{
                       ...(items[i] as any),
@@ -94,6 +96,8 @@ export default function MarketingToolsPage() {
                       price,
                       description,
                     }}
+                    viewHref={detailHref}
+                    goToCartAfterAdd={false}
                   />
                 </div>
               </div>
