@@ -6,7 +6,7 @@ import ShopActions from "@/components/shop-actions";
 import InlineMore from "@/components/ui/inline-more";
 
 type Item = {
-  id: string;        // stable key
+  id: string;
   slug: string;
   title: string;
   price: number;
@@ -18,30 +18,9 @@ const CAT = "templates";
 const primary = (slug: string) => `/images/${CAT}/${slug}.jpg`;
 
 const items: Item[] = [
-  {
-    id: "invoice-template",
-    slug: "invoice-template",
-    title: "Invoice Template Kit",
-    price: 5.49,
-    description: "Clean, professional invoices.",
-    image: primary("invoice-template"),
-  },
-  {
-    id: "presentation-deck-template",
-    slug: "presentation-deck-template",
-    title: "Presentation Deck Template",
-    price: 6.49,
-    description: "Modern slide layouts for anything.",
-    image: primary("presentation-deck-template"),
-  },
-  {
-    id: "resume-template",
-    slug: "resume-template",
-    title: "Ultimate Resume Template",
-    price: 6.99,
-    description: "ATS-friendly resume with cover letter.",
-    image: primary("resume-template"),
-  },
+  { id: "invoice-template", slug: "invoice-template", title: "Invoice Template Kit", price: 5.49, description: "Clean, professional invoices.", image: primary("invoice-template") },
+  { id: "presentation-deck-template", slug: "presentation-deck-template", title: "Presentation Deck Template", price: 6.49, description: "Modern slide layouts for anything.", image: primary("presentation-deck-template") },
+  { id: "resume-template", slug: "resume-template", title: "Ultimate Resume Template", price: 6.99, description: "ATS-friendly resume with cover letter.", image: primary("resume-template") },
 ];
 
 const formatEUR = (n: number) =>
@@ -56,44 +35,23 @@ export default function TemplatesPage() {
         items={items}
         renderItem={(p) => {
           const slug = p.slug ?? String(p.id);
-          const price =
-            typeof p.price === "number"
-              ? p.price
-              : typeof p.price === "string"
-              ? parseFloat(p.price)
-              : 0;
+          const price = typeof p.price === "number" ? p.price : typeof p.price === "string" ? parseFloat(p.price) : 0;
           const image = typeof p.image === "string" ? p.image : primary(slug);
+          const detailHref = `/products/${encodeURIComponent(slug)}`; // ← single product page
 
           return (
-            <div
-              key={String(p.id)}
-              className="group rounded-2xl border bg-white overflow-hidden shadow transition hover:shadow-lg"
-            >
-              {/* Hoverable, perfectly-fit cover */}
+            <div key={String(p.id)} className="group rounded-2xl border bg-white overflow-hidden shadow transition hover:shadow-lg">
               <HoverableCover src={image} alt={p.title} ratio="16/9" fit="contain" />
-
               <div className="p-4">
                 <h2 className="text-xl font-semibold mb-2">{p.title}</h2>
 
-                {/* Inline “More / Less” under subtitle — always show trigger */}
-                <InlineMore
-                  text={p.description}
-                  lines={2}
-                  minChars={1}
-                  className="text-gray-600 text-sm mb-2"
-                />
-
+                <InlineMore text={p.description} lines={2} minChars={1} className="text-gray-600 text-sm mb-2" />
                 <p className="text-lg font-bold mb-3">{formatEUR(price)}</p>
 
-                {/* View (checkout) + Add to Cart (opens cart with badge) */}
                 <ShopActions
-                  item={{
-                    id: slug,
-                    title: p.title,
-                    price,
-                    image,
-                    description: p.description,
-                  }}
+                  item={{ id: slug, title: p.title, price, image, description: p.description }}
+                  viewHref={detailHref}         // ← View → product page
+                  goToCartAfterAdd={false}      // stay on grid
                 />
               </div>
             </div>
