@@ -21,7 +21,6 @@ const items: Item[] = [
   { id: "social-icons-pack",   slug: "social-icons-pack",   title: "Social Media Icons",  price: 3.99, description: "Brand-safe logos in multiple styles and sizes." },
 ];
 
-// Try multiple sensible filenames (category folder, root, -cover variants) + safe fallbacks
 const imgCandidates = (slug: string) => [
   `/images/${CAT}/${slug}.jpg`,
   `/images/${CAT}/${slug}-cover.jpg`,
@@ -54,6 +53,7 @@ export default function IconsPage() {
               : 0;
 
           const primaryImg = `/images/${CAT}/${slug}.jpg`;
+          const detailHref = `/products/${encodeURIComponent(slug)}`; // ← single product page
 
           return (
             <div
@@ -80,6 +80,8 @@ export default function IconsPage() {
                     image: primaryImg,
                     description: p.description,
                   }}
+                  viewHref={detailHref}   // ← View → product page
+                  goToCartAfterAdd={false}
                 />
               </div>
             </div>
