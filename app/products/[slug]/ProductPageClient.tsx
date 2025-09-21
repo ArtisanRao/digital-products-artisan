@@ -1,4 +1,3 @@
-// app/products/[slug]/ProductPageClient.tsx
 "use client";
 
 import * as React from "react";
@@ -115,7 +114,6 @@ export default function ProductPageClient({ slug }: { slug: string }) {
 
   const imgs: string[] = (p.images?.length ? p.images : [p.image]).filter(Boolean) as string[];
 
-  // TS-safe currency handling for display
   const currencyRaw = getPreferredCurrency();
   const currency = String(currencyRaw).toUpperCase() as "EUR" | "USD";
   const locale = currency === "EUR" ? "de-DE" : "en-US";
@@ -133,16 +131,13 @@ export default function ProductPageClient({ slug }: { slug: string }) {
 
       const raw = await res.text();
       let data: any = {};
-      try {
-        data = JSON.parse(raw);
-      } catch {}
-
+      try { data = JSON.parse(raw); } catch {}
       if (!res.ok || !data?.url) {
         const message = data?.error || raw || `Checkout failed (HTTP ${res.status})`;
         throw new Error(message);
       }
 
-      window.location.href = data.url as string; // → Stripe Checkout
+      window.location.href = data.url as string;
     } catch (err: any) {
       console.error("Checkout error:", err);
       alert(err?.message || "Sorry—couldn't start checkout.");
