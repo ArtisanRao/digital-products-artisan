@@ -51,7 +51,6 @@ export default function Page() {
   title={item.title}
   price={item.price}
   image={item.image}
-  description={item.description}
   viewHref={detailHref}
   goToCartAfterAdd={false}
 />
@@ -63,6 +62,7 @@ export default function Page() {
     </main>
   );
 }
+
 
 
 
