@@ -177,7 +177,7 @@ export default function ProductPageClient({ slug }: { slug: string }) {
             className="bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
           />
 
-        <Button
+          <Button
             type="button"
             onClick={handleBuy}
             disabled={buyLoading}
