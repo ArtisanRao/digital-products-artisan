@@ -1,4 +1,3 @@
-// DO NOT add "use client" — this file must stay a Server Component
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
 export const revalidate = 0;
@@ -9,78 +8,76 @@ import InlineMore from "@/components/ui/inline-more";
 import { Button } from "@/components/ui/button";
 import AddToCartButton from "@/components/add-to-cart-button";
 import { products, productsById } from "@/data/products";
-import { getPreferredCurrency } from "@/lib/currency";
+import { notFound } from "next/navigation";
 
-type Params = { slug: string };
+// Minimal, server-safe gallery (no client hooks needed)
+function ServerGallery({ images, alt }: { images: string[]; alt: string }) {
+  const safe = images?.length ? images : ["/images/placeholder-cover.jpg"];
+  return (
+    <div className="relative isolate rounded-2xl border bg-white">
+      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl">
+        <Image
+          src={safe[0]}
+          alt={alt}
+          fill
+          sizes="(min-width:1024px) 720px, 100vw"
+          className="object-contain"
+          priority
+        />
+      </div>
+      {safe.length > 1 && (
+        <div className="grid grid-cols-4 gap-2 p-3">
+          {safe.slice(1, 5).map((src, i) => (
+            <div key={src + i} className="relative aspect-[4/3] overflow-hidden rounded-lg bg-gray-50">
+              <Image src={src} alt={`${alt} preview ${i + 2}`} fill sizes="200px" className="object-cover" />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
-// Next.js 15: params can be a Promise — await it.
-export default async function Page({
-  params,
-}: {
-  params: Promise<Params>;
-}) {
-  const { slug } = await params;
+// Look up by numeric ID or slug
+function findProductSync(idOrSlug: string) {
+  const asNum = Number(idOrSlug);
+  if (Number.isFinite(asNum)) {
+    const byId = (productsById as Record<number, any>)?.[asNum];
+    if (byId) return byId;
+    const byIdLinear = products.find((p) => Number(p.id) === asNum);
+    if (byIdLinear) return byIdLinear;
+  }
+  const slug = idOrSlug.toLowerCase();
+  return (
+    products.find((p) => String(p.slug).toLowerCase() === slug) ||
+    products.find((p) => String(p.id) === idOrSlug) ||
+    null
+  );
+}
 
-  const p = findProduct(slug);
+export default function Page({ params }: { params: { slug: string } }) {
+  // ✅ Resolve product at request time on the server
+  const handle = String(params?.slug ?? "");
+  const p = findProductSync(handle);
 
   if (!p) {
-    return (
-      <main className="mx-auto max-w-6xl px-4 py-12">
-        <h1 className="text-2xl font-semibold">Product not found</h1>
-      </main>
-    );
+    // If the URL truly doesn't match a product, return a real 404.
+    // (If you prefer a soft “not found” message instead, render that UI here.)
+    return notFound();
   }
 
   const imgs: string[] = (p.images?.length ? p.images : [p.image]).filter(Boolean) as string[];
-  const cover = imgs[0] ?? "/images/placeholder-cover.jpg";
-
-  // Safe currency formatting on the server; your util should fall back when no client storage
-  const currencyRaw = getPreferredCurrency();
-  const currency = String(currencyRaw).toUpperCase() as "EUR" | "USD";
-  const locale = currency === "EUR" ? "de-DE" : "en-US";
-  const display = new Intl.NumberFormat(locale, { style: "currency", currency }).format(p.price);
-
   const canonicalHref = `/products/${encodeURIComponent(String(p.slug ?? p.id))}`;
+
+  // Display price as-is (your AddToCart/Checkout buttons handle currency)
+  const priceDisplay = `€${Number(p.price).toFixed(2)}`;
 
   return (
     <main className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 py-8 lg:grid-cols-[1.2fr_.8fr]">
-      {/* Simple server-rendered gallery: hero + thumbnails */}
       <section style={{ zIndex: 1, position: "relative" }}>
-        <div className="grid grid-cols-[86px_1fr] gap-4 lg:gap-6 relative">
-          <div className="flex max-h-[560px] flex-col gap-3 overflow-auto pr-1">
-            {imgs.map((src, i) => (
-              <div
-                key={src + i}
-                className="relative aspect-square w-[86px] overflow-hidden rounded-xl border border-gray-200"
-                aria-hidden
-              >
-                <Image
-                  src={src}
-                  alt={`${p.title} — thumbnail ${i + 1}`}
-                  fill
-                  sizes="86px"
-                  className="object-cover"
-                />
-              </div>
-            ))}
-          </div>
-
-          <div className="relative isolate rounded-2xl border bg-white">
-            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl">
-              <Image
-                src={cover}
-                alt={p.title}
-                fill
-                sizes="(min-width:1024px) 720px, 100vw"
-                className="object-contain"
-                priority
-              />
-            </div>
-          </div>
-        </div>
+        <ServerGallery images={imgs} alt={p.title} />
       </section>
 
-      {/* Details / Actions */}
       <section className="isolate" style={{ position: "relative", zIndex: 60, pointerEvents: "auto" }}>
         <h1
           className="text-4xl font-extrabold leading-tight"
@@ -95,24 +92,24 @@ export default async function Page({
           </Link>
         </h1>
 
-        <div className="mt-4 text-3xl font-semibold">{display}</div>
+        <div className="mt-4 text-3xl font-semibold">{priceDisplay}</div>
 
         <div className="mt-4 text-gray-700">
           <InlineMore text={p.description ?? ""} lines={3} minChars={80} />
         </div>
 
-        <div
-          className="mt-6 flex flex-wrap gap-3"
-          style={{ position: "relative", zIndex: 61, pointerEvents: "auto" }}
-        >
+        <div className="mt-6 flex flex-wrap gap-3" style={{ position: "relative", zIndex: 61, pointerEvents: "auto" }}>
           <AddToCartButton
             productId={p.id}
             className="bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
           />
 
-          {/* Keep this a link so the server page stays non-interactive for Buy.
-              If you want JS checkout, move that into a separate client component. */}
-          <Button asChild className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500">
+          {/* Keep Buy button simple on server page; your existing client checkout flow can remain elsewhere */}
+          <Button
+            type="button"
+            asChild
+            className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
+          >
             <Link href="/checkout">Buy</Link>
           </Button>
         </div>
@@ -124,22 +121,5 @@ export default async function Page({
         </ul>
       </section>
     </main>
-  );
-}
-
-/** Shared helper (server-safe) */
-function findProduct(idOrSlug: string) {
-  const asNum = Number(idOrSlug);
-  if (Number.isFinite(asNum)) {
-    const byId = (productsById as any)?.[asNum];
-    if (byId) return byId;
-    const byIdLinear = products.find((p) => Number(p.id) === asNum);
-    if (byIdLinear) return byIdLinear;
-  }
-  const lower = idOrSlug.toLowerCase();
-  return (
-    products.find((p) => String(p.slug).toLowerCase() === lower) ||
-    products.find((p) => String(p.id) === idOrSlug) ||
-    null
   );
 }
