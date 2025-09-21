@@ -47,13 +47,14 @@ export default function Page() {
 
               <div className="mt-auto">
                 <ProductActions
-                  {...({
-                    item,
-                    viewHref: detailHref,
-                    goToCartAfterAdd: false,
-                    buyEnabled: false, // slugs here are not product IDs, so disable direct Buy
-                  } as import("@/components/ProductActions").Props)}
-                />
+  id={item.id}
+  title={item.title}
+  price={item.price}
+  image={item.image}
+  description={item.description}
+  viewHref={detailHref}
+  goToCartAfterAdd={false}
+/>
               </div>
             </div>
           );
@@ -62,6 +63,7 @@ export default function Page() {
     </main>
   );
 }
+
 
 
 
