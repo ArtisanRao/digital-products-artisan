@@ -6,15 +6,21 @@ import { ShoppingCart, Eye } from "lucide-react";
 type Size = "sm" | "md" | "lg";
 
 type Props = {
+  /** canonical product fields */
   id: string | number;
   title: string;
   price: number;
   image?: string;
   quantity?: number;
-  /** Optional: control compactness of the buttons */
+
+  /** presentation */
   size?: Size;
-  /** Optional: extra classes for the wrapper */
   className?: string;
+
+  /** optional flags coming from category/list pages */
+  buyEnabled?: boolean;            // when false, hide/disable the “View/Buy” button
+  viewHref?: string;               // accepted for compatibility (unused here)
+  goToCartAfterAdd?: boolean;      // accepted for compatibility (unused here)
 };
 
 function addToCartLocal(
@@ -61,9 +67,9 @@ function getPreferredCurrency(): "eur" | "usd" {
 }
 
 const SIZE_STYLES: Record<Size, { btn: string; icon: string; gap: string }> = {
-  sm:  { btn: "px-3 py-1.5 text-sm",  icon: "h-4 w-4", gap: "gap-2" },
-  md:  { btn: "px-4 py-2 text-sm",    icon: "h-4 w-4", gap: "gap-3" },
-  lg:  { btn: "px-5 py-2.5 text-base",icon: "h-5 w-5", gap: "gap-3" },
+  sm:  { btn: "px-3 py-1.5 text-sm",   icon: "h-4 w-4", gap: "gap-2" },
+  md:  { btn: "px-4 py-2 text-sm",     icon: "h-4 w-4", gap: "gap-3" },
+  lg:  { btn: "px-5 py-2.5 text-base", icon: "h-5 w-5", gap: "gap-3" },
 };
 
 export default function ProductActions({
@@ -74,6 +80,7 @@ export default function ProductActions({
   quantity = 1,
   size = "md",
   className,
+  buyEnabled = true,        // <-- default: show the View/Buy button
 }: Props) {
   const [adding, setAdding] = useState(false);
   const [viewing, setViewing] = useState(false);
@@ -91,7 +98,6 @@ export default function ProductActions({
       { replace: false }
     );
     setAdding(false);
-    // stay on page — header badge updates via cart:updated
   };
 
   const handleView = async (e: MouseEvent<HTMLButtonElement>) => {
@@ -110,7 +116,7 @@ export default function ProductActions({
       });
       const data = await resp.json();
       if (resp.ok && data?.url) {
-        window.location.href = data.url as string; // ⟶ Stripe Checkout
+        window.location.href = data.url as string; // → Stripe Checkout
       } else {
         console.error("Checkout error:", data);
       }
@@ -122,22 +128,24 @@ export default function ProductActions({
   };
 
   return (
-    <div
-      className={`relative z-10 flex items-center ${s.gap} pointer-events-auto ${className ?? ""}`}
-    >
-      <button
-        type="button"
-        onClick={handleView}
-        disabled={viewing}
-        aria-label="View (go to checkout)"
-        className={`inline-flex items-center ${s.gap} rounded-lg bg-blue-600 ${s.btn} text-white
-                    hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2
-                    focus-visible:ring-blue-500 disabled:opacity-60`}
-      >
-        <Eye className={s.icon} />
-        {viewing ? "Opening…" : "View"}
-      </button>
+    <div className={`relative z-10 flex items-center ${s.gap} pointer-events-auto ${className ?? ""}`}>
+      {/* View/Buy (optional) */}
+      {buyEnabled && (
+        <button
+          type="button"
+          onClick={handleView}
+          disabled={viewing}
+          aria-label="View (go to checkout)"
+          className={`inline-flex items-center ${s.gap} rounded-lg bg-blue-600 ${s.btn} text-white
+                      hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2
+                      focus-visible:ring-blue-500 disabled:opacity-60`}
+        >
+          <Eye className={s.icon} />
+          {viewing ? "Opening…" : "View"}
+        </button>
+      )}
 
+      {/* Add to cart */}
       <button
         type="button"
         onClick={handleAdd}
