@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -45,7 +45,7 @@ export default function StripeBuyButton({
       disabled={loading}
       className={`bg-blue-600 text-white hover:bg-blue-700 ${className ?? ""}`}
     >
-      {loading ? "Loading…" : label}
+      {loading ? "Loadingâ€¦" : label}
     </Button>
   );
 }

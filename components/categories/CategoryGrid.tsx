@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState, Fragment } from "react";
 
@@ -9,7 +9,7 @@ export type Product = {
   slug?: string;
   price?: number | string;
   image?: string;
-  description?: string; // ← added
+  description?: string; // â† added
 };
 
 /** Default card (used only if you don't pass a custom renderer) */

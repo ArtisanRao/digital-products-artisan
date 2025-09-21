@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Head from "next/head";
 import CategoryGrid from "@/components/categories/CategoryGrid";
@@ -26,7 +26,7 @@ export default function EbooksPage() {
     },
     {
       id: "fantasy-novel",
-      title: "The Lost Realm – A Fantasy Novel",
+      title: "The Lost Realm â€“ A Fantasy Novel",
       image: "/images/fantasy-novel-cover.jpg",
       price: 6.49,
       description: "An epic journey through a magical world of dragons and destiny.",
@@ -34,7 +34,7 @@ export default function EbooksPage() {
     },
     {
       id: "science-fiction-novel",
-      title: "Galactic Echoes – Sci-Fi Thriller",
+      title: "Galactic Echoes â€“ Sci-Fi Thriller",
       image: "/images/science-fiction-novel-cover.jpg",
       price: 6.99,
       description: "A suspenseful journey through space and time.",
@@ -42,7 +42,7 @@ export default function EbooksPage() {
     },
     {
       id: "romance-novel",
-      title: "Love Letters – Romance Novel",
+      title: "Love Letters â€“ Romance Novel",
       image: "/images/romance-novel-cover.jpg",
       price: 5.49,
       description: "A heartwarming love story to escape into.",
@@ -50,7 +50,7 @@ export default function EbooksPage() {
     },
     {
       id: "self-help-book",
-      title: "Unlock You – Self-Help Book",
+      title: "Unlock You â€“ Self-Help Book",
       image: "/images/self-help-personal-development-book-cover.jpg",
       price: 7.25,
       description: "Practical wisdom to improve your life and mindset.",
@@ -66,7 +66,7 @@ export default function EbooksPage() {
     },
     {
       id: "true-crime-novel",
-      title: "Whispers of Guilt – True Crime",
+      title: "Whispers of Guilt â€“ True Crime",
       image: "/images/true-crime-novel-cover.jpg",
       price: 5.95,
       description: "A chilling exploration of real-life mystery and justice.",
@@ -99,7 +99,7 @@ export default function EbooksPage() {
         <title>eBooks Collection | Digital Products Artisan</title>
         <meta
           name="description"
-          content="Browse our premium collection of downloadable eBooks across genres — fantasy, self-help, sci-fi and more."
+          content="Browse our premium collection of downloadable eBooks across genres â€” fantasy, self-help, sci-fi and more."
         />
         <script
           type="application/ld+json"
@@ -108,7 +108,7 @@ export default function EbooksPage() {
       </Head>
 
       <main className="max-w-7xl mx-auto px-4 py-12">
-        <h1 className="text-4xl font-bold text-center mb-10">📚 eBooks Collection</h1>
+        <h1 className="text-4xl font-bold text-center mb-10">ðŸ“š eBooks Collection</h1>
 
         <CategoryGrid
           items={ebooks}
@@ -134,7 +134,7 @@ export default function EbooksPage() {
                 <div className="p-4">
                   <h2 className="text-xl font-semibold mb-2">{title}</h2>
 
-                  {/* Inline “More / Less” under subtitle */}
+                  {/* Inline â€œMore / Lessâ€ under subtitle */}
                   <InlineMore
                     text={description}
                     lines={1}

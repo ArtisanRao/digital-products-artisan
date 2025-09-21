@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Image from 'next/image';
 import * as React from 'react';
@@ -87,7 +87,7 @@ export default function TestimonialsSection() {
               </div>
             ) : null}
 
-            <p className="mt-4 text-lg leading-8 text-slate-700">“{t.quote}”</p>
+            <p className="mt-4 text-lg leading-8 text-slate-700">â€œ{t.quote}â€</p>
 
             <div className="mt-8 flex items-center gap-4">
               <Image

@@ -1,4 +1,4 @@
-// components/bundles/data.ts
+﻿// components/bundles/data.ts
 export type Bundle = {
   slug: string;                 // used in the URL
   title: string;

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import { Button } from "@/components/ui/button";
@@ -29,7 +29,7 @@ export type ExpandableGridProps<T> = {
   items: T[];
   /** Fallback count when collapsed (if no per-bp override). Default: 6 */
   collapsedCount?: number;
-  /** Per-breakpoint collapsed counts. Use `false` to mean “show all” at that breakpoint. */
+  /** Per-breakpoint collapsed counts. Use `false` to mean â€œshow allâ€ at that breakpoint. */
   collapsedCountByBp?: Partial<Record<Breakpoint, number | false>>;
   /** How many more to reveal per click. Default: 4 */
   increment?: number;
@@ -66,7 +66,7 @@ export default function ExpandableGrid<T>({
       map.base ??
       collapsedCount;
 
-    // If explicitly false → show all initially
+    // If explicitly false â†’ show all initially
     if (rawPick === false) return items.length;
 
     // Otherwise coerce to number and clamp

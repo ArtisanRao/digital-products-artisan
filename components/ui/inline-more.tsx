@@ -1,4 +1,4 @@
-// components/ui/inline-more.tsx
+﻿// components/ui/inline-more.tsx
 "use client";
 
 import * as React from "react";
@@ -14,7 +14,7 @@ type Props = {
 
   // NEW
   forceLink?: boolean;         // alias for alwaysShow
-  linkClassName?: string;      // style the “More/Less” button
+  linkClassName?: string;      // style the â€œMore/Lessâ€ button
 };
 
 export default function InlineMore({

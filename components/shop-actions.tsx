@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Button } from "@/components/ui/button";
 import { Eye, ShoppingCart } from "lucide-react";
@@ -16,7 +16,7 @@ type Item = {
 
 type Props = {
   item: Item;
-  /** Where the blue “View” should go. Default: /checkout */
+  /** Where the blue â€œViewâ€ should go. Default: /checkout */
   viewHref?: string;
   /** After adding, go to /cart so the badge is visible. Default: true */
   goToCartAfterAdd?: boolean;
@@ -91,7 +91,7 @@ export default function ShopActions({
 
   return (
     <div className="mt-3 flex items-center gap-2">
-      {/* VIEW — blue button linking to /checkout (or custom viewHref) */}
+      {/* VIEW â€” blue button linking to /checkout (or custom viewHref) */}
       <Button
         type="button"
         onClick={view}
@@ -102,7 +102,7 @@ export default function ShopActions({
         View
       </Button>
 
-      {/* ADD TO CART — add + open cart + go to /cart */}
+      {/* ADD TO CART â€” add + open cart + go to /cart */}
       <Button
         type="button"
         onClick={add}

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Star, Search, Filter, Grid, List } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import HoverableCover from '@/components/ui/hoverable-cover';         // ⬅️ bring back hover cover
+import HoverableCover from '@/components/ui/hoverable-cover';         // â¬…ï¸ bring back hover cover
 import { products, type Product } from '@/data/products';
 import ProductActions from '@/components/product-actions';
 import DescriptionClamp from '@/components/DescriptionClamp';
@@ -287,7 +287,7 @@ export default function ProductsPage() {
           {viewMode === 'grid' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {sortedProducts.map((product, idx) => {
-                // 👉 Build cover + additional mockups (deduped)
+                // ðŸ‘‰ Build cover + additional mockups (deduped)
                 const coverSrcs = Array.from(
                   new Set([product.image, ...(((product as any).images ?? []) as string[])].filter(Boolean))
                 );
@@ -321,7 +321,7 @@ export default function ProductsPage() {
                         className="text-sm text-gray-600"
                       />
 
-                      {/* 👇 extra mockup thumbnails */}
+                      {/* ðŸ‘‡ extra mockup thumbnails */}
                       {coverSrcs.length > 1 && (
                         <div className="mt-3 grid grid-cols-3 gap-2">
                           {coverSrcs.slice(1, 4).map((thumb) => (

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server"
+﻿import { NextResponse } from "next/server"
 import Stripe from "stripe"
 import { signDownloadToken } from "@/lib/download-token"
 import { productsById } from "@/data/products"
@@ -88,7 +88,7 @@ export async function POST(req: Request) {
       }
     }
 
-    console.log("✅ Checkout completed; links:", links)
+    console.log("âœ… Checkout completed; links:", links)
   }
 
   return NextResponse.json({ received: true })

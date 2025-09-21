@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import BestSellersGrid from "./BestSellersGrid";
 
 export const metadata: Metadata = {
@@ -145,7 +145,7 @@ export default function BestSellersPage() {
 
   return (
     <main className="p-8 max-w-5xl mx-auto">
-      <h1 className="text-4xl font-bold mb-6 text-center">🔥 Best-Selling Digital Products</h1>
+      <h1 className="text-4xl font-bold mb-6 text-center">ðŸ”¥ Best-Selling Digital Products</h1>
 
       {/* Client grid with per-card More/Less + blue actions */}
       <BestSellersGrid items={items} />

@@ -1,4 +1,4 @@
-// app/terms-of-service/page.tsx
+﻿// app/terms-of-service/page.tsx
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -14,7 +14,7 @@ export default function TermsOfServicePage() {
   return (
     <main className="container mx-auto px-4 py-10 prose prose-gray max-w-3xl">
       <nav className="mb-6 text-sm text-gray-500">
-        <Link href="/" className="hover:underline">Home</Link> <span>›</span>{" "}
+        <Link href="/" className="hover:underline">Home</Link> <span>â€º</span>{" "}
         <span aria-current="page">Terms of Service</span>
       </nav>
 
@@ -23,7 +23,7 @@ export default function TermsOfServicePage() {
 
       <h2>1. About our products</h2>
       <p>
-        We sell digital downloads (no physical shipping). After purchase you’ll
+        We sell digital downloads (no physical shipping). After purchase youâ€™ll
         receive access to your files immediately.
       </p>
 
@@ -43,7 +43,7 @@ export default function TermsOfServicePage() {
 
       <h2>4. Support</h2>
       <p>
-        If you encounter problems with a file, reach out and we’ll help resolve
+        If you encounter problems with a file, reach out and weâ€™ll help resolve
         it as quickly as possible.
       </p>
 

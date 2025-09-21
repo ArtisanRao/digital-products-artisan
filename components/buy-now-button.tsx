@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { getPreferredCurrency } from "@/lib/currency";
@@ -19,7 +19,7 @@ export default function BuyNowButton({
   async function handleClick() {
     setLoading(true);
     try {
-      // 👇 Always include the chosen/auto currency (EUR enables Klarna)
+      // ðŸ‘‡ Always include the chosen/auto currency (EUR enables Klarna)
       const currency = getPreferredCurrency();
 
       const res = await fetch("/api/checkout", {
@@ -40,7 +40,7 @@ export default function BuyNowButton({
       window.location.href = data.url as string;
     } catch (err: any) {
       console.error("BuyNowButton error:", err);
-      alert(err?.message || "Sorry—couldn't start checkout.");
+      alert(err?.message || "Sorryâ€”couldn't start checkout.");
     } finally {
       setLoading(false);
     }

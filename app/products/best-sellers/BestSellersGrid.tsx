@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -79,7 +79,7 @@ export default function BestSellersGrid({ items }: { items: Item[] }) {
       <CartAutoRedirect />
       <CategoryGrid
         items={items}
-        expandAll                  // ← no grid-level “Read more” button
+        expandAll                  // â† no grid-level â€œRead moreâ€ button
         renderItem={(p) => <BestSellerCard p={p as Item} />}
       />
     </>

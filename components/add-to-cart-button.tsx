@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import { Button } from "@/components/ui/button";
@@ -32,13 +32,13 @@ export default function AddToCartButton({
     const found = cart.find((i) => i.id === idStr);
 
     if (found) {
-      // ✅ tweak #1: read quantity OR legacy qty, then write both
+      // âœ… tweak #1: read quantity OR legacy qty, then write both
       const currentQty = Math.max(1, Number(found.quantity ?? found.qty ?? 1));
       const next = currentQty + 1;
       found.quantity = next;
       found.qty = next; // legacy support
     } else {
-      // ✅ tweak #2: write both fields for new items
+      // âœ… tweak #2: write both fields for new items
       cart.push({
         id: idStr,
         name: p.title,
@@ -82,7 +82,7 @@ export default function AddToCartButton({
       aria-label="Add to cart"
     >
       <ShoppingCart className="w-4 h-4 mr-2" />
-      {adding ? "Adding…" : children ?? "Add to cart"}
+      {adding ? "Addingâ€¦" : children ?? "Add to cart"}
     </Button>
   );
 }

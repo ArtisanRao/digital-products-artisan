@@ -1,4 +1,5 @@
-﻿"use client";
+﻿// components/product-actions.tsx
+"use client";
 
 import * as React from "react";
 import Link from "next/link";
@@ -15,52 +16,32 @@ type Item = {
 
 type Props = {
   item: Item;
-
-  /** Show a "View" button linking to PDP when provided */
+  /** When provided, shows a "View" button linking to the product page */
   viewHref?: string;
-
-  /** Kept for compatibility; pass-through to AddToCart when wired */
+  /** When true, redirect to cart after add (default: false) */
   goToCartAfterAdd?: boolean;
-
-  /** Hide the Buy button when false (e.g. on category tiles) */
+  /** Optional flag used by some pages; safe to ignore here */
   buyEnabled?: boolean;
-
   className?: string;
 };
 
 export default function ProductActions({
   item,
   viewHref,
-  goToCartAfterAdd,
-  buyEnabled = true,
+  goToCartAfterAdd = false,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  buyEnabled, // accepted for compatibility; not used by this component
   className,
 }: Props) {
-  const numericId = typeof item.id === "number" ? item.id : Number.NaN;
-  const canTransact = Number.isFinite(numericId);
+  const productId = typeof item.id === "string" ? Number(item.id) : item.id;
 
   return (
-    <div className={["flex items-center gap-3", className || ""].join(" ")}>
+    <div className={["flex items-center gap-2", className].filter(Boolean).join(" ")}>
+      <AddToCartButton productId={productId} goToCartAfterAdd={goToCartAfterAdd} />
       {viewHref ? (
-        <Button asChild variant="outline">
-          <Link href={viewHref}>View</Link>
-        </Button>
-      ) : null}
-
-      <AddToCartButton
-        productId={canTransact ? (numericId as number) : (undefined as any)}
-        disabled={!canTransact}
-        className="bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
-        // @ts-expect-error: optional prop supported by our backend when implemented
-        goToCartAfterAdd={goToCartAfterAdd}
-      />
-
-      {buyEnabled && canTransact ? (
-        <Button
-          asChild
-          className="bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
-        >
-          <Link href={`/checkout?productId=${numericId}&qty=1`}>Buy</Link>
-        </Button>
+        <Link href={viewHref}>
+          <Button variant="outline">View</Button>
+        </Link>
       ) : null}
     </div>
   );

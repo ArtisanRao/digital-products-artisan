@@ -1,4 +1,4 @@
-// components/cart-checkout-button.tsx
+﻿// components/cart-checkout-button.tsx
 "use client";
 
 import { useState } from "react";
@@ -27,7 +27,7 @@ export default function CartCheckoutButton() {
       const data = await resp.json();
       if (!resp.ok || !data?.url) {
         console.error("Checkout error:", data);
-        alert(data?.error || "Sorry—couldn’t start checkout.");
+        alert(data?.error || "Sorryâ€”couldnâ€™t start checkout.");
         setLoading(false);
         return;
       }
@@ -45,7 +45,7 @@ export default function CartCheckoutButton() {
       disabled={!items?.length || loading}
       className="bg-gradient-to-r from-blue-600 to-cyan-600"
     >
-      {loading ? "Redirecting…" : "Checkout all"}
+      {loading ? "Redirectingâ€¦" : "Checkout all"}
     </Button>
   );
 }

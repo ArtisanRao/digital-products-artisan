@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import CategoryGrid from "@/components/categories/CategoryGrid";
 import HoverableCover from "@/components/ui/hoverable-cover";
@@ -34,7 +34,7 @@ const formatEUR = (n: number) =>
 export default function DigitalArtPage() {
   return (
     <main className="mx-auto max-w-7xl px-4 py-12">
-      <h1 className="mb-10 text-center text-4xl font-bold">🎨 Digital Art</h1>
+      <h1 className="mb-10 text-center text-4xl font-bold">ðŸŽ¨ Digital Art</h1>
 
       <CategoryGrid
         items={items}
@@ -59,7 +59,7 @@ export default function DigitalArtPage() {
               <div className="p-4">
                 <h2 className="mb-2 text-xl font-semibold">{p.title}</h2>
 
-                {/* Inline “More / Less” under subtitle */}
+                {/* Inline â€œMore / Lessâ€ under subtitle */}
                 <InlineMore
                   text={p.description}
                   lines={2}

@@ -1,4 +1,4 @@
-// app/api/checkout/route.ts
+﻿// app/api/checkout/route.ts
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { products, productsById } from "@/data/products";
@@ -15,7 +15,7 @@ function getStripe(): Stripe {
   return _stripe;
 }
 
-// ───────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Accepted body shapes
 type BodySingle = { productId: number | string; qty?: number; currency?: string };
 type BodyCart = { cart: Array<{ productId: number | string; qty?: number }>; currency?: string };
@@ -30,7 +30,7 @@ type BodyLines = {
   currency?: string;
 };
 type Body = BodySingle | BodyCart | BodyLines;
-// ───────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function toInt(n: any, fallback = 1) {
   const v = Number(n);
@@ -85,7 +85,7 @@ export async function POST(req: Request) {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
     const stripe = getStripe();
 
-    // ───────────────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // Build Stripe line_items from one of the accepted body shapes
     let line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
     let singleKnownProductUrl: string | null = null;

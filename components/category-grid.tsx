@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import HoverableCover from "@/components/ui/hoverable-cover";
 import ShopActions from "@/components/shop-actions";
@@ -40,7 +40,7 @@ export default function CategoryGrid({
               {item.description ? (
                 <p className="text-gray-600 text-sm mb-2">{item.description}</p>
               ) : null}
-              <p className="text-lg font-bold mb-3">€{item.price.toFixed(2)}</p>
+              <p className="text-lg font-bold mb-3">â‚¬{item.price.toFixed(2)}</p>
 
               {/* Blue "View" + "Add to Cart" */}
               <ShopActions item={item} />

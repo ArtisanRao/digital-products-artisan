@@ -1,4 +1,4 @@
-// lib/currency.ts
+﻿// lib/currency.ts
 const KEY = "preferredCurrency"; // "usd" | "eur"
 
 export function getPreferredCurrency(): "usd" | "eur" {

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import CategoryGrid from "@/components/categories/CategoryGrid";
 import HoverableCover from "@/components/ui/hoverable-cover";
@@ -40,7 +40,7 @@ const formatEUR = (n: number) =>
 export default function WebTemplatesPage() {
   return (
     <main className="mx-auto max-w-7xl px-4 py-12">
-      <h1 className="mb-10 text-center text-4xl font-bold">🌐 Web Templates</h1>
+      <h1 className="mb-10 text-center text-4xl font-bold">ðŸŒ Web Templates</h1>
 
       <CategoryGrid
         items={items}
@@ -70,7 +70,7 @@ export default function WebTemplatesPage() {
               <div className="p-4">
                 <h2 className="mb-2 text-xl font-semibold">{p.title}</h2>
 
-                {/* Inline “More / Less” under subtitle — always show using minChars */}
+                {/* Inline â€œMore / Lessâ€ under subtitle â€” always show using minChars */}
                 <InlineMore
                   text={p.description}
                   lines={2}

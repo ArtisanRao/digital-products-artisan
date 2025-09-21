@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 
@@ -6,12 +6,12 @@ const faqs = [
   {
     question: 'What is Digital Products Artisan?',
     answer:
-      'Digital Products Artisan is a curated marketplace for premium digital goods — ebooks, AI prompts & packs, templates, graphics, planners, and productivity assets. Whether you\'re a creator, entrepreneur, building a brand, managing a project, boosting creativity or a lifelong learner, we offer the tools you need to bring your vision to life — all delivered instantly and effortlessly, with no fluff.',
+      'Digital Products Artisan is a curated marketplace for premium digital goods â€” ebooks, AI prompts & packs, templates, graphics, planners, and productivity assets. Whether you\'re a creator, entrepreneur, building a brand, managing a project, boosting creativity or a lifelong learner, we offer the tools you need to bring your vision to life â€” all delivered instantly and effortlessly, with no fluff.',
   },
   {
     question: 'Are your digital products compatible with my software?',
     answer:
-      'Most of our products come in widely supported formats like PDF, PSD, PNG, DOCX, and more. Product pages include compatibility details — always check there first.',
+      'Most of our products come in widely supported formats like PDF, PSD, PNG, DOCX, and more. Product pages include compatibility details â€” always check there first.',
   },
   {
     question: 'Can I customize the templates I purchase?',
@@ -46,12 +46,12 @@ const faqs = [
   {
     question: 'I found a bug or issue with a file. What should I do?',
     answer:
-      'Please contact us immediately with details and a screenshot if possible. We’ll replace, update, or assist you as quickly as possible.',
+      'Please contact us immediately with details and a screenshot if possible. Weâ€™ll replace, update, or assist you as quickly as possible.',
   },
   {
     question: 'What forms of payment do you accept?',
     answer:
-      'We accept major credit/debit cards and digital wallets via Snipcart’s secure checkout system.',
+      'We accept major credit/debit cards and digital wallets via Snipcartâ€™s secure checkout system.',
   },
   {
     question: 'Are your products refundable?',

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import * as React from 'react';
 import Link from 'next/link';
@@ -27,7 +27,7 @@ export default function DescriptionClamp({
   if (!safe) return null;
 
   const needsToggle = safe.length > maxChars;
-  const preview = needsToggle ? safe.slice(0, maxChars).trimEnd() + '…' : safe;
+  const preview = needsToggle ? safe.slice(0, maxChars).trimEnd() + 'â€¦' : safe;
 
   return (
     <div className={className}>

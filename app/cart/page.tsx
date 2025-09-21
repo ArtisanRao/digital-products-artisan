@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useMemo } from "react";
 import { getPreferredCurrency } from "@/lib/currency";
@@ -17,7 +17,7 @@ type CartItem = {
 
 export default function CartPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [hydrated, setHydrated] = useState(false); // ⬅️ avoid flash-of-empty
+  const [hydrated, setHydrated] = useState(false); // â¬…ï¸ avoid flash-of-empty
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currency, setCurrency] = useState<string>("eur");
@@ -115,7 +115,7 @@ export default function CartPage() {
     }
   };
 
-  // Stripe Checkout (multi-item) via /api/checkout — send the "lines" shape
+  // Stripe Checkout (multi-item) via /api/checkout â€” send the "lines" shape
   const handleCheckout = async () => {
     if (!cartItems.length) {
       setError("Your cart is empty!");
@@ -143,12 +143,12 @@ export default function CartPage() {
       const data = await resp.json();
       if (!resp.ok || !data?.url) {
         console.error("Checkout error:", data);
-        setError(data?.error || "Sorry—couldn’t start checkout.");
+        setError(data?.error || "Sorryâ€”couldnâ€™t start checkout.");
         setLoading(false);
         return;
       }
 
-      window.location.href = data.url as string; // ⟶ Stripe Checkout
+      window.location.href = data.url as string; // âŸ¶ Stripe Checkout
     } catch (e) {
       console.error(e);
       setError("Network error starting checkout.");
@@ -160,7 +160,7 @@ export default function CartPage() {
   if (!hydrated) {
     return (
       <main className="container mx-auto p-6 text-center">
-        <h1 className="text-4xl font-bold mb-2">Loading cart…</h1>
+        <h1 className="text-4xl font-bold mb-2">Loading cartâ€¦</h1>
         <p className="text-gray-600">Please wait.</p>
       </main>
     );
@@ -251,7 +251,7 @@ export default function CartPage() {
             disabled={loading}
             className="w-full bg-blue-600 text-white hover:bg-blue-700 sm:w-auto"
           >
-            {loading ? "Redirecting…" : "Checkout"}
+            {loading ? "Redirectingâ€¦" : "Checkout"}
           </Button>
         </div>
       </div>

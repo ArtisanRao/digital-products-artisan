@@ -1,4 +1,4 @@
-// Centralized slugs/titles and lightweight data helpers
+﻿// Centralized slugs/titles and lightweight data helpers
 
 export const CATEGORY_MAP = {
   "ebooks": "eBooks",

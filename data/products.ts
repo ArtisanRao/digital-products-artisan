@@ -1,4 +1,4 @@
-// data/products.ts
+﻿// data/products.ts
 import { imageManifest } from "./image-manifest"
 
 export type Product = {
@@ -6,7 +6,7 @@ export type Product = {
   slug: string
   title: string
   description: string            // short blurb for cards/SEO
-  longDescription?: string       // 🆕 detailed copy for quick-view & PDP
+  longDescription?: string       // ðŸ†• detailed copy for quick-view & PDP
   price: number
   originalPrice: number
   category: string
@@ -38,7 +38,7 @@ const base: Omit<Product, "images">[] = [
       "Buy This Complete Shop - PLR MRR Digital Product: Resell Ebooks, Courses, Prompts & More.",
     description:
       "Complete, rights-included digital shop bundle. Rebrand and resell ebooks, courses, prompts, templates, and more.",
-    longDescription: `✸ Buy my complete Shop with PLR / MRR Rights ✸ 
+    longDescription: `âœ¸ Buy my complete Shop with PLR / MRR Rights âœ¸ 
 
 You have here the opportunity to buy my complete shop with a big discount!! This Bundle is way more worth than 100 USD!
 
@@ -48,37 +48,37 @@ The PLR license allows you to edit, rebrand and sell the products as your own pr
 
 In this bundle you will receive all products of my shop:
 
-🚀 ChatGPT Expertise BASIC PACK Video Course
-🚀 ChatGPT Expertise UPGRADE PACK Video Course
-🚀 Make Money with AI Art Ebook
-🚀 Make Money with AI Art Video
-🚀 Create AI Human Reel Videos Video Course
-🚀 PLR Chat GPT Video Course
-🚀 10 Business & Marketing Video Courses PLR
-🚀 100 Midjourney Prompts Abstract Art
-🚀 Cryptocurrency Secrets Video Course and Ebook
-🚀 700 Product Ideas to sell on Etsy
-🚀 Keto Diet Secrets Ebook
-🚀 Eating Healthy Premium PLR EBook Complete Video Course
-🚀 Carb Cycling For Weight Loss Premium PLR EBook Complete Video Course
-🚀 Healthy Primal Living PLR EBook Video Course
-🚀 Lose Your Belly Diet PLR EBook Video Course
-🚀 Boost Your Immune System PLR EBook Video Course
-🚀 Coloring Book 911
-🚀 450 Coloring Book Pages
-🚀 Intermittent Fasting Quick Start
-🚀 ChatGPT for Internet Marketers
-🚀 Juicing Recipes
-🚀 Make Money with PLR Ebook
-🚀 Make Money with PLR Video Course
-🚀 Google Gemini 7K Prompts
-🚀 Side Hustle Secrets Ebook
-🚀 Side Hustle Secrets Video Upgrade
-🚀 Easy Keto
-🚀 1940 Graphic Recipes
-🚀 AI Images Library
-🚀 Effective Instagram Marketing
-🚀 Blockchain Explained Ebook
+ðŸš€ ChatGPT Expertise BASIC PACK Video Course
+ðŸš€ ChatGPT Expertise UPGRADE PACK Video Course
+ðŸš€ Make Money with AI Art Ebook
+ðŸš€ Make Money with AI Art Video
+ðŸš€ Create AI Human Reel Videos Video Course
+ðŸš€ PLR Chat GPT Video Course
+ðŸš€ 10 Business & Marketing Video Courses PLR
+ðŸš€ 100 Midjourney Prompts Abstract Art
+ðŸš€ Cryptocurrency Secrets Video Course and Ebook
+ðŸš€ 700 Product Ideas to sell on Etsy
+ðŸš€ Keto Diet Secrets Ebook
+ðŸš€ Eating Healthy Premium PLR EBook Complete Video Course
+ðŸš€ Carb Cycling For Weight Loss Premium PLR EBook Complete Video Course
+ðŸš€ Healthy Primal Living PLR EBook Video Course
+ðŸš€ Lose Your Belly Diet PLR EBook Video Course
+ðŸš€ Boost Your Immune System PLR EBook Video Course
+ðŸš€ Coloring Book 911
+ðŸš€ 450 Coloring Book Pages
+ðŸš€ Intermittent Fasting Quick Start
+ðŸš€ ChatGPT for Internet Marketers
+ðŸš€ Juicing Recipes
+ðŸš€ Make Money with PLR Ebook
+ðŸš€ Make Money with PLR Video Course
+ðŸš€ Google Gemini 7K Prompts
+ðŸš€ Side Hustle Secrets Ebook
+ðŸš€ Side Hustle Secrets Video Upgrade
+ðŸš€ Easy Keto
+ðŸš€ 1940 Graphic Recipes
+ðŸš€ AI Images Library
+ðŸš€ Effective Instagram Marketing
+ðŸš€ Blockchain Explained Ebook
 
 After your order is processed, you will receive a PDF document with the links to download the files from Google Drive. This item is provided electronically.
 
@@ -86,7 +86,7 @@ This listing is for a digital download. No physical product will be shipped.
 
 If you have any questions, please contact me and I will be more than happy to help!
 
-🚀Check out my other PLR Products at my store🚀: https://www.etsy.com/shop/ArtisanRao?ref=dashboard-header`,
+ðŸš€Check out my other PLR Products at my storeðŸš€: https://www.etsy.com/shop/ArtisanRao?ref=dashboard-header`,
     price: 42.99,
     originalPrice: 0,
     category: "Complete Shop Packages",
@@ -105,17 +105,17 @@ If you have any questions, please contact me and I will be more than happy to he
     title:
       "Self-Help Ebook: The Art of Giving No F*cks - Minimalist Mindset (Digital Download).",
     description:
-      "A practical guide to focus, freedom, and owning your life—minimalist mindset strategies with worksheets.",
+      "A practical guide to focus, freedom, and owning your lifeâ€”minimalist mindset strategies with worksheets.",
     longDescription: `A practical framework to stop people-pleasing and focus on what truly matters.
 
-You’ll get:
-• 120+ pages of concise lessons & mindset exercises  
-• Printable worksheets & reflection prompts  
-• Minimalist routines to reduce mental clutter
+Youâ€™ll get:
+â€¢ 120+ pages of concise lessons & mindset exercises  
+â€¢ Printable worksheets & reflection prompts  
+â€¢ Minimalist routines to reduce mental clutter
 
 Details:
-• Personal & light commercial use per product license
-• Instant digital download (PDF)`,
+â€¢ Personal & light commercial use per product license
+â€¢ Instant digital download (PDF)`,
     price: 14.99,
     originalPrice: 0,
     category: "Self-Help & How-To",
@@ -131,18 +131,18 @@ Details:
     id: 3,
     slug: "digital-wealth-ultimate-guide",
     title:
-      "Digital Wealth – Ultimate Guide - This Order Includes A Free Extra Bonus.",
+      "Digital Wealth â€“ Ultimate Guide - This Order Includes A Free Extra Bonus.",
     description:
       "Step-by-step strategies for building digital income streams. Includes a surprise bonus resource.",
     longDescription: `Build durable online income with actionable, beginner-friendly strategies.
 
 Inside:
-• Playbooks for products, funnels, audience & automation  
-• Realistic growth plans and tools stack recommendations  
-• Free bonus: quickstart checklist & templates
+â€¢ Playbooks for products, funnels, audience & automation  
+â€¢ Realistic growth plans and tools stack recommendations  
+â€¢ Free bonus: quickstart checklist & templates
 
 Delivery:
-• Instant digital download (PDF) — no shipping`,
+â€¢ Instant digital download (PDF) â€” no shipping`,
     price: 28.99,
     originalPrice: 0,
     category: "Ebooks (Miscellaneous)",
@@ -164,12 +164,12 @@ Delivery:
     longDescription: `Discover 12 proven AI-assisted side hustles you can start this week.
 
 Includes:
-• Step-by-step setup guides and pricing ideas  
-• Prompt packs and tool suggestions  
-• Simple marketing tips to land first customers
+â€¢ Step-by-step setup guides and pricing ideas  
+â€¢ Prompt packs and tool suggestions  
+â€¢ Simple marketing tips to land first customers
 
 Format & access:
-• PDF download delivered instantly after purchase`,
+â€¢ PDF download delivered instantly after purchase`,
     price: 2.99,
     originalPrice: 0,
     category: "AI & ChatGPT Guides",
@@ -188,12 +188,12 @@ Format & access:
       "Make Money As You Sleep: Financial Freedom Guide - Passive Income Ebook (Digital Download)",
     description:
       "Learn foundational passive income strategies and systems to build long-term financial freedom.",
-    longDescription: `Set up income systems that work even when you don’t.
+    longDescription: `Set up income systems that work even when you donâ€™t.
 
-You’ll learn:
-• Evergreen product ideas and distribution channels  
-• Automations for delivery, payment and support  
-• Risk-reduction and compounding strategies
+Youâ€™ll learn:
+â€¢ Evergreen product ideas and distribution channels  
+â€¢ Automations for delivery, payment and support  
+â€¢ Risk-reduction and compounding strategies
 
 Instant digital download; read on any device.`,
     price: 2.99,

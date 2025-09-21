@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import {
@@ -41,7 +41,7 @@ export default function CurrencyPicker({ className, hidden }: Props) {
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="usd">USD $</SelectItem>
-          <SelectItem value="eur">EUR €</SelectItem>
+          <SelectItem value="eur">EUR â‚¬</SelectItem>
         </SelectContent>
       </Select>
     </div>

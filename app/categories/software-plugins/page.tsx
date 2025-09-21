@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import CategoryGrid from "@/components/categories/CategoryGrid";
 import HoverableCover from "@/components/ui/hoverable-cover";
@@ -7,7 +7,7 @@ import InlineMore from "@/components/ui/inline-more";
 
 type Item = {
   id: string;
-  slug?: string; // optional; we’ll default to id
+  slug?: string; // optional; weâ€™ll default to id
   title: string;
   image: string;
   price: number;
@@ -48,7 +48,7 @@ const formatEUR = (n: number) =>
 export default function SoftwarePluginsPage() {
   return (
     <main className="max-w-7xl mx-auto px-4 py-12">
-      <h1 className="text-4xl font-bold text-center mb-10">🧩 Software Plugins</h1>
+      <h1 className="text-4xl font-bold text-center mb-10">ðŸ§© Software Plugins</h1>
 
       <CategoryGrid
         items={items}
@@ -75,7 +75,7 @@ export default function SoftwarePluginsPage() {
               <div className="p-4">
                 <h2 className="text-xl font-semibold mb-2">{title}</h2>
 
-                {/* Inline “More / Less” under subtitle — force visible */}
+                {/* Inline â€œMore / Lessâ€ under subtitle â€” force visible */}
                 <InlineMore
                   text={description}
                   lines={2}

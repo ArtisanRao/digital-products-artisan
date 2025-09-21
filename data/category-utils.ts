@@ -1,4 +1,4 @@
-// data/category-utils.ts
+﻿// data/category-utils.ts
 export const LEGACY_CATEGORY_MAP: Record<string, string> = {
   "Digital Art": "AI & ChatGPT Guides",
   "Printable Planners": "Planners & Productivity",

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import products from "@/lib/products.json";
 
@@ -19,14 +19,14 @@ export async function POST(req: Request) {
   let priceId: string | null = null;
 
   if (productId === "passive-income-ebook") {
-    priceId = "price_1S4qZbLRZXb99FYz8MhczfRW"; // 👈 Replace with your actual price ID
+    priceId = "price_1S4qZbLRZXb99FYz8MhczfRW"; // ðŸ‘ˆ Replace with your actual price ID
   }
 
   if (!priceId) {
     return NextResponse.json({ error: "Price ID missing" }, { status: 400 });
   }
 
-  // ✅ Initialize Stripe here to avoid build-time crash on Vercel
+  // âœ… Initialize Stripe here to avoid build-time crash on Vercel
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
     apiVersion: "2025-08-27.basil",
   });
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/product/${productId}`,
     metadata: {
       productId,
-      blobKey: p.fileUrl, // ✅ Using fileUrl instead of blobKey
+      blobKey: p.fileUrl, // âœ… Using fileUrl instead of blobKey
     },
   });
 

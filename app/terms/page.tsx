@@ -1,4 +1,4 @@
-export const metadata = {
+﻿export const metadata = {
   title: "Terms & Conditions | Digital Products Artisan",
   description: "Please review our terms of service for using this site and purchasing digital products.",
 }
@@ -6,7 +6,7 @@ export const metadata = {
 export default function TermsPage() {
   return (
     <main className="max-w-3xl mx-auto px-4 py-12">
-      <h1 className="text-3xl font-bold mb-6">📄 Terms & Conditions</h1>
+      <h1 className="text-3xl font-bold mb-6">ðŸ“„ Terms & Conditions</h1>
 
       <p className="text-gray-700 mb-6">
         By accessing or purchasing from <strong>Digital Products Artisan</strong>, you agree to the following terms and conditions.
@@ -27,12 +27,12 @@ export default function TermsPage() {
       <h2 className="text-xl font-semibold mb-3">3. Refund Policy</h2>
       <p className="text-gray-700 mb-4">
         Due to the digital nature of our products, all sales are final. However, if you encounter any issue with your download,
-        contact us and we’ll do our best to help.
+        contact us and weâ€™ll do our best to help.
       </p>
 
       <h2 className="text-xl font-semibold mb-3">4. Intellectual Property</h2>
       <p className="text-gray-700 mb-4">
-        All content and products are copyright © {new Date().getFullYear()} Digital Products Artisan unless otherwise stated.
+        All content and products are copyright Â© {new Date().getFullYear()} Digital Products Artisan unless otherwise stated.
         You may not copy, alter, or redistribute any content without permission.
       </p>
 

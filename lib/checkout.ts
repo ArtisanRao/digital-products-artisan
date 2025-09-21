@@ -1,4 +1,4 @@
-// lib/checkout.ts
+﻿// lib/checkout.ts
 export type CheckoutLine = {
   id: string;           // internal id/sku
   name: string;
@@ -20,5 +20,5 @@ export async function startCheckout(lines: CheckoutLine[]) {
   }
 
   const { url } = (await res.json()) as { url: string };
-  window.location.href = url; // 👈 go straight to Stripe’s hosted checkout
+  window.location.href = url; // ðŸ‘ˆ go straight to Stripeâ€™s hosted checkout
 }

@@ -1,28 +1,28 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import CoverImage from "@/components/ui/cover-image";
 import InlineMore from "@/components/ui/inline-more";
 
 const categories = [
-  { name: "📚 eBooks",             slug: "ebooks",               image: "/images/ebooks-cover.jpg",               desc: "Digital books, guides, and educational content." },
-  { name: "🎨 Digital Art",        slug: "digital-art",          image: "/images/digital-art-cover.jpg",          desc: "Illustrations, posters, wallpapers and creative assets." },
-  { name: "🧾 Templates",          slug: "business-templates",   image: "/images/business-templates-cover.jpg",   desc: "Design templates and graphics ready to use." },
-  { name: "📥 Marketing Tools",    slug: "marketing-tools",      image: "/images/marketing-tools-cover.jpg",      desc: "Prompts, swipe files, and growth resources for marketing." },
-  { name: "🗓️ Printable Planners", slug: "printable-planners",   image: "/images/printable-planners-cover.jpg",   desc: "Digital planners, journals, and productivity tools." },
-  { name: "📸 Photography Prints", slug: "photography-prints",   image: "/images/photography-prints-cover.jpg",   desc: "High-quality photo prints, presets, and media assets." },
-  { name: "🔤 Fonts",              slug: "fonts",                image: "/images/fonts-cover.jpg",                desc: "Display, serif, sans and script fonts for your projects." },
-  { name: "🔘 Icons",              slug: "icons",                image: "/images/icons-cover.jpg",                desc: "Clean, scalable icon packs for UI and branding." },
-  { name: "🌐 Web Templates",      slug: "web-templates",        image: "/images/web-templates-cover.jpg",        desc: "Website templates, UI kits, and themes." },
-  { name: "🎥 Video Resources",    slug: "video-resources",      image: "/images/video-resources-cover.jpg",      desc: "Stock footage, overlays, LUTs, and templates." },
-  { name: "🎵 Audio Samples",      slug: "audio-samples",        image: "/images/audio-samples-cover.jpg",        desc: "Loops, one-shots, SFX and music beds for creators." },
-  { name: "📱 Social Media Kits",  slug: "social-media-kits",    image: "/images/social-media-kits-cover.jpg",    desc: "Packaged posts, graphics, and assets for social channels." },
+  { name: "ðŸ“š eBooks",             slug: "ebooks",               image: "/images/ebooks-cover.jpg",               desc: "Digital books, guides, and educational content." },
+  { name: "ðŸŽ¨ Digital Art",        slug: "digital-art",          image: "/images/digital-art-cover.jpg",          desc: "Illustrations, posters, wallpapers and creative assets." },
+  { name: "ðŸ§¾ Templates",          slug: "business-templates",   image: "/images/business-templates-cover.jpg",   desc: "Design templates and graphics ready to use." },
+  { name: "ðŸ“¥ Marketing Tools",    slug: "marketing-tools",      image: "/images/marketing-tools-cover.jpg",      desc: "Prompts, swipe files, and growth resources for marketing." },
+  { name: "ðŸ—“ï¸ Printable Planners", slug: "printable-planners",   image: "/images/printable-planners-cover.jpg",   desc: "Digital planners, journals, and productivity tools." },
+  { name: "ðŸ“¸ Photography Prints", slug: "photography-prints",   image: "/images/photography-prints-cover.jpg",   desc: "High-quality photo prints, presets, and media assets." },
+  { name: "ðŸ”¤ Fonts",              slug: "fonts",                image: "/images/fonts-cover.jpg",                desc: "Display, serif, sans and script fonts for your projects." },
+  { name: "ðŸ”˜ Icons",              slug: "icons",                image: "/images/icons-cover.jpg",                desc: "Clean, scalable icon packs for UI and branding." },
+  { name: "ðŸŒ Web Templates",      slug: "web-templates",        image: "/images/web-templates-cover.jpg",        desc: "Website templates, UI kits, and themes." },
+  { name: "ðŸŽ¥ Video Resources",    slug: "video-resources",      image: "/images/video-resources-cover.jpg",      desc: "Stock footage, overlays, LUTs, and templates." },
+  { name: "ðŸŽµ Audio Samples",      slug: "audio-samples",        image: "/images/audio-samples-cover.jpg",        desc: "Loops, one-shots, SFX and music beds for creators." },
+  { name: "ðŸ“± Social Media Kits",  slug: "social-media-kits",    image: "/images/social-media-kits-cover.jpg",    desc: "Packaged posts, graphics, and assets for social channels." },
 ];
 
 export default function CategoriesPage() {
   return (
     <main className="max-w-7xl mx-auto px-4 py-12">
-      <h1 className="text-4xl font-bold text-center mb-12">🗂️ All Categories</h1>
+      <h1 className="text-4xl font-bold text-center mb-12">ðŸ—‚ï¸ All Categories</h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {categories.map((category) => (
@@ -52,7 +52,7 @@ export default function CategoriesPage() {
                 {category.name}
               </h2>
 
-              {/* Inline “more / less” under the subtitle */}
+              {/* Inline â€œmore / lessâ€ under the subtitle */}
               <InlineMore
                 text={category.desc}
                 lines={2}

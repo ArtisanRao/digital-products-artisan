@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -40,7 +40,7 @@ export default function CheckoutButton({
         window.location.href = data.url;
       } else {
         console.error("Checkout failed:", data);
-        alert("Sorry—couldn’t start checkout. Please try again.");
+        alert("Sorryâ€”couldnâ€™t start checkout. Please try again.");
       }
     } catch (e) {
       console.error(e);
@@ -57,7 +57,7 @@ export default function CheckoutButton({
       disabled={loading}
       className={`bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 ${className ?? ""}`}
     >
-      {loading ? "Starting checkout…" : "Get This Bundle"}
+      {loading ? "Starting checkoutâ€¦" : "Get This Bundle"}
     </Button>
   );
 }

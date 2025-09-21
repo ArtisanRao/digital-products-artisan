@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import CategoryGrid from "@/components/categories/CategoryGrid";
 import HoverableCover from "@/components/ui/hoverable-cover";
@@ -18,7 +18,7 @@ type Item = {
 const items: Item[] = [
   { id: "photography-prints", slug: "photography-prints", title: "Photography Prints",    price: 9.99, description: "Curated high-resolution prints." },
   { id: "mystery-thriller-novel", slug: "mystery-thriller-novel", title: "Moody Noir Poster", price: 7.99, description: "Atmospheric, cinematic artwork." },
-  { id: "landscape-pack", slug: "landscape-pack", title: "Landscape Pack", price: 8.49, description: "Crisp outdoor scenes for décor." },
+  { id: "landscape-pack", slug: "landscape-pack", title: "Landscape Pack", price: 8.49, description: "Crisp outdoor scenes for dÃ©cor." },
 ];
 
 const imgCandidates = (slug: string) => [
@@ -34,7 +34,7 @@ const formatEUR = (n: number) =>
 export default function PhotographyPrintsPage() {
   return (
     <main className="max-w-7xl mx-auto px-4 py-12">
-      <h1 className="text-4xl font-bold text-center mb-10">📸 Photography Prints</h1>
+      <h1 className="text-4xl font-bold text-center mb-10">ðŸ“¸ Photography Prints</h1>
 
       <CategoryGrid
         items={items}
@@ -59,7 +59,7 @@ export default function PhotographyPrintsPage() {
               <div className="p-4">
                 <h2 className="text-xl font-semibold mb-2">{p.title}</h2>
 
-                {/* Inline “More / Less” under subtitle (force show) */}
+                {/* Inline â€œMore / Lessâ€ under subtitle (force show) */}
                 <InlineMore
                   text={p.description}
                   lines={2}

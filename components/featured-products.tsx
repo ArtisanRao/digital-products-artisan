@@ -1,4 +1,4 @@
-// components/featured-products.tsx
+﻿// components/featured-products.tsx
 "use client";
 
 import * as React from "react";
@@ -15,7 +15,7 @@ type FeaturedProduct = {
   slug: string;
   title: string;
   description: string;
-  longDescription?: string; // ⬅️ allow richer copy if you add it later
+  longDescription?: string; // â¬…ï¸ allow richer copy if you add it later
   price: number;
   originalPrice: number;
   rating: number;
@@ -48,7 +48,7 @@ const featuredProducts: FeaturedProduct[] = [
     title:
       "Self-Help Ebook: The Art of Giving No F*cks - Minimalist Mindset (Digital Download).",
     description:
-      "A practical guide to focus, freedom, and owning your life—minimalist mindset strategies with worksheets.",
+      "A practical guide to focus, freedom, and owning your lifeâ€”minimalist mindset strategies with worksheets.",
     price: 14.99,
     originalPrice: 0,
     rating: 4.7,
@@ -60,7 +60,7 @@ const featuredProducts: FeaturedProduct[] = [
   {
     id: 3,
     slug: "digital-wealth-ultimate-guide",
-    title: "Digital Wealth – Ultimate Guide - This Order Includes A Free Extra Bonus.",
+    title: "Digital Wealth â€“ Ultimate Guide - This Order Includes A Free Extra Bonus.",
     description:
       "Step-by-step strategies for building digital income streams. Includes a surprise bonus resource.",
     price: 28.99,
@@ -99,7 +99,7 @@ const featuredProducts: FeaturedProduct[] = [
   },
 ];
 
-// Small util so we always show € correctly
+// Small util so we always show â‚¬ correctly
 const formatPrice = (value: number, currency = "EUR", locale = "de-DE") =>
   new Intl.NumberFormat(locale, { style: "currency", currency }).format(value);
 

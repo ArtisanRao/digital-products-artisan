@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Image from 'next/image';
 import * as React from 'react';
@@ -35,11 +35,11 @@ export default function ProductCard({ product }: { product: Product }) {
     '';
   const fullText = fullTextRaw.trim();
 
-  // Show “More” for most items
+  // Show â€œMoreâ€ for most items
   const MAX_CHARS = 90;
   const needsToggle = fullText.length > MAX_CHARS;
   const preview = needsToggle
-    ? fullText.slice(0, MAX_CHARS).trimEnd() + '…'
+    ? fullText.slice(0, MAX_CHARS).trimEnd() + 'â€¦'
     : fullText;
 
   // Image src with fallbacks
@@ -97,7 +97,7 @@ export default function ProductCard({ product }: { product: Product }) {
           </Button>
         </div>
 
-        {/* description with “More / Show less” */}
+        {/* description with â€œMore / Show lessâ€ */}
         {fullText && (
           <div className="px-4 pb-4">
             <p className="whitespace-pre-line text-sm leading-relaxed text-gray-700">

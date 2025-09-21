@@ -1,4 +1,4 @@
-// app/api/currency-suggest/route.ts
+﻿// app/api/currency-suggest/route.ts
 import { NextResponse } from "next/server";
 
 export const runtime = "edge";

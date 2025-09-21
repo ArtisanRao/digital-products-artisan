@@ -1,4 +1,4 @@
-// components/currency-bootstrap.tsx
+﻿// components/currency-bootstrap.tsx
 "use client";
 
 import { useEffect } from "react";

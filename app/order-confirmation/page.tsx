@@ -1,4 +1,4 @@
-import Stripe from "stripe";
+﻿import Stripe from "stripe";
 import Link from "next/link";
 import { products, productsBySlug, Product } from "@/data/products";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,7 @@ export default async function OrderConfirmation({
       <main className="container mx-auto px-4 py-12 max-w-3xl">
         <h1 className="text-2xl font-bold mb-4">No order to confirm</h1>
         <p className="text-gray-600">
-          We couldn’t find a recent order. If you just purchased, please return from the payment page or{" "}
+          We couldnâ€™t find a recent order. If you just purchased, please return from the payment page or{" "}
           <Link className="underline" href="/products">
             browse products
           </Link>{" "}
@@ -44,7 +44,7 @@ export default async function OrderConfirmation({
   // Shared env
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
 
-  // Data that we’ll render
+  // Data that weâ€™ll render
   let email: string | null = null;
   let items: {
     name: string;
@@ -124,7 +124,7 @@ export default async function OrderConfirmation({
       <div className="flex items-center gap-3 mb-6">
         <CheckCircle2 className="w-6 h-6 text-green-600" />
         <h1 className="text-2xl md:text-3xl font-bold">
-          Payment Successful — Thanks for your purchase!
+          Payment Successful â€” Thanks for your purchase!
         </h1>
       </div>
 
@@ -196,7 +196,7 @@ export default async function OrderConfirmation({
                         </Button>
                       ) : (
                         <span className="text-gray-500">
-                          We’ll email your files shortly
+                          Weâ€™ll email your files shortly
                         </span>
                       )}
                     </td>

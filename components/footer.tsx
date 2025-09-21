@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import Image from 'next/image';
@@ -178,7 +178,7 @@ export default function Footer() {
       {/* Footer Bottom with Collapsibles */}
       <div className="mt-10 pt-6 border-t border-gray-700 text-sm w-full max-w-5xl mx-auto space-y-2">
         <p className="text-center text-gray-400 mb-4">
-          © {year} Digital Products Artisan. All rights reserved.
+          Â© {year} Digital Products Artisan. All rights reserved.
         </p>
 
         {policies.map((policy, i) => {

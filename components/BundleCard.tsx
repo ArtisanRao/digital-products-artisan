@@ -1,4 +1,4 @@
-// components/BundleCard.tsx
+﻿// components/BundleCard.tsx
 import Image from "next/image";
 import Link from "next/link";
 import type { Bundle } from "@/lib/bundles";
@@ -45,7 +45,7 @@ export default function BundleCard({ bundle }: Props) {
         <p className="mt-1 text-neutral-600">{bundle.blurb}</p>
 
         <div className="mt-3 flex items-center gap-2 text-sm text-neutral-600">
-          <span className="text-amber-500">★</span>
+          <span className="text-amber-500">â˜…</span>
           <span className="font-medium">{bundle.rating.toFixed(1)}</span>
           <span>({bundle.reviews})</span>
         </div>

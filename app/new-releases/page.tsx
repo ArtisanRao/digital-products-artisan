@@ -1,4 +1,4 @@
-export const metadata = {
+﻿export const metadata = {
   title: "New Releases | Digital Products Artisan",
   description: "Check out the latest additions to our digital product lineup.",
 }

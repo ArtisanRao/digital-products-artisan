@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -149,7 +149,7 @@ export default function BundlesPage() {
         window.location.href = data.url;
       } else {
         console.error("Checkout failed:", data?.error || data);
-        alert("Sorry—couldn't start checkout. Please try again.");
+        alert("Sorryâ€”couldn't start checkout. Please try again.");
       }
     } catch (e) {
       console.error(e);
@@ -263,21 +263,21 @@ export default function BundlesPage() {
               {/* SIDE-BY-SIDE CTAs */}
               <CardFooter className="p-6 pt-0">
                 <div className="w-full grid grid-cols-2 gap-3">
-                  {/* View details → full product page */}
+                  {/* View details â†’ full product page */}
                   <Button asChild className="w-full bg-blue-600 text-white hover:bg-blue-700">
                     <Link href={`/bundles/${bundleSlug}`} prefetch>
                       View details
                     </Link>
                   </Button>
 
-                  {/* Get this bundle → POST /api/checkout (no login redirect) */}
+                  {/* Get this bundle â†’ POST /api/checkout (no login redirect) */}
                   <Button
                     type="button"
                     disabled={loading}
                     onClick={() => handleCheckout(bundle)}
                     className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                   >
-                    {loading ? "Starting checkout…" : "Get this bundle"}
+                    {loading ? "Starting checkoutâ€¦" : "Get this bundle"}
                   </Button>
                 </div>
               </CardFooter>

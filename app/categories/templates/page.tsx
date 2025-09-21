@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import CategoryGrid from "@/components/categories/CategoryGrid";
 import HoverableCover from "@/components/ui/hoverable-cover";
@@ -50,7 +50,7 @@ const formatEUR = (n: number) =>
 export default function TemplatesPage() {
   return (
     <main className="max-w-7xl mx-auto px-4 py-12">
-      <h1 className="text-4xl font-bold text-center mb-10">🧾 Templates</h1>
+      <h1 className="text-4xl font-bold text-center mb-10">ðŸ§¾ Templates</h1>
 
       <CategoryGrid
         items={items}
@@ -75,7 +75,7 @@ export default function TemplatesPage() {
               <div className="p-4">
                 <h2 className="text-xl font-semibold mb-2">{p.title}</h2>
 
-                {/* Inline “More / Less” under subtitle — always show trigger */}
+                {/* Inline â€œMore / Lessâ€ under subtitle â€” always show trigger */}
                 <InlineMore
                   text={p.description}
                   lines={2}

@@ -1,4 +1,4 @@
-// lib/download-token.ts
+﻿// lib/download-token.ts
 import crypto from "crypto"
 
 export type TokenPayload = {

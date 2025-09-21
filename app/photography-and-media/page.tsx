@@ -1,4 +1,4 @@
-export default function PhotographyAndMediaPage() {
+﻿export default function PhotographyAndMediaPage() {
   return (
     <main className="container mx-auto p-6">
       <h1 className="text-4xl font-bold mb-6">Photography &amp; Media</h1>

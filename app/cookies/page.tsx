@@ -1,4 +1,4 @@
-export const metadata = {
+﻿export const metadata = {
   title: "Cookie Policy | Digital Products Artisan",
   description: "How we use cookies and similar technologies to improve your experience.",
 }
@@ -6,7 +6,7 @@ export const metadata = {
 export default function CookiePolicyPage() {
   return (
     <main className="max-w-3xl mx-auto px-4 py-12">
-      <h1 className="text-3xl font-bold mb-6">🍪 Cookie Policy</h1>
+      <h1 className="text-3xl font-bold mb-6">ðŸª Cookie Policy</h1>
 
       <p className="text-gray-700 mb-6">
         This Cookie Policy explains how <strong>Digital Products Artisan</strong> uses cookies and similar technologies

@@ -1,4 +1,4 @@
-// lib/bundles.ts
+﻿// lib/bundles.ts
 export type Bundle = {
   id: string;
   title: string;

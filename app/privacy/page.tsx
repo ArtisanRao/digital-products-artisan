@@ -1,4 +1,4 @@
-export const metadata = {
+﻿export const metadata = {
   title: "Privacy Policy | Digital Products Artisan",
   description: "Learn how we handle your data and protect your privacy when you shop with us.",
 }
@@ -6,7 +6,7 @@ export const metadata = {
 export default function PrivacyPolicyPage() {
   return (
     <main className="max-w-3xl mx-auto px-4 py-12">
-      <h1 className="text-3xl font-bold mb-6">🔒 Privacy Policy</h1>
+      <h1 className="text-3xl font-bold mb-6">ðŸ”’ Privacy Policy</h1>
       <p className="mb-4 text-gray-700">
         At Digital Products Artisan, we value your privacy and are committed to protecting your personal information.
         This Privacy Policy outlines how we collect, use, and safeguard your data.

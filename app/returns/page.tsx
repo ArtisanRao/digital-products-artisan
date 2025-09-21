@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
@@ -12,7 +12,7 @@ const returnsPolicyItems = [
   {
     question: "What if I have an issue with a downloaded file?",
     answer:
-      "If you encounter an issue — such as file corruption, download problems, or incorrect content — please contact us within 7 days of purchase. We will investigate and may offer a replacement or refund at our discretion.",
+      "If you encounter an issue â€” such as file corruption, download problems, or incorrect content â€” please contact us within 7 days of purchase. We will investigate and may offer a replacement or refund at our discretion.",
   },
   {
     question: "How can I request support or a refund?",
@@ -20,9 +20,9 @@ const returnsPolicyItems = [
       "To request assistance, email our support team at support@digitalproductsartisan.com with your order number, a description of the issue, and any relevant screenshots or details.",
   },
   {
-    question: "What if the product doesn’t meet my expectations?",
+    question: "What if the product doesnâ€™t meet my expectations?",
     answer:
-      "We stand by the quality of our digital goods and want you to be satisfied. In rare cases where a product does not meet expectations, we’ll work with you to find a fair solution.",
+      "We stand by the quality of our digital goods and want you to be satisfied. In rare cases where a product does not meet expectations, weâ€™ll work with you to find a fair solution.",
   },
   {
     question: "Are there any refund exceptions?",

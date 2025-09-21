@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import type React from "react"
 
@@ -65,7 +65,7 @@ export default function NewsletterSection() {
 
           <div className="flex items-center justify-center space-x-2 text-sm opacity-90">
             <Gift className="w-4 h-4" />
-            <span>Free starter pack • No spam • Unsubscribe anytime</span>
+            <span>Free starter pack â€¢ No spam â€¢ Unsubscribe anytime</span>
           </div>
         </div>
       </div>

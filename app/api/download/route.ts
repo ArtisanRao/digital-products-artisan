@@ -1,4 +1,4 @@
-import { verifyDownloadToken } from "@/lib/download-token";
+﻿import { verifyDownloadToken } from "@/lib/download-token";
 import fs from "node:fs/promises";
 import path from "node:path";
 
@@ -54,7 +54,7 @@ export async function GET(req: Request) {
 
     const buf = await fs.readFile(resolved); // Node Buffer
 
-    // ✅ Deep-copy into a fresh ArrayBuffer (avoids SharedArrayBuffer typings)
+    // âœ… Deep-copy into a fresh ArrayBuffer (avoids SharedArrayBuffer typings)
     const ab = new ArrayBuffer(buf.byteLength);
     new Uint8Array(ab).set(buf);
 

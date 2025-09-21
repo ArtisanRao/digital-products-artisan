@@ -1,11 +1,11 @@
-"use client";
+﻿"use client";
 
 import { useEffect } from "react";
 import { setPreferredCurrency } from "@/lib/currency";
 
 /**
  * Sets a default currency once per browser (EUR for EU IPs, else USD),
- * without showing a picker. It won't overwrite a user’s existing choice.
+ * without showing a picker. It won't overwrite a userâ€™s existing choice.
  */
 export default function AutoCurrency() {
   useEffect(() => {

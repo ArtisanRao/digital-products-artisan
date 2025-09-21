@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Head from "next/head";
 import CategoryGrid from "@/components/categories/CategoryGrid";
@@ -48,7 +48,7 @@ export default function MarketingToolsPage() {
       </Head>
 
       <main className="max-w-7xl mx-auto px-4 py-12">
-        <h1 className="text-4xl font-bold text-center mb-10">🧾 Marketing Tools</h1>
+        <h1 className="text-4xl font-bold text-center mb-10">ðŸ§¾ Marketing Tools</h1>
 
         <CategoryGrid
           items={items}
@@ -74,7 +74,7 @@ export default function MarketingToolsPage() {
                 <div className="p-4">
                   <h2 className="text-xl font-semibold mb-2">{title}</h2>
 
-                  {/* Inline “More / Less” under subtitle (force show) */}
+                  {/* Inline â€œMore / Lessâ€ under subtitle (force show) */}
                   <InlineMore
                     text={description}
                     lines={2}

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import * as React from 'react';
 import Image from 'next/image';
@@ -13,7 +13,7 @@ type Product = {
   title: string;
   slug: string;
   description?: string;
-  longDescription?: string; // ✅ prefer this when present
+  longDescription?: string; // âœ… prefer this when present
   price: number;
   image?: string | null;
   images?: string[];
@@ -69,7 +69,7 @@ export default function ProductQuickView({ product, open, onOpenChange }: Props)
 
             {/* price */}
             <div className="mb-4 text-2xl font-semibold">
-              €{product.price.toFixed(2)}
+              â‚¬{product.price.toFixed(2)}
             </div>
 
             {/* long description (scrollable if very long). 

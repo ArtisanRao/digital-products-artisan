@@ -1,4 +1,4 @@
-import { type NextRequest, NextResponse } from "next/server"
+﻿import { type NextRequest, NextResponse } from "next/server"
 
 // Mock Stripe integration - replace with actual Stripe in production
 export async function POST(request: NextRequest) {

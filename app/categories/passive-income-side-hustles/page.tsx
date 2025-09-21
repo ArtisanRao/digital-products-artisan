@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import CategoryGrid from "@/components/categories/CategoryGrid";
 import HoverableCover from "@/components/ui/hoverable-cover";
@@ -39,7 +39,7 @@ const formatEUR = (n: number) =>
 export default function IconsPage() {
   return (
     <main className="mx-auto max-w-7xl px-4 py-12">
-      <h1 className="mb-10 text-center text-4xl font-bold">🔘 Icons</h1>
+      <h1 className="mb-10 text-center text-4xl font-bold">ðŸ”˜ Icons</h1>
 
       <CategoryGrid
         items={items}
@@ -53,7 +53,7 @@ export default function IconsPage() {
               : 0;
 
           const primaryImg = `/images/${CAT}/${slug}.jpg`;
-          const detailHref = `/products/${encodeURIComponent(slug)}`; // ← single product page
+          const detailHref = `/products/${encodeURIComponent(slug)}`; // â† single product page
 
           return (
             <div
@@ -66,7 +66,7 @@ export default function IconsPage() {
               <div className="p-4">
                 <h2 className="mb-2 text-xl font-semibold">{p.title}</h2>
 
-                {/* Inline “More / Less” under subtitle (force show) */}
+                {/* Inline â€œMore / Lessâ€ under subtitle (force show) */}
                 <InlineMore text={p.description} lines={2} minChars={1} className="mb-2 text-sm text-gray-600" />
 
                 <p className="mb-3 text-lg font-bold">{formatEUR(price)}</p>
@@ -80,7 +80,7 @@ export default function IconsPage() {
                     image: primaryImg,
                     description: p.description,
                   }}
-                  viewHref={detailHref}   // ← View → product page
+                  viewHref={detailHref}   // â† View â†’ product page
                   goToCartAfterAdd={false}
                 />
               </div>

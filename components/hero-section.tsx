@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button"
+﻿import { Button } from "@/components/ui/button"
 import { ArrowRight, Download, Zap, Sparkles } from "lucide-react"
 import Link from "next/link"
 
@@ -37,8 +37,8 @@ export default function HeroSection() {
           </h1>
 
           <p className="text-xl md:text-2xl text-gray-600 mb-6 max-w-3xl mx-auto leading-relaxed">
-            Fuel Your Creativity. Build Your Vision. Explore high-quality digital downloads—ebooks, templates, prompt
-            packs, and more—crafted to empower creators, entrepreneurs, and lifelong learners.
+            Fuel Your Creativity. Build Your Vision. Explore high-quality digital downloadsâ€”ebooks, templates, prompt
+            packs, and moreâ€”crafted to empower creators, entrepreneurs, and lifelong learners.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
@@ -80,7 +80,7 @@ export default function HeroSection() {
                 className="mt-2 inline-block text-sm underline underline-offset-4"
                 aria-label="Learn how instant downloads work"
               >
-                How it works →
+                How it works â†’
               </Link>
             </div>
 
@@ -97,7 +97,7 @@ export default function HeroSection() {
                 className="mt-2 inline-block text-sm underline underline-offset-4"
                 aria-label="Read about our quality standards"
               >
-                Quality standards →
+                Quality standards â†’
               </Link>
             </div>
 
@@ -114,7 +114,7 @@ export default function HeroSection() {
                 className="mt-2 inline-block text-sm underline underline-offset-4"
                 aria-label="Learn about access and support"
               >
-                Access &amp; support →
+                Access &amp; support â†’
               </Link>
             </div>
           </div>

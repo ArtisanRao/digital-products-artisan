@@ -1,4 +1,4 @@
-import { Card, CardContent } from "@/components/ui/card"
+﻿import { Card, CardContent } from "@/components/ui/card"
 import { FileText, Palette, Zap, Calendar, Code, Camera } from "lucide-react"
 import Link from "next/link"
 

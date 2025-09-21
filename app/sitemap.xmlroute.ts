@@ -1,4 +1,4 @@
-// app/sitemap.xml/route.ts
+﻿// app/sitemap.xml/route.ts
 import { NextResponse } from 'next/server';
 
 export async function GET() {

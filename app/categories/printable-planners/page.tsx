@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import CategoryGrid from "@/components/categories/CategoryGrid";
 import HoverableCover from "@/components/ui/hoverable-cover";
@@ -58,7 +58,7 @@ const formatEUR = (n: number) =>
 export default function PrintablePlannersPage() {
   return (
     <main className="mx-auto max-w-7xl px-4 py-12">
-      <h1 className="mb-10 text-center text-4xl font-bold">🗓️ Printable Planners</h1>
+      <h1 className="mb-10 text-center text-4xl font-bold">ðŸ—“ï¸ Printable Planners</h1>
 
       <CategoryGrid
         items={items}
@@ -83,7 +83,7 @@ export default function PrintablePlannersPage() {
               <div className="p-4">
                 <h2 className="mb-2 text-xl font-semibold">{p.title}</h2>
 
-                {/* Inline “More / Less” under subtitle — force visible */}
+                {/* Inline â€œMore / Lessâ€ under subtitle â€” force visible */}
                 <InlineMore
                   text={p.description}
                   lines={2}

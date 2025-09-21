@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import CategoryGrid from "@/components/categories/CategoryGrid";
 import HoverableCover from "@/components/ui/hoverable-cover";
@@ -21,7 +21,7 @@ const items: Item[] = [
     slug: "modern-sans-font",
     title: "Modern Sans Font",
     price: 4.99,
-    description: "Clean geometric sans — perfect for UI and branding.",
+    description: "Clean geometric sans â€” perfect for UI and branding.",
   },
   {
     id: "handwritten-script-font",
@@ -58,7 +58,7 @@ const formatEUR = (n: number) =>
 export default function FontsPage() {
   return (
     <main className="mx-auto max-w-7xl px-4 py-12">
-      <h1 className="mb-10 text-center text-4xl font-bold">🔤 Fonts</h1>
+      <h1 className="mb-10 text-center text-4xl font-bold">ðŸ”¤ Fonts</h1>
 
       <CategoryGrid
         items={items}
@@ -72,7 +72,7 @@ export default function FontsPage() {
               : 0;
 
           const primaryImg = `/images/${CAT}/${slug}.jpg`;
-          const detailHref = `/products/${encodeURIComponent(slug)}`; // ← product page
+          const detailHref = `/products/${encodeURIComponent(slug)}`; // â† product page
 
           return (
             <div
@@ -84,7 +84,7 @@ export default function FontsPage() {
               <div className="p-4">
                 <h2 className="mb-2 text-xl font-semibold">{p.title}</h2>
 
-                {/* Inline “More / Less” under subtitle (force show) */}
+                {/* Inline â€œMore / Lessâ€ under subtitle (force show) */}
                 <InlineMore
                   text={p.description}
                   lines={2}
@@ -103,7 +103,7 @@ export default function FontsPage() {
                     image: primaryImg,
                     description: p.description,
                   }}
-                  viewHref={detailHref}      // ← View → single product page
+                  viewHref={detailHref}      // â† View â†’ single product page
                   goToCartAfterAdd={false}
                 />
               </div>
