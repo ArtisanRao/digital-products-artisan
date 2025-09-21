@@ -1,4 +1,5 @@
-﻿import withPWA from "next-pwa";
+﻿// next.config.mjs
+import withPWA from "next-pwa";
 
 /** Configure next-pwa */
 const withPWACfg = withPWA({
@@ -6,59 +7,9 @@ const withPWACfg = withPWA({
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === "development",
-  workbox: {
-    // take control immediately
-    clientsClaim: true,
-    skipWaiting: true,
-
-    // ignore query params we use for cache-busting (if any)
-    ignoreURLParametersMatching: [/^v$/, /^ver$/, /^_h/],
-
-    // Runtime caching so HTML (navigations) comes from network first
-    runtimeCaching: [
-      // HTML navigations (App Router pages like /products/[slug])
-      {
-        urlPattern: ({ request }) => request.mode === "navigate",
-        handler: "NetworkFirst",
-        options: {
-          cacheName: "html",
-          networkTimeoutSeconds: 3, // fallback quickly if offline
-          expiration: { maxEntries: 50, maxAgeSeconds: 24 * 60 * 60 },
-        },
-      },
-      // Static assets (JS/CSS/fonts)
-      {
-        urlPattern: ({ request }) =>
-          ["script", "style", "font"].includes(request.destination),
-        handler: "StaleWhileRevalidate",
-        options: {
-          cacheName: "assets",
-          expiration: { maxEntries: 100, maxAgeSeconds: 7 * 24 * 60 * 60 },
-        },
-      },
-      // Images
-      {
-        urlPattern: ({ request }) => request.destination === "image",
-        handler: "CacheFirst",
-        options: {
-          cacheName: "images",
-          expiration: { maxEntries: 300, maxAgeSeconds: 30 * 24 * 60 * 60 },
-        },
-      },
-      // Other same-origin requests (APIs)
-      {
-        urlPattern: ({ url, request }) =>
-          url.origin === self.location.origin &&
-          request.destination === "" &&
-          request.method === "GET",
-        handler: "NetworkFirst",
-        options: {
-          cacheName: "misc",
-          expiration: { maxEntries: 100, maxAgeSeconds: 7 * 24 * 60 * 60 },
-        },
-      },
-    ],
-  },
+  // ✅ Do NOT pass a `workbox` key; next-pwa/Workbox will handle defaults.
+  // Being explicit about mode avoids warnings:
+  mode: process.env.NODE_ENV === "production" ? "production" : "development",
 });
 
 /** Content Security Policy (tune domains as needed) */
@@ -167,7 +118,7 @@ const baseConfig = {
       // keep these first
       ...assetNoIndexHeaders,
 
-      // Make product detail HTML always fresh (helps avoid SW-stale 404s)
+      // Keep product detail HTML fresh
       {
         source: "/products/:slug",
         headers: [
