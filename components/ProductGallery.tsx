@@ -90,11 +90,11 @@ export default function ProductGallery({ images, alt = 'Product image' }: Props)
                     ? 'ring-2 ring-blue-600 border-blue-200'
                     : 'hover:shadow-sm border-gray-200',
                 ].join(' ')}
-                aria-label={Show image }
+                aria-label={`Show image ${i + 1}`}
               >
                 <Image
                   src={src}
-                  alt={${alt} thumbnail }
+                  alt={`${alt} thumbnail ${i + 1}`}
                   fill
                   sizes="96px"
                   className="object-cover"
@@ -138,7 +138,7 @@ export default function ProductGallery({ images, alt = 'Product image' }: Props)
           {/* Main image: eager + priority for instant paint */}
           <div className="w-full">
             <Image
-              key={current}                // ensure swap without reusing node
+              key={current}
               src={current}
               alt={alt}
               width={1600}
@@ -192,7 +192,7 @@ export default function ProductGallery({ images, alt = 'Product image' }: Props)
 
             <div className="relative max-w-[95vw] max-h-[85vh] w-auto h-auto">
               <Image
-                key={s-}
+                key={`fs-${current}`}
                 src={current}
                 alt={alt}
                 width={1800}
