@@ -13,14 +13,14 @@ type Props = {
   image?: string;
   quantity?: number;
 
-  /** Optional UI controls */
+  /** UI */
   size?: Size;
   className?: string;
 
-  /** Optional behavior flags/links used by listing/category pages */
-  buyEnabled?: boolean;          // if false, hide the View/Buy button entirely
-  viewHref?: string;             // if present, View navigates here instead of Stripe
-  goToCartAfterAdd?: boolean;    // if true, redirect to /cart after add
+  /** Behavior used on listing/category pages */
+  buyEnabled?: boolean;          // hide/show the View/Buy button
+  viewHref?: string;             // if set, View navigates to this URL instead of Stripe
+  goToCartAfterAdd?: boolean;    // if true, redirect to /cart after adding
 };
 
 function addToCartLocal(
@@ -109,9 +109,8 @@ export default function ProductActions({
     e.preventDefault();
     e.stopPropagation();
 
-    // If a plain link was provided, just navigate there.
     if (viewHref) {
-      window.location.href = viewHref;
+      window.location.href = viewHref; // go to PDP or custom URL
       return;
     }
 
@@ -142,7 +141,6 @@ export default function ProductActions({
 
   return (
     <div className={`relative z-10 flex items-center ${s.gap} pointer-events-auto ${className ?? ""}`}>
-      {/* View / Buy button (optional) */}
       {buyEnabled && (
         viewHref ? (
           <Link
@@ -172,7 +170,6 @@ export default function ProductActions({
         )
       )}
 
-      {/* Add to cart */}
       <button
         type="button"
         onClick={handleAdd}
