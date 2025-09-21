@@ -1,4 +1,4 @@
-// NOTE: Do NOT add "use client" here — route must be a Server Component
+// DO NOT add "use client" — this file must stay a Server Component
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
 export const revalidate = 0;
@@ -11,27 +11,17 @@ import AddToCartButton from "@/components/add-to-cart-button";
 import { products, productsById } from "@/data/products";
 import { getPreferredCurrency } from "@/lib/currency";
 
-type PageProps = { params: { slug: string } };
+type Params = { slug: string };
 
-function findProduct(idOrSlug: string) {
-  const asNum = Number(idOrSlug);
-  if (Number.isFinite(asNum)) {
-    const byId = (productsById as any)?.[asNum];
-    if (byId) return byId;
-    const byIdLinear = products.find((p) => Number(p.id) === asNum);
-    if (byIdLinear) return byIdLinear;
-  }
-  const slug = idOrSlug.toLowerCase();
-  return (
-    products.find((p) => String(p.slug).toLowerCase() === slug) ||
-    products.find((p) => String(p.id) === idOrSlug) ||
-    null
-  );
-}
+// Next.js 15: params can be a Promise — await it.
+export default async function Page({
+  params,
+}: {
+  params: Promise<Params>;
+}) {
+  const { slug } = await params;
 
-export default function Page({ params }: PageProps) {
-  const handle = String(params?.slug ?? "");
-  const p = findProduct(handle);
+  const p = findProduct(slug);
 
   if (!p) {
     return (
@@ -44,7 +34,7 @@ export default function Page({ params }: PageProps) {
   const imgs: string[] = (p.images?.length ? p.images : [p.image]).filter(Boolean) as string[];
   const cover = imgs[0] ?? "/images/placeholder-cover.jpg";
 
-  // Currency formatting on the server is fine
+  // Safe currency formatting on the server; your util should fall back when no client storage
   const currencyRaw = getPreferredCurrency();
   const currency = String(currencyRaw).toUpperCase() as "EUR" | "USD";
   const locale = currency === "EUR" ? "de-DE" : "en-US";
@@ -54,7 +44,7 @@ export default function Page({ params }: PageProps) {
 
   return (
     <main className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 py-8 lg:grid-cols-[1.2fr_.8fr]">
-      {/* Simple server-rendered “gallery”: hero + thumbnails (no client state here) */}
+      {/* Simple server-rendered gallery: hero + thumbnails */}
       <section style={{ zIndex: 1, position: "relative" }}>
         <div className="grid grid-cols-[86px_1fr] gap-4 lg:gap-6 relative">
           <div className="flex max-h-[560px] flex-col gap-3 overflow-auto pr-1">
@@ -64,7 +54,13 @@ export default function Page({ params }: PageProps) {
                 className="relative aspect-square w-[86px] overflow-hidden rounded-xl border border-gray-200"
                 aria-hidden
               >
-                <Image src={src} alt={`${p.title} — thumbnail ${i + 1}`} fill sizes="86px" className="object-cover" />
+                <Image
+                  src={src}
+                  alt={`${p.title} — thumbnail ${i + 1}`}
+                  fill
+                  sizes="86px"
+                  className="object-cover"
+                />
               </div>
             ))}
           </div>
@@ -114,7 +110,8 @@ export default function Page({ params }: PageProps) {
             className="bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
           />
 
-          {/* Simple link fallback for Buy to keep this file server-only */}
+          {/* Keep this a link so the server page stays non-interactive for Buy.
+              If you want JS checkout, move that into a separate client component. */}
           <Button asChild className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500">
             <Link href="/checkout">Buy</Link>
           </Button>
@@ -127,5 +124,22 @@ export default function Page({ params }: PageProps) {
         </ul>
       </section>
     </main>
+  );
+}
+
+/** Shared helper (server-safe) */
+function findProduct(idOrSlug: string) {
+  const asNum = Number(idOrSlug);
+  if (Number.isFinite(asNum)) {
+    const byId = (productsById as any)?.[asNum];
+    if (byId) return byId;
+    const byIdLinear = products.find((p) => Number(p.id) === asNum);
+    if (byIdLinear) return byIdLinear;
+  }
+  const lower = idOrSlug.toLowerCase();
+  return (
+    products.find((p) => String(p.slug).toLowerCase() === lower) ||
+    products.find((p) => String(p.id) === idOrSlug) ||
+    null
   );
 }
