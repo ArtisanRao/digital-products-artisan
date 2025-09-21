@@ -4,8 +4,8 @@ import CategoryGrid from "@/components/categories/CategoryGrid";
 import HoverableCover from "@/components/ui/hoverable-cover";
 import ShopActions from "@/components/shop-actions";
 import InlineMore from "@/components/ui/inline-more";
-import ProductActions from "@/components/ProductActions";
 import type { Props as ProductActionsProps } from "@/components/ProductActions";
+import ProductActions from "@/components/ProductActions";
 type Item = {
   id: string;        // stable key
   slug: string;
