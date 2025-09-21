@@ -1,9 +1,10 @@
-"use client";
+﻿"use client";
 
 import CategoryGrid from "@/components/categories/CategoryGrid";
 import HoverableCover from "@/components/ui/hoverable-cover";
 import ShopActions from "@/components/shop-actions";
 import InlineMore from "@/components/ui/inline-more";
+import ProductActions from "@/components/ProductActions";
 
 type Item = {
   id: string;        // stable key
@@ -52,7 +53,7 @@ const formatEUR = (n: number) =>
 export default function CompleteShopPackagesPage() {
   return (
     <main className="max-w-7xl mx-auto px-4 py-12">
-      <h1 className="text-4xl font-bold text-center mb-10">🧰 Complete Shop Packages</h1>
+      <h1 className="text-4xl font-bold text-center mb-10">ðŸ§° Complete Shop Packages</h1>
 
       <CategoryGrid
         items={items}
@@ -65,7 +66,7 @@ export default function CompleteShopPackagesPage() {
               ? parseFloat(p.price)
               : 0;
           const image = typeof p.image === "string" ? p.image : primary(slug);
-          const detailHref = `/products/${encodeURIComponent(slug)}`; // ← single product page
+          const detailHref = `/products/${encodeURIComponent(slug)}`; // â† single product page
 
           return (
             <div
@@ -78,7 +79,7 @@ export default function CompleteShopPackagesPage() {
               <div className="p-4">
                 <h2 className="text-xl font-semibold mb-2">{p.title}</h2>
 
-                {/* Inline “More / Less” under subtitle — always show trigger */}
+                {/* Inline â€œMore / Lessâ€ under subtitle â€” always show trigger */}
                 <InlineMore
                   text={p.description}
                   lines={2}
@@ -97,9 +98,9 @@ export default function CompleteShopPackagesPage() {
                     image,
                     description: p.description,
                   }}
-                  viewHref={detailHref}     // ← View goes to product page
+                  viewHref={detailHref}     // â† View goes to product page
                   goToCartAfterAdd={false}
-                  buyEnabled={false}        // ← prevent Checkout button here
+                  buyEnabled={false}        // â† prevent Checkout button here
                 />
               </div>
             </div>
