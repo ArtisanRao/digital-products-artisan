@@ -1,5 +1,4 @@
-// components/product-actions.tsx
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import Link from "next/link";
@@ -17,49 +16,44 @@ type Item = {
 type Props = {
   item: Item;
 
-  /** When provided, show a "View" link button that navigates to the PDP. */
+  /** Show a "View" button linking to PDP when provided */
   viewHref?: string;
 
-  /** If true, redirect to cart after add (kept for API compatibility). */
+  /** Kept for compatibility; pass-through to AddToCart when wired */
   goToCartAfterAdd?: boolean;
 
-  /** If false, hide the "Buy" button (e.g., on category tiles). */
+  /** Hide the Buy button when false (e.g. on category tiles) */
   buyEnabled?: boolean;
 
-  /** Optional className passthrough for container */
   className?: string;
 };
 
 export default function ProductActions({
   item,
   viewHref,
-  goToCartAfterAdd, // currently unused by AddToCartButton, kept for compatibility
+  goToCartAfterAdd,
   buyEnabled = true,
   className,
 }: Props) {
-  // Only allow Add to Cart / Buy when we have a numeric product id
-  const numericId = typeof item.id === "number" ? item.id : undefined;
-  const canTransact = Number.isFinite(numericId as number);
+  const numericId = typeof item.id === "number" ? item.id : Number.NaN;
+  const canTransact = Number.isFinite(numericId);
 
   return (
     <div className={["flex items-center gap-3", className || ""].join(" ")}>
-      {/* View button (optional) */}
       {viewHref ? (
         <Button asChild variant="outline">
           <Link href={viewHref}>View</Link>
         </Button>
       ) : null}
 
-      {/* Add to Cart — enabled only when we have a numeric product id */}
       <AddToCartButton
-        productId={numericId as number}
+        productId={canTransact ? (numericId as number) : (undefined as any)}
         disabled={!canTransact}
         className="bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
-        // @ts-expect-error: supported by our backend implementation if you wire it later
+        // @ts-expect-error: optional prop supported by our backend when implemented
         goToCartAfterAdd={goToCartAfterAdd}
       />
 
-      {/* Buy — hidden when buyEnabled === false or when id is not numeric */}
       {buyEnabled && canTransact ? (
         <Button
           asChild
