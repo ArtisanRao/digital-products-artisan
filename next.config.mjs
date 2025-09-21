@@ -1,64 +1,12 @@
-﻿import withPWA from "next-pwa";
+﻿// next.config.mjs
+import withPWA from "next-pwa";
 
-/** Configure next-pwa */
+/** Configure next-pwa — keep it simple */
 const withPWACfg = withPWA({
   dest: "public",
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === "development",
-  workbox: {
-    // take control immediately
-    clientsClaim: true,
-    skipWaiting: true,
-
-    // ignore query params we use for cache-busting (if any)
-    ignoreURLParametersMatching: [/^v$/, /^ver$/, /^_h/],
-
-    // Runtime caching so HTML (navigations) comes from network first
-    runtimeCaching: [
-      // HTML navigations (App Router pages like /products/[slug])
-      {
-        urlPattern: ({ request }) => request.mode === "navigate",
-        handler: "NetworkFirst",
-        options: {
-          cacheName: "html",
-          networkTimeoutSeconds: 3, // fallback quickly if offline
-          expiration: { maxEntries: 50, maxAgeSeconds: 24 * 60 * 60 },
-        },
-      },
-      // Static assets (JS/CSS/fonts)
-      {
-        urlPattern: ({ request }) =>
-          ["script", "style", "font"].includes(request.destination),
-        handler: "StaleWhileRevalidate",
-        options: {
-          cacheName: "assets",
-          expiration: { maxEntries: 100, maxAgeSeconds: 7 * 24 * 60 * 60 },
-        },
-      },
-      // Images
-      {
-        urlPattern: ({ request }) => request.destination === "image",
-        handler: "CacheFirst",
-        options: {
-          cacheName: "images",
-          expiration: { maxEntries: 300, maxAgeSeconds: 30 * 24 * 60 * 60 },
-        },
-      },
-      // Other same-origin requests (APIs)
-      {
-        urlPattern: ({ url, request }) =>
-          url.origin === self.location.origin &&
-          request.destination === "" &&
-          request.method === "GET",
-        handler: "NetworkFirst",
-        options: {
-          cacheName: "misc",
-          expiration: { maxEntries: 100, maxAgeSeconds: 7 * 24 * 60 * 60 },
-        },
-      },
-    ],
-  },
 });
 
 /** Content Security Policy (tune domains as needed) */
@@ -164,10 +112,9 @@ const baseConfig = {
 
   async headers() {
     return [
-      // keep these first
       ...assetNoIndexHeaders,
 
-      // Make product detail HTML always fresh (helps avoid SW-stale 404s)
+      // Keep product detail HTML fresh (avoid SW-stale HTML)
       {
         source: "/products/:slug",
         headers: [
@@ -176,14 +123,12 @@ const baseConfig = {
         ],
       },
 
-      // default security headers
       { source: "/(.*)", headers: securityHeaders },
     ];
   },
 
   async redirects() {
     return [
-      // Canonical host: www → apex
       {
         source: "/:path*",
         has: [{ type: "host", value: "www.digitalproductsartisan.com" }],
@@ -213,8 +158,7 @@ const baseConfig = {
       { source: "/category/:slug", destination: "/categories/:slug", permanent: true },
       { source: "/category/:slug/", destination: "/categories/:slug", permanent: true },
 
-      /** ---------- CATEGORY SLUG CHANGES (match data/categories.ts) ---------- */
-      // Renames:
+      // Category slug renames
       { source: "/categories/digital-art",        destination: "/categories/ai-chatgpt-guides",           permanent: true },
       { source: "/categories/printable-planners", destination: "/categories/planners-productivity",       permanent: true },
       { source: "/categories/photography-prints", destination: "/categories/self-help-how-to",            permanent: true },
@@ -225,19 +169,19 @@ const baseConfig = {
       { source: "/categories/fonts",              destination: "/categories/keto-diet-guides",            permanent: true },
       { source: "/categories/icons",              destination: "/categories/passive-income-side-hustles", permanent: true },
 
-      // New top-level categories (helpful forwards if nested variants existed)
-      { source: "/categories/web-templates/fonts",  destination: "/categories/fonts",  permanent: true },
-      { source: "/categories/web-templates/icons",  destination: "/categories/icons",  permanent: true },
+      // Helpful forwards for nested variants
+      { source: "/categories/web-templates/fonts", destination: "/categories/fonts",  permanent: true },
+      { source: "/categories/web-templates/icons", destination: "/categories/icons",  permanent: true },
 
-      // Preserve earlier variants/typos if they were ever live
-      { source: "/categories/audio-samples",                destination: "/categories/plr-mrr-bundles",             permanent: true },
-      { source: "/categories/ai-and-chatgpt-guides",       destination: "/categories/ai-chatgpt-guides",           permanent: true },
-      { source: "/categories/planners-and-productivity",   destination: "/categories/planners-productivity",        permanent: true },
-      { source: "/categories/self-help-and-how-to",        destination: "/categories/self-help-how-to",            permanent: true },
-      { source: "/categories/plr-and-mrr-bundles",         destination: "/categories/plr-mrr-bundles",             permanent: true },
-      { source: "/categories/video-courses-and-training",  destination: "/categories/video-courses-training",       permanent: true },
-      { source: "/categories/complete-shop-packages",      destination: "/categories/complete-shop-packages",       permanent: true }, // idempotent
-      { source: "/categories/health-and-fitness-ebooks",   destination: "/categories/health-fitness-ebooks",        permanent: true },
+      // Preserve earlier variants/typos
+      { source: "/categories/audio-samples",               destination: "/categories/plr-mrr-bundles",             permanent: true },
+      { source: "/categories/ai-and-chatgpt-guides",      destination: "/categories/ai-chatgpt-guides",           permanent: true },
+      { source: "/categories/planners-and-productivity",  destination: "/categories/planners-productivity",        permanent: true },
+      { source: "/categories/self-help-and-how-to",       destination: "/categories/self-help-how-to",            permanent: true },
+      { source: "/categories/plr-and-mrr-bundles",        destination: "/categories/plr-mrr-bundles",             permanent: true },
+      { source: "/categories/video-courses-and-training", destination: "/categories/video-courses-training",       permanent: true },
+      { source: "/categories/complete-shop-packages",     destination: "/categories/complete-shop-packages",       permanent: true },
+      { source: "/categories/health-and-fitness-ebooks",  destination: "/categories/health-fitness-ebooks",        permanent: true },
     ];
   },
 };
