@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import CategoryGrid from "@/components/categories/CategoryGrid";
 import HoverableCover from "@/components/ui/hoverable-cover";
