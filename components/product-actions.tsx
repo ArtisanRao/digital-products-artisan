@@ -14,7 +14,7 @@ type ItemLike = {
   description?: string;
 };
 
-type Props = {
+export type Props = {
   /** Product-like item (must contain id, title, price) */
   item: ItemLike;
 
@@ -57,7 +57,7 @@ export default function ProductActions({
       let data: any = {};
       try { data = JSON.parse(raw); } catch {}
       if (!res.ok || !data?.url) {
-        const message = data?.error || raw || `Checkout failed (HTTP ${res.status})`;
+        const message = data?.error || raw || \Checkout failed (HTTP \)\;
         throw new Error(message);
       }
       window.location.href = data.url as string;
@@ -72,14 +72,12 @@ export default function ProductActions({
   return (
     <div className={cn("flex flex-col gap-3", className)}>
       <div className={cn("flex flex-wrap gap-3", actionsClassName)}>
-        {/* Add to cart always available */}
         <AddToCartButton
           productId={item.id}
           goToCartAfterAdd={goToCartAfterAdd}
           className="bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
         />
 
-        {/* Buy button (can be disabled via buyEnabled) */}
         <Button
           type="button"
           onClick={handleBuy}
@@ -89,7 +87,6 @@ export default function ProductActions({
           {buyLoading ? "Redirecting..." : "Buy"}
         </Button>
 
-        {/* Optional “View” button when a link is provided */}
         {viewHref ? (
           <Button asChild variant="outline">
             <Link href={viewHref}>View</Link>
