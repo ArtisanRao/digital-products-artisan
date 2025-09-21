@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, MouseEvent } from "react";
+import Link from "next/link";
 import { ShoppingCart, Eye } from "lucide-react";
 
 type Size = "sm" | "md" | "lg";
 
 type Props = {
   id: string | number;
+  slug?: string;               // ← added
   title: string;
   price: number;
   image?: string;
@@ -47,19 +49,6 @@ function addToCartLocal(
   }
 }
 
-function getPreferredCurrency(): "eur" | "usd" {
-  try {
-    const raw =
-      (localStorage.getItem("preferredCurrency") ||
-        localStorage.getItem("currency") ||
-        "eur") as string;
-    const v = raw.toLowerCase();
-    return (v === "usd" ? "usd" : "eur") as "eur" | "usd";
-  } catch {
-    return "eur";
-  }
-}
-
 const SIZE_STYLES: Record<Size, { btn: string; icon: string; gap: string }> = {
   sm:  { btn: "px-3 py-1.5 text-sm",  icon: "h-4 w-4", gap: "gap-2" },
   md:  { btn: "px-4 py-2 text-sm",    icon: "h-4 w-4", gap: "gap-3" },
@@ -68,6 +57,7 @@ const SIZE_STYLES: Record<Size, { btn: string; icon: string; gap: string }> = {
 
 export default function ProductActions({
   id,
+  slug,                 // ← added
   title,
   price,
   image,
@@ -76,9 +66,7 @@ export default function ProductActions({
   className,
 }: Props) {
   const [adding, setAdding] = useState(false);
-  const [viewing, setViewing] = useState(false);
   const idStr = String(id);
-
   const s = SIZE_STYLES[size];
 
   const handleAdd = (e: MouseEvent<HTMLButtonElement>) => {
@@ -91,53 +79,28 @@ export default function ProductActions({
       { replace: false }
     );
     setAdding(false);
-    // stay on page — header badge updates via cart:updated
   };
 
-  const handleView = async (e: MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    setViewing(true);
-    try {
-      const resp = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          lines: [{ id: idStr, name: title, price, image, quantity: 1 }],
-          currency: getPreferredCurrency(),
-        }),
-      });
-      const data = await resp.json();
-      if (resp.ok && data?.url) {
-        window.location.href = data.url as string; // ⟶ Stripe Checkout
-      } else {
-        console.error("Checkout error:", data);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setViewing(false);
-    }
-  };
+  const href = `/products/${slug ?? idStr}`;
 
   return (
     <div
       className={`relative z-10 flex items-center ${s.gap} pointer-events-auto ${className ?? ""}`}
     >
-      <button
-        type="button"
-        onClick={handleView}
-        disabled={viewing}
-        aria-label="View (go to checkout)"
+      {/* View → PDP */}
+      <Link
+        href={href}
+        prefetch={false}
+        aria-label={`View ${title}`}
         className={`inline-flex items-center ${s.gap} rounded-lg bg-blue-600 ${s.btn} text-white
                     hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2
                     focus-visible:ring-blue-500 disabled:opacity-60`}
       >
         <Eye className={s.icon} />
-        {viewing ? "Opening…" : "View"}
-      </button>
+        View
+      </Link>
 
+      {/* Add to cart */}
       <button
         type="button"
         onClick={handleAdd}
