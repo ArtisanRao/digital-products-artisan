@@ -1,89 +1,101 @@
-﻿// components/product-actions.tsx
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import AddToCartButton from "@/components/add-to-cart-button";
 
-type Item = {
+type ItemLike = {
   id: number | string;
   title: string;
   price: number;
-  image: string;
+  image?: string;
   description?: string;
 };
 
 type Props = {
-  item: Item;
-  /** Show a “View” button that links to the product detail page (optional). */
+  /** Product-like item (must contain id, title, price) */
+  item: ItemLike;
+
+  /** When provided, show a “View” button that links here */
   viewHref?: string;
-  /** If false, hides the “Buy” button (optional, default true). */
-  buyEnabled?: boolean;
-  /** Accepted for compatibility; pass through if your AddToCartButton supports it. */
+
+  /** If true, navigate to cart after AddToCart (default: false) */
   goToCartAfterAdd?: boolean;
+
+  /** If false, hide/disable the “Buy” button (default: true) */
+  buyEnabled?: boolean;
+
+  /** Extra classes for container */
   className?: string;
-  rightSlot?: React.ReactNode;
+
+  /** Extra classes for buttons row */
+  actionsClassName?: string;
 };
 
 export default function ProductActions({
   item,
   viewHref,
+  goToCartAfterAdd = false,
   buyEnabled = true,
-  goToCartAfterAdd, // kept for callers; wire to AddToCartButton if supported
   className,
-  rightSlot,
+  actionsClassName,
 }: Props) {
-  const onBuy = React.useCallback(() => {
-    (async () => {
-      try {
-        const res = await fetch("/api/checkout", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ productId: item.id, qty: 1 }),
-        });
-        const txt = await res.text();
-        let data: any = {};
-        try {
-          data = JSON.parse(txt);
-        } catch {}
-        if (!res.ok || !data?.url) {
-          throw new Error(data?.error || txt || `Checkout failed (${res.status})`);
-        }
-        window.location.href = data.url as string;
-      } catch (err: any) {
-        console.error("Checkout error:", err);
-        alert(err?.message || "Couldn’t start checkout.");
+  const [buyLoading, setBuyLoading] = React.useState(false);
+
+  const handleBuy = async () => {
+    if (!buyEnabled || buyLoading) return;
+    setBuyLoading(true);
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: item.id, qty: 1 }),
+      });
+      const raw = await res.text();
+      let data: any = {};
+      try { data = JSON.parse(raw); } catch {}
+      if (!res.ok || !data?.url) {
+        const message = data?.error || raw || `Checkout failed (HTTP ${res.status})`;
+        throw new Error(message);
       }
-    })();
-  }, [item.id]);
+      window.location.href = data.url as string;
+    } catch (err: any) {
+      console.error("Checkout error:", err);
+      alert(err?.message || "Sorry—couldn't start checkout.");
+    } finally {
+      setBuyLoading(false);
+    }
+  };
 
   return (
-    <div className={["flex items-center gap-3", className].filter(Boolean).join(" ")}>
-      {viewHref ? (
-        <Button asChild variant="secondary" className="shrink-0">
-          <Link href={viewHref}>View</Link>
-        </Button>
-      ) : null}
+    <div className={cn("flex flex-col gap-3", className)}>
+      <div className={cn("flex flex-wrap gap-3", actionsClassName)}>
+        {/* Add to cart always available */}
+        <AddToCartButton
+          productId={item.id}
+          goToCartAfterAdd={goToCartAfterAdd}
+          className="bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
+        />
 
-      <AddToCartButton
-        productId={item.id}
-        className="shrink-0"
-        // If supported in your implementation, uncomment the next line:
-        // goToCartAfterAdd={goToCartAfterAdd}
-      />
-
-      {buyEnabled ? (
+        {/* Buy button (can be disabled via buyEnabled) */}
         <Button
           type="button"
-          className="shrink-0 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
-          onClick={onBuy}
+          onClick={handleBuy}
+          disabled={!buyEnabled || buyLoading}
+          className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
         >
-          Buy
+          {buyLoading ? "Redirecting..." : "Buy"}
         </Button>
-      ) : null}
 
-      {rightSlot ? <div className="ml-auto">{rightSlot}</div> : null}
+        {/* Optional “View” button when a link is provided */}
+        {viewHref ? (
+          <Button asChild variant="outline">
+            <Link href={viewHref}>View</Link>
+          </Button>
+        ) : null}
+      </div>
     </div>
   );
 }
