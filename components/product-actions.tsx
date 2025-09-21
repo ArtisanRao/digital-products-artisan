@@ -18,7 +18,7 @@ export type Props = {
   item: ItemLike;
   viewHref?: string;
   goToCartAfterAdd?: boolean;
-  buyEnabled?: boolean;
+  buyEnabled?: boolean; // <-- IMPORTANT
   className?: string;
   actionsClassName?: string;
 };
@@ -51,7 +51,6 @@ export default function ProductActions({
         const message = data?.error || raw || `Checkout failed (HTTP ${res.status})`;
         throw new Error(message);
       }
-
       window.location.href = data.url as string;
     } catch (err: any) {
       console.error("Checkout error:", err);
