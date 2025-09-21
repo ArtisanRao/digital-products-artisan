@@ -185,7 +185,6 @@ export default function ProductPageClient({ slug }: { slug: string }) {
             onClick={handleBuy}
             disabled={buyLoading}
             className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
-            style={{ pointerEvents: "auto" }}
           >
             {buyLoading ? "Redirecting..." : "Buy"}
           </Button>
