@@ -1,26 +1,26 @@
 "use client";
 
 import { useState, MouseEvent } from "react";
+import Link from "next/link";
 import { ShoppingCart, Eye } from "lucide-react";
 
 type Size = "sm" | "md" | "lg";
 
 type Props = {
-  /** canonical product fields */
   id: string | number;
   title: string;
   price: number;
   image?: string;
   quantity?: number;
 
-  /** presentation */
+  /** Optional UI controls */
   size?: Size;
   className?: string;
 
-  /** optional flags coming from category/list pages */
-  buyEnabled?: boolean;            // when false, hide/disable the “View/Buy” button
-  viewHref?: string;               // accepted for compatibility (unused here)
-  goToCartAfterAdd?: boolean;      // accepted for compatibility (unused here)
+  /** Optional behavior flags/links used by listing/category pages */
+  buyEnabled?: boolean;          // if false, hide the View/Buy button entirely
+  viewHref?: string;             // if present, View navigates here instead of Stripe
+  goToCartAfterAdd?: boolean;    // if true, redirect to /cart after add
 };
 
 function addToCartLocal(
@@ -80,12 +80,13 @@ export default function ProductActions({
   quantity = 1,
   size = "md",
   className,
-  buyEnabled = true,        // <-- default: show the View/Buy button
+  buyEnabled = true,
+  viewHref,
+  goToCartAfterAdd = false,
 }: Props) {
   const [adding, setAdding] = useState(false);
   const [viewing, setViewing] = useState(false);
   const idStr = String(id);
-
   const s = SIZE_STYLES[size];
 
   const handleAdd = (e: MouseEvent<HTMLButtonElement>) => {
@@ -93,16 +94,26 @@ export default function ProductActions({
     e.stopPropagation();
 
     setAdding(true);
-    addToCartLocal(
+    const ok = addToCartLocal(
       { id: idStr, name: title, price, image, quantity: Math.max(1, Number(quantity) || 1) },
       { replace: false }
     );
     setAdding(false);
+
+    if (ok && goToCartAfterAdd) {
+      window.location.href = "/cart";
+    }
   };
 
   const handleView = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
+
+    // If a plain link was provided, just navigate there.
+    if (viewHref) {
+      window.location.href = viewHref;
+      return;
+    }
 
     setViewing(true);
     try {
@@ -119,9 +130,11 @@ export default function ProductActions({
         window.location.href = data.url as string; // → Stripe Checkout
       } else {
         console.error("Checkout error:", data);
+        alert("Sorry — couldn't start checkout.");
       }
     } catch (err) {
       console.error(err);
+      alert("Sorry — couldn't start checkout.");
     } finally {
       setViewing(false);
     }
@@ -129,20 +142,34 @@ export default function ProductActions({
 
   return (
     <div className={`relative z-10 flex items-center ${s.gap} pointer-events-auto ${className ?? ""}`}>
-      {/* View/Buy (optional) */}
+      {/* View / Buy button (optional) */}
       {buyEnabled && (
-        <button
-          type="button"
-          onClick={handleView}
-          disabled={viewing}
-          aria-label="View (go to checkout)"
-          className={`inline-flex items-center ${s.gap} rounded-lg bg-blue-600 ${s.btn} text-white
-                      hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2
-                      focus-visible:ring-blue-500 disabled:opacity-60`}
-        >
-          <Eye className={s.icon} />
-          {viewing ? "Opening…" : "View"}
-        </button>
+        viewHref ? (
+          <Link
+            href={viewHref}
+            aria-label="View product"
+            className={`inline-flex items-center ${s.gap} rounded-lg bg-blue-600 ${s.btn} text-white
+                        hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2
+                        focus-visible:ring-blue-500`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Eye className={s.icon} />
+            View
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={handleView}
+            disabled={viewing}
+            aria-label="View (go to checkout)"
+            className={`inline-flex items-center ${s.gap} rounded-lg bg-blue-600 ${s.btn} text-white
+                        hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2
+                        focus-visible:ring-blue-500 disabled:opacity-60`}
+          >
+            <Eye className={s.icon} />
+            {viewing ? "Opening…" : "View"}
+          </button>
+        )
       )}
 
       {/* Add to cart */}
