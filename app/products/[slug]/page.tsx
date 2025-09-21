@@ -1,7 +1,11 @@
-// app/products/[slug]/ProductPageClient.tsx
 "use client";
 
+export const dynamic = "force-dynamic";
+export const dynamicParams = true;
+export const revalidate = 0;
+
 import * as React from "react";
+import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -100,9 +104,12 @@ function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
   );
 }
 
-export default function ProductPageClient({ slug }: { slug: string }) {
-  const handle = String(slug ?? "");
+export default function Page() {
+  // ✅ read dynamic segment on the client
+  const params = useParams<{ slug: string }>();
+  const handle = String(params?.slug ?? "");
   const p = findProduct(handle);
+
   const [buyLoading, setBuyLoading] = React.useState(false);
 
   if (!p) {
@@ -115,7 +122,7 @@ export default function ProductPageClient({ slug }: { slug: string }) {
 
   const imgs: string[] = (p.images?.length ? p.images : [p.image]).filter(Boolean) as string[];
 
-  // TS-safe currency handling for display
+  // currency display
   const currencyRaw = getPreferredCurrency();
   const currency = String(currencyRaw).toUpperCase() as "EUR" | "USD";
   const locale = currency === "EUR" ? "de-DE" : "en-US";
@@ -133,16 +140,13 @@ export default function ProductPageClient({ slug }: { slug: string }) {
 
       const raw = await res.text();
       let data: any = {};
-      try {
-        data = JSON.parse(raw);
-      } catch {}
-
+      try { data = JSON.parse(raw); } catch {}
       if (!res.ok || !data?.url) {
         const message = data?.error || raw || `Checkout failed (HTTP ${res.status})`;
         throw new Error(message);
       }
 
-      window.location.href = data.url as string; // → Stripe Checkout
+      window.location.href = data.url as string;
     } catch (err: any) {
       console.error("Checkout error:", err);
       alert(err?.message || "Sorry—couldn't start checkout.");
