@@ -48,7 +48,7 @@ export default function ProductActions({
       try { data = JSON.parse(raw); } catch {}
 
       if (!res.ok || !data?.url) {
-        const message = data?.error || raw || Checkout failed (HTTP );
+        const message = data?.error || raw || `Checkout failed (HTTP ${res.status})`;
         throw new Error(message);
       }
 
