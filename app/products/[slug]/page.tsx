@@ -1,5 +1,9 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const dynamicParams = true;
+
 import * as React from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
@@ -10,6 +14,11 @@ import { Button } from "@/components/ui/button";
 import AddToCartButton from "@/components/add-to-cart-button"; //⬅️ NEW
 import { products, productsById } from "@/data/products";
 import { getPreferredCurrency } from "@/lib/currency";
+
+// Pre-generate known slugs (still allows any slug at runtime)
+export function generateStaticParams() {
+  return products.map((p) => ({ slug: String(p.slug ?? p.id) }));
+}
 
 function findProduct(idOrSlug: string) {
   const asNum = Number(idOrSlug);
