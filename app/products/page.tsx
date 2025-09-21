@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import HoverableCover from '@/components/ui/hoverable-cover';         // â¬…ï¸ bring back hover cover
 import { products, type Product } from '@/data/products';
-import ProductActions from '@/components/product-actions';
+import ProductActions from '@/components/ProductActions';
 import DescriptionClamp from '@/components/DescriptionClamp';
 
 const baseCategories = [
