@@ -1,4 +1,21 @@
-﻿"use client";
+﻿<div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+  {items.map((p) => {
+    const slug = p.slug ?? String(p.id);
+    const detailHref = \/products/\\;
+    const item = { id: p.id, title: p.title, price: p.price, image: p.image, description: p.description };
+    return (
+      <div key={slug} className="flex flex-col rounded-lg border p-4">
+        <a href={detailHref} className="mb-3 font-semibold hover:underline">{p.title}</a>
+        <div className="mt-auto">
+          <ProductActions
+            {...({ item, viewHref: detailHref, goToCartAfterAdd: false, buyEnabled: false } as import("@/components/ProductActions").Props)}
+          />
+        </div>
+      </div>
+    );
+  })}
+</div>
+"use client";
 import ProductActions from "@/components/ProductActions";
 import type { Props as ProductActionsProps } from "@/components/ProductActions";
 
