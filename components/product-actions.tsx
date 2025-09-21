@@ -15,22 +15,11 @@ type ItemLike = {
 };
 
 export type Props = {
-  /** Product-like item (must contain id, title, price) */
   item: ItemLike;
-
-  /** When provided, show a “View” button that links here */
   viewHref?: string;
-
-  /** If true, navigate to cart after AddToCart (default: false) */
   goToCartAfterAdd?: boolean;
-
-  /** If false, hide/disable the “Buy” button (default: true) */
   buyEnabled?: boolean;
-
-  /** Extra classes for container */
   className?: string;
-
-  /** Extra classes for buttons row */
   actionsClassName?: string;
 };
 
@@ -53,13 +42,16 @@ export default function ProductActions({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ productId: item.id, qty: 1 }),
       });
+
       const raw = await res.text();
       let data: any = {};
       try { data = JSON.parse(raw); } catch {}
+
       if (!res.ok || !data?.url) {
-        const message = data?.error || raw || \Checkout failed (HTTP \)\;
+        const message = data?.error || raw || Checkout failed (HTTP );
         throw new Error(message);
       }
+
       window.location.href = data.url as string;
     } catch (err: any) {
       console.error("Checkout error:", err);
