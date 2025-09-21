@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import ProductActions from "@/components/ProductActions";
+import type { Props as ProductActionsProps } from "@/components/ProductActions";
 
 type Item = {
   id: number | string;
