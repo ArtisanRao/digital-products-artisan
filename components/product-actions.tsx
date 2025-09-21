@@ -18,7 +18,7 @@ export type Props = {
   item: ItemLike;
   viewHref?: string;
   goToCartAfterAdd?: boolean;
-  buyEnabled?: boolean; // <-- IMPORTANT
+  buyEnabled?: boolean; // <-- important
   className?: string;
   actionsClassName?: string;
 };
