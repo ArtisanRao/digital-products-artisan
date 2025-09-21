@@ -1,6 +1,7 @@
 ﻿"use client";
+import ProductActions from "@/components/ProductActions";
+import type { Props as ProductActionsProps } from "@/components/ProductActions";
 
- ProductActions from "@/components/ProductActions"
 
 
 // Route/category slug (new)
