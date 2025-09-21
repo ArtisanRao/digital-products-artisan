@@ -1,11 +1,7 @@
+// app/products/[slug]/ProductPageClient.tsx
 "use client";
 
-export const dynamic = "force-dynamic";
-export const dynamicParams = true;
-export const revalidate = 0;
-
 import * as React from "react";
-import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -104,12 +100,9 @@ function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
   );
 }
 
-export default function Page() {
-  // ✅ Get slug from URL at runtime so the route stays dynamic
-  const params = useParams<{ slug: string }>();
-  const handle = String(params?.slug ?? "");
+export default function ProductPageClient({ slug }: { slug: string }) {
+  const handle = String(slug ?? "");
   const p = findProduct(handle);
-
   const [buyLoading, setBuyLoading] = React.useState(false);
 
   if (!p) {
@@ -140,7 +133,10 @@ export default function Page() {
 
       const raw = await res.text();
       let data: any = {};
-      try { data = JSON.parse(raw); } catch {}
+      try {
+        data = JSON.parse(raw);
+      } catch {}
+
       if (!res.ok || !data?.url) {
         const message = data?.error || raw || `Checkout failed (HTTP ${res.status})`;
         throw new Error(message);
@@ -164,7 +160,10 @@ export default function Page() {
       </section>
 
       <section className="isolate" style={{ position: "relative", zIndex: 60, pointerEvents: "auto" }}>
-        <h1 className="text-4xl font-extrabold leading-tight" style={{ position: "relative", zIndex: 61, pointerEvents: "auto" }}>
+        <h1
+          className="text-4xl font-extrabold leading-tight"
+          style={{ position: "relative", zIndex: 61, pointerEvents: "auto" }}
+        >
           <Link
             href={canonicalHref}
             className="underline decoration-transparent hover:decoration-current focus:decoration-current"
