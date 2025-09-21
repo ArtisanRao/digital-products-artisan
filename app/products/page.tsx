@@ -296,7 +296,7 @@ export default function ProductsPage() {
                   <Card key={product.id} className="group hover:shadow-lg transition-shadow duration-300" tabIndex={0}>
                     <CardHeader className="p-0">
                       <div className="relative overflow-hidden rounded-t-lg">
-                        <Link href={`/products/${product.id}`} aria-label={`View ${product.title}`}>
+                        <Link href={`/products/${product.slug}`} aria-label={`View ${product.title}`}>
                           <HoverableCover srcs={coverSrcs} alt={product.title} ratio="16/9" fit="contain" />
                         </Link>
                         {product.bestseller && (
@@ -309,7 +309,7 @@ export default function ProductsPage() {
 
                     <CardContent className="p-4">
                       <Link
-                        href={`/products/${product.id}`}
+                        href={`/products/${product.slug}`}
                         className="hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-sm"
                       >
                         <CardTitle className="text-lg font-semibold line-clamp-2">{product.title}</CardTitle>
@@ -325,7 +325,7 @@ export default function ProductsPage() {
                       {coverSrcs.length > 1 && (
                         <div className="mt-3 grid grid-cols-3 gap-2">
                           {coverSrcs.slice(1, 4).map((thumb) => (
-                            <Link href={`/products/${product.id}`} key={thumb} aria-label="View details">
+                            <Link href={`/products/${product.slug}`} key={thumb} aria-label="View details">
                               <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-gray-50">
                                 <Image
                                   src={thumb}
@@ -386,7 +386,7 @@ export default function ProductsPage() {
                     className="flex items-center space-x-4 p-4 border rounded-lg hover:shadow-md transition-shadow duration-300"
                     tabIndex={0}
                   >
-                    <Link href={`/products/${product.id}`} className="flex-shrink-0" aria-label={`View ${product.title}`}>
+                    <Link href={`/products/${product.slug}`} className="flex-shrink-0" aria-label={`View ${product.title}`}>
                       <div className="relative w-[120px] h-[90px] bg-white rounded-md">
                         <Image
                           src={product.image || '/placeholder.svg'}
@@ -400,7 +400,7 @@ export default function ProductsPage() {
                     </Link>
 
                     <div className="flex-1 min-w-0">
-                      <Link href={`/products/${product.id}`} className="hover:underline">
+                      <Link href={`/products/${product.slug}`} className="hover:underline">
                         <h3 className="text-lg font-semibold truncate">{product.title}</h3>
                       </Link>
 
@@ -414,7 +414,7 @@ export default function ProductsPage() {
                       {coverSrcs.length > 1 && (
                         <div className="mt-2 flex gap-2">
                           {coverSrcs.slice(1, 4).map((thumb) => (
-                            <Link href={`/products/${product.id}`} key={thumb} aria-label="View details">
+                            <Link href={`/products/${product.slug}`} key={thumb} aria-label="View details">
                               <div className="relative w-14 h-10 rounded-md overflow-hidden bg-gray-50">
                                 <Image
                                   src={thumb}
