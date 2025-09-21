@@ -1,5 +1,9 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+export const dynamicParams = true;
+export const revalidate = 0;
+
 import * as React from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
@@ -101,7 +105,7 @@ function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
 }
 
 export default function Page() {
-  // ✅ Read slug from the URL on the client
+  // ✅ Get slug from URL at runtime so the route stays dynamic
   const params = useParams<{ slug: string }>();
   const handle = String(params?.slug ?? "");
   const p = findProduct(handle);
