@@ -4,17 +4,17 @@ export const dynamicParams = true;
 export const revalidate = 0;
 
 import * as React from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import InlineMore from "@/components/ui/inline-more";
 import { Button } from "@/components/ui/button";
 import AddToCartButton from "@/components/add-to-cart-button";
-import ProductGallery from "@/components/ProductGallery"; // your client gallery
 import { products, productsById } from "@/data/products";
 import { getPreferredCurrency } from "@/lib/currency";
 
-// ----- helpers (pure) -----
+// ✅ Correct location for your client gallery component
+import ProductGallery from "../_components/ProductGallery";
+
 function findProduct(idOrSlug: string) {
   const asNum = Number(idOrSlug);
   if (Number.isFinite(asNum)) {
@@ -31,16 +31,12 @@ function findProduct(idOrSlug: string) {
   );
 }
 
-// ----- PAGE (server component) -----
-// NOTE: In Next.js 15, `params` is a Promise<any>. Don't over-type it.
+// In Next.js 15, `params` is a Promise — await it here.
 export default async function Page(props: { params: Promise<{ slug: string }> }) {
-  const { slug } = await props.params; // <-- important: await the promise
+  const { slug } = await props.params;
   const p = findProduct(String(slug ?? ""));
 
-  if (!p) {
-    // Friendly 404 page (or use `notFound()` to render the framework 404)
-    notFound();
-  }
+  if (!p) notFound();
 
   const imgs: string[] = (p.images?.length ? p.images : [p.image]).filter(Boolean) as string[];
 
@@ -54,7 +50,6 @@ export default async function Page(props: { params: Promise<{ slug: string }> })
   return (
     <main className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 py-8 lg:grid-cols-[1.2fr_.8fr]">
       <section style={{ zIndex: 1, position: "relative" }}>
-        {/* Client component is fine inside a server page */}
         <ProductGallery images={imgs} alt={p.title} />
       </section>
 
@@ -87,8 +82,11 @@ export default async function Page(props: { params: Promise<{ slug: string }> })
             className="bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
           />
 
-          {/* Plain link as a non-blocking fallback if your Buy button is client-side elsewhere */}
-          <Button asChild className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500">
+          {/* Keep a simple link Buy fallback (your client Buy button can still exist elsewhere) */}
+          <Button
+            asChild
+            className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
+          >
             <Link href={`/api/checkout?productId=${encodeURIComponent(String(p.id))}&qty=1&currency=${currency}`}>
               Buy
             </Link>
