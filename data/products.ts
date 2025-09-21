@@ -217,9 +217,9 @@ Instant digital download; read on any device.`,
 // Also attaches image-manifest galleries and picks a cover.
 // ---------------------------------------------------------------------------
 export const products: Product[] = RAW_PRODUCTS.map((p) => {
+  // normalize category label and create a stable slug for it
   const newLabel = normalizeCategoryLabel(p.category);
-  const ensuredSlug =
-    labelToSlugAny(p.category) ?? labelToSlugAny(newLabel);
+  const ensuredSlug = labelToSlugAny(newLabel) ?? labelToSlugAny(p.category);
 
   // dev warning to help you gradually clean up RAW_PRODUCTS
   if (process.env.NODE_ENV !== "production" && p.category in LEGACY_CATEGORY_MAP) {
@@ -233,17 +233,60 @@ export const products: Product[] = RAW_PRODUCTS.map((p) => {
     });
   }
 
+  // Images: prefer manifest (cover first), fall back to author-provided cover
   const fromManifest = coverFirst(imageManifest[p.slug]);
   const images = fromManifest?.length ? fromManifest : [p.image];
 
+  // Make slug lowercase just in case (safety)
+  const normalizedProductSlug = String(p.slug).toLowerCase();
+
   return {
     ...p,
+    slug: normalizedProductSlug,
     category: newLabel,
     categorySlug: ensuredSlug,
-    image: images[0],
+    image: images[0], // always point cover to first
     images,
   };
 });
 
-export const productsById = Object.fromEntries(products.map((p) => [p.id, p])) as Record<number, Product>;
-export const productsBySlug = Object.fromEntries(products.map((p) => [p.slug, p])) as Record<string, Product>;
+// Build both numeric and string id maps; and a slug map (lowercased)
+export const productsById: Record<number, Product> = Object.fromEntries(
+  products.map((p) => [p.id, p])
+) as Record<number, Product>;
+
+// Helpful also to have a string-keyed map for ids (for code that uses "1" instead of 1)
+export const productsByIdStr: Record<string, Product> = Object.fromEntries(
+  products.map((p) => [String(p.id), p])
+);
+
+export const productsBySlug: Record<string, Product> = Object.fromEntries(
+  products.map((p) => [String(p.slug).toLowerCase(), p])
+);
+
+// ------------------------
+// Dev-time integrity checks
+// ------------------------
+if (process.env.NODE_ENV !== "production") {
+  const seenIds = new Set<number>();
+  const seenSlugs = new Set<string>();
+  for (const p of products) {
+    if (seenIds.has(p.id)) {
+      // eslint-disable-next-line no-console
+      console.warn(`[products] Duplicate id detected: ${p.id} (${p.title})`);
+    }
+    seenIds.add(p.id);
+
+    const s = String(p.slug).toLowerCase();
+    if (seenSlugs.has(s)) {
+      // eslint-disable-next-line no-console
+      console.warn(`[products] Duplicate slug detected: ${s} (${p.title})`);
+    }
+    seenSlugs.add(s);
+
+    if (!p.image) {
+      // eslint-disable-next-line no-console
+      console.warn(`[products] Missing cover image for: ${p.title}`);
+    }
+  }
+}
