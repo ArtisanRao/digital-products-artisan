@@ -1,8 +1,5 @@
-﻿// next.config.mjs
-import withPWA from "next-pwa";
-
-/** Configure next-pwa — keep it simple */
-const withPWACfg = withPWA({
+// next.config.js
+const withPWA = require("next-pwa")({
   dest: "public",
   register: true,
   skipWaiting: true,
@@ -32,11 +29,7 @@ const securityHeaders = [
   { key: "X-Frame-Options", value: "SAMEORIGIN" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  {
-    key: "Permissions-Policy",
-    value:
-      "accelerometer=(), autoplay=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=(), interest-cohort=()",
-  },
+  { key: "Permissions-Policy", value: "accelerometer=(), autoplay=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=(), interest-cohort=()" },
   { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains; preload" },
   { key: "Origin-Agent-Cluster", value: "?1" },
 ];
@@ -59,7 +52,8 @@ const assetNoIndexHeaders = [
       { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
     ],
   },
-  // Favicons
+
+  // Favicons: allow caching but don't index
   {
     source: "/favicon.ico",
     headers: [
@@ -93,7 +87,7 @@ const assetNoIndexHeaders = [
 ];
 
 /** @type {import('next').NextConfig} */
-const baseConfig = {
+const nextConfig = withPWA({
   reactStrictMode: true,
   poweredByHeader: false,
 
@@ -113,22 +107,13 @@ const baseConfig = {
   async headers() {
     return [
       ...assetNoIndexHeaders,
-
-      // Keep product detail HTML fresh (avoid SW-stale HTML)
-      {
-        source: "/products/:slug",
-        headers: [
-          { key: "Cache-Control", value: "no-store" },
-          { key: "X-Robots-Tag", value: "all" },
-        ],
-      },
-
       { source: "/(.*)", headers: securityHeaders },
     ];
   },
 
   async redirects() {
     return [
+      // ===== Canonical host: force www → apex (SEO + favicon consistency) =====
       {
         source: "/:path*",
         has: [{ type: "host", value: "www.digitalproductsartisan.com" }],
@@ -136,7 +121,7 @@ const baseConfig = {
         permanent: true,
       },
 
-      // Legal
+      // ===== Legal: ensure old/alternate paths reach the live TOS =====
       { source: "/terms", destination: "/terms-of-service", permanent: true },
       { source: "/terms/", destination: "/terms-of-service", permanent: true },
       { source: "/legal/terms", destination: "/terms-of-service", permanent: true },
@@ -157,33 +142,8 @@ const baseConfig = {
 
       { source: "/category/:slug", destination: "/categories/:slug", permanent: true },
       { source: "/category/:slug/", destination: "/categories/:slug", permanent: true },
-
-      // Category slug renames
-      { source: "/categories/digital-art",        destination: "/categories/ai-chatgpt-guides",           permanent: true },
-      { source: "/categories/printable-planners", destination: "/categories/planners-productivity",       permanent: true },
-      { source: "/categories/photography-prints", destination: "/categories/self-help-how-to",            permanent: true },
-      { source: "/categories/audio-templates",    destination: "/categories/plr-mrr-bundles",             permanent: true },
-      { source: "/categories/video-resources",    destination: "/categories/video-courses-training",      permanent: true },
-      { source: "/categories/templates",          destination: "/categories/complete-shop-packages",      permanent: true },
-      { source: "/categories/ebooks",             destination: "/categories/health-fitness-ebooks",       permanent: true },
-      { source: "/categories/fonts",              destination: "/categories/keto-diet-guides",            permanent: true },
-      { source: "/categories/icons",              destination: "/categories/passive-income-side-hustles", permanent: true },
-
-      // Helpful forwards for nested variants
-      { source: "/categories/web-templates/fonts", destination: "/categories/fonts",  permanent: true },
-      { source: "/categories/web-templates/icons", destination: "/categories/icons",  permanent: true },
-
-      // Preserve earlier variants/typos
-      { source: "/categories/audio-samples",               destination: "/categories/plr-mrr-bundles",             permanent: true },
-      { source: "/categories/ai-and-chatgpt-guides",      destination: "/categories/ai-chatgpt-guides",           permanent: true },
-      { source: "/categories/planners-and-productivity",  destination: "/categories/planners-productivity",        permanent: true },
-      { source: "/categories/self-help-and-how-to",       destination: "/categories/self-help-how-to",            permanent: true },
-      { source: "/categories/plr-and-mrr-bundles",        destination: "/categories/plr-mrr-bundles",             permanent: true },
-      { source: "/categories/video-courses-and-training", destination: "/categories/video-courses-training",       permanent: true },
-      { source: "/categories/complete-shop-packages",     destination: "/categories/complete-shop-packages",       permanent: true },
-      { source: "/categories/health-and-fitness-ebooks",  destination: "/categories/health-fitness-ebooks",        permanent: true },
     ];
   },
-};
+});
 
-export default withPWACfg(baseConfig);
+module.exports = nextConfig;

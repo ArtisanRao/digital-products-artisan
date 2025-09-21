@@ -1,137 +1,62 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
+import CoverImage from "@/components/ui/cover-image";
 import InlineMore from "@/components/ui/inline-more";
-import { CATEGORIES } from "@/data/categories";
 
-/** Prefer /images/<slug>.jpg, then folder jpgs, then png/webp, then default.
- *  Also expose which URL is being tried via data attributes for debugging.
- */
-function CategoryCover({
-  slug,
-  alt,
-  overrideSrc,
-}: {
-  slug: string;
-  alt: string;
-  overrideSrc?: string;
-}) {
-  // bump this string to force-bust caches when you add/rename files
-  const ver = process.env.NEXT_PUBLIC_ASSET_VERSION ?? "v6";
-
-  const candidates: string[] = [
-    ...(overrideSrc ? [overrideSrc] : []),
-
-    // 1) Flat jpg (what you said you have)
-    `/images/${slug}.jpg`,
-
-    // 2) Per-category folder jpgs
-    `/images/categories/${slug}/cover.jpg`,
-    `/images/categories/${slug}/hero.jpg`,
-
-    // 3) Optional png/webp fallbacks
-    `/images/${slug}.png`,
-    `/images/${slug}.webp`,
-    `/images/categories/${slug}/cover.png`,
-    `/images/categories/${slug}/cover.webp`,
-  ];
-
-  const fallback = "/images/categories/_default/cover.jpg";
-  const [idx, setIdx] = useState(0);
-  const pick = idx < candidates.length ? candidates[idx] : fallback;
-  const src = `${pick}?${ver}`;
-
-  return (
-    <div className="relative">
-      <img
-        src={src}
-        alt={alt}
-        className="aspect-[16/9] w-full rounded-none object-cover md:aspect-[3/2]"
-        loading="lazy"
-        decoding="async"
-        onError={() => setIdx((i) => i + 1)}
-        data-current-src={pick}           // ← inspect this in DevTools
-        title={pick}                      // ← hover to see which URL is used
-      />
-      {process.env.NODE_ENV !== "production" && (
-        <div className="pointer-events-none absolute bottom-1 right-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-white">
-          {pick}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Emojis
-const emojiBySlug: Record<string, string> = {
-  "ai-chatgpt-guides": "🤖",
-  "planners-productivity": "🗓️",
-  "self-help-how-to": "📘",
-  "plr-mrr-bundles": "📦",
-  "video-courses-training": "🎥",
-  "complete-shop-packages": "🧰",
-  "health-fitness-ebooks": "📚",
-  "keto-diet-guides": "🥑",
-  "passive-income-side-hustles": "💸",
-  "web-templates": "🌐",
-  "prompt-packs-ai-tools": "🧠",
-  "fonts": "🔤",
-  "icons": "🔘",
-};
-
-// Descriptions
-const descBySlug: Record<string, string> = {
-  "ai-chatgpt-guides": "Playbooks, prompts, and AI workflows.",
-  "planners-productivity": "Planners, journals, and focus tools.",
-  "self-help-how-to": "Guides to improve skills and habits.",
-  "plr-mrr-bundles": "Rebrand & resell with PLR/MRR licenses.",
-  "video-courses-training": "Step-by-step video lessons & workshops.",
-  "complete-shop-packages": "Turnkey store bundles ready to sell.",
-  "health-fitness-ebooks": "Wellness, strength, and habit guides.",
-  "keto-diet-guides": "Meal plans, recipes, and trackers.",
-  "passive-income-side-hustles": "Systems and strategies to earn online.",
-  "web-templates": "Site themes, UI kits, and components.",
-  "prompt-packs-ai-tools": "Reusable prompt packs and utilities.",
-  "fonts": "Display, serif, sans & script collections.",
-  "icons": "Clean, scalable icons for UI & brand.",
-};
+const categories = [
+  { name: "📚 eBooks",             slug: "ebooks",               image: "/images/ebooks-cover.jpg",               desc: "Digital books, guides, and educational content." },
+  { name: "🎨 Digital Art",        slug: "digital-art",          image: "/images/digital-art-cover.jpg",          desc: "Illustrations, posters, wallpapers and creative assets." },
+  { name: "🧾 Templates",          slug: "business-templates",   image: "/images/business-templates-cover.jpg",   desc: "Design templates and graphics ready to use." },
+  { name: "📥 Marketing Tools",    slug: "marketing-tools",      image: "/images/marketing-tools-cover.jpg",      desc: "Prompts, swipe files, and growth resources for marketing." },
+  { name: "🗓️ Printable Planners", slug: "printable-planners",   image: "/images/printable-planners-cover.jpg",   desc: "Digital planners, journals, and productivity tools." },
+  { name: "📸 Photography Prints", slug: "photography-prints",   image: "/images/photography-prints-cover.jpg",   desc: "High-quality photo prints, presets, and media assets." },
+  { name: "🔤 Fonts",              slug: "fonts",                image: "/images/fonts-cover.jpg",                desc: "Display, serif, sans and script fonts for your projects." },
+  { name: "🔘 Icons",              slug: "icons",                image: "/images/icons-cover.jpg",                desc: "Clean, scalable icon packs for UI and branding." },
+  { name: "🌐 Web Templates",      slug: "web-templates",        image: "/images/web-templates-cover.jpg",        desc: "Website templates, UI kits, and themes." },
+  { name: "🎥 Video Resources",    slug: "video-resources",      image: "/images/video-resources-cover.jpg",      desc: "Stock footage, overlays, LUTs, and templates." },
+  { name: "🎵 Audio Samples",      slug: "audio-samples",        image: "/images/audio-samples-cover.jpg",        desc: "Loops, one-shots, SFX and music beds for creators." },
+  { name: "📱 Social Media Kits",  slug: "social-media-kits",    image: "/images/social-media-kits-cover.jpg",    desc: "Packaged posts, graphics, and assets for social channels." },
+];
 
 export default function CategoriesPage() {
-  // Optional: add { image: "/images/custom-name.jpg" } per category in data/categories.ts
-  const categories = CATEGORIES.map((c: any) => ({
-    name: `${emojiBySlug[c.slug] ?? "📁"} ${c.label}`,
-    slug: c.slug,
-    desc: descBySlug[c.slug] ?? c.label,
-    plainLabel: c.label,
-    overrideSrc: typeof c.image === "string" ? c.image : undefined,
-  }));
-
   return (
     <main className="max-w-7xl mx-auto px-4 py-12">
-      <h1 className="mb-12 text-center text-4xl font-bold">🗂️ All Categories</h1>
+      <h1 className="text-4xl font-bold text-center mb-12">🗂️ All Categories</h1>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {categories.map((category) => (
           <Link
             key={category.slug}
             href={`/categories/${category.slug}`}
-            aria-label={`Browse ${category.plainLabel}`}
-            className="group block overflow-hidden rounded-2xl border bg-white shadow transition-all duration-300 hover:-translate-y-1 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2"
+            aria-label={`Browse ${category.name}`}
+            className="
+              group block rounded-2xl border overflow-hidden bg-white
+              shadow transition-all duration-300
+              hover:-translate-y-1 hover:shadow-xl
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2
+            "
           >
-            <CategoryCover
-              slug={category.slug}
-              alt={category.plainLabel}
-              overrideSrc={category.overrideSrc}
+            <CoverImage
+              src={category.image}
+              alt={category.name}
+              ratio="16/9"
+              fit="contain"
+              paddingClass="p-2"
+              roundedClass="rounded-none"
+              className="md:aspect-[3/2]"
+              sizes="(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw"
             />
             <div className="p-4">
               <h2 className="text-xl font-semibold transition-colors group-hover:text-blue-600">
                 {category.name}
               </h2>
+
+              {/* Inline “more / less” under the subtitle */}
               <InlineMore
                 text={category.desc}
                 lines={2}
-                minChars={1}
+                minChars={1}                 // always show the toggle
                 className="mt-1 text-sm text-gray-600"
                 moreLabel="more"
                 lessLabel="less"

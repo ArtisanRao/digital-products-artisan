@@ -17,10 +17,10 @@ export default function BuyNowButton({
   const [loading, setLoading] = React.useState(false);
 
   async function handleClick() {
-    if (loading) return; // guard double-click
     setLoading(true);
     try {
-      const currency = getPreferredCurrency(); // EUR enables Klarna in our API
+      // 👇 Always include the chosen/auto currency (EUR enables Klarna)
+      const currency = getPreferredCurrency();
 
       const res = await fetch("/api/checkout", {
         method: "POST",
@@ -28,13 +28,12 @@ export default function BuyNowButton({
         body: JSON.stringify({ productId, qty, currency }),
       });
 
-      // Handle both JSON and text (for unexpected server errors)
-      const raw = await res.text();
+      const text = await res.text();
       let data: any = {};
-      try { data = JSON.parse(raw); } catch { /* ignore */ }
+      try { data = JSON.parse(text); } catch {}
 
       if (!res.ok || !data?.url) {
-        const message = data?.error || raw || `Checkout failed (HTTP ${res.status})`;
+        const message = data?.error || text || `Checkout failed (HTTP ${res.status})`;
         throw new Error(message);
       }
 

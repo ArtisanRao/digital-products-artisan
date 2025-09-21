@@ -1,47 +1,43 @@
 // data/products.ts
-import { imageManifest } from "./image-manifest";
-import { normalizeCategoryLabel, labelToSlugAny, LEGACY_CATEGORY_MAP } from "./category-utils";
+import { imageManifest } from "./image-manifest"
 
 export type Product = {
-  id: number;
-  slug: string;
-  title: string;
-  description: string;           // short blurb for cards/SEO
-  longDescription?: string;      // detailed copy for quick-view & PDP
-  price: number;
-  originalPrice: number;
-  category: string;              // always normalized on export
-  categorySlug?: string;         // auto-filled from registry when possible
-  tags: string[];
-  rating: number;
-  reviews: number;
-  downloads: number;
-  bestseller?: boolean;
-  image: string;
-  images?: string[];             // gallery images (from manifest)
-  downloadPath?: string;         // repo-relative path under /private (e.g. "private/slug/file.pdf")
-};
+  id: number
+  slug: string
+  title: string
+  description: string            // short blurb for cards/SEO
+  longDescription?: string       // 🆕 detailed copy for quick-view & PDP
+  price: number
+  originalPrice: number
+  category: string
+  tags: string[]
+  rating: number
+  reviews: number
+  downloads: number
+  bestseller?: boolean
+  image: string
+  images?: string[]              // gallery images (from manifest)
+  downloadPath?: string          // repo-relative path under /private (e.g. "private/slug/file.pdf")
+}
 
 // Put any filename containing "cover" first
 function coverFirst(list: string[] | undefined): string[] | undefined {
-  if (!list?.length) return list;
-  const covers: string[] = [];
-  const others: string[] = [];
-  for (const p of list) (/cover/i.test(p) ? covers : others).push(p);
-  return covers.length ? [...covers, ...others] : list;
+  if (!list?.length) return list
+  const covers: string[] = []
+  const others: string[] = []
+  for (const p of list) (/cover/i.test(p) ? covers : others).push(p)
+  return covers.length ? [...covers, ...others] : list
 }
 
-// ---------------------------------------------------------------------------
-// RAW (un-normalized) product data. Keep as-is; normalization happens below.
-// ---------------------------------------------------------------------------
-const RAW_PRODUCTS: Omit<Product, "images" | "categorySlug">[] = [
+// Base product data (image is a fallback if no manifest)
+const base: Omit<Product, "images">[] = [
   {
     id: 1,
     slug: "buy-this-complete-shop",
     title:
-      "Buy This Complete Shop - PLR MRR Digital Product: Resell Health & Fitness eBooks, Courses, Prompts & More.",
+      "Buy This Complete Shop - PLR MRR Digital Product: Resell Ebooks, Courses, Prompts & More.",
     description:
-      "Complete, rights-included digital shop bundle. Rebrand and resell Health & Fitness eBooks, courses, prompts, Complete Shop Packages, and more.",
+      "Complete, rights-included digital shop bundle. Rebrand and resell ebooks, courses, prompts, templates, and more.",
     longDescription: `✸ Buy my complete Shop with PLR / MRR Rights ✸ 
 
 You have here the opportunity to buy my complete shop with a big discount!! This Bundle is way more worth than 100 USD!
@@ -100,6 +96,7 @@ If you have any questions, please contact me and I will be more than happy to he
     downloads: 1500,
     bestseller: true,
     image: "/images/products/buy-this-complete-shop/cover.jpg",
+    // Secure file served via /api/download
     downloadPath: "private/buy-this-complete-shop/main.pdf",
   },
   {
@@ -142,13 +139,13 @@ Details:
 Inside:
 • Playbooks for products, funnels, audience & automation  
 • Realistic growth plans and tools stack recommendations  
-• Free bonus: quickstart checklist & Complete Shop Packages
+• Free bonus: quickstart checklist & templates
 
 Delivery:
 • Instant digital download (PDF) — no shipping`,
     price: 28.99,
     originalPrice: 0,
-    category: "Health & Fitness eBooks (Miscellaneous)",
+    category: "Ebooks (Miscellaneous)",
     tags: ["Wealth", "Business", "Strategy", "Guide"],
     rating: 4.6,
     reviews: 95,
@@ -210,83 +207,18 @@ Instant digital download; read on any device.`,
     image: "/images/products/make-money-as-you-sleep/cover.jpg",
     downloadPath: "private/make-money-as-you-sleep/book.pdf",
   },
-];
+]
 
-// ---------------------------------------------------------------------------
-// NORMALIZED export (safety net): categories & slugs are canonical here.
-// Also attaches image-manifest galleries and picks a cover.
-// ---------------------------------------------------------------------------
-export const products: Product[] = RAW_PRODUCTS.map((p) => {
-  // normalize category label and create a stable slug for it
-  const newLabel = normalizeCategoryLabel(p.category);
-  const ensuredSlug = labelToSlugAny(newLabel) ?? labelToSlugAny(p.category);
-
-  // dev warning to help you gradually clean up RAW_PRODUCTS
-  if (process.env.NODE_ENV !== "production" && p.category in LEGACY_CATEGORY_MAP) {
-    // eslint-disable-next-line no-console
-    console.warn("[LegacyCategory] Normalized:", {
-      id: p.id,
-      title: p.title,
-      oldLabel: p.category,
-      normalizedTo: newLabel,
-      slug: ensuredSlug,
-    });
-  }
-
-  // Images: prefer manifest (cover first), fall back to author-provided cover
-  const fromManifest = coverFirst(imageManifest[p.slug]);
-  const images = fromManifest?.length ? fromManifest : [p.image];
-
-  // Make slug lowercase just in case (safety)
-  const normalizedProductSlug = String(p.slug).toLowerCase();
-
+// Attach manifest images & pick cover
+export const products: Product[] = base.map((p) => {
+  const fromManifest = coverFirst(imageManifest[p.slug])
+  const images = fromManifest?.length ? fromManifest : [p.image]
   return {
     ...p,
-    slug: normalizedProductSlug,
-    category: newLabel,
-    categorySlug: ensuredSlug,
-    image: images[0], // always point cover to first
+    image: images[0],
     images,
-  };
-});
-
-// Build both numeric and string id maps; and a slug map (lowercased)
-export const productsById: Record<number, Product> = Object.fromEntries(
-  products.map((p) => [p.id, p])
-) as Record<number, Product>;
-
-// Helpful also to have a string-keyed map for ids (for code that uses "1" instead of 1)
-export const productsByIdStr: Record<string, Product> = Object.fromEntries(
-  products.map((p) => [String(p.id), p])
-);
-
-export const productsBySlug: Record<string, Product> = Object.fromEntries(
-  products.map((p) => [String(p.slug).toLowerCase(), p])
-);
-
-// ------------------------
-// Dev-time integrity checks
-// ------------------------
-if (process.env.NODE_ENV !== "production") {
-  const seenIds = new Set<number>();
-  const seenSlugs = new Set<string>();
-  for (const p of products) {
-    if (seenIds.has(p.id)) {
-      // eslint-disable-next-line no-console
-      console.warn(`[products] Duplicate id detected: ${p.id} (${p.title})`);
-    }
-    seenIds.add(p.id);
-
-    const s = String(p.slug).toLowerCase();
-    if (seenSlugs.has(s)) {
-      // eslint-disable-next-line no-console
-      console.warn(`[products] Duplicate slug detected: ${s} (${p.title})`);
-    }
-    seenSlugs.add(s);
-
-    if (!p.image) {
-      // eslint-disable-next-line no-console
-      console.warn(`[products] Missing cover image for: ${p.title}`);
-    }
   }
-}
+})
+
+export const productsById = Object.fromEntries(products.map((p) => [p.id, p])) as Record<number, Product>
+export const productsBySlug = Object.fromEntries(products.map((p) => [p.slug, p])) as Record<string, Product>

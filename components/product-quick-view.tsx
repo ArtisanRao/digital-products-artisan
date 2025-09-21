@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import * as React from 'react';
 import Image from 'next/image';
@@ -26,9 +26,12 @@ type Props = {
 };
 
 export default function ProductQuickView({ product, open, onOpenChange }: Props) {
-  const images = (product.images?.length ? product.images : [product.image]).filter(Boolean) as string[];
+  const images = (product.images?.length ? product.images : [product.image]).filter(
+    Boolean
+  ) as string[];
   const cover = images[0] ?? '/images/placeholder-cover.jpg';
 
+  // Prefer longDescription, then description, otherwise empty string
   const desc = (product.longDescription?.trim() || product.description?.trim() || '');
 
   return (
@@ -69,7 +72,8 @@ export default function ProductQuickView({ product, open, onOpenChange }: Props)
               €{product.price.toFixed(2)}
             </div>
 
-            {/* long description */}
+            {/* long description (scrollable if very long). 
+                whitespace-pre-line preserves your line breaks from data/products.ts */}
             <div className="max-h-56 overflow-auto pr-2">
               {desc ? (
                 <p className="whitespace-pre-line text-sm leading-relaxed text-gray-700">
@@ -84,13 +88,7 @@ export default function ProductQuickView({ product, open, onOpenChange }: Props)
             <div className="mt-6 flex flex-wrap gap-3">
               <AddToCartButton productId={Number(product.id)} />
               <Button variant="outline" asChild>
-                <Link
-                  prefetch={false}
-                  href={`/products/${product.slug ?? product.id}`}
-                  aria-label={`View ${product.title}`}
-                >
-                  View full details
-                </Link>
+                <Link href={`/products/${product.id}`}>View full details</Link>
               </Button>
             </div>
           </div>

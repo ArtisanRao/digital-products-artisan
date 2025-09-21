@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import Image from 'next/image';
 import * as React from 'react';
@@ -6,7 +6,6 @@ import { Eye } from 'lucide-react';
 import ProductQuickView from '@/components/product-quick-view';
 import { Button } from '@/components/ui/button';
 import { productsById, productsBySlug } from '@/data/products';
-import Link from 'next/link'; // ← added
 
 type Product = {
   id: number | string;
@@ -88,18 +87,13 @@ export default function ProductCard({ product }: { product: Product }) {
             {product.title}
           </h3>
           <Button
-            asChild
             size="sm"
             variant="secondary"
             className="shrink-0"
+            onClick={openQuickView}
             aria-label={`View ${product.title}`}
           >
-            <Link
-              prefetch={false}
-              href={`/products/${product.slug ?? product.id}`}
-            >
-              View
-            </Link>
+            View
           </Button>
         </div>
 
