@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -99,9 +100,12 @@ function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
   );
 }
 
-export default function ProductPageClient({ slug }: { slug: string }) {
-  const handle = String(slug ?? "");
+export default function Page() {
+  // ✅ Read slug from the URL on the client
+  const params = useParams<{ slug: string }>();
+  const handle = String(params?.slug ?? "");
   const p = findProduct(handle);
+
   const [buyLoading, setBuyLoading] = React.useState(false);
 
   if (!p) {
@@ -133,7 +137,6 @@ export default function ProductPageClient({ slug }: { slug: string }) {
       const raw = await res.text();
       let data: any = {};
       try { data = JSON.parse(raw); } catch {}
-
       if (!res.ok || !data?.url) {
         const message = data?.error || raw || `Checkout failed (HTTP ${res.status})`;
         throw new Error(message);
