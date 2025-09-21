@@ -12,8 +12,8 @@ import AddToCartButton from "@/components/add-to-cart-button";
 import { products, productsById } from "@/data/products";
 import { getPreferredCurrency } from "@/lib/currency";
 
-// ✅ Correct location for your client gallery component
-import ProductGallery from "../_components/ProductGallery";
+// ✅ Use the shared component under /components
+import ProductGallery from "@/components/ProductGallery";
 
 function findProduct(idOrSlug: string) {
   const asNum = Number(idOrSlug);
@@ -82,7 +82,7 @@ export default async function Page(props: { params: Promise<{ slug: string }> })
             className="bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
           />
 
-          {/* Keep a simple link Buy fallback (your client Buy button can still exist elsewhere) */}
+          {/* Simple Buy link (server-safe). Your client checkout button can still be used elsewhere. */}
           <Button
             asChild
             className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
