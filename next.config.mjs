@@ -1,15 +1,12 @@
 ﻿// next.config.mjs
 import withPWA from "next-pwa";
 
-/** Configure next-pwa */
+/** Configure next-pwa — keep it simple */
 const withPWACfg = withPWA({
   dest: "public",
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === "development",
-  // ✅ Do NOT pass a `workbox` key; next-pwa/Workbox will handle defaults.
-  // Being explicit about mode avoids warnings:
-  mode: process.env.NODE_ENV === "production" ? "production" : "development",
 });
 
 /** Content Security Policy (tune domains as needed) */
@@ -115,10 +112,9 @@ const baseConfig = {
 
   async headers() {
     return [
-      // keep these first
       ...assetNoIndexHeaders,
 
-      // Keep product detail HTML fresh
+      // Keep product detail HTML fresh (avoid SW-stale HTML)
       {
         source: "/products/:slug",
         headers: [
@@ -127,14 +123,12 @@ const baseConfig = {
         ],
       },
 
-      // default security headers
       { source: "/(.*)", headers: securityHeaders },
     ];
   },
 
   async redirects() {
     return [
-      // Canonical host: www → apex
       {
         source: "/:path*",
         has: [{ type: "host", value: "www.digitalproductsartisan.com" }],
@@ -164,8 +158,7 @@ const baseConfig = {
       { source: "/category/:slug", destination: "/categories/:slug", permanent: true },
       { source: "/category/:slug/", destination: "/categories/:slug", permanent: true },
 
-      /** ---------- CATEGORY SLUG CHANGES (match data/categories.ts) ---------- */
-      // Renames:
+      // Category slug renames
       { source: "/categories/digital-art",        destination: "/categories/ai-chatgpt-guides",           permanent: true },
       { source: "/categories/printable-planners", destination: "/categories/planners-productivity",       permanent: true },
       { source: "/categories/photography-prints", destination: "/categories/self-help-how-to",            permanent: true },
@@ -176,19 +169,19 @@ const baseConfig = {
       { source: "/categories/fonts",              destination: "/categories/keto-diet-guides",            permanent: true },
       { source: "/categories/icons",              destination: "/categories/passive-income-side-hustles", permanent: true },
 
-      // New top-level categories (helpful forwards if nested variants existed)
-      { source: "/categories/web-templates/fonts",  destination: "/categories/fonts",  permanent: true },
-      { source: "/categories/web-templates/icons",  destination: "/categories/icons",  permanent: true },
+      // Helpful forwards for nested variants
+      { source: "/categories/web-templates/fonts", destination: "/categories/fonts",  permanent: true },
+      { source: "/categories/web-templates/icons", destination: "/categories/icons",  permanent: true },
 
-      // Preserve earlier variants/typos if they were ever live
-      { source: "/categories/audio-samples",                destination: "/categories/plr-mrr-bundles",             permanent: true },
-      { source: "/categories/ai-and-chatgpt-guides",       destination: "/categories/ai-chatgpt-guides",           permanent: true },
-      { source: "/categories/planners-and-productivity",   destination: "/categories/planners-productivity",        permanent: true },
-      { source: "/categories/self-help-and-how-to",        destination: "/categories/self-help-how-to",            permanent: true },
-      { source: "/categories/plr-and-mrr-bundles",         destination: "/categories/plr-mrr-bundles",             permanent: true },
-      { source: "/categories/video-courses-and-training",  destination: "/categories/video-courses-training",       permanent: true },
-      { source: "/categories/complete-shop-packages",      destination: "/categories/complete-shop-packages",       permanent: true }, // idempotent
-      { source: "/categories/health-and-fitness-ebooks",   destination: "/categories/health-fitness-ebooks",        permanent: true },
+      // Preserve earlier variants/typos
+      { source: "/categories/audio-samples",               destination: "/categories/plr-mrr-bundles",             permanent: true },
+      { source: "/categories/ai-and-chatgpt-guides",      destination: "/categories/ai-chatgpt-guides",           permanent: true },
+      { source: "/categories/planners-and-productivity",  destination: "/categories/planners-productivity",        permanent: true },
+      { source: "/categories/self-help-and-how-to",       destination: "/categories/self-help-how-to",            permanent: true },
+      { source: "/categories/plr-and-mrr-bundles",        destination: "/categories/plr-mrr-bundles",             permanent: true },
+      { source: "/categories/video-courses-and-training", destination: "/categories/video-courses-training",       permanent: true },
+      { source: "/categories/complete-shop-packages",     destination: "/categories/complete-shop-packages",       permanent: true },
+      { source: "/categories/health-and-fitness-ebooks",  destination: "/categories/health-fitness-ebooks",        permanent: true },
     ];
   },
 };
