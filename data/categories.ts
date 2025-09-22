@@ -11,12 +11,12 @@ export const CATEGORIES: Category[] = [
   { label: "Keto & Diet Guides",         slug: "keto-diet-guides" },
   { label: "Passive Income & Side Hustles", slug: "passive-income-side-hustles" },
 
-  // Renamed categories
-  { label: "Digital Essentials Hub",     slug: "digital-essentials-hub" }, // was: prompt-packs-and-ai-tools
-  { label: "Creative Fonts & Icons",     slug: "fonts" },                  // label only (keep slug for stability)
-  { label: "Religious eBooks",           slug: "religious-ebooks" },       // was: icons
+  // Renamed/extra categories
+  { label: "Digital Essentials Hub",     slug: "digital-essentials-hub" }, // (was: Prompt Packs & AI Tools)
+  { label: "Fonts & Icons",              slug: "fonts" },                  // label changed only
+  { label: "Religious eBooks",           slug: "religious-ebooks" },       // (was: Icons)
 
-  // Keep as-is
+  // Keep
   { label: "Web Templates",              slug: "web-templates" },
   { label: "Social Media Kits",          slug: "social-media-kits" },
 ];

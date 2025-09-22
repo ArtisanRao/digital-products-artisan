@@ -4,31 +4,26 @@ import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
 import { CATEGORIES } from "@/data/categories";
 
-/**
- * One cover per category.
- * Files live in /public/images/<filename>
- */
+/** Exact filenames under /public/images */
 const FILENAME_BY_SLUG: Record<string, string> = {
-  "ai-and-chatgpt-guides":       "ai-chatgpt-guides.jpg",
-  "planners-productivity":       "planners-productivity.png",
-  "self-help-and-how-to":        "self-help-how-to.jpg",
-  "plr-mrr-bundles":             "plr-mrr-bundles.jpg",
-  "video-courses-and-training":  "video-courses-training.jpg",
+  "ai-and-chatgpt-guides":       "ai-&-chatgpt-guides.jpg",
+  "planners-productivity":       "planners-&-productivity.jpg",
+  "self-help-and-how-to":        "self-help-&-how-to.jpg",
+  "plr-mrr-bundles":             "plr-&-mrr-bundles.jpg",
+  "video-courses-and-training":  "video-courses-&-training.jpg",
   "complete-shop-packages":      "complete-shop-packages.jpg",
-  "health-fitness-ebooks":       "health-fitness-ebooks.jpg",
-  "keto-diet-guides":            "keto-diet-guides.jpg",
-  "passive-income-side-hustles": "passive-income-side-hustles.jpg",
+  "health-fitness-ebooks":       "health-&-fitness-ebooks.jpg",
+  "keto-diet-guides":            "keto-&-diet-guides.jpg",
+  "passive-income-side-hustles": "passive-income-&-side-hustles.jpg",
   "web-templates":               "web-templates.jpg",
-
-  // ✅ renamed category (re-using existing file so it shows immediately)
-  "digital-essentials-hub":      "prompt-packs-ai-tools.jpg",
-
-  // ✅ ensure Social Media Kits shows
   "social-media-kits":           "social-media-kits.jpg",
 
-  // renamed labels
-  "fonts":                       "fonts.jpg",            // Creative Fonts & Icons (slug unchanged)
-  "religious-ebooks":            "religious-ebooks.jpg", // add this file when you have it; will fallback if missing
+  // Digital Essentials Hub (reuse your existing prompt-packs cover until you add a new one)
+  "digital-essentials-hub":      "prompt-packs-&-ai-tools.jpg",
+
+  // May or may not exist yet—fallback will handle it gracefully
+  "fonts":                       "fonts.jpg",
+  "religious-ebooks":            "religious-ebooks.jpg",
 };
 
 const DESC_BY_LABEL: Record<string, string> = {
@@ -42,11 +37,13 @@ const DESC_BY_LABEL: Record<string, string> = {
   "Keto & Diet Guides": "Low-carb & diet frameworks, recipes and tips.",
   "Passive Income & Side Hustles": "Repeatable systems for income outside 9-to-5.",
   "Web Templates": "Website, UI kits and theme starters.",
-  "Digital Essentials Hub": "High-leverage prompt packs, automations, and utilities.",
+  "Digital Essentials Hub": "Prompt packs, automations, and utilities.",
   "Social Media Kits": "Post templates and brandable assets for socials.",
-  "Creative Fonts & Icons": "Display, serif, sans and script families—plus icon sets.",
+  "Fonts & Icons": "Font families and icon sets for brands & apps.",
   "Religious eBooks": "Faith-centered books, devotionals, and study guides.",
 };
+
+const FALLBACK_IMG = "/images/web-templates.jpg";
 
 export default function CategoriesPage() {
   return (
@@ -55,8 +52,8 @@ export default function CategoriesPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {CATEGORIES.map((c) => {
-          const filename = FILENAME_BY_SLUG[c.slug] ?? "web-templates.jpg";
-          const img = `/images/${filename}`;
+          const filename = FILENAME_BY_SLUG[c.slug];
+          const img = filename ? `/images/${filename}` : FALLBACK_IMG;
           const desc = DESC_BY_LABEL[c.label] ?? "Explore products in this category.";
 
           return (
@@ -70,6 +67,7 @@ export default function CategoriesPage() {
                 <div className="aspect-[16/9] md:aspect-[3/2] overflow-hidden">
                   <img
                     src={img}
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).src = FALLBACK_IMG; }}
                     alt={c.label}
                     className="h-full w-full object-contain p-2"
                     loading="lazy"

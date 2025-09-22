@@ -5,43 +5,34 @@ import InlineMore from "@/components/ui/inline-more";
 
 const META: Record<string, { title: string; description: string }> = {
   "ai-and-chatgpt-guides":      { title: "AI & ChatGPT Guides",     description: "Guides, prompts and AI learning resources." },
-  "planners-productivity":      { title: "Planners & Productivity",  description: "Digital planners, journals and productivity tools." },
-  "self-help-and-how-to":       { title: "Self-Help & How-To",       description: "Practical how-to guides and self-improvement." },
-  "plr-mrr-bundles":            { title: "PLR & MRR Bundles",        description: "Done-for-you PLR/MRR products and kits." },
-  "video-courses-and-training": { title: "Video Courses & Training", description: "Structured video lessons and trainings." },
-  "complete-shop-packages":     { title: "Complete Shop Packages",   description: "Turn-key storefront bundles and assets." },
-  "health-fitness-ebooks":      { title: "Health & Fitness eBooks",  description: "Nutrition, fitness and wellness books." },
-  "keto-diet-guides":           { title: "Keto & Diet Guides",       description: "Keto and nutrition programs and meal plans." },
+  "planners-productivity":      { title: "Planners & Productivity", description: "Digital planners, journals and productivity tools." },
+  "self-help-and-how-to":       { title: "Self-Help & How-To",      description: "Practical how-to guides and self-improvement." },
+  "plr-mrr-bundles":            { title: "PLR & MRR Bundles",       description: "Done-for-you PLR/MRR products and kits." },
+  "video-courses-and-training": { title: "Video Courses & Training",description: "Structured video lessons and trainings." },
+  "complete-shop-packages":     { title: "Complete Shop Packages",  description: "Turn-key storefront bundles and assets." },
+  "health-fitness-ebooks":      { title: "Health & Fitness eBooks", description: "Nutrition, fitness and wellness books." },
+  "keto-diet-guides":           { title: "Keto & Diet Guides",      description: "Keto and nutrition programs and meal plans." },
   "passive-income-side-hustles":{ title: "Passive Income & Side Hustles", description: "Monetization playbooks and templates." },
-  "web-templates":              { title: "Web Templates",            description: "Website templates, UI kits and themes." },
-
-  // NEW/renamed
-  "digital-essentials-hub":     { title: "Digital Essentials Hub",   description: "Prompt packs, automations, and utilities." },
-  "fonts":                      { title: "Creative Fonts & Icons",   description: "Display, serif, sans and script fonts—plus icons." },
-  "religious-ebooks":           { title: "Religious eBooks",         description: "Faith-centered books, devotionals and study guides." },
-
-  // keep
-  "social-media-kits":          { title: "Social Media Kits",        description: "Post templates and brandable assets for socials." },
+  "web-templates":              { title: "Web Templates",           description: "Website templates, UI kits and themes." },
+  "digital-essentials-hub":     { title: "Digital Essentials Hub",  description: "Prompt packs, automations, and utilities." },
+  "fonts":                      { title: "Fonts & Icons",           description: "Font families and icon sets." },
+  "religious-ebooks":           { title: "Religious eBooks",        description: "Faith-centered books, devotionals and study guides." },
+  "social-media-kits":          { title: "Social Media Kits",       description: "Post templates and brandable assets for socials." },
 };
 
-/** slug -> single fallback file in /public/images */
-const FILENAME_BY_SLUG: Record<string, string> = {
-  "ai-and-chatgpt-guides":       "ai-chatgpt-guides.jpg",
-  "planners-productivity":       "planners-productivity.png",
-  "self-help-and-how-to":        "self-help-how-to.jpg",
-  "plr-mrr-bundles":             "plr-mrr-bundles.jpg",
-  "video-courses-and-training":  "video-courses-training.jpg",
+const FALLBACK_BY_SLUG: Record<string, string> = {
+  "ai-and-chatgpt-guides":       "ai-&-chatgpt-guides.jpg",
+  "planners-productivity":       "planners-&-productivity.jpg",
+  "self-help-and-how-to":        "self-help-&-how-to.jpg",
+  "plr-mrr-bundles":             "plr-&-mrr-bundles.jpg",
+  "video-courses-and-training":  "video-courses-&-training.jpg",
   "complete-shop-packages":      "complete-shop-packages.jpg",
-  "health-fitness-ebooks":       "health-fitness-ebooks.jpg",
-  "keto-diet-guides":            "keto-diet-guides.jpg",
-  "passive-income-side-hustles": "passive-income-side-hustles.jpg",
+  "health-fitness-ebooks":       "health-&-fitness-ebooks.jpg",
+  "keto-diet-guides":            "keto-&-diet-guides.jpg",
+  "passive-income-side-hustles": "passive-income-&-side-hustles.jpg",
   "web-templates":               "web-templates.jpg",
-
-  // ✅ show these two now
-  "digital-essentials-hub":      "prompt-packs-ai-tools.jpg",
+  "digital-essentials-hub":      "prompt-packs-&-ai-tools.jpg",
   "social-media-kits":           "social-media-kits.jpg",
-
-  // renamed labels
   "fonts":                       "fonts.jpg",
   "religious-ebooks":            "religious-ebooks.jpg",
 };
@@ -65,7 +56,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }) 
   };
 }
 
-/** List files in /public/images that start with the slug (e.g., web-templates-1.jpg) */
+/** List files in /public/images that start with the slug (if you later rename files to match). */
 function listRootImagesBySlugPrefix(slug: string) {
   const dir = path.join(process.cwd(), "public", "images");
   try {
@@ -112,7 +103,7 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
   }
 
   const items = listRootImagesBySlugPrefix(slug);
-  const fallback = FILENAME_BY_SLUG[slug] ? `/images/${FILENAME_BY_SLUG[slug]}` : undefined;
+  const fallback = FALLBACK_BY_SLUG[slug] ? `/images/${FALLBACK_BY_SLUG[slug]}` : undefined;
 
   return (
     <main className="container mx-auto px-4 py-16">
@@ -135,13 +126,10 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
           <div className="aspect-[16/9] md:aspect-[3/2]">
             <img src={fallback} alt={`${meta.title} cover`} className="h-full w-full object-contain" />
           </div>
-          <p className="mt-3 text-sm text-gray-600">
-            Add additional images in <code>/public/images</code> starting with <code>{slug}-…</code> to grow this gallery.
-          </p>
         </div>
       ) : (
         <p className="mt-6 text-gray-600">
-          No matching images found in <code>/public/images</code>. Add files like <code>{slug}.jpg</code> (or <code>{slug}-1.jpg</code>) and redeploy.
+          No matching images found in <code>/public/images</code>.
         </p>
       )}
 
