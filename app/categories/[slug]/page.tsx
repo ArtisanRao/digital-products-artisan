@@ -1,43 +1,59 @@
 ﻿import fs from "node:fs";
 import path from "node:path";
 import Link from "next/link";
-import CoverImage from "@/components/ui/cover-image";
 import InlineMore from "@/components/ui/inline-more";
 
-type CatInfo = { title: string; description: string; folder: string };
-
-// Slug → UI text + folder under /public/images/<folder>
-// IMPORTANT: slugs here match your canonical ones:
-// ai-and-chatgpt-guides, self-help-and-how-to, video-courses-and-training,
-// prompt-packs-and-ai-tools, passive-income-and-side-hustles, etc.
-const CATEGORIES: Record<string, CatInfo> = {
-  "ai-and-chatgpt-guides":       { title: "AI & ChatGPT Guides",       description: "Guides, prompts and AI learning resources.",             folder: "ai-and-chatgpt-guides" },
-  "planners-productivity":       { title: "Planners & Productivity",    description: "Digital planners, journals and productivity tools.",     folder: "planners-productivity" },
-  "self-help-and-how-to":        { title: "Self-Help & How-To",         description: "Practical how-to guides and self-improvement.",          folder: "self-help-and-how-to" },
-  "plr-mrr-bundles":             { title: "PLR & MRR Bundles",          description: "Done-for-you PLR/MRR products and kits.",                folder: "plr-mrr-bundles" },
-  "video-courses-and-training":  { title: "Video Courses & Training",   description: "Structured video lessons and trainings.",                 folder: "video-courses-and-training" },
-  "complete-shop-packages":      { title: "Complete Shop Packages",     description: "Turn-key storefront bundles and assets.",                 folder: "complete-shop-packages" },
-  "health-fitness-ebooks":       { title: "Health & Fitness eBooks",    description: "Nutrition, fitness and wellness books.",                  folder: "health-fitness-ebooks" },
-  "keto-diet-guides":            { title: "Keto & Diet Guides",         description: "Keto and nutrition programs and meal plans.",            folder: "keto-diet-guides" },
-  "passive-income-and-side-hustles": { title: "Passive Income & Side Hustles", description: "Monetization playbooks and templates.",           folder: "passive-income-and-side-hustles" },
-  "web-templates":               { title: "Web Templates",              description: "Website templates, UI kits and themes.",                  folder: "web-templates" },
-  "prompt-packs-and-ai-tools":   { title: "Prompt Packs & AI Tools",    description: "Prompt packs and AI utilities.",                         folder: "prompt-packs-and-ai-tools" },
-  "fonts":                       { title: "Fonts",                       description: "Display, serif, sans and script fonts.",                 folder: "fonts" },
-  "icons":                       { title: "Icons",                       description: "Clean, scalable icon packs for UI and branding.",        folder: "icons" },
+/** UI copy per slug (same slugs you already use elsewhere) */
+const META: Record<
+  string,
+  { title: string; description: string }
+> = {
+  "ai-and-chatgpt-guides":      { title: "AI & ChatGPT Guides",     description: "Guides, prompts and AI learning resources." },
+  "planners-productivity":      { title: "Planners & Productivity",  description: "Digital planners, journals and productivity tools." },
+  "self-help-and-how-to":       { title: "Self-Help & How-To",       description: "Practical how-to guides and self-improvement." },
+  "plr-mrr-bundles":            { title: "PLR & MRR Bundles",        description: "Done-for-you PLR/MRR products and kits." },
+  "video-courses-and-training": { title: "Video Courses & Training", description: "Structured video lessons and trainings." },
+  "complete-shop-packages":     { title: "Complete Shop Packages",   description: "Turn-key storefront bundles and assets." },
+  "health-fitness-ebooks":      { title: "Health & Fitness eBooks",  description: "Nutrition, fitness and wellness books." },
+  "keto-diet-guides":           { title: "Keto & Diet Guides",       description: "Keto and nutrition programs and meal plans." },
+  "passive-income-side-hustles":{ title: "Passive Income & Side Hustles", description: "Monetization playbooks and templates." },
+  "web-templates":              { title: "Web Templates",            description: "Website templates, UI kits and themes." },
+  "prompt-packs-and-ai-tools":  { title: "Prompt Packs & AI Tools",  description: "Prompt packs and AI utilities." },
+  "fonts":                      { title: "Fonts",                     description: "Display, serif, sans and script fonts." },
+  "icons":                      { title: "Icons",                     description: "Clean, scalable icon packs for UI and branding." },
+  "social-media-kits":          { title: "Social Media Kits",         description: "Post templates and brandable assets for socials." },
 };
 
-// Pre-render all known slugs
+/** Map slug -> single fallback file under /public/images */
+const FILENAME_BY_SLUG: Record<string, string> = {
+  "ai-and-chatgpt-guides":       "ai-chatgpt-guides.jpg",
+  "planners-productivity":       "planners-productivity.png",
+  "self-help-and-how-to":        "self-help-how-to.jpg",
+  "plr-mrr-bundles":             "plr-mrr-bundles.jpg",
+  "video-courses-and-training":  "video-courses-training.jpg",
+  "complete-shop-packages":      "complete-shop-packages.jpg",
+  "health-fitness-ebooks":       "health-fitness-ebooks.jpg",
+  "keto-diet-guides":            "keto-diet-guides.jpg",
+  "passive-income-side-hustles": "passive-income-side-hustles.jpg",
+  "web-templates":               "web-templates.jpg",
+  "prompt-packs-and-ai-tools":   "prompt-packs-ai-tools.jpg",
+  "fonts":                       "fonts.jpg",
+  "icons":                       "icons.jpg",
+  "social-media-kits":           "categories/social-media-kits/cover.png",
+};
+
+// Static params
 export function generateStaticParams() {
-  return Object.keys(CATEGORIES).map((slug) => ({ slug }));
+  return Object.keys(META).map((slug) => ({ slug }));
 }
 
 type Params = { slug: string };
 
 export async function generateMetadata({ params }: { params: Promise<Params> }) {
   const { slug } = await params;
-  const cat = CATEGORIES[slug];
-  const title = cat ? `${cat.title} | Digital Products Artisan` : "Digital Products | Digital Products Artisan";
-  const description = cat?.description ?? "Browse our curated digital products.";
+  const m = META[slug];
+  const title = m ? `${m.title} | Digital Products Artisan` : "Digital Products | Digital Products Artisan";
+  const description = m?.description ?? "Browse our curated digital products.";
   return {
     title,
     description,
@@ -46,18 +62,25 @@ export async function generateMetadata({ params }: { params: Promise<Params> }) 
   };
 }
 
-// Read all images in /public/images/<folder>
-function listFolderImages(folder: string) {
-  const dir = path.join(process.cwd(), "public", "images", folder);
+/** List all files in /public/images whose filename starts with this slug (prefix match). */
+function listRootImagesBySlugPrefix(slug: string) {
+  const dir = path.join(process.cwd(), "public", "images");
   try {
-    return fs
+    const all = fs
       .readdirSync(dir, { withFileTypes: true })
       .filter((d) => d.isFile() && /\.(png|jpe?g|webp|avif|gif)$/i.test(d.name))
-      .map((d) => ({
-        src: `/images/${folder}/${d.name}`,
-        title: d.name.replace(/\.[^.]+$/, "").replace(/[-_]/g, " "),
+      .map((d) => d.name);
+
+    const prefix = `${slug}`;
+    const matches = all
+      .filter((name) => name.toLowerCase().startsWith(prefix.toLowerCase()))
+      .map((name) => ({
+        src: `/images/${name}`,
+        title: name.replace(/\.[^.]+$/, "").replace(/[-_]/g, " "),
       }))
       .sort((a, b) => a.src.localeCompare(b.src, undefined, { numeric: true }));
+
+    return matches;
   } catch {
     return [];
   }
@@ -65,9 +88,9 @@ function listFolderImages(folder: string) {
 
 export default async function CategoryPage({ params }: { params: Promise<Params> }) {
   const { slug } = await params;
-  const cat = CATEGORIES[slug];
+  const meta = META[slug];
 
-  if (!cat) {
+  if (!meta) {
     const pretty = slug.replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
     return (
       <main className="container mx-auto px-4 py-16">
@@ -85,36 +108,38 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     );
   }
 
-  const items = listFolderImages(cat.folder);
+  const items = listRootImagesBySlugPrefix(slug);
+  const hasGallery = items.length > 0;
+  const fallback = FILENAME_BY_SLUG[slug] ? `/images/${FILENAME_BY_SLUG[slug]}` : undefined;
 
   return (
     <main className="container mx-auto px-4 py-16">
-      <h1 className="text-3xl md:text-4xl font-bold mb-2">{cat.title}</h1>
-      <InlineMore text={cat.description} lines={1} minChars={40} className="text-gray-700 mb-2" />
+      <h1 className="text-3xl md:text-4xl font-bold mb-2">{meta.title}</h1>
+      <InlineMore text={meta.description} lines={1} minChars={40} className="text-gray-700 mb-2" />
 
-      {items.length ? (
+      {hasGallery ? (
         <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
           {items.map((it) => (
             <div key={it.src} className="rounded-xl border bg-white hover:shadow-lg transition">
-              <CoverImage
-                src={it.src}
-                alt={it.title}
-                ratio="3/2"
-                fit="contain"
-                hover
-                paddingClass="p-2"
-                roundedClass="rounded-xl"
-                sizes="(min-width:1024px) 25vw, (min-width:640px) 33vw, 100vw"
-              />
+              <img src={it.src} alt={it.title} className="w-full h-auto object-contain p-2 rounded-xl" />
               <div className="px-3 py-2">
                 <div className="text-sm font-medium line-clamp-1">{it.title}</div>
               </div>
             </div>
           ))}
         </div>
+      ) : fallback ? (
+        <div className="mt-8 rounded-xl border bg-white p-2">
+          <div className="aspect-[16/9] md:aspect-[3/2]">
+            <img src={fallback} alt={`${meta.title} cover`} className="h-full w-full object-contain" />
+          </div>
+          <p className="mt-3 text-sm text-gray-600">
+            Add additional images in <code>/public/images</code> starting with <code>{slug}-…</code> to grow this gallery.
+          </p>
+        </div>
       ) : (
         <p className="mt-6 text-gray-600">
-          No covers found in <code>/public/images/{cat.folder}</code>. Add images (jpg, png, webp, avif) and redeploy.
+          No matching images found in <code>/public/images</code>. Add files like <code>{slug}.jpg</code> (or <code>{slug}-1.jpg</code>) and redeploy.
         </p>
       )}
 
