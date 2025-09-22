@@ -4,10 +4,7 @@ import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
 
 /** UI copy per slug (same slugs you already use elsewhere) */
-const META: Record<
-  string,
-  { title: string; description: string }
-> = {
+const META: Record<string, { title: string; description: string }> = {
   "ai-and-chatgpt-guides":      { title: "AI & ChatGPT Guides",     description: "Guides, prompts and AI learning resources." },
   "planners-productivity":      { title: "Planners & Productivity",  description: "Digital planners, journals and productivity tools." },
   "self-help-and-how-to":       { title: "Self-Help & How-To",       description: "Practical how-to guides and self-improvement." },
@@ -24,19 +21,19 @@ const META: Record<
   "social-media-kits":          { title: "Social Media Kits",         description: "Post templates and brandable assets for socials." },
 };
 
-/** Map slug -> single fallback file under /public/images */
+/** Map slug -> single fallback file under /public/images (ampersand filenames) */
 const FILENAME_BY_SLUG: Record<string, string> = {
-  "ai-and-chatgpt-guides":       "ai-chatgpt-guides.jpg",
-  "planners-productivity":       "planners-productivity.png",
-  "self-help-and-how-to":        "self-help-how-to.jpg",
-  "plr-mrr-bundles":             "plr-mrr-bundles.jpg",
-  "video-courses-and-training":  "video-courses-training.jpg",
+  "ai-and-chatgpt-guides":       "ai-&-chatgpt-guides.jpg",
+  "planners-productivity":       "planners-&-productivity.jpg",
+  "self-help-and-how-to":        "self-help-&-how-to.jpg",
+  "plr-mrr-bundles":             "plr-&-mrr-bundles.jpg",
+  "video-courses-and-training":  "video-courses-&-training.jpg",
   "complete-shop-packages":      "complete-shop-packages.jpg",
-  "health-fitness-ebooks":       "health-fitness-ebooks.jpg",
-  "keto-diet-guides":            "keto-diet-guides.jpg",
-  "passive-income-side-hustles": "passive-income-side-hustles.jpg",
+  "health-fitness-ebooks":       "health-&-fitness-ebooks.jpg",
+  "keto-diet-guides":            "keto-&-diet-guides.jpg",
+  "passive-income-side-hustles": "passive-income-&-side-hustles.jpg",
   "web-templates":               "web-templates.jpg",
-  "prompt-packs-and-ai-tools":   "prompt-packs-ai-tools.jpg",
+  "prompt-packs-and-ai-tools":   "prompt-packs-&-ai-tools.jpg",
   "fonts":                       "fonts.jpg",
   "icons":                       "icons.jpg",
   "social-media-kits":           "categories/social-media-kits/cover.png",
@@ -62,18 +59,23 @@ export async function generateMetadata({ params }: { params: Promise<Params> }) 
   };
 }
 
-/** List all files in /public/images whose filename starts with this slug (prefix match). */
+/** Convert '...-and-...' segments to '...-&-...' for filename matching */
+function ampersandVariant(slug: string) {
+  return slug.replace(/-and-/g, "-&-");
+}
+
+/** List all files in /public/images whose filename starts with slug or its &-variant. */
 function listRootImagesBySlugPrefix(slug: string) {
   const dir = path.join(process.cwd(), "public", "images");
   try {
     const all = fs
       .readdirSync(dir, { withFileTypes: true })
       .filter((d) => d.isFile() && /\.(png|jpe?g|webp|avif|gif)$/i.test(d.name))
-      .map((d) => d.name);
+      .map((d) => d.name.toLowerCase());
 
-    const prefix = `${slug}`;
+    const prefixes = [slug.toLowerCase(), ampersandVariant(slug).toLowerCase()];
     const matches = all
-      .filter((name) => name.toLowerCase().startsWith(prefix.toLowerCase()))
+      .filter((name) => prefixes.some((p) => name.startsWith(p)))
       .map((name) => ({
         src: `/images/${name}`,
         title: name.replace(/\.[^.]+$/, "").replace(/[-_]/g, " "),
@@ -134,12 +136,12 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
             <img src={fallback} alt={`${meta.title} cover`} className="h-full w-full object-contain" />
           </div>
           <p className="mt-3 text-sm text-gray-600">
-            Add additional images in <code>/public/images</code> starting with <code>{slug}-…</code> to grow this gallery.
+            Add additional images in <code>/public/images</code> starting with <code>{slug}-…</code> or <code>{ampersandVariant(slug)}-…</code> to grow this gallery.
           </p>
         </div>
       ) : (
         <p className="mt-6 text-gray-600">
-          No matching images found in <code>/public/images</code>. Add files like <code>{slug}.jpg</code> (or <code>{slug}-1.jpg</code>) and redeploy.
+          No matching images found in <code>/public/images</code>. Add files like <code>{slug}.jpg</code> or <code>{ampersandVariant(slug)}.jpg</code> and redeploy.
         </p>
       )}
 
