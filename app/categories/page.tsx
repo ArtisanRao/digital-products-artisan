@@ -3,21 +3,44 @@
 import Link from "next/link";
 import CoverImage from "@/components/ui/cover-image";
 import InlineMore from "@/components/ui/inline-more";
+import { CATEGORIES } from "@/data/categories";
 
-const categories = [
-  { name: "📚 eBooks",             slug: "ebooks",               image: "/images/ebooks-cover.jpg",               desc: "Digital books, guides, and educational content." },
-  { name: "🎨 Digital Art",        slug: "digital-art",          image: "/images/digital-art-cover.jpg",          desc: "Illustrations, posters, wallpapers and creative assets." },
-  { name: "🧾 Templates",          slug: "business-templates",   image: "/images/business-templates-cover.jpg",   desc: "Design templates and graphics ready to use." },
-  { name: "📥 Marketing Tools",    slug: "marketing-tools",      image: "/images/marketing-tools-cover.jpg",      desc: "Prompts, swipe files, and growth resources for marketing." },
-  { name: "🗓️ Printable Planners", slug: "printable-planners",   image: "/images/printable-planners-cover.jpg",   desc: "Digital planners, journals, and productivity tools." },
-  { name: "📸 Photography Prints", slug: "photography-prints",   image: "/images/photography-prints-cover.jpg",   desc: "High-quality photo prints, presets, and media assets." },
-  { name: "🔤 Fonts",              slug: "fonts",                image: "/images/fonts-cover.jpg",                desc: "Display, serif, sans and script fonts for your projects." },
-  { name: "🔘 Icons",              slug: "icons",                image: "/images/icons-cover.jpg",                desc: "Clean, scalable icon packs for UI and branding." },
-  { name: "🌐 Web Templates",      slug: "web-templates",        image: "/images/web-templates-cover.jpg",        desc: "Website templates, UI kits, and themes." },
-  { name: "🎥 Video Resources",    slug: "video-resources",      image: "/images/video-resources-cover.jpg",      desc: "Stock footage, overlays, LUTs, and templates." },
-  { name: "🎵 Audio Samples",      slug: "audio-samples",        image: "/images/audio-samples-cover.jpg",        desc: "Loops, one-shots, SFX and music beds for creators." },
-  { name: "📱 Social Media Kits",  slug: "social-media-kits",    image: "/images/social-media-kits-cover.jpg",    desc: "Packaged posts, graphics, and assets for social channels." },
-];
+// Per-category images living in /public/images
+const IMAGE_BY_SLUG: Record<string, string> = {
+  "ai-and-chatgpt-guides":      "/images/ai-chatgpt-guides.jpg",
+  "planners-productivity":      "/images/planners-productivity.png", // png in repo
+  "self-help-and-how-to":       "/images/self-help-how-to.jpg",
+  "plr-mrr-bundles":            "/images/plr-mrr-bundles.jpg",
+  "video-courses-and-training": "/images/video-courses-training.jpg",
+  "complete-shop-packages":     "/images/complete-shop-packages.jpg",
+  "health-fitness-ebooks":      "/images/health-fitness-ebooks.jpg",
+  "keto-diet-guides":           "/images/keto-diet-guides.jpg",
+  "passive-income-side-hustles":"/images/passive-income-side-hustles.jpg",
+  "web-templates":              "/images/web-templates.jpg",
+  "prompt-packs-and-ai-tools":  "/images/prompt-packs-ai-tools.jpg",
+  "fonts":                      "/images/fonts.jpg",
+  "icons":                      "/images/icons.jpg",
+  // Fallbacks (add a file later if you have one):
+  "social-media-kits":          "/images/categories/social-media-kits/cover.png",
+};
+
+// Short blurbs for the grid cards (optional)
+const DESC_BY_LABEL: Record<string, string> = {
+  "AI & ChatGPT Guides": "Actionable guides, prompts and workflows to build with AI.",
+  "Planners & Productivity": "Digital planners, journals and organization systems.",
+  "Self-Help & How-To": "Practical guides, routines and step-by-step tutorials.",
+  "PLR & MRR Bundles": "Rebrandable products with resale rights (PLR/MRR).",
+  "Video Courses & Training": "Structured video lessons and skill accelerators.",
+  "Complete Shop Packages": "Ready-made storefront bundles to launch fast.",
+  "Health & Fitness eBooks": "Nutrition, training and healthy living guides.",
+  "Keto & Diet Guides": "Low-carb & diet frameworks, recipes and tips.",
+  "Passive Income & Side Hustles": "Repeatable systems for income outside 9-to-5.",
+  "Web Templates": "Website, UI kits and theme starters.",
+  "Prompt Packs & AI Tools": "High-leverage prompt packs and utilities.",
+  "Social Media Kits": "Post templates and brandable assets for socials.",
+  "Fonts": "Display, serif, sans and script families.",
+  "Icons": "Clean, scalable icon sets for brands & apps.",
+};
 
 export default function CategoriesPage() {
   return (
@@ -25,45 +48,48 @@ export default function CategoriesPage() {
       <h1 className="text-4xl font-bold text-center mb-12">🗂️ All Categories</h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {categories.map((category) => (
-          <Link
-            key={category.slug}
-            href={`/categories/${category.slug}`}
-            aria-label={`Browse ${category.name}`}
-            className="
-              group block rounded-2xl border overflow-hidden bg-white
-              shadow transition-all duration-300
-              hover:-translate-y-1 hover:shadow-xl
-              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2
-            "
-          >
-            <CoverImage
-              src={category.image}
-              alt={category.name}
-              ratio="16/9"
-              fit="contain"
-              paddingClass="p-2"
-              roundedClass="rounded-none"
-              className="md:aspect-[3/2]"
-              sizes="(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw"
-            />
-            <div className="p-4">
-              <h2 className="text-xl font-semibold transition-colors group-hover:text-blue-600">
-                {category.name}
-              </h2>
-
-              {/* Inline “more / less” under the subtitle */}
-              <InlineMore
-                text={category.desc}
-                lines={2}
-                minChars={1}                 // always show the toggle
-                className="mt-1 text-sm text-gray-600"
-                moreLabel="more"
-                lessLabel="less"
+        {CATEGORIES.map((c) => {
+          const img = IMAGE_BY_SLUG[c.slug] ?? "/images/web-templates.jpg"; // safe fallback
+          const desc = DESC_BY_LABEL[c.label] ?? "Explore products in this category.";
+          return (
+            <Link
+              key={c.slug}
+              href={`/categories/${c.slug}`}
+              aria-label={`Browse ${c.label}`}
+              className="
+                group block rounded-2xl border overflow-hidden bg-white
+                shadow transition-all duration-300
+                hover:-translate-y-1 hover:shadow-xl
+                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2
+              "
+            >
+              <CoverImage
+                src={img}
+                alt={c.label}
+                ratio="16/9"
+                fit="contain"
+                paddingClass="p-2"
+                roundedClass="rounded-none"
+                className="md:aspect-[3/2]"
+                sizes="(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw"
               />
-            </div>
-          </Link>
-        ))}
+              <div className="p-4">
+                <h2 className="text-xl font-semibold transition-colors group-hover:text-blue-600">
+                  {c.label}
+                </h2>
+
+                <InlineMore
+                  text={desc}
+                  lines={2}
+                  minChars={1}
+                  className="mt-1 text-sm text-gray-600"
+                  moreLabel="more"
+                  lessLabel="less"
+                />
+              </div>
+            </Link>
+          );
+        })}
       </div>
     </main>
   );
