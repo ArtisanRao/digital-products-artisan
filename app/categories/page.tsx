@@ -10,17 +10,19 @@ import { CATEGORIES } from "@/data/categories";
  * If a file is missing, we fall back to /images/web-templates.jpg
  */
 const FILENAME_BY_SLUG: Record<string, string> = {
-  "ai-and-chatgpt-guides":       "ai-chatgpt-guides.jpg",
-  "planners-productivity":       "planners-productivity.png",
-  "self-help-and-how-to":        "self-help-how-to.jpg",
-  "plr-mrr-bundles":             "plr-mrr-bundles.jpg",
-  "video-courses-and-training":  "video-courses-training.jpg",
+  "ai-and-chatgpt-guides":       "ai-&-chatgpt-guides.jpg",
+  "planners-productivity":       "planners-&-productivity.jpg",
+  "self-help-and-how-to":        "self-help-&-how-to.jpg",
+  "plr-mrr-bundles":             "plr-&-mrr-bundles.jpg",
+  "video-courses-and-training":  "video-courses-&-training.jpg",
   "complete-shop-packages":      "complete-shop-packages.jpg",
-  "health-fitness-ebooks":       "health-fitness-ebooks.jpg",
-  "keto-diet-guides":            "keto-diet-guides.jpg",
-  "passive-income-side-hustles": "passive-income-side-hustles.jpg",
+  "health-fitness-ebooks":       "health-&-fitness-ebooks.jpg",
+  "keto-diet-guides":            "keto-&-diet-guides.jpg",
+  "passive-income-side-hustles": "passive-income-&-side-hustles.jpg",
   "web-templates":               "web-templates.jpg",
-  "prompt-packs-and-ai-tools":   "prompt-packs-ai-tools.jpg",
+
+  // These are optional; if the exact files don’t exist yet, the card will use the fallback image.
+  "prompt-packs-and-ai-tools":   "prompt-packs-&-ai-tools.jpg",
   "fonts":                       "fonts.jpg",
   "icons":                       "icons.jpg",
   "social-media-kits":           "categories/social-media-kits/cover.png",
