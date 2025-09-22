@@ -33,7 +33,7 @@ type Params = { slug: string };
 export async function generateMetadata({ params }: { params: Promise<Params> }) {
   const { slug } = await params;
   const cat = CATEGORIES[slug];
-  const title = cat ? ${cat.title} | Digital Products Artisan : "Digital Products | Digital Products Artisan";
+  const title = cat ? `${cat.title} | Digital Products Artisan` : "Digital Products | Digital Products Artisan";
   const description = cat?.description ?? "Browse our curated digital products.";
   return {
     title,
