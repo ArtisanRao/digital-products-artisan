@@ -7,20 +7,23 @@ import InlineMore from "@/components/ui/inline-more";
 type CatInfo = { title: string; description: string; folder: string };
 
 // Slug → UI text + folder under /public/images/<folder>
+// IMPORTANT: slugs here match your canonical ones:
+// ai-and-chatgpt-guides, self-help-and-how-to, video-courses-and-training,
+// prompt-packs-and-ai-tools, passive-income-and-side-hustles, etc.
 const CATEGORIES: Record<string, CatInfo> = {
-  "ai-chatgpt-guides":        { title: "AI & ChatGPT Guides",      description: "Guides, prompts and AI learning resources.",           folder: "ai-chatgpt-guides" },
-  "planners-productivity":    { title: "Planners & Productivity",   description: "Digital planners, journals and productivity tools.",  folder: "planners-productivity" },
-  "self-help-how-to":         { title: "Self-Help & How-To",        description: "Practical how-to guides and self-improvement.",       folder: "self-help-how-to" },
-  "plr-mrr-bundles":          { title: "PLR & MRR Bundles",         description: "Done-for-you PLR/MRR products and kits.",             folder: "plr-mrr-bundles" },
-  "video-courses-training":   { title: "Video Courses & Training",  description: "Structured video lessons and trainings.",              folder: "video-courses-training" },
-  "complete-shop-packages":   { title: "Complete Shop Packages",    description: "Turn-key storefront bundles and assets.",              folder: "complete-shop-packages" },
-  "health-fitness-ebooks":    { title: "Health & Fitness eBooks",   description: "Nutrition, fitness and wellness books.",              folder: "health-fitness-ebooks" },
-  "keto-diet-guides":         { title: "Keto & Diet Guides",        description: "Keto and nutrition programs and meal plans.",         folder: "keto-diet-guides" },
-  "passive-income-side-hustles": { title: "Passive Income & Side Hustles", description: "Monetization playbooks and templates.",        folder: "passive-income-side-hustles" },
-  "web-templates":            { title: "Web Templates",             description: "Website templates, UI kits and themes.",              folder: "web-templates" },
-  "prompt-packs-ai-tools":    { title: "Prompt Packs & AI Tools",   description: "Prompt packs and AI utilities.",                      folder: "prompt-packs-ai-tools" },
-  "fonts":                    { title: "Fonts",                      description: "Display, serif, sans and script fonts.",             folder: "fonts" },
-  "icons":                    { title: "Icons",                      description: "Clean, scalable icon packs for UI and branding.",    folder: "icons" },
+  "ai-and-chatgpt-guides":       { title: "AI & ChatGPT Guides",       description: "Guides, prompts and AI learning resources.",             folder: "ai-and-chatgpt-guides" },
+  "planners-productivity":       { title: "Planners & Productivity",    description: "Digital planners, journals and productivity tools.",     folder: "planners-productivity" },
+  "self-help-and-how-to":        { title: "Self-Help & How-To",         description: "Practical how-to guides and self-improvement.",          folder: "self-help-and-how-to" },
+  "plr-mrr-bundles":             { title: "PLR & MRR Bundles",          description: "Done-for-you PLR/MRR products and kits.",                folder: "plr-mrr-bundles" },
+  "video-courses-and-training":  { title: "Video Courses & Training",   description: "Structured video lessons and trainings.",                 folder: "video-courses-and-training" },
+  "complete-shop-packages":      { title: "Complete Shop Packages",     description: "Turn-key storefront bundles and assets.",                 folder: "complete-shop-packages" },
+  "health-fitness-ebooks":       { title: "Health & Fitness eBooks",    description: "Nutrition, fitness and wellness books.",                  folder: "health-fitness-ebooks" },
+  "keto-diet-guides":            { title: "Keto & Diet Guides",         description: "Keto and nutrition programs and meal plans.",            folder: "keto-diet-guides" },
+  "passive-income-and-side-hustles": { title: "Passive Income & Side Hustles", description: "Monetization playbooks and templates.",           folder: "passive-income-and-side-hustles" },
+  "web-templates":               { title: "Web Templates",              description: "Website templates, UI kits and themes.",                  folder: "web-templates" },
+  "prompt-packs-and-ai-tools":   { title: "Prompt Packs & AI Tools",    description: "Prompt packs and AI utilities.",                         folder: "prompt-packs-and-ai-tools" },
+  "fonts":                       { title: "Fonts",                       description: "Display, serif, sans and script fonts.",                 folder: "fonts" },
+  "icons":                       { title: "Icons",                       description: "Clean, scalable icon packs for UI and branding.",        folder: "icons" },
 };
 
 // Pre-render all known slugs
