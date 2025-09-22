@@ -6,10 +6,10 @@ export type Product = {
   slug: string
   title: string
   description: string            // short blurb for cards/SEO
-  longDescription?: string       // 🆕 detailed copy for quick-view & PDP
+  longDescription?: string       // detailed copy for quick-view & PDP
   price: number
   originalPrice: number
-  category: string
+  category: string               // must match the new category labels
   tags: string[]
   rating: number
   reviews: number
@@ -145,7 +145,7 @@ Delivery:
 • Instant digital download (PDF) — no shipping`,
     price: 28.99,
     originalPrice: 0,
-    category: "Ebooks (Miscellaneous)",
+    category: "Passive Income & Side Hustles",
     tags: ["Wealth", "Business", "Strategy", "Guide"],
     rating: 4.6,
     reviews: 95,
