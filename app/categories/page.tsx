@@ -16,13 +16,13 @@ const FILENAME_BY_SLUG: Record<string, string> = {
   "keto-diet-guides":            "keto-&-diet-guides.jpg",
   "passive-income-side-hustles": "passive-income-&-side-hustles.jpg",
   "web-templates":               "web-templates.jpg",
+
+  // ✅ these were missing before
   "social-media-kits":           "social-media-kits.jpg",
+  "digital-essentials-hub":      "digital-essentials-hub.jpg",
 
-  // Digital Essentials Hub (reuse your existing prompt-packs cover until you add a new one)
-  "digital-essentials-hub":      "prompt-packs-&-ai-tools.jpg",
-
-  // May or may not exist yet—fallback will handle it gracefully
-  "fonts":                       "fonts.jpg",
+  // renamed categories
+  "fonts-and-icons":             "fonts.jpg",              // reuse your fonts cover
   "religious-ebooks":            "religious-ebooks.jpg",
 };
 

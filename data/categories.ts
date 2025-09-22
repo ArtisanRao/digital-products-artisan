@@ -13,7 +13,7 @@ export const CATEGORIES: Category[] = [
 
   // Renamed/extra categories
   { label: "Digital Essentials Hub",     slug: "digital-essentials-hub" }, // (was: Prompt Packs & AI Tools)
-  { label: "Fonts & Icons",              slug: "fonts" },                  // label changed only
+  { label: "Fonts & Icons",              slug: "fonts-and-icons" },                  // label changed only
   { label: "Religious eBooks",           slug: "religious-ebooks" },       // (was: Icons)
 
   // Keep
