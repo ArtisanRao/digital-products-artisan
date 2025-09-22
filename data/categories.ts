@@ -1,4 +1,4 @@
-﻿export type Category = { label: string; slug: string };
+export type Category = { label: string; slug: string }; 
 
 export const CATEGORIES: Category[] = [
   { label: "AI & ChatGPT Guides",        slug: "ai-and-chatgpt-guides" },

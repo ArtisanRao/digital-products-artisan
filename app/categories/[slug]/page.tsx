@@ -51,7 +51,7 @@ function listFolderImages(folder: string) {
       .readdirSync(dir, { withFileTypes: true })
       .filter((d) => d.isFile() && /\.(png|jpe?g|webp|avif|gif)$/i.test(d.name))
       .map((d) => ({
-        src: /images//,
+        src: `/images/${folder}/${d.name}`,
         title: d.name.replace(/\.[^.]+$/, "").replace(/[-_]/g, " "),
       }))
       .sort((a, b) => a.src.localeCompare(b.src, undefined, { numeric: true }));
