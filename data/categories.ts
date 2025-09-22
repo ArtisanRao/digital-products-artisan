@@ -1,3 +1,6 @@
+﻿# from repo root
+$path = "data\categories.ts"
+$content = @"
 export type Category = { label: string; slug: string }; 
 
 export const CATEGORIES: Category[] = [
@@ -18,3 +21,6 @@ export const CATEGORIES: Category[] = [
   { label: "Fonts",                      slug: "fonts" },
   { label: "Icons",                      slug: "icons" },
 ];
+"@
+Set-Content -Path $path -Value $content
+
