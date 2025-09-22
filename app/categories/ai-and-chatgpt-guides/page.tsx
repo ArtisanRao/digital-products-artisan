@@ -51,7 +51,6 @@ export default function Page() {
   title={item.title}
   price={item.price}
   image={item.image}
-  goToCartAfterAdd={false}
 />
               </div>
             </div>
@@ -61,6 +60,7 @@ export default function Page() {
     </main>
   );
 }
+
 
 
 
