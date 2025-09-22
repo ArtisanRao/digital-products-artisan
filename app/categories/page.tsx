@@ -5,10 +5,10 @@ import CoverImage from "@/components/ui/cover-image";
 import InlineMore from "@/components/ui/inline-more";
 import { CATEGORIES } from "@/data/categories";
 
-// Per-category images living in /public/images
+// Per-category hero images in /public/images
 const IMAGE_BY_SLUG: Record<string, string> = {
   "ai-and-chatgpt-guides":      "/images/ai-chatgpt-guides.jpg",
-  "planners-productivity":      "/images/planners-productivity.png", // png in repo
+  "planners-productivity":      "/images/planners-productivity.png",
   "self-help-and-how-to":       "/images/self-help-how-to.jpg",
   "plr-mrr-bundles":            "/images/plr-mrr-bundles.jpg",
   "video-courses-and-training": "/images/video-courses-training.jpg",
@@ -20,11 +20,11 @@ const IMAGE_BY_SLUG: Record<string, string> = {
   "prompt-packs-and-ai-tools":  "/images/prompt-packs-ai-tools.jpg",
   "fonts":                      "/images/fonts.jpg",
   "icons":                      "/images/icons.jpg",
-  // Fallbacks (add a file later if you have one):
+  // fallback until you add a dedicated image:
   "social-media-kits":          "/images/categories/social-media-kits/cover.png",
 };
 
-// Short blurbs for the grid cards (optional)
+// Short blurbs for the grid cards
 const DESC_BY_LABEL: Record<string, string> = {
   "AI & ChatGPT Guides": "Actionable guides, prompts and workflows to build with AI.",
   "Planners & Productivity": "Digital planners, journals and organization systems.",
@@ -49,8 +49,9 @@ export default function CategoriesPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {CATEGORIES.map((c) => {
-          const img = IMAGE_BY_SLUG[c.slug] ?? "/images/web-templates.jpg"; // safe fallback
+          const img = IMAGE_BY_SLUG[c.slug] ?? "/images/web-templates.jpg";
           const desc = DESC_BY_LABEL[c.label] ?? "Explore products in this category.";
+
           return (
             <Link
               key={c.slug}
