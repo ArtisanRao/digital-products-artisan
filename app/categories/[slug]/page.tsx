@@ -3,7 +3,6 @@ import path from "node:path";
 import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
 
-/** UI copy per slug (same slugs you already use elsewhere) */
 const META: Record<string, { title: string; description: string }> = {
   "ai-and-chatgpt-guides":      { title: "AI & ChatGPT Guides",     description: "Guides, prompts and AI learning resources." },
   "planners-productivity":      { title: "Planners & Productivity",  description: "Digital planners, journals and productivity tools." },
@@ -15,31 +14,38 @@ const META: Record<string, { title: string; description: string }> = {
   "keto-diet-guides":           { title: "Keto & Diet Guides",       description: "Keto and nutrition programs and meal plans." },
   "passive-income-side-hustles":{ title: "Passive Income & Side Hustles", description: "Monetization playbooks and templates." },
   "web-templates":              { title: "Web Templates",            description: "Website templates, UI kits and themes." },
-  "prompt-packs-and-ai-tools":  { title: "Prompt Packs & AI Tools",  description: "Prompt packs and AI utilities." },
-  "fonts":                      { title: "Fonts",                     description: "Display, serif, sans and script fonts." },
-  "icons":                      { title: "Icons",                     description: "Clean, scalable icon packs for UI and branding." },
-  "social-media-kits":          { title: "Social Media Kits",         description: "Post templates and brandable assets for socials." },
+
+  // NEW/renamed
+  "digital-essentials-hub":     { title: "Digital Essentials Hub",   description: "Prompt packs, automations, and utilities." },
+  "fonts":                      { title: "Creative Fonts & Icons",   description: "Display, serif, sans and script fonts—plus icons." },
+  "religious-ebooks":           { title: "Religious eBooks",         description: "Faith-centered books, devotionals and study guides." },
+
+  // keep
+  "social-media-kits":          { title: "Social Media Kits",        description: "Post templates and brandable assets for socials." },
 };
 
-/** Map slug -> single fallback file under /public/images (ampersand filenames) */
+/** slug -> single fallback file in /public/images */
 const FILENAME_BY_SLUG: Record<string, string> = {
-  "ai-and-chatgpt-guides":       "ai-&-chatgpt-guides.jpg",
-  "planners-productivity":       "planners-&-productivity.jpg",
-  "self-help-and-how-to":        "self-help-&-how-to.jpg",
-  "plr-mrr-bundles":             "plr-&-mrr-bundles.jpg",
-  "video-courses-and-training":  "video-courses-&-training.jpg",
+  "ai-and-chatgpt-guides":       "ai-chatgpt-guides.jpg",
+  "planners-productivity":       "planners-productivity.png",
+  "self-help-and-how-to":        "self-help-how-to.jpg",
+  "plr-mrr-bundles":             "plr-mrr-bundles.jpg",
+  "video-courses-and-training":  "video-courses-training.jpg",
   "complete-shop-packages":      "complete-shop-packages.jpg",
-  "health-fitness-ebooks":       "health-&-fitness-ebooks.jpg",
-  "keto-diet-guides":            "keto-&-diet-guides.jpg",
-  "passive-income-side-hustles": "passive-income-&-side-hustles.jpg",
+  "health-fitness-ebooks":       "health-fitness-ebooks.jpg",
+  "keto-diet-guides":            "keto-diet-guides.jpg",
+  "passive-income-side-hustles": "passive-income-side-hustles.jpg",
   "web-templates":               "web-templates.jpg",
-  "prompt-packs-and-ai-tools":   "prompt-packs-&-ai-tools.jpg",
+
+  // ✅ show these two now
+  "digital-essentials-hub":      "prompt-packs-ai-tools.jpg",
+  "social-media-kits":           "social-media-kits.jpg",
+
+  // renamed labels
   "fonts":                       "fonts.jpg",
-  "icons":                       "icons.jpg",
-  "social-media-kits":           "categories/social-media-kits/cover.png",
+  "religious-ebooks":            "religious-ebooks.jpg",
 };
 
-// Static params
 export function generateStaticParams() {
   return Object.keys(META).map((slug) => ({ slug }));
 }
@@ -59,23 +65,18 @@ export async function generateMetadata({ params }: { params: Promise<Params> }) 
   };
 }
 
-/** Convert '...-and-...' segments to '...-&-...' for filename matching */
-function ampersandVariant(slug: string) {
-  return slug.replace(/-and-/g, "-&-");
-}
-
-/** List all files in /public/images whose filename starts with slug or its &-variant. */
+/** List files in /public/images that start with the slug (e.g., web-templates-1.jpg) */
 function listRootImagesBySlugPrefix(slug: string) {
   const dir = path.join(process.cwd(), "public", "images");
   try {
     const all = fs
       .readdirSync(dir, { withFileTypes: true })
       .filter((d) => d.isFile() && /\.(png|jpe?g|webp|avif|gif)$/i.test(d.name))
-      .map((d) => d.name.toLowerCase());
+      .map((d) => d.name);
 
-    const prefixes = [slug.toLowerCase(), ampersandVariant(slug).toLowerCase()];
+    const prefix = `${slug}`;
     const matches = all
-      .filter((name) => prefixes.some((p) => name.startsWith(p)))
+      .filter((name) => name.toLowerCase().startsWith(prefix.toLowerCase()))
       .map((name) => ({
         src: `/images/${name}`,
         title: name.replace(/\.[^.]+$/, "").replace(/[-_]/g, " "),
@@ -111,7 +112,6 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
   }
 
   const items = listRootImagesBySlugPrefix(slug);
-  const hasGallery = items.length > 0;
   const fallback = FILENAME_BY_SLUG[slug] ? `/images/${FILENAME_BY_SLUG[slug]}` : undefined;
 
   return (
@@ -119,7 +119,7 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
       <h1 className="text-3xl md:text-4xl font-bold mb-2">{meta.title}</h1>
       <InlineMore text={meta.description} lines={1} minChars={40} className="text-gray-700 mb-2" />
 
-      {hasGallery ? (
+      {items.length ? (
         <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
           {items.map((it) => (
             <div key={it.src} className="rounded-xl border bg-white hover:shadow-lg transition">
@@ -136,12 +136,12 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
             <img src={fallback} alt={`${meta.title} cover`} className="h-full w-full object-contain" />
           </div>
           <p className="mt-3 text-sm text-gray-600">
-            Add additional images in <code>/public/images</code> starting with <code>{slug}-…</code> or <code>{ampersandVariant(slug)}-…</code> to grow this gallery.
+            Add additional images in <code>/public/images</code> starting with <code>{slug}-…</code> to grow this gallery.
           </p>
         </div>
       ) : (
         <p className="mt-6 text-gray-600">
-          No matching images found in <code>/public/images</code>. Add files like <code>{slug}.jpg</code> or <code>{ampersandVariant(slug)}.jpg</code> and redeploy.
+          No matching images found in <code>/public/images</code>. Add files like <code>{slug}.jpg</code> (or <code>{slug}-1.jpg</code>) and redeploy.
         </p>
       )}
 

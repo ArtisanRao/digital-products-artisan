@@ -5,27 +5,30 @@ import InlineMore from "@/components/ui/inline-more";
 import { CATEGORIES } from "@/data/categories";
 
 /**
- * Each category card shows exactly one cover file located at:
- *   /public/images/<filename>
- * If a file is missing, we fall back to /images/web-templates.jpg
+ * One cover per category.
+ * Files live in /public/images/<filename>
  */
 const FILENAME_BY_SLUG: Record<string, string> = {
-  "ai-and-chatgpt-guides":       "ai-&-chatgpt-guides.jpg",
-  "planners-productivity":       "planners-&-productivity.jpg",
-  "self-help-and-how-to":        "self-help-&-how-to.jpg",
-  "plr-mrr-bundles":             "plr-&-mrr-bundles.jpg",
-  "video-courses-and-training":  "video-courses-&-training.jpg",
+  "ai-and-chatgpt-guides":       "ai-chatgpt-guides.jpg",
+  "planners-productivity":       "planners-productivity.png",
+  "self-help-and-how-to":        "self-help-how-to.jpg",
+  "plr-mrr-bundles":             "plr-mrr-bundles.jpg",
+  "video-courses-and-training":  "video-courses-training.jpg",
   "complete-shop-packages":      "complete-shop-packages.jpg",
-  "health-fitness-ebooks":       "health-&-fitness-ebooks.jpg",
-  "keto-diet-guides":            "keto-&-diet-guides.jpg",
-  "passive-income-side-hustles": "passive-income-&-side-hustles.jpg",
+  "health-fitness-ebooks":       "health-fitness-ebooks.jpg",
+  "keto-diet-guides":            "keto-diet-guides.jpg",
+  "passive-income-side-hustles": "passive-income-side-hustles.jpg",
   "web-templates":               "web-templates.jpg",
 
-  // These are optional; if the exact files don’t exist yet, the card will use the fallback image.
-  "prompt-packs-and-ai-tools":   "prompt-packs-&-ai-tools.jpg",
-  "fonts":                       "fonts.jpg",
-  "icons":                       "icons.jpg",
-  "social-media-kits":           "categories/social-media-kits/cover.png",
+  // ✅ renamed category (re-using existing file so it shows immediately)
+  "digital-essentials-hub":      "prompt-packs-ai-tools.jpg",
+
+  // ✅ ensure Social Media Kits shows
+  "social-media-kits":           "social-media-kits.jpg",
+
+  // renamed labels
+  "fonts":                       "fonts.jpg",            // Creative Fonts & Icons (slug unchanged)
+  "religious-ebooks":            "religious-ebooks.jpg", // add this file when you have it; will fallback if missing
 };
 
 const DESC_BY_LABEL: Record<string, string> = {
@@ -39,10 +42,10 @@ const DESC_BY_LABEL: Record<string, string> = {
   "Keto & Diet Guides": "Low-carb & diet frameworks, recipes and tips.",
   "Passive Income & Side Hustles": "Repeatable systems for income outside 9-to-5.",
   "Web Templates": "Website, UI kits and theme starters.",
-  "Prompt Packs & AI Tools": "High-leverage prompt packs and utilities.",
+  "Digital Essentials Hub": "High-leverage prompt packs, automations, and utilities.",
   "Social Media Kits": "Post templates and brandable assets for socials.",
-  "Fonts": "Display, serif, sans and script families.",
-  "Icons": "Clean, scalable icon sets for brands & apps.",
+  "Creative Fonts & Icons": "Display, serif, sans and script families—plus icon sets.",
+  "Religious eBooks": "Faith-centered books, devotionals, and study guides.",
 };
 
 export default function CategoriesPage() {
