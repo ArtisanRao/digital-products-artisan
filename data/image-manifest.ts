@@ -16,7 +16,13 @@ export const imageManifest: Record<string, string[]> = {
     "/images/products/chatgpt-side-hustles/cover.jpg"
   ],
   "digital-wealth-ultimate-guide": [
-    "/images/products/digital-wealth-ultimate-guide/cover.jpg"
+    "/images/products/digital-wealth-ultimate-guide/cover.jpg",
+    "/images/products/digital-wealth-ultimate-guide/1.jpg",
+    "/images/products/digital-wealth-ultimate-guide/2.jpg",
+    "/images/products/digital-wealth-ultimate-guide/3.jpg",
+    "/images/products/digital-wealth-ultimate-guide/4.jpg",
+    "/images/products/digital-wealth-ultimate-guide/5.jpg",
+    "/images/products/digital-wealth-ultimate-guide/6.jpg"
   ],
   "make-money-as-you-sleep": [
     "/images/products/make-money-as-you-sleep/cover.jpg"
