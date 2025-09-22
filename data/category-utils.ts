@@ -1,23 +1,29 @@
 ﻿// data/category-utils.ts
 export const LEGACY_CATEGORY_MAP: Record<string, string> = {
+  // direct renames
   "Digital Art": "AI & ChatGPT Guides",
   "Printable Planners": "Planners & Productivity",
   "Photography Prints": "Self-Help & How-To",
-  "Audio Templates": "PLR & MRR Bundles",
+  "Audio Samples": "PLR & MRR Bundles",
   "Video Resources": "Video Courses & Training",
-  "Templates": "Complete Shop Packages",
   "eBooks": "Health & Fitness eBooks",
-  "Fonts": "Keto & Diet Guides",
-  "Icons": "Passive Income & Side Hustles",
+  "Templates": "Web Templates",
+  "Marketing tools": "Passive Income & Side Hustles",
+  "Marketing Tools": "Passive Income & Side Hustles",
+
+  // second-stage consolidation you requested
+  "Web Templates": "Complete Shop Packages",
+
+  // keep these as-is (no mapping): Social Media Kits, Fonts, Icons
 };
 
 export type CategoryRec = { label: string; slug: string };
 
-// import from your single source of truth:
+// single source of truth
 import { CATEGORIES } from "./categories";
 
-const byLabel = new Map(CATEGORIES.map(c => [c.label, c]));
-const bySlug  = new Map(CATEGORIES.map(c => [c.slug, c]));
+const byLabel = new Map(CATEGORIES.map((c) => [c.label, c]));
+const bySlug  = new Map(CATEGORIES.map((c) => [c.slug, c]));
 
 /** Returns the canonical CategoryRec by NEW label; undefined if not found. */
 export function getCategoryByLabel(label: string): CategoryRec | undefined {
