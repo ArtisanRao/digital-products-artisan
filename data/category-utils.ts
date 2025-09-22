@@ -1,25 +1,20 @@
-﻿# from repo root
-$path = "data\category-utils.ts"
-$content = @"
-// data/category-utils.ts
-
+﻿// data/category-utils.ts
 export const LEGACY_CATEGORY_MAP: Record<string, string> = {
   // direct renames
   "Digital Art": "AI & ChatGPT Guides",
   "Printable Planners": "Planners & Productivity",
   "Photography Prints": "Self-Help & How-To",
   "Audio Samples": "PLR & MRR Bundles",
-  "Audio Templates": "PLR & MRR Bundles",    // alt variant
   "Video Resources": "Video Courses & Training",
   "eBooks": "Health & Fitness eBooks",
   "Templates": "Web Templates",
-  "Marketing tools": "Passive Income & Side Hustles", // lowercase t
+  "Marketing tools": "Passive Income & Side Hustles",
   "Marketing Tools": "Passive Income & Side Hustles",
 
-  // second-stage consolidation you requested
+  // second-stage consolidation
   "Web Templates": "Complete Shop Packages",
 
-  // keep as-is: Social Media Kits, Fonts, Icons
+  // Social Media Kits, Fonts, Icons stay as-is
 };
 
 export type CategoryRec = { label: string; slug: string };
@@ -35,19 +30,9 @@ export function getCategoryByLabel(label: string): CategoryRec | undefined {
   return byLabel.get(label);
 }
 
-/**
- * Returns the canonical NEW label given any (old or new) label.
- * Follows multi-step mappings (e.g., Templates -> Web Templates -> Complete Shop Packages)
- * and guards against cycles.
- */
+/** Returns the canonical NEW label given any (old or new) label. */
 export function normalizeCategoryLabel(label: string): string {
-  let current = label;
-  const seen = new Set<string>();
-  while (LEGACY_CATEGORY_MAP[current] && !seen.has(current)) {
-    seen.add(current);
-    current = LEGACY_CATEGORY_MAP[current];
-  }
-  return current;
+  return LEGACY_CATEGORY_MAP[label] ?? label;
 }
 
 /** Returns the canonical slug for any (old or new) label. */
@@ -56,10 +41,7 @@ export function labelToSlugAny(label: string): string | undefined {
   return byLabel.get(newLabel)?.slug;
 }
 
-/** Convenience: get CategoryRec from any (old/new) label directly. */
-export function getCategoryByAnyLabel(label: string): CategoryRec | undefined {
-  const newLabel = normalizeCategoryLabel(label);
-  return byLabel.get(newLabel);
+/** Convenience: lookup by slug. */
+export function getCategoryBySlug(slug: string): CategoryRec | undefined {
+  return bySlug.get(slug);
 }
-"
-Set-Content -LiteralPath $path -Value $content
