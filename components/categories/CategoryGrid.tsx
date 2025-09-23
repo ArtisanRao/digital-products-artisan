@@ -12,17 +12,87 @@ export type Product = {
   description?: string; // ← added
 };
 
+/** Resilient <img> that tries multiple candidate sources in order */
+function SafeThumb({
+  product,
+  className,
+  alt,
+}: {
+  product: Product;
+  className?: string;
+  alt?: string;
+}) {
+  const candidates = useMemo(() => {
+    const list: string[] = [];
+
+    // 1) explicit image (and its extension variants)
+    if (product.image) {
+      const src = product.image;
+      list.push(src);
+      if (/\.jpe?g$/i.test(src)) {
+        list.push(src.replace(/\.jpe?g$/i, ".png"));
+        list.push(src.replace(/\.jpe?g$/i, ".webp"));
+      } else if (/\.png$/i.test(src)) {
+        list.push(src.replace(/\.png$/i, ".jpg"));
+        list.push(src.replace(/\.png$/i, ".webp"));
+      } else if (/\.webp$/i.test(src)) {
+        list.push(src.replace(/\.webp$/i, ".jpg"));
+        list.push(src.replace(/\.webp$/i, ".png"));
+      }
+    }
+
+    // 2) category defaults based on slug
+    if (product.slug) {
+      list.push(`/images/categories/${product.slug}/card.jpg`);
+      list.push(`/images/categories/${product.slug}/card.png`);
+      list.push(`/images/categories/${product.slug}/card.webp`);
+
+      // 3) product defaults based on slug
+      list.push(`/images/products/${product.slug}/cover.jpg`);
+      list.push(`/images/products/${product.slug}/cover.png`);
+      list.push(`/images/products/${product.slug}/cover.webp`);
+    }
+
+    // 4) global fallbacks
+    list.push("/images/categories/_default/card.jpg");
+    list.push("/images/placeholder.jpg");
+
+    // Deduplicate while preserving order
+    return Array.from(new Set(list));
+  }, [product.image, product.slug]);
+
+  const [idx, setIdx] = useState(0);
+
+  // Reset to first candidate if product changes
+  useEffect(() => setIdx(0), [product.id, product.image, product.slug]);
+
+  // If we run out of candidates entirely, render nothing
+  if (!candidates.length) return null;
+
+  return (
+    <img
+      src={candidates[idx]}
+      alt={alt ?? product.title}
+      className={className}
+      loading="lazy"
+      onError={() => {
+        if (idx < candidates.length - 1) setIdx((i) => i + 1);
+      }}
+    />
+  );
+}
+
 /** Default card (used only if you don't pass a custom renderer) */
 function DefaultProductCard({ product }: { product: Product }) {
   return (
-    <article className="rounded-2xl border bg-white/50 p-4 shadow-sm hover:shadow transition">
-      {product.image ? (
-        <img
-          src={product.image}
+    <article className="rounded-2xl border bg-white/50 p-4 shadow-sm transition hover:shadow">
+      <div className="mb-3 aspect-[4/3] w-full overflow-hidden rounded-xl">
+        <SafeThumb
+          product={product}
           alt={product.title}
-          className="mb-3 aspect-[4/3] w-full rounded-xl object-cover"
+          className="h-full w-full object-cover"
         />
-      ) : null}
+      </div>
       <h3 className="line-clamp-2 text-sm font-semibold">{product.title}</h3>
       {product.price !== undefined && (
         <p className="mt-1 text-xs text-muted-foreground">From {String(product.price)}</p>

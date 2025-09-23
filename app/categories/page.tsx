@@ -5,24 +5,7 @@ import InlineMore from "@/components/ui/inline-more";
 import { CATEGORIES } from "@/data/categories";
 import { useState, useMemo } from "react";
 
-/** Candidate filenames under /public/images (tries in order, falls back on error) */
-const CANDIDATES_BY_SLUG: Record<string, string[]> = {
-  "ai-and-chatgpt-guides":       ["ai-&-chatgpt-guides.jpg", "ai-chatgpt-guides.jpg"],
-  "planners-productivity":       ["planners-&-productivity.jpg", "planners-productivity.jpg", "planners-productivity.png"],
-  "self-help-and-how-to":        ["self-help-&-how-to.jpg", "self-help-how-to.jpg"],
-  "plr-mrr-bundles":             ["plr-&-mrr-bundles.jpg", "plr-mrr-bundles.jpg"],
-  "video-courses-and-training":  ["video-courses-&-training.jpg", "video-courses-training.jpg"],
-  "complete-shop-packages":      ["complete-shop-packages.jpg"],
-  "health-fitness-ebooks":       ["health-&-fitness-ebooks.jpg", "health-fitness-ebooks.jpg"],
-  "keto-diet-guides":            ["keto-&-diet-guides.jpg", "keto-diet-guides.jpg"],
-  "passive-income-side-hustles": ["passive-income-&-side-hustles.jpg", "passive-income-side-hustles.jpg"],
-  "web-templates":               ["web-templates.jpg", "web-templates1.jpg", "web-templates2.jpg"],
-  "digital-essentials-hub":      ["digital-essentials-hub.jpg", "prompt-packs-&-ai-tools.jpg", "prompt-packs-ai-tools.jpg"],
-  "social-media-kits":           ["social-media-kits.jpg", "social-media-kits-cover.jpg"],
-  "fonts":                       ["fonts-&-icons.jpg", "fonts.jpg"],
-  "religious-ebooks":            ["religious-ebooks.jpg"],
-};
-
+/** Optional descriptions (kept from your version) */
 const DESC_BY_LABEL: Record<string, string> = {
   "AI & ChatGPT Guides": "Actionable guides, prompts and workflows to build with AI.",
   "Planners & Productivity": "Digital planners, journals and organization systems.",
@@ -40,15 +23,47 @@ const DESC_BY_LABEL: Record<string, string> = {
   "Religious eBooks": "Faith-centered books, devotionals, and study guides.",
 };
 
-const FALLBACK_IMG = "/images/web-templates.jpg";
+const GLOBAL_FALLBACKS = [
+  "/images/categories/_default/card.jpg",
+  "/images/placeholder.jpg",
+];
 
-function useImageFallback(slug: string) {
-  const candidates = useMemo(
-    () => CANDIDATES_BY_SLUG[slug]?.map((n) => `/images/${n}`) ?? [FALLBACK_IMG],
-    [slug]
-  );
+/** Build a robust image candidate list for a category */
+function buildCandidates(slug: string, image?: string): string[] {
+  const list: string[] = [];
+
+  // 1) Prefer explicit image from data/categories.ts (e.g., /images/categories/<slug>/card.jpg)
+  if (image) {
+    list.push(image);
+    // try alt extensions
+    if (/\.jpe?g$/i.test(image)) {
+      list.push(image.replace(/\.jpe?g$/i, ".png"));
+      list.push(image.replace(/\.jpe?g$/i, ".webp"));
+    } else if (/\.png$/i.test(image)) {
+      list.push(image.replace(/\.png$/i, ".jpg"));
+      list.push(image.replace(/\.png$/i, ".webp"));
+    } else if (/\.webp$/i.test(image)) {
+      list.push(image.replace(/\.webp$/i, ".jpg"));
+      list.push(image.replace(/\.webp$/i, ".png"));
+    }
+  }
+
+  // 2) If data didn't provide an image, follow the convention: /images/categories/<slug>/card.*
+  const base = `/images/categories/${slug}/card`;
+  list.push(`${base}.jpg`, `${base}.png`, `${base}.webp`);
+
+  // 3) Global fallbacks
+  list.push(...GLOBAL_FALLBACKS);
+
+  // Dedup while preserving order
+  return Array.from(new Set(list));
+}
+
+/** Small hook to manage onError fallback */
+function useCategoryImage(slug: string, image?: string) {
+  const candidates = useMemo(() => buildCandidates(slug, image), [slug, image]);
   const [idx, setIdx] = useState(0);
-  const src = candidates[idx] ?? FALLBACK_IMG;
+  const src = candidates[idx] ?? GLOBAL_FALLBACKS[0];
   const onError = () => setIdx((i) => (i + 1 < candidates.length ? i + 1 : i));
   return { src, onError };
 }
@@ -60,7 +75,7 @@ export default function CategoriesPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {CATEGORIES.map((c) => {
-          const { src, onError } = useImageFallback(c.slug);
+          const { src, onError } = useCategoryImage(c.slug, (c as any).image);
           const desc = DESC_BY_LABEL[c.label] ?? "Explore products in this category.";
 
           return (
@@ -76,7 +91,7 @@ export default function CategoriesPage() {
                     src={src}
                     onError={onError}
                     alt={c.label}
-                    className="h-full w-full object-contain p-2"
+                    className="h-full w-full object-cover"
                     loading="lazy"
                   />
                 </div>
