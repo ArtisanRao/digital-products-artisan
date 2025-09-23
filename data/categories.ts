@@ -1,3 +1,4 @@
+// data/categories.ts
 export type Category = { label: string; slug: string };
 
 export const CATEGORIES: Category[] = [
@@ -11,12 +12,12 @@ export const CATEGORIES: Category[] = [
   { label: "Keto & Diet Guides",         slug: "keto-diet-guides" },
   { label: "Passive Income & Side Hustles", slug: "passive-income-side-hustles" },
 
-  // Renamed/extra categories
-  { label: "Digital Essentials Hub",     slug: "digital-essentials-hub" }, // (was: Prompt Packs & AI Tools)
-  { label: "Fonts & Icons",              slug: "fonts-and-icons" },                  // label changed only
-  { label: "Religious eBooks",           slug: "religious-ebooks" },       // (was: Icons)
+  // New/renamed
+  { label: "Digital Essentials Hub",     slug: "digital-essentials-hub" },
+  { label: "Social Media Kits",          slug: "social-media-kits" },
+  { label: "Fonts & Icons",              slug: "fonts" },
+  { label: "Religious eBooks",           slug: "religious-ebooks" },
 
   // Keep
   { label: "Web Templates",              slug: "web-templates" },
-  { label: "Social Media Kits",          slug: "social-media-kits" },
 ];
