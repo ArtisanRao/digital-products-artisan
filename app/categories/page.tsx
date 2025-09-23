@@ -3,27 +3,24 @@
 import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
 import { CATEGORIES } from "@/data/categories";
+import { useState, useMemo } from "react";
 
-/** Exact filenames under /public/images */
-const FILENAME_BY_SLUG: Record<string, string> = {
-  "ai-and-chatgpt-guides":       "ai-&-chatgpt-guides.jpg",
-  "planners-productivity":       "planners-&-productivity.jpg",
-  "self-help-and-how-to":        "self-help-&-how-to.jpg",
-  "plr-mrr-bundles":             "plr-&-mrr-bundles.jpg",
-  "video-courses-and-training":  "video-courses-&-training.jpg",
-  "complete-shop-packages":      "complete-shop-packages.jpg",
-  "health-fitness-ebooks":       "health-&-fitness-ebooks.jpg",
-  "keto-diet-guides":            "keto-&-diet-guides.jpg",
-  "passive-income-side-hustles": "passive-income-&-side-hustles.jpg",
-  "web-templates":               "web-templates.jpg",
-
-  // ✅ these were missing before
-  "social-media-kits":           "social-media-kits.jpg",
-  "digital-essentials-hub":      "digital-essentials-hub.jpg",
-
-  // renamed categories
-  "fonts-and-icons":             "fonts.jpg",              // reuse your fonts cover
-  "religious-ebooks":            "religious-ebooks.jpg",
+/** Candidate filenames under /public/images (tries in order, falls back on error) */
+const CANDIDATES_BY_SLUG: Record<string, string[]> = {
+  "ai-and-chatgpt-guides":       ["ai-&-chatgpt-guides.jpg", "ai-chatgpt-guides.jpg"],
+  "planners-productivity":       ["planners-&-productivity.jpg", "planners-productivity.jpg", "planners-productivity.png"],
+  "self-help-and-how-to":        ["self-help-&-how-to.jpg", "self-help-how-to.jpg"],
+  "plr-mrr-bundles":             ["plr-&-mrr-bundles.jpg", "plr-mrr-bundles.jpg"],
+  "video-courses-and-training":  ["video-courses-&-training.jpg", "video-courses-training.jpg"],
+  "complete-shop-packages":      ["complete-shop-packages.jpg"],
+  "health-fitness-ebooks":       ["health-&-fitness-ebooks.jpg", "health-fitness-ebooks.jpg"],
+  "keto-diet-guides":            ["keto-&-diet-guides.jpg", "keto-diet-guides.jpg"],
+  "passive-income-side-hustles": ["passive-income-&-side-hustles.jpg", "passive-income-side-hustles.jpg"],
+  "web-templates":               ["web-templates.jpg", "web-templates1.jpg", "web-templates2.jpg"],
+  "digital-essentials-hub":      ["digital-essentials-hub.jpg", "prompt-packs-&-ai-tools.jpg", "prompt-packs-ai-tools.jpg"],
+  "social-media-kits":           ["social-media-kits.jpg", "social-media-kits-cover.jpg"],
+  "fonts":                       ["fonts-&-icons.jpg", "fonts.jpg"],
+  "religious-ebooks":            ["religious-ebooks.jpg"],
 };
 
 const DESC_BY_LABEL: Record<string, string> = {
@@ -45,6 +42,17 @@ const DESC_BY_LABEL: Record<string, string> = {
 
 const FALLBACK_IMG = "/images/web-templates.jpg";
 
+function useImageFallback(slug: string) {
+  const candidates = useMemo(
+    () => CANDIDATES_BY_SLUG[slug]?.map((n) => `/images/${n}`) ?? [FALLBACK_IMG],
+    [slug]
+  );
+  const [idx, setIdx] = useState(0);
+  const src = candidates[idx] ?? FALLBACK_IMG;
+  const onError = () => setIdx((i) => (i + 1 < candidates.length ? i + 1 : i));
+  return { src, onError };
+}
+
 export default function CategoriesPage() {
   return (
     <main className="max-w-7xl mx-auto px-4 py-12">
@@ -52,8 +60,7 @@ export default function CategoriesPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {CATEGORIES.map((c) => {
-          const filename = FILENAME_BY_SLUG[c.slug];
-          const img = filename ? `/images/${filename}` : FALLBACK_IMG;
+          const { src, onError } = useImageFallback(c.slug);
           const desc = DESC_BY_LABEL[c.label] ?? "Explore products in this category.";
 
           return (
@@ -66,8 +73,8 @@ export default function CategoriesPage() {
               <div className="relative w-full bg-gray-50">
                 <div className="aspect-[16/9] md:aspect-[3/2] overflow-hidden">
                   <img
-                    src={img}
-                    onError={(e) => { (e.currentTarget as HTMLImageElement).src = FALLBACK_IMG; }}
+                    src={src}
+                    onError={onError}
                     alt={c.label}
                     className="h-full w-full object-contain p-2"
                     loading="lazy"

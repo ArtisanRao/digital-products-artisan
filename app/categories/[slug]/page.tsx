@@ -2,7 +2,9 @@
 import path from "node:path";
 import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
+import { products } from "@/data/products";
 
+/** UI copy per slug */
 const META: Record<string, { title: string; description: string }> = {
   "ai-and-chatgpt-guides":      { title: "AI & ChatGPT Guides",     description: "Guides, prompts and AI learning resources." },
   "planners-productivity":      { title: "Planners & Productivity", description: "Digital planners, journals and productivity tools." },
@@ -20,21 +22,21 @@ const META: Record<string, { title: string; description: string }> = {
   "social-media-kits":          { title: "Social Media Kits",       description: "Post templates and brandable assets for socials." },
 };
 
-const FALLBACK_BY_SLUG: Record<string, string> = {
-  "ai-and-chatgpt-guides":       "ai-&-chatgpt-guides.jpg",
-  "planners-productivity":       "planners-&-productivity.jpg",
-  "self-help-and-how-to":        "self-help-&-how-to.jpg",
-  "plr-mrr-bundles":             "plr-&-mrr-bundles.jpg",
-  "video-courses-and-training":  "video-courses-&-training.jpg",
-  "complete-shop-packages":      "complete-shop-packages.jpg",
-  "health-fitness-ebooks":       "health-&-fitness-ebooks.jpg",
-  "keto-diet-guides":            "keto-&-diet-guides.jpg",
-  "passive-income-side-hustles": "passive-income-&-side-hustles.jpg",
-  "web-templates":               "web-templates.jpg",
-  "digital-essentials-hub":      "digital-essentials-hub.jpg",   // ✅ updated
-  "social-media-kits":           "social-media-kits.jpg",
-  "fonts":                       "fonts.jpg",
-  "religious-ebooks":            "religious-ebooks.jpg",
+const FALLBACK_BY_SLUG: Record<string, string[]> = {
+  "ai-and-chatgpt-guides":       ["ai-&-chatgpt-guides.jpg", "ai-chatgpt-guides.jpg"],
+  "planners-productivity":       ["planners-&-productivity.jpg", "planners-productivity.jpg", "planners-productivity.png"],
+  "self-help-and-how-to":        ["self-help-&-how-to.jpg", "self-help-how-to.jpg"],
+  "plr-mrr-bundles":             ["plr-&-mrr-bundles.jpg", "plr-mrr-bundles.jpg"],
+  "video-courses-and-training":  ["video-courses-&-training.jpg", "video-courses-training.jpg"],
+  "complete-shop-packages":      ["complete-shop-packages.jpg"],
+  "health-fitness-ebooks":       ["health-&-fitness-ebooks.jpg", "health-fitness-ebooks.jpg"],
+  "keto-diet-guides":            ["keto-&-diet-guides.jpg", "keto-diet-guides.jpg"],
+  "passive-income-side-hustles": ["passive-income-&-side-hustles.jpg", "passive-income-side-hustles.jpg"],
+  "web-templates":               ["web-templates.jpg", "web-templates1.jpg", "web-templates2.jpg"],
+  "digital-essentials-hub":      ["digital-essentials-hub.jpg", "prompt-packs-&-ai-tools.jpg", "prompt-packs-ai-tools.jpg"],
+  "social-media-kits":           ["social-media-kits.jpg", "social-media-kits-cover.jpg"],
+  "fonts":                       ["fonts-&-icons.jpg", "fonts.jpg"],
+  "religious-ebooks":            ["religious-ebooks.jpg"],
 };
 
 export function generateStaticParams() {
@@ -56,7 +58,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }) 
   };
 }
 
-/** List files in /public/images that start with the slug (if you later rename files to match). */
+/** Optional: show any root images that start with the slug (if you add more later) */
 function listRootImagesBySlugPrefix(slug: string) {
   const dir = path.join(process.cwd(), "public", "images");
   try {
@@ -64,17 +66,13 @@ function listRootImagesBySlugPrefix(slug: string) {
       .readdirSync(dir, { withFileTypes: true })
       .filter((d) => d.isFile() && /\.(png|jpe?g|webp|avif|gif)$/i.test(d.name))
       .map((d) => d.name);
-
-    const prefix = `${slug}`;
-    const matches = all
-      .filter((name) => name.toLowerCase().startsWith(prefix.toLowerCase()))
+    const prefix = `${slug}`.toLowerCase();
+    return all
+      .filter((name) => name.toLowerCase().startsWith(prefix))
       .map((name) => ({
         src: `/images/${name}`,
         title: name.replace(/\.[^.]+$/, "").replace(/[-_]/g, " "),
-      }))
-      .sort((a, b) => a.src.localeCompare(b.src, undefined, { numeric: true }));
-
-    return matches;
+      }));
   } catch {
     return [];
   }
@@ -102,40 +100,81 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     );
   }
 
-  const items = listRootImagesBySlugPrefix(slug);
-  const fallback = FALLBACK_BY_SLUG[slug] ? `/images/${FALLBACK_BY_SLUG[slug]}` : undefined;
+  // === Show products belonging to this category label ===
+  const label = meta.title; // products use the label string in `category`
+  const catProducts = products.filter((p) => p.category === label);
+
+  // Image fallbacks (covers)
+  const gallery = listRootImagesBySlugPrefix(slug);
+  const fallbacks = FALLBACK_BY_SLUG[slug] ?? [];
+  const fallbackSrc = fallbacks.length ? `/images/${fallbacks[0]}` : undefined;
 
   return (
     <main className="container mx-auto px-4 py-16">
       <h1 className="text-3xl md:text-4xl font-bold mb-2">{meta.title}</h1>
       <InlineMore text={meta.description} lines={1} minChars={40} className="text-gray-700 mb-2" />
 
-      {items.length ? (
-        <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-          {items.map((it) => (
-            <div key={it.src} className="rounded-xl border bg-white hover:shadow-lg transition">
-              <img src={it.src} alt={it.title} className="w-full h-auto object-contain p-2 rounded-xl" />
-              <div className="px-3 py-2">
-                <div className="text-sm font-medium line-clamp-1">{it.title}</div>
+      {catProducts.length > 0 ? (
+        <>
+          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {catProducts.map((p) => (
+              <Link
+                key={p.slug}
+                href={`/products/${p.slug}`}
+                className="rounded-xl border bg-white hover:shadow-lg transition overflow-hidden"
+              >
+                <div className="aspect-[3/2] bg-gray-50">
+                  <img
+                    src={p.image}
+                    alt={p.title}
+                    className="w-full h-full object-contain p-3"
+                    loading="lazy"
+                  />
+                </div>
+                <div className="px-4 py-3">
+                  <h3 className="font-semibold line-clamp-2">{p.title}</h3>
+                  <p className="text-sm text-gray-600 line-clamp-2 mt-1">{p.description}</p>
+                  <div className="mt-2 font-semibold">${p.price.toFixed(2)}</div>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          {(gallery.length > 0 || fallbackSrc) && (
+            <div className="mt-10">
+              <h2 className="text-lg font-semibold">Category Covers</h2>
+              <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+                {(gallery.length ? gallery : [{ src: fallbackSrc!, title: `${meta.title} cover` }]).map((it) => (
+                  <div key={it.src} className="rounded-xl border bg-white hover:shadow-lg transition">
+                    <img src={it.src} alt={it.title} className="w-full h-auto object-contain p-2 rounded-xl" />
+                  </div>
+                ))}
               </div>
             </div>
-          ))}
-        </div>
-      ) : fallback ? (
-        <div className="mt-8 rounded-xl border bg-white p-2">
-          <div className="aspect-[16/9] md:aspect-[3/2]">
-            <img src={fallback} alt={`${meta.title} cover`} className="h-full w-full object-contain" />
-          </div>
-        </div>
+          )}
+        </>
       ) : (
-        <p className="mt-6 text-gray-600">
-          No matching images found in <code>/public/images</code>.
-        </p>
-      )}
+        // No products yet → just show the single cover (or gallery if present)
+        <>
+          {(gallery.length > 0 || fallbackSrc) ? (
+            <div className="mt-8 rounded-xl border bg-white p-2">
+              <div className="aspect-[16/9] md:aspect-[3/2]">
+                <img
+                  src={(gallery[0]?.src ?? fallbackSrc)!}
+                  alt={`${meta.title} cover`}
+                  className="h-full w-full object-contain"
+                />
+              </div>
+            </div>
+          ) : (
+            <p className="mt-6 text-gray-600">No matching images found in <code>/public/images</code>.</p>
+          )}
 
-      <div className="mt-8">
-        <Link href="/products" className="inline-block underline">Browse all products →</Link>
-      </div>
+          <div className="mt-8">
+            <Link href="/products" className="inline-block underline">Browse all products →</Link>
+          </div>
+        </>
+      )}
     </main>
   );
 }
