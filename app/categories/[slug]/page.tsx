@@ -31,7 +31,7 @@ const FALLBACK_BY_SLUG: Record<string, string> = {
   "keto-diet-guides":            "keto-&-diet-guides.jpg",
   "passive-income-side-hustles": "passive-income-&-side-hustles.jpg",
   "web-templates":               "web-templates.jpg",
-  "digital-essentials-hub":      "prompt-packs-&-ai-tools.jpg",
+  "digital-essentials-hub":      "digital-essentials-hub.jpg",   // ✅ updated
   "social-media-kits":           "social-media-kits.jpg",
   "fonts":                       "fonts.jpg",
   "religious-ebooks":            "religious-ebooks.jpg",
