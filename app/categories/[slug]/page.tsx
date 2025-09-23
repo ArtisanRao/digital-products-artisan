@@ -31,10 +31,11 @@ const LEGACY_TO_NEW: Record<string, string> = {
   "fonts": "fonts-and-icons",
 };
 
-/** As an absolute path inside /public */
+/** Paths */
 const pub = (...p: string[]) => path.join(process.cwd(), "public", ...p);
+const GLOBAL_DEFAULT = "/images/categories/_default/card.jpg";
 
-/** Return first existing path (absolute) and its public href */
+/** Find first existing (absolute + public href) */
 function firstExistingPublicHref(cands: string[]): { abs: string; href: string } | null {
   for (const href of cands) {
     const abs = pub(href.replace(/^\//, ""));
@@ -43,15 +44,14 @@ function firstExistingPublicHref(cands: string[]): { abs: string; href: string }
   return null;
 }
 
-/** Build category cover (card.*) and thumbs (thumb-*.ext) from /public/images/categories/<slug> */
+/** Read curated cover + thumbs from /public/images/categories/<slug> ONLY */
 function readCategoryGallery(slug: string) {
   const dirAbs = pub("images", "categories", slug);
-  const coverCands = [
+  const cover = firstExistingPublicHref([
     `/images/categories/${slug}/card.jpg`,
     `/images/categories/${slug}/card.png`,
     `/images/categories/${slug}/card.webp`,
-  ];
-  const cover = firstExistingPublicHref(coverCands)?.href;
+  ])?.href;
 
   let thumbs: string[] = [];
   if (fs.existsSync(dirAbs)) {
@@ -64,26 +64,6 @@ function readCategoryGallery(slug: string) {
   return { cover, thumbs };
 }
 
-/** Last-resort root-level fallbacks you already keep around */
-const ROOT_FALLBACKS_BY_SLUG: Record<string, string[]> = {
-  "ai-and-chatgpt-guides":       ["ai-&-chatgpt-guides.jpg", "ai-chatgpt-guides.jpg"],
-  "planners-and-productivity":   ["planners-&-productivity.jpg", "planners-productivity.jpg", "planners-productivity.png"],
-  "self-help-and-how-to":        ["self-help-&-how-to.jpg", "self-help-how-to.jpg"],
-  "plr-and-mrr-bundles":         ["plr-&-mrr-bundles.jpg", "plr-mrr-bundles.jpg"],
-  "video-courses-and-training":  ["video-courses-&-training.jpg", "video-courses-training.jpg"],
-  "complete-shop-packages":      ["complete-shop-packages.jpg"],
-  "health-and-fitness-ebooks":   ["health-&-fitness-ebooks.jpg", "health-fitness-ebooks.jpg"],
-  "keto-and-diet-guides":        ["keto-&-diet-guides.jpg", "keto-diet-guides.jpg"],
-  "passive-income-and-side-hustles": ["passive-income-&-side-hustles.jpg", "passive-income-side-hustles.jpg"],
-  "web-templates":               ["web-templates.jpg", "web-templates1.jpg", "web-templates2.jpg"],
-  "digital-essentials-hub":      ["digital-essentials-hub.jpg", "prompt-packs-&-ai-tools.jpg", "prompt-packs-ai-tools.jpg"],
-  "social-media-kits":           ["social-media-kits.jpg", "social-media-kits-cover.jpg"],
-  "fonts-and-icons":             ["fonts-&-icons.jpg", "fonts.jpg"],
-  "religious-ebooks":            ["religious-ebooks.jpg"],
-};
-
-const GLOBAL_DEFAULT = "/images/categories/_default/card.jpg";
-
 /** Static params for new and legacy slugs */
 export function generateStaticParams() {
   const newSlugs = Object.keys(META);
@@ -92,10 +72,7 @@ export function generateStaticParams() {
 }
 
 type Params = { slug: string };
-
-function normalizeSlug(s: string) {
-  return LEGACY_TO_NEW[s] ?? s;
-}
+const normalizeSlug = (s: string) => LEGACY_TO_NEW[s] ?? s;
 
 export async function generateMetadata({ params }: { params: Promise<Params> }) {
   const { slug: raw } = await params;
@@ -134,24 +111,20 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     );
   }
 
-  // --- Products belonging to this category (match by label/title) ---
+  // Products in this category (match by label/title)
   const label = meta.title;
   const catProducts = products.filter((p) => p.category === label);
 
-  // --- Gallery from /images/categories/<slug> ---
+  // Curated gallery from the category folder
   const { cover, thumbs } = readCategoryGallery(slug);
-
-  // --- Strict, curated cover: use card.* if present; else root fallbacks; else global default ---
-  const rootFallbacks = (ROOT_FALLBACKS_BY_SLUG[slug] ?? []).map((n) => `/images/${n}`);
-  const resolvedRoot = firstExistingPublicHref(rootFallbacks)?.href;
-  const coverSrc = cover ?? resolvedRoot ?? GLOBAL_DEFAULT;
+  const coverSrc = cover ?? GLOBAL_DEFAULT;
 
   return (
     <main className="container mx-auto px-4 py-16">
       <h1 className="text-3xl md:text-4xl font-bold mb-2">{meta.title}</h1>
       <InlineMore text={meta.description} lines={1} minChars={40} className="text-gray-700 mb-2" />
 
-      {/* Curated cover */}
+      {/* Curated cover only */}
       <div className="mt-6 rounded-xl border bg-white p-2">
         <div className="aspect-[16/9] md:aspect-[3/2]">
           <img
