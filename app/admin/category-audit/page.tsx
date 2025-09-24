@@ -1,7 +1,7 @@
 // app/admin/category-audit/page.tsx
-export const dynamic = "force-dynamic";
+"use client"; // ← must be first line
 
-"use client";
+export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
 
