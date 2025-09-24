@@ -33,7 +33,6 @@ const LEGACY_TO_NEW: Record<string, string> = {
 
 /** Paths */
 const pub = (...p: string[]) => path.join(process.cwd(), "public", ...p);
-const GLOBAL_DEFAULT = "/images/categories/_default/card.jpg";
 
 /** Find first existing (absolute + public href) */
 function firstExistingPublicHref(cands: string[]): { abs: string; href: string } | null {
@@ -44,24 +43,16 @@ function firstExistingPublicHref(cands: string[]): { abs: string; href: string }
   return null;
 }
 
-/** Read curated cover + thumbs from /public/images/categories/<slug> ONLY */
-function readCategoryGallery(slug: string) {
+/** Read thumbs from /public/images/categories/<slug> ONLY (no hero cover) */
+function readCategoryThumbs(slug: string) {
   const dirAbs = pub("images", "categories", slug);
-  const cover = firstExistingPublicHref([
-    `/images/categories/${slug}/card.jpg`,
-    `/images/categories/${slug}/card.png`,
-    `/images/categories/${slug}/card.webp`,
-  ])?.href;
+  if (!fs.existsSync(dirAbs)) return [] as string[];
 
-  let thumbs: string[] = [];
-  if (fs.existsSync(dirAbs)) {
-    const files = fs.readdirSync(dirAbs);
-    thumbs = files
-      .filter((f) => /^thumb-\d+\.(png|jpe?g|webp|avif)$/i.test(f))
-      .sort()
-      .map((f) => `/images/categories/${slug}/${f}`);
-  }
-  return { cover, thumbs };
+  const files = fs.readdirSync(dirAbs);
+  return files
+    .filter((f) => /^thumb-\d+\.(png|jpe?g|webp|avif)$/i.test(f))
+    .sort()
+    .map((f) => `/images/categories/${slug}/${f}`);
 }
 
 /** Static params for new and legacy slugs */
@@ -115,29 +106,17 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
   const label = meta.title;
   const catProducts = products.filter((p) => p.category === label);
 
-  // Curated gallery from the category folder
-  const { cover, thumbs } = readCategoryGallery(slug);
-  const coverSrc = cover ?? GLOBAL_DEFAULT;
+  // Thumbs only (no repeated hero)
+  const thumbs = readCategoryThumbs(slug);
 
   return (
     <main className="container mx-auto px-4 py-16">
       <h1 className="text-3xl md:text-4xl font-bold mb-2">{meta.title}</h1>
       <InlineMore text={meta.description} lines={1} minChars={40} className="text-gray-700 mb-2" />
 
-      {/* Curated cover only */}
-      <div className="mt-6 rounded-xl border bg-white p-2">
-        <div className="aspect-[16/9] md:aspect-[3/2]">
-          <img
-            src={coverSrc}
-            alt={`${meta.title} cover`}
-            className="h-full w-full object-contain"
-          />
-        </div>
-      </div>
-
       {/* Thumbs gallery from the category folder */}
       {thumbs.length > 0 && (
-        <div className="mt-8">
+        <div className="mt-6">
           <h2 className="text-lg font-semibold">More previews</h2>
           <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
             {thumbs.map((src) => (
