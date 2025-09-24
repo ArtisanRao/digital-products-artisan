@@ -59,11 +59,7 @@ const normalize = (s: string) =>
     .replace(/\be-?books?\b/g, "ebooks")
     .replace(/[^a-z0-9]+/g, "-");
 
-function sameCategory(a: string, b: string) {
-  return normalize(a) === normalize(b);
-}
-
-/** Minimal, safe aliasing for Religious eBooks only */
+/** minimal aliasing for tricky categories */
 const CATEGORY_STRICT_ALIASES: Record<string, string[]> = {
   "religious-ebooks": ["religion-ebooks", "religious-ebook", "religion-ebook"],
 };
@@ -117,32 +113,27 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     );
   }
 
-  // STRICT match: only items whose category/categorySlug/categories/tags/collection
-  // equal this category's label or slug (normalized). No substring fuzziness.
+  // STRICT keys we accept for this page (normalized)
   const wanted = new Set([
     normalize(meta.label),
     normalize(slug),
     ...(CATEGORY_STRICT_ALIASES[slug] ?? []).map((a) => normalize(a)),
   ]);
 
+  // Only use each product's OWN fields — do NOT inject current page's label/slug
   const catProducts = products.filter((p: any) => {
-    const cands: string[] = [];
-    if (typeof p.category === "string") cands.push(p.category);
-    if (Array.isArray(p.categories)) cands.push(...p.categories);
-    if (typeof p.categorySlug === "string") cands.push(p.categorySlug);
-    if (typeof p.collection === "string") cands.push(p.collection);
-    if (Array.isArray(p.tags)) cands.push(...p.tags);
-
-    // sometimes authors put the visible label directly:
-    cands.push(meta.label, slug);
-
-    return cands.some((c) => wanted.has(normalize(String(c))));
+    const fields: string[] = [];
+    if (typeof p.category === "string") fields.push(p.category);
+    if (typeof p.categorySlug === "string") fields.push(p.categorySlug);
+    if (typeof p.collection === "string") fields.push(p.collection);
+    if (Array.isArray(p.categories)) fields.push(...p.categories);
+    if (Array.isArray(p.tags)) fields.push(...p.tags);
+    // normalize and compare exact equality
+    return fields.some((f) => wanted.has(normalize(String(f))));
   });
 
-  // Enrich with resolved cover + up to 3 thumbs (used by the grid)
   const items = catProducts.map((p: any) => ({
     ...p,
-    // NEVER override the true product title
     image: p.image ?? resolveProductCover(p),
     gallery: Array.isArray(p.images) && p.images.length ? p.images : resolveProductThumbs(p.slug),
   }));
