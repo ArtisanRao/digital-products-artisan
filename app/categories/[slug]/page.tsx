@@ -45,7 +45,11 @@ function firstExistingPublicHref(cands: (string | undefined)[]): { abs: string; 
   return null;
 }
 
-/** Resolve a product cover: p.image → /images/products/<slug>/cover.* → placeholder */
+/** Resolve a product cover:
+ *  1) p.image
+ *  2) /images/products/<slug>/cover.(jpg|png|webp)
+ *  3) /images/placeholder.jpg
+ */
 function resolveProductCover(p: { slug?: string; image?: string }) {
   const fallback = "/images/placeholder.jpg";
   if (!p.slug) return p.image ?? fallback;
@@ -59,7 +63,7 @@ function resolveProductCover(p: { slug?: string; image?: string }) {
   );
 }
 
-/** Up to 3 mockups from /public/images/products/<slug> */
+/** Pick up to 3 mockups from /public/images/products/<slug> */
 function resolveProductThumbs(slug?: string) {
   if (!slug) return [] as string[];
   const dir = pub("images", "products", slug);
@@ -68,70 +72,20 @@ function resolveProductThumbs(slug?: string) {
     .readdirSync(dir)
     .filter((f) => /\.(png|jpe?g|webp|avif)$/i.test(f))
     .filter((f) => /^(mock|thumb|preview)[-_]?\d*/i.test(f) || /-mockup/i.test(f))
-    .sort();
+    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
   return files.slice(0, 3).map((f) => `/images/products/${slug}/${f}`);
 }
 
-/* ----------------- Robust category matching ----------------- */
-const norm = (s: string) =>
+/** Helpers to normalize comparisons */
+const toSlug = (s: string) =>
   s
     .toLowerCase()
+    .trim()
     .replace(/&/g, "and")
-    .replace(/e-?books?/g, "ebooks")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
-function synonymsForSlug(slug: string): string[] {
-  const base = norm(slug);
-  const extras: string[] = [];
-  if (slug === "religious-ebooks") {
-    extras.push(
-      "religious-ebooks",
-      "religion-ebooks",
-      "christian-ebooks",
-      "faith-ebooks",
-      "devotional-ebooks",
-      "spiritual-ebooks",
-      "spirituality-ebooks"
-    );
-  }
-  if (slug === "fonts-and-icons") {
-    extras.push("fonts", "icons", "font-families", "icon-sets");
-  }
-  if (slug === "plr-and-mrr-bundles") {
-    extras.push("plr-bundles", "mrr-bundles", "plr-and-mrr", "plr-mrr");
-  }
-  return Array.from(new Set([base, ...extras.map(norm)]));
-}
-
-function matchesCategory(slug: string, product: any) {
-  const targets = synonymsForSlug(slug);
-  const fields: string[] = [
-    product.category,
-    product.categorySlug,
-    product.collection,
-    product.type,
-    ...(Array.isArray(product.tags) ? product.tags : []),
-  ]
-    .filter(Boolean)
-    .map(String);
-
-  const normalized = fields.map(norm);
-
-  // Exact match against synonyms
-  if (normalized.some((f) => targets.includes(f))) return true;
-
-  // Loose contains: e.g. "religious-ebooks-2025" or "ebooks-religious"
-  if (normalized.some((f) => targets.some((t) => f.includes(t) || t.includes(f)))) return true;
-
-  // Final fallback: exact equals on the meta title once normalized
-  const meta = META[slug];
-  if (meta && product.category) {
-    return norm(String(product.category)) === norm(meta.title);
-  }
-
-  return false;
-}
+const norm = (s: string) => s.toLowerCase().trim();
 
 /** Static params for new + legacy slugs */
 export function generateStaticParams() {
@@ -157,6 +111,43 @@ export async function generateMetadata({ params }: { params: Promise<Params> }) 
   };
 }
 
+/** Robust category matcher: checks label and slug across common product fields */
+function productBelongsToCategory(p: any, label: string, slug: string) {
+  const labelN = norm(label);
+  const slugN = toSlug(slug);
+  const labelSlug = toSlug(label);
+
+  const bucket: string[] = [];
+
+  // Strings
+  if (p.category) bucket.push(String(p.category));
+  if (p.collection) bucket.push(String(p.collection));
+  if (p.type) bucket.push(String(p.type));
+  if (p.categorySlug) bucket.push(String(p.categorySlug));
+
+  // Arrays
+  if (Array.isArray(p.categories)) bucket.push(...p.categories.map(String));
+  if (Array.isArray(p.labels)) bucket.push(...p.labels.map(String));
+  if (Array.isArray(p.tags)) bucket.push(...p.tags.map(String));
+
+  // Normalize and test
+  for (const s of bucket) {
+    const sNorm = norm(s);
+    const sSlug = toSlug(s);
+    if (sNorm === labelN) return true;           // exact label (case-insens)
+    if (sSlug === slugN) return true;            // exact slug match
+    if (sSlug === labelSlug) return true;        // label → slug match
+  }
+
+  // Soft contains (helps if a value is like "Religious eBooks & Devotionals")
+  for (const s of bucket) {
+    const sNorm = norm(s);
+    if (sNorm.includes(labelN)) return true;
+  }
+
+  return false;
+}
+
 export default async function CategoryPage({ params }: { params: Promise<Params> }) {
   const { slug: raw } = await params;
   const slug = normalizeSlug(raw);
@@ -180,16 +171,27 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     );
   }
 
-  // Robust product selection for this category
-  const catProducts = products.filter((p) => matchesCategory(slug, p));
+  // ✅ Robust match across product fields
+  const matched = products.filter((p: any) => productBelongsToCategory(p, meta.title, slug));
 
-  // Enrich with resolved cover + up to 3 thumbs (used by CategoryProductGrid)
-  const items = catProducts.map((p: any) => ({
-    ...p,
-    // Ensure we keep the true product title
-    title: p.title ?? p.name ?? p.slug ?? "Untitled",
+  // Enrich with resolved cover + up to 3 thumbs for the grid
+  const items = matched.map((p: any) => ({
+    // Make sure AddToCartButton path works when id is numeric
+    id: p.id,
+    slug: p.slug,
+    // Force real product name, not subcategory:
+    name: p.title,
+    title: p.title,
+    description: p.description,
+    price: p.price,
+    currency: (p.currency as string | undefined) ?? "€",
     image: p.image ?? resolveProductCover(p),
-    gallery: p.gallery && p.gallery.length ? p.gallery : resolveProductThumbs(p.slug),
+    gallery: p.images?.length ? p.images : resolveProductThumbs(p.slug),
+    type: p.type,
+    collection: p.collection,
+    category: p.category,
+    priceId: (p as any).priceId,
+    buyUrl: (p as any).buyUrl,
   }));
 
   return (
