@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
-import CategoryProductGrid from "@/components/category/CategoryProductGrid"; // client grid with Buy/Add
+import CategoryProductGrid from "@/components/categories/CategoryProductGrid";
 import { products } from "@/data/products";
 
 /** ---- Category metadata (normalized slugs) ---- */

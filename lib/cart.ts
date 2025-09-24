@@ -8,6 +8,7 @@ export type CartItem = {
   image?: string;
   qty: number;
 };
+
 const KEY = "dpa:cart";
 export const CART_EVENT = "cart:change";
 
@@ -20,7 +21,9 @@ function write(items: CartItem[]) {
   window.dispatchEvent(new CustomEvent(CART_EVENT, { detail: { count: count() } }));
 }
 
-export function count(): number { return read().reduce((n, it) => n + it.qty, 0); }
+export function count(): number {
+  return read().reduce((n, it) => n + it.qty, 0);
+}
 
 export function add(item: Omit<CartItem, "qty">, qty = 1) {
   const items = read();
@@ -30,7 +33,9 @@ export function add(item: Omit<CartItem, "qty">, qty = 1) {
 }
 
 export function remove(slug: string, qty = 1) {
-  const items = read().map((x) => (x.slug === slug ? { ...x, qty: x.qty - qty } : x)).filter((x) => x.qty > 0);
+  const items = read()
+    .map((x) => (x.slug === slug ? { ...x, qty: x.qty - qty } : x))
+    .filter((x) => x.qty > 0);
   write(items);
 }
 

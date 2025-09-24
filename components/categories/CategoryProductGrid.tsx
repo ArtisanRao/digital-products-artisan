@@ -9,26 +9,26 @@ export type GridProduct = {
   title: string;
   category: string;
   price: number | string;
-  image?: string;         // cover
-  gallery?: string[];     // mockups
+  image?: string;        // cover
+  gallery?: string[];    // mockups (first 3 shown)
   description?: string;
-  priceId?: string;       // if you use Stripe Checkout
-  buyUrl?: string;        // optional direct checkout url
+  priceId?: string;      // if you use Stripe Checkout
+  buyUrl?: string;       // optional direct checkout URL
 };
 
 function fmtPrice(p: number | string) {
   if (typeof p === "number") {
-    try { return new Intl.NumberFormat(undefined, { style: "currency", currency: "EUR" }).format(p); }
-    catch { return `€${p.toFixed(2)}`; }
+    try {
+      return new Intl.NumberFormat(undefined, { style: "currency", currency: "EUR" }).format(p);
+    } catch {
+      return `€${p.toFixed(2)}`;
+    }
   }
   return p;
 }
 
 async function buyNow(p: GridProduct) {
-  // 1) use provided checkout url if present
   if (p.buyUrl) { window.location.href = p.buyUrl; return; }
-
-  // 2) try your Stripe endpoint (/api/stripe/create exists in your project)
   try {
     const res = await fetch("/api/stripe/create", {
       method: "POST",
@@ -42,7 +42,6 @@ async function buyNow(p: GridProduct) {
     const data = await res.json();
     if (data?.url) { window.location.href = data.url; return; }
   } catch {}
-  // 3) fallback to product page
   window.location.href = `/products/${p.slug}#buy`;
 }
 
@@ -50,7 +49,10 @@ function AddToCart({ p }: { p: GridProduct }) {
   return (
     <button
       onClick={() => {
-        const price = typeof p.price === "number" ? p.price : Number(String(p.price).replace(/[^\d.]/g, "")) || 0;
+        const price =
+          typeof p.price === "number"
+            ? p.price
+            : Number(String(p.price).replace(/[^\d.]/g, "")) || 0;
         add({ slug: p.slug, title: p.title, price, image: p.image }, 1);
       }}
       className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
