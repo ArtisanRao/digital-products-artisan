@@ -1,62 +1,35 @@
 ﻿// app/categories/[slug]/page.tsx
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-
 import fs from "node:fs";
 import path from "node:path";
 import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
 import CategoryProductGrid from "@/components/categories/CategoryProductGrid";
 import { products } from "@/data/products";
+import {
+  CATEGORY_BY_SLUG,
+  CATEGORY_SLUG_ALIASES,
+} from "@/data/categories";
 
-/** ---- Category metadata (normalized slugs) ---- */
-const META: Record<string, { title: string; description: string }> = {
-  "ai-and-chatgpt-guides":       { title: "AI & ChatGPT Guides",     description: "Guides, prompts and AI learning resources." },
-  "planners-and-productivity":   { title: "Planners & Productivity", description: "Digital planners, journals and productivity tools." },
-  "self-help-and-how-to":        { title: "Self-Help & How-To",      description: "Practical how-to guides and self-improvement." },
-  "plr-and-mrr-bundles":         { title: "PLR & MRR Bundles",       description: "Done-for-you PLR/MRR products and kits." },
-  "video-courses-and-training":  { title: "Video Courses & Training",description: "Structured video lessons and trainings." },
-  "complete-shop-packages":      { title: "Complete Shop Packages",  description: "Turn-key storefront bundles and assets." },
-  "health-and-fitness-ebooks":   { title: "Health & Fitness eBooks", description: "Nutrition, fitness and wellness books." },
-  "keto-and-diet-guides":        { title: "Keto & Diet Guides",      description: "Keto and nutrition programs and meal plans." },
-  "passive-income-and-side-hustles": { title: "Passive Income & Side Hustles", description: "Monetization playbooks and templates." },
-  "web-templates":               { title: "Web Templates",           description: "Website templates, UI kits and themes." },
-  "digital-essentials-hub":      { title: "Digital Essentials Hub",  description: "Prompt packs, automations, and utilities." },
-  "fonts-and-icons":             { title: "Fonts & Icons",           description: "Font families and icon sets." },
-  "religious-ebooks":            { title: "Religious eBooks",        description: "Faith-centered books, devotionals and study guides." },
-  "social-media-kits":           { title: "Social Media Kits",       description: "Post templates and brandable assets for socials." },
-};
-
-/** Backward-compat slug aliases (old → new) */
-const LEGACY_TO_NEW: Record<string, string> = {
-  "planners-productivity": "planners-and-productivity",
-  "plr-mrr-bundles": "plr-and-mrr-bundles",
-  "health-fitness-ebooks": "health-and-fitness-ebooks",
-  "keto-diet-guides": "keto-and-diet-guides",
-  "fonts": "fonts-and-icons",
-};
-
+/* ---------- FS helpers for covers/thumbs (non-blocking) ---------- */
 const pub = (...p: string[]) => path.join(process.cwd(), "public", ...p);
-
-/** File helpers */
-function firstExistingPublicHref(cands: (string | undefined)[]): { abs: string; href: string } | null {
+function firstExistingPublicHref(cands: (string | undefined)[]) {
   for (const href of cands) {
     if (!href) continue;
     const abs = pub(href.replace(/^\//, ""));
-    if (fs.existsSync(abs)) return { abs, href };
+    if (fs.existsSync(abs)) return href;
   }
-  return null;
+  return undefined;
 }
 function resolveProductCover(p: { slug?: string; image?: string }) {
   const fallback = "/images/placeholder.jpg";
-  if (!p.slug) return p.image ?? fallback;
+  if (!p?.slug) return p?.image ?? fallback;
   return (
     firstExistingPublicHref([
       p.image,
       `/images/products/${p.slug}/cover.jpg`,
       `/images/products/${p.slug}/cover.png`,
       `/images/products/${p.slug}/cover.webp`,
-    ])?.href ?? fallback
+    ]) ?? fallback
   );
 }
 function resolveProductThumbs(slug?: string) {
@@ -66,48 +39,59 @@ function resolveProductThumbs(slug?: string) {
   const files = fs
     .readdirSync(dir)
     .filter((f) => /\.(png|jpe?g|webp|avif)$/i.test(f))
-    .filter((f) => /^(mock|thumb|preview)[-_]?\d*/i.test(f) || /-mockup/i.test(f))
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-  return files.slice(0, 3).map((f) => `/images/products/${slug}/${f}`);
+  // Prefer mock/preview-style names first
+  const mocks = files.filter(
+    (f) => /^(mock|thumb|preview)[-_]?\d*/i.test(f) || /-mockup/i.test(f)
+  );
+  const rest = files.filter(
+    (f) => !(/^(mock|thumb|preview)[-_]?\d*/i.test(f) || /-mockup/i.test(f))
+  );
+  return [...mocks, ...rest].slice(0, 3).map((f) => `/images/products/${slug}/${f}`);
 }
 
-/** Normalizers */
-const norm = (s: string) => s.toLowerCase().trim();
-const toSlug = (s: string) =>
-  s
+/* ---------- Category normalization ---------- */
+function norm(s: string) {
+  return s
     .toLowerCase()
     .trim()
     .replace(/&/g, "and")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-const STOP = new Set([
-  "and","the","of","a","an","to","for","in","on","with",
-  "ebook","ebooks","book","books","e-book","e-books",
-  "template","templates","bundle","bundles","digital","kit","kits"
-]);
-const tokenize = (s: string) => toSlug(s).split("-").filter(t => t && !STOP.has(t));
+    .replace(/\be-?books?\b/g, "ebooks")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
-/** Aliases (helps religious/faith matching too) */
-const CATEGORY_ALIASES: Record<string,string[]> = {
-  "religious-ebooks": ["religious","religion","faith","christian","christianity","devotional","devotionals","bible","scripture","spiritual","spirituality"],
-};
+function altForms(label: string) {
+  const base = label.trim();
+  const set = new Set<string>();
+  const push = (x: string) => set.add(norm(x));
+  push(base);
+  push(base.replace(/&/g, "and"));
+  push(base.replace(/\band\b/gi, "&"));
+  push(base.replace(/\be-?books?\b/gi, "ebooks"));
+  // also try singular (rough heuristic)
+  push(base.replace(/\bebooks\b/i, "ebook"));
+  return set;
+}
 
-/** Static params */
+/* ---------- Static params ---------- */
 export function generateStaticParams() {
-  const newSlugs = Object.keys(META);
-  const legacySlugs = Object.keys(LEGACY_TO_NEW);
-  return [...newSlugs, ...legacySlugs].map((slug) => ({ slug }));
+  const slugs = Object.keys(CATEGORY_BY_SLUG);
+  const legacy = Object.keys(CATEGORY_SLUG_ALIASES);
+  return [...slugs, ...legacy].map((slug) => ({ slug }));
 }
 
 type Params = { slug: string };
-const normalizeSlug = (s: string) => LEGACY_TO_NEW[s] ?? s;
+const normalizeSlug = (s: string) => CATEGORY_SLUG_ALIASES[s] ?? s;
 
+/* ---------- Metadata ---------- */
 export async function generateMetadata({ params }: { params: Promise<Params> }) {
   const { slug: raw } = await params;
   const slug = normalizeSlug(raw);
-  const m = META[slug];
-  const title = m ? `${m.title} | Digital Products Artisan` : "Digital Products | Digital Products Artisan";
-  const description = m?.description ?? "Browse our curated digital products.";
+  const meta = CATEGORY_BY_SLUG[slug];
+  const title = meta ? `${meta.label} | Digital Products Artisan` : "Digital Products | Digital Products Artisan";
+  const description = meta?.description ?? "Browse our curated digital products.";
   return {
     title,
     description,
@@ -116,55 +100,16 @@ export async function generateMetadata({ params }: { params: Promise<Params> }) 
   };
 }
 
-/** STRICT direct checks first, then soft token checks */
-function productBelongsToCategory(p: any, catLabel: string, catSlug: string) {
-  const labelN = norm(catLabel);
-  const labelSlug = toSlug(catLabel);
-  const slugN = toSlug(catSlug);
-
-  // Candidate single-value fields
-  const singles = [p.category, p.categorySlug, p.collection, p.type, p.section, p.genre];
-  for (const s of singles) {
-    if (!s) continue;
-    const sN = norm(String(s));
-    const sSlug = toSlug(String(s));
-    if (sN === labelN || sSlug === slugN || sSlug === labelSlug) return true;
-  }
-
-  // Arrays
-  const arrays = [p.categories, p.labels, p.tags];
-  for (const arr of arrays) {
-    if (!Array.isArray(arr)) continue;
-    for (const s of arr) {
-      const sN = norm(String(s));
-      const sSlug = toSlug(String(s));
-      if (sN === labelN || sSlug === slugN || sSlug === labelSlug) return true;
-    }
-  }
-
-  // Soft: token overlap
-  const labelTokens = new Set([
-    ...tokenize(catLabel),
-    ...tokenize(catSlug),
-    ...(CATEGORY_ALIASES[slugN] ?? []),
-  ]);
-  const bucket: string[] = [];
-  for (const s of singles) if (s) bucket.push(String(s));
-  for (const arr of arrays) if (Array.isArray(arr)) bucket.push(...arr.map(String));
-  if (bucket.some(s => tokenize(s).some(t => labelTokens.has(t)))) return true;
-
-  return false;
-}
-
+/* ---------- Page ---------- */
 export default async function CategoryPage({ params }: { params: Promise<Params> }) {
   const { slug: raw } = await params;
   const slug = normalizeSlug(raw);
-  const meta = META[slug];
+  const meta = CATEGORY_BY_SLUG[slug];
 
   if (!meta) {
     const pretty = slug.replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
     return (
-      <main className="container mx-auto px-4 py-16" data-catgrid="v3">
+      <main className="container mx-auto px-4 py-16">
         <h1 className="text-3xl md:text-4xl font-bold mb-2">{pretty}</h1>
         <InlineMore
           text="We couldn’t find a dedicated page for this category yet. Explore best sellers below or visit all products."
@@ -179,30 +124,57 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     );
   }
 
-  // Use strict direct match first (this mirrors what used to work), then token fallback
-  const matched = products.filter((p: any) => productBelongsToCategory(p, meta.title, slug));
+  // Robust matching against product.category / product.categories / product.tags
+  const want = altForms(meta.label);
+  const matches = (p: any) => {
+    const cand: string[] = [];
 
-  // Build items for the grid — always use real product name
-  const items = matched.map((p: any) => ({
-    id: p.id,
-    slug: p.slug,
-    name: p.title,                 // ✅ ensure product title, not subcategory label
-    title: p.title,
-    description: p.description,
-    price: p.price,
-    currency: p.currency ?? "€",
+    if (typeof p.category === "string") cand.push(p.category);
+    if (Array.isArray(p.categories)) cand.push(...p.categories);
+    if (Array.isArray(p.tags)) cand.push(...p.tags);
+    if (typeof p.collection === "string") cand.push(p.collection);
+
+    // Some data stores category as the slug; include that too
+    if (typeof p.categorySlug === "string") cand.push(p.categorySlug);
+
+    // Loose alias: the visible category label itself
+    cand.push(meta.label);
+
+    // Compare all normalized
+    const hit = cand.some((c) => want.has(norm(String(c))));
+    if (hit) return true;
+
+    // Fallback: substring match if nothing else (helps with minor spelling differences)
+    const combined = cand.map((c) => norm(String(c))).join(" ");
+    return Array.from(want).some((w) => combined.includes(w));
+  };
+
+  let catProducts = products.filter(matches);
+
+  // If still nothing, last resort: look for slug words inside product.category/collection/tags
+  if (catProducts.length === 0) {
+    const slugWords = norm(slug).split(" ").filter(Boolean);
+    catProducts = products.filter((p: any) => {
+      const hay = norm(
+        `${p.category ?? ""} ${Array.isArray(p.categories) ? p.categories.join(" ") : ""} ${
+          Array.isArray(p.tags) ? p.tags.join(" ") : ""
+        } ${p.collection ?? ""}`
+      );
+      return slugWords.every((w) => hay.includes(w));
+    });
+  }
+
+  // Enrich with resolved cover + up to 3 thumbs (used by the grid)
+  const items = catProducts.map((p: any) => ({
+    ...p,
+    // never override the real title — keep p.title as-is:
     image: p.image ?? resolveProductCover(p),
     gallery: Array.isArray(p.images) && p.images.length ? p.images : resolveProductThumbs(p.slug),
-    type: p.type,
-    collection: p.collection,
-    category: p.category,
-    priceId: p.priceId,
-    buyUrl: p.buyUrl,
   }));
 
   return (
-    <main className="container mx-auto px-4 py-16" data-catgrid="v3">
-      <h1 className="text-3xl md:text-4xl font-bold mb-2">{meta.title}</h1>
+    <main className="container mx-auto px-4 py-16">
+      <h1 className="text-3xl md:text-4xl font-bold mb-2">{meta.label}</h1>
       <InlineMore text={meta.description} lines={1} minChars={40} className="text-gray-700 mb-2" />
 
       {items.length ? (
