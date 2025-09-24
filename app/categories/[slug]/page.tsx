@@ -41,38 +41,19 @@ function resolveProductThumbs(slug?: string) {
     .readdirSync(dir)
     .filter((f) => /\.(png|jpe?g|webp|avif)$/i.test(f))
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-  const mocks = files.filter(
-    (f) => /^(mock|thumb|preview)[-_]?\d*/i.test(f) || /-mockup/i.test(f)
-  );
-  const rest = files.filter((f) => !(/^(mock|thumb|preview)[-_]?\d*/i.test(f) || /-mockup/i.test(f)));
+  const mocks = files.filter((f) => /^(mock|thumb|preview)[-_]?\d*/i.test(f) || /-mockup/i.test(f));
+  const rest  = files.filter((f) => !(/^(mock|thumb|preview)[-_]?\d*/i.test(f) || /-mockup/i.test(f)));
   return [...mocks, ...rest].slice(0, 3).map((f) => `/images/products/${slug}/${f}`);
 }
 
-/* ---------- Category normalization ---------- */
-function norm(s: string) {
-  return s
-    .toLowerCase()
-    .trim()
+/* ---------- Normalization helpers ---------- */
+const norm = (s: string) =>
+  s.toLowerCase()
     .replace(/&/g, "and")
     .replace(/\be-?books?\b/g, "ebooks")
-    .replace(/[^a-z0-9]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-function altForms(label: string) {
-  const base = label.trim();
-  const set = new Set<string>();
-  const push = (x: string) => set.add(norm(x));
-  push(base);
-  push(base.replace(/&/g, "and"));
-  push(base.replace(/\band\b/gi, "&"));
-  push(base.replace(/\be-?books?\b/gi, "ebooks"));
-  // sometimes data uses singular
-  push(base.replace(/\bebooks\b/i, "ebook"));
-  return set;
-}
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 
-/* ---------- Static params ---------- */
 export function generateStaticParams() {
   const slugs = Object.keys(CATEGORY_BY_SLUG);
   const legacy = Object.keys(CATEGORY_SLUG_ALIASES);
@@ -82,7 +63,6 @@ export function generateStaticParams() {
 type Params = { slug: string };
 const normalizeSlug = (s: string) => CATEGORY_SLUG_ALIASES[s] ?? s;
 
-/* ---------- Metadata ---------- */
 export async function generateMetadata({ params }: { params: Promise<Params> }) {
   const { slug: raw } = await params;
   const slug = normalizeSlug(raw);
@@ -97,14 +77,13 @@ export async function generateMetadata({ params }: { params: Promise<Params> }) 
   };
 }
 
-/* ---------- Page ---------- */
 export default async function CategoryPage({ params }: { params: Promise<Params> }) {
   const { slug: raw } = await params;
   const slug = normalizeSlug(raw);
   const meta = CATEGORY_BY_SLUG[slug];
 
   if (!meta) {
-    const pretty = slug.replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
+    const pretty = raw.replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
     return (
       <main className="container mx-auto px-4 py-16">
         <h1 className="text-3xl md:text-4xl font-bold mb-2">{pretty}</h1>
@@ -121,41 +100,33 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     );
   }
 
-  // Build the accepted “names” for this category
-  const WANT = new Set<string>([
-    ...altForms(meta.label),
-    norm(slug),
-    norm(slug.replace(/-/g, " ")),
-  ]);
+  const wantSlug = slug;                 // e.g. "religious-ebooks"
+  const wantLabel = norm(meta.label);    // normalized label
 
-  // Strict match: ONLY use product-provided classification fields
-  const matches = (p: any) => {
-    const cand: string[] = [];
-    if (typeof p.category === "string") cand.push(p.category);
-    if (Array.isArray(p.categories)) cand.push(...p.categories);
-    if (Array.isArray(p.tags)) cand.push(...p.tags);
-    if (typeof p.collection === "string") cand.push(p.collection);
-    if (typeof p.categorySlug === "string") cand.push(p.categorySlug);
+  // STRICT: only equal-to slug OR equal-to normalized label; no substring/fuzzy
+  const catProducts = products.filter((p: any) => {
+    const bucket: string[] = [];
 
-    // Normalize & check exact membership against allowed forms
-    const nset = new Set(cand.map((c) => norm(String(c))));
-    for (const n of nset) if (WANT.has(n)) return true;
+    if (typeof p.category === "string") bucket.push(norm(p.category));
+    if (Array.isArray(p.categories)) bucket.push(...p.categories.map((c: string) => norm(String(c))));
+    if (typeof p.collection === "string") bucket.push(norm(p.collection));
+    if (Array.isArray(p.tags)) bucket.push(...p.tags.map((t: string) => norm(String(t))));
+    if (typeof p.categorySlug === "string") bucket.push(String(p.categorySlug).toLowerCase());
 
-    return false; // no substring fallback to avoid cross-listing
-  };
+    // Also accept the visible label itself as a value some data rows may store
+    bucket.push(wantLabel);
 
-  let catProducts = products.filter(matches);
+    return bucket.some((val) => val === wantLabel || val === wantSlug);
+  });
 
-  // Enrich for grid
   const items = catProducts.map((p: any) => ({
     ...p,
-    // keep the *true product title*; do not overwrite
     image: p.image ?? resolveProductCover(p),
     gallery: Array.isArray(p.images) && p.images.length ? p.images : resolveProductThumbs(p.slug),
   }));
 
   return (
-    <main className="container mx-auto px-4 py-16" data-cat-build="strict-v5">
+    <main className="container mx-auto px-4 py-16">
       <h1 className="text-3xl md:text-4xl font-bold mb-2">{meta.label}</h1>
       <InlineMore text={meta.description} lines={1} minChars={40} className="text-gray-700 mb-2" />
 

@@ -6,13 +6,18 @@ export type Category = {
   description: string;
 };
 
-/** Legacy slug redirects (old → new) */
+/** Legacy + common-misspelling slug redirects (old → new) */
 export const CATEGORY_SLUG_ALIASES: Record<string, string> = {
+  // Legacy
   "planners-productivity": "planners-and-productivity",
   "plr-mrr-bundles": "plr-and-mrr-bundles",
   "health-fitness-ebooks": "health-and-fitness-ebooks",
   "keto-diet-guides": "keto-and-diet-guides",
   "fonts": "fonts-and-icons",
+
+  // Common typos / near-misses
+  "religous-ebooks": "religious-ebooks",   // typo
+  "religion-ebooks": "religious-ebooks",   // near-match
 };
 
 /** Normalize a slug (apply legacy → new mapping) */
@@ -54,7 +59,7 @@ export const CATEGORY_BY_SLUG: Record<string, Category> = Object.fromEntries(
 
 export const CATEGORY_LABELS: string[] = CATEGORIES.map((c) => c.label);
 
-/** Helper to get a category (accepts legacy slug too) */
+/** Helper to get a category (accepts legacy/alias slug too) */
 export function getCategory(slug: string): Category | undefined {
   const normalized = resolveCategorySlug(slug);
   return CATEGORY_BY_SLUG[normalized];
