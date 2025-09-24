@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
 import { addToCart } from "@/lib/cart";
 
 export type GridProduct = {
@@ -23,6 +22,7 @@ export type GridProduct = {
   priceId?: string;      // Stripe price id (optional)
 };
 
+/* ---------- helpers ---------- */
 function formatPrice(p?: number | string, currency = "€") {
   if (typeof p === "number") {
     const num = p.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -78,18 +78,33 @@ function parsePrice(p?: number | string): number {
 }
 
 async function buyNow(p: GridProduct) {
+  // Direct buy link takes precedence
   if (p.buyUrl) {
     window.location.href = p.buyUrl;
     return;
   }
-  try {
-    // Prefer Stripe priceId if provided
-    const payload =
-      p.priceId
-        ? { line_items: [{ price: p.priceId, quantity: 1 }], mode: "payment" }
-        : { items: [{ slug: keyFor(p) ?? "", quantity: 1 }], mode: "payment" };
 
-    const res = await fetch("/api/stripe/create", {
+  // Prefer GET → /api/checkout with productId or slug (fast redirect)
+  const k = keyFor(p);
+  const currency = String(p.currency || "EUR").toUpperCase();
+  if (k) {
+    const isNumeric = /^\d+$/.test(k);
+    const qs = new URLSearchParams({
+      [isNumeric ? "productId" : "slug"]: k,
+      qty: "1",
+      currency,
+    }).toString();
+    window.location.href = `/api/checkout?${qs}`;
+    return;
+  }
+
+  // Fallback: POST to /api/checkout with priceId or items[]
+  try {
+    const payload = p.priceId
+      ? { line_items: [{ price: p.priceId, quantity: 1 }], mode: "payment" }
+      : { items: [{ slug: "", quantity: 1 }], mode: "payment" }; // last-resort
+
+    const res = await fetch("/api/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -100,11 +115,11 @@ async function buyNow(p: GridProduct) {
       return;
     }
   } catch {
-    // ignore and fallback
+    // ignore and fall through
   }
-  // Final fallback – native checkout page
-  const k = keyFor(p);
-  window.location.href = k ? `/checkout?item=${encodeURIComponent(k)}` : "/checkout";
+
+  // Absolute last resort
+  window.location.href = "/cart";
 }
 
 function BlueButton(props: React.ComponentProps<"button">) {
@@ -121,6 +136,7 @@ function BlueButton(props: React.ComponentProps<"button">) {
   );
 }
 
+/* ---------- component ---------- */
 export default function CategoryProductGrid({ items }: { items: GridProduct[] }) {
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
@@ -128,15 +144,14 @@ export default function CategoryProductGrid({ items }: { items: GridProduct[] })
         const title = p.title ?? p.name ?? p.label ?? "Untitled";
         const priceLabel = formatPrice(p.price, p.currency ?? "€");
         const viewHref = viewHrefFor(p);
-        const thumbs = useMemo(
-          () => (Array.isArray(p.gallery) ? p.gallery.slice(0, 3) : []),
-          [p.gallery]
-        );
+
+        // compute thumbs without hooks (don’t call hooks in a loop)
+        const thumbs = (Array.isArray(p.gallery) ? p.gallery.slice(0, 3) : []) as string[];
 
         const onAdd = () => {
-          const key = cartKeyFor(p, i); // ← always yields a key, even if slug/id missing
+          const key = cartKeyFor(p, i); // always yields a key
           addToCart({ id: key, title, price: parsePrice(p.price), image: p.image }, 1);
-          // no redirect; CartBadge updates via event in lib/cart.ts
+          // No redirect; CartBadge updates via 'cart-update' event from lib/cart.ts
         };
 
         return (
@@ -158,11 +173,15 @@ export default function CategoryProductGrid({ items }: { items: GridProduct[] })
 
             {/* Title */}
             <h3 className="mt-3 text-xl font-semibold leading-snug">
-              <Link href={viewHref} className="hover:underline">{title}</Link>
+              <Link href={viewHref} className="hover:underline">
+                {title}
+              </Link>
             </h3>
 
             {/* Optional blurb */}
-            {p.description && <p className="mt-1 line-clamp-2 text-sm text-gray-600">{p.description}</p>}
+            {p.description && (
+              <p className="mt-1 line-clamp-2 text-sm text-gray-600">{p.description}</p>
+            )}
 
             {/* Mockups (hover ring) */}
             {thumbs.length > 0 && (
