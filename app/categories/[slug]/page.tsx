@@ -1,5 +1,6 @@
 ﻿// app/categories/[slug]/page.tsx
 export const dynamic = "force-dynamic";
+export const dynamicParams = true;
 export const revalidate = 0;
 
 import fs from "node:fs";
@@ -50,11 +51,11 @@ function resolveProductThumbs(slug?: string) {
 }
 
 /* ---------- Normalization ---------- */
-function normalizeTypos(s: string) {
+function fixTypos(s: string) {
   return s.replace(/\breligous\b/gi, "religious");
 }
-function norm(s: string) {
-  return normalizeTypos(
+function normName(s: string) {
+  return fixTypos(
     s
       .toLowerCase()
       .trim()
@@ -65,19 +66,29 @@ function norm(s: string) {
       .trim()
   );
 }
+function normSlug(s: string) {
+  return fixTypos(
+    s
+      .toLowerCase()
+      .trim()
+      .replace(/&/g, "and")
+      .replace(/\be[\s-]?books?\b/g, "ebooks")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+  );
+}
 function altForms(label: string, slug?: string) {
   const set = new Set<string>();
-  const add = (x: string) => set.add(norm(x));
+  const add = (x: string) => set.add(normName(x));
   add(label);
   add(label.replace(/&/g, "and"));
   add(label.replace(/\band\b/gi, "&"));
   add(label.replace(/\be[\s-]?books?\b/gi, "ebooks"));
-  // singular variant
-  add(label.replace(/\bebooks\b/i, "ebook"));
+  add(label.replace(/\bebooks\b/i, "ebook")); // singular fallback
   if (slug) {
-    const slugSpaced = slug.replace(/-/g, " ");
-    add(slugSpaced);
-    add(slugSpaced.replace(/&/g, "and"));
+    const spaced = slug.replace(/-/g, " ");
+    add(spaced);
+    add(spaced.replace(/&/g, "and"));
   }
   return set;
 }
@@ -89,12 +100,12 @@ export function generateStaticParams() {
   return [...slugs, ...legacy].map((slug) => ({ slug }));
 }
 type Params = { slug: string };
-const normalizeSlug = (s: string) => CATEGORY_SLUG_ALIASES[s] ?? s;
+const alias = (s: string) => CATEGORY_SLUG_ALIASES[s] ?? s;
 
 /* ---------- Metadata ---------- */
 export async function generateMetadata({ params }: { params: Promise<Params> }) {
   const { slug: raw } = await params;
-  const slug = normalizeSlug(raw);
+  const slug = alias(raw);
   const meta = CATEGORY_BY_SLUG[slug];
   const title = meta ? `${meta.label} | Digital Products Artisan` : "Digital Products | Digital Products Artisan";
   const description = meta?.description ?? "Browse our curated digital products.";
@@ -109,13 +120,13 @@ export async function generateMetadata({ params }: { params: Promise<Params> }) 
 /* ---------- Page ---------- */
 export default async function CategoryPage({ params }: { params: Promise<Params> }) {
   const { slug: raw } = await params;
-  const slug = normalizeSlug(raw);
+  const slug = alias(raw);
   const meta = CATEGORY_BY_SLUG[slug];
 
   if (!meta) {
     const pretty = slug.replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
     return (
-      <main className="container mx-auto px-4 py-16">
+      <main className="container mx-auto px-4 py-16" data-cat-build="strict-v3">
         <h1 className="text-3xl md:text-4xl font-bold mb-2">{pretty}</h1>
         <InlineMore
           text="We couldn’t find a dedicated page for this category yet. Explore best sellers below or visit all products."
@@ -130,33 +141,22 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     );
   }
 
-  // STRICT: Only match against category/categorySlug/categories[]
-  const wanted = altForms(meta.label, slug);
-  const isInCategory = (p: any) => {
-    const bucket: string[] = [];
-    if (typeof p.category === "string") bucket.push(p.category);
-    if (Array.isArray(p.categories)) bucket.push(...p.categories);
-    if (typeof p.categorySlug === "string") bucket.push(p.categorySlug.replace(/-/g, " "));
+  const wantedSlug = normSlug(slug);
+  const wantedNames = altForms(meta.label, slug);
 
-    const normalized = bucket.map((s) => norm(String(s)));
-    // exact set intersection only (no substrings)
-    return normalized.some((n) => wanted.has(n));
+  // STRICT: Prefer categorySlug exact match; else match only category/categories by normalized name.
+  const inCategory = (p: any) => {
+    if (typeof p.categorySlug === "string") {
+      return normSlug(p.categorySlug) === wantedSlug;
+    }
+    const candidates: string[] = [];
+    if (typeof p.category === "string") candidates.push(p.category);
+    if (Array.isArray(p.categories)) candidates.push(...p.categories);
+    const normalized = candidates.map(normName);
+    return normalized.some((n) => wantedNames.has(n));
   };
 
-  let catProducts = products.filter(isInCategory);
-
-  // Soft fallback ONLY if empty: tolerate tiny spelling drift inside category fields
-  if (catProducts.length === 0) {
-    const wantedList = Array.from(wanted);
-    catProducts = products.filter((p: any) => {
-      const bucket: string[] = [];
-      if (typeof p.category === "string") bucket.push(p.category);
-      if (Array.isArray(p.categories)) bucket.push(...p.categories);
-      if (typeof p.categorySlug === "string") bucket.push(p.categorySlug.replace(/-/g, " "));
-      const hay = norm(bucket.join(" "));
-      return wantedList.some((w) => hay.includes(w));
-    });
-  }
+  const catProducts = products.filter(inCategory);
 
   const items = catProducts.map((p: any) => ({
     ...p,
@@ -165,7 +165,7 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
   }));
 
   return (
-    <main className="container mx-auto px-4 py-16">
+    <main className="container mx-auto px-4 py-16" data-cat-build="strict-v3">
       <h1 className="text-3xl md:text-4xl font-bold mb-2">{meta.label}</h1>
       <InlineMore text={meta.description} lines={1} minChars={40} className="text-gray-700 mb-2" />
 
