@@ -1,4 +1,3 @@
-// components/category/CategoryProductGrid.tsx
 "use client";
 
 import Link from "next/link";
@@ -28,7 +27,13 @@ function fmtPrice(p: number | string) {
 }
 
 async function buyNow(p: GridProduct) {
-  if (p.buyUrl) { window.location.href = p.buyUrl; return; }
+  // Prefer an explicit checkout URL if you’ve put one in the product
+  if (p.buyUrl) {
+    window.location.href = p.buyUrl;
+    return;
+  }
+
+  // Try Stripe Checkout via your existing API route
   try {
     const res = await fetch("/api/stripe/create", {
       method: "POST",
@@ -40,36 +45,29 @@ async function buyNow(p: GridProduct) {
       ),
     });
     const data = await res.json();
-    if (data?.url) { window.location.href = data.url; return; }
-  } catch {}
-  window.location.href = `/products/${p.slug}#buy`;
+    if (data?.url) {
+      window.location.href = data.url;
+      return;
+    }
+  } catch {
+    // ignore and fallback below
+  }
+
+  // Fallback to your /checkout page if Stripe didn't return a URL
+  window.location.href = `/checkout?item=${encodeURIComponent(p.slug)}`;
 }
 
-function AddToCart({ p }: { p: GridProduct }) {
+function ActionButton(props: React.ComponentProps<"button">) {
+  const { className = "", ...rest } = props;
   return (
     <button
-      onClick={() => {
-        const price =
-          typeof p.price === "number"
-            ? p.price
-            : Number(String(p.price).replace(/[^\d.]/g, "")) || 0;
-        add({ slug: p.slug, title: p.title, price, image: p.image }, 1);
-      }}
-      className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-    >
-      🛒 Add to cart
-    </button>
-  );
-}
-
-function BuyButton({ p }: { p: GridProduct }) {
-  return (
-    <button
-      onClick={() => buyNow(p)}
-      className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
-    >
-      ⚡ Buy
-    </button>
+      {...rest}
+      className={
+        "inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white " +
+        "hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 " +
+        className
+      }
+    />
   );
 }
 
@@ -78,8 +76,21 @@ export default function CategoryProductGrid({ items }: { items: GridProduct[] })
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
       {items.map((p) => {
         const thumbs = (p.gallery ?? []).slice(0, 3);
+
+        const onAdd = () => {
+          const price =
+            typeof p.price === "number"
+              ? p.price
+              : Number(String(p.price).replace(/[^\d.]/g, "")) || 0;
+          add({ slug: p.slug, title: p.title, price, image: p.image }, 1);
+          // no redirect; CartBadge (if added) will update automatically
+        };
+
+        const onBuy = () => buyNow(p);
+
         return (
           <article key={p.slug} className="rounded-2xl border bg-white p-4 shadow-sm hover:shadow transition">
+            {/* Cover */}
             <Link href={`/products/${p.slug}`} className="block">
               <div className="aspect-[3/2] rounded-xl bg-gray-50 overflow-hidden">
                 <img
@@ -91,6 +102,7 @@ export default function CategoryProductGrid({ items }: { items: GridProduct[] })
               </div>
             </Link>
 
+            {/* Title + desc */}
             <h3 className="mt-3 text-xl font-semibold">
               <Link href={`/products/${p.slug}`} className="hover:underline">
                 {p.title}
@@ -98,6 +110,7 @@ export default function CategoryProductGrid({ items }: { items: GridProduct[] })
             </h3>
             {p.description && <p className="mt-1 text-gray-600 line-clamp-2">{p.description}</p>}
 
+            {/* Mockups (first 3) */}
             {thumbs.length > 0 && (
               <div className="mt-3 flex gap-3">
                 {thumbs.map((src) => (
@@ -108,17 +121,21 @@ export default function CategoryProductGrid({ items }: { items: GridProduct[] })
               </div>
             )}
 
+            {/* Price */}
             <div className="mt-4 text-2xl font-semibold">{fmtPrice(p.price)}</div>
 
-            <div className="mt-4 flex gap-3">
+            {/* Actions: all blue bg + white text */}
+            <div className="mt-4 flex flex-wrap gap-3">
               <Link
                 href={`/products/${p.slug}`}
-                className="rounded-xl border px-4 py-2 text-sm hover:bg-muted/30"
+                className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50"
               >
                 👁️ View
               </Link>
-              <AddToCart p={p} />
-              <BuyButton p={p} />
+
+              <ActionButton onClick={onAdd}>🛒 Add to cart</ActionButton>
+
+              <ActionButton onClick={onBuy}>⚡ Buy</ActionButton>
             </div>
           </article>
         );
