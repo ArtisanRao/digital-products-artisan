@@ -77,20 +77,11 @@ function normSlug(s: string) {
       .replace(/^-+|-+$/g, "")
   );
 }
-function altForms(label: string, slug?: string) {
-  const set = new Set<string>();
-  const add = (x: string) => set.add(normName(x));
-  add(label);
-  add(label.replace(/&/g, "and"));
-  add(label.replace(/\band\b/gi, "&"));
-  add(label.replace(/\be[\s-]?books?\b/gi, "ebooks"));
-  add(label.replace(/\bebooks\b/i, "ebook")); // singular fallback
-  if (slug) {
-    const spaced = slug.replace(/-/g, " ");
-    add(spaced);
-    add(spaced.replace(/&/g, "and"));
-  }
-  return set;
+function tokensOfLabel(label: string) {
+  const STOP = new Set(["and", "the", "in", "of", "for", "to", "a", "an"]);
+  return normName(label)
+    .split(" ")
+    .filter((t) => t && !STOP.has(t));
 }
 
 /* ---------- Static params ---------- */
@@ -126,7 +117,7 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
   if (!meta) {
     const pretty = slug.replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
     return (
-      <main className="container mx-auto px-4 py-16" data-cat-build="strict-v3">
+      <main className="container mx-auto px-4 py-16" data-cat-build="strict-v4">
         <h1 className="text-3xl md:text-4xl font-bold mb-2">{pretty}</h1>
         <InlineMore
           text="We couldn’t find a dedicated page for this category yet. Explore best sellers below or visit all products."
@@ -142,21 +133,36 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
   }
 
   const wantedSlug = normSlug(slug);
-  const wantedNames = altForms(meta.label, slug);
+  const labelTokens = tokensOfLabel(meta.label); // e.g. ["religious","ebooks"]
 
-  // STRICT: Prefer categorySlug exact match; else match only category/categories by normalized name.
-  const inCategory = (p: any) => {
+  // 1) STRICT: categorySlug exact OR category/categories name-equality
+  const strictMatch = (p: any) => {
     if (typeof p.categorySlug === "string") {
       return normSlug(p.categorySlug) === wantedSlug;
     }
-    const candidates: string[] = [];
-    if (typeof p.category === "string") candidates.push(p.category);
-    if (Array.isArray(p.categories)) candidates.push(...p.categories);
-    const normalized = candidates.map(normName);
-    return normalized.some((n) => wantedNames.has(n));
+    const cands: string[] = [];
+    if (typeof p.category === "string") cands.push(p.category);
+    if (Array.isArray(p.categories)) cands.push(...p.categories);
+    const normalized = cands.map(normName);
+    const wantedName = normName(meta.label);
+    return normalized.some((n) => n === wantedName);
   };
 
-  const catProducts = products.filter(inCategory);
+  let catProducts = products.filter(strictMatch);
+
+  // 2) FALLBACK (only if strict found nothing): allow tags/collection,
+  // but REQUIRE every token from the category label to appear.
+  if (catProducts.length === 0) {
+    const relaxedMatch = (p: any) => {
+      const hay = normName(
+        `${p.category ?? ""} ${Array.isArray(p.categories) ? p.categories.join(" ") : ""} ${
+          Array.isArray(p.tags) ? p.tags.join(" ") : ""
+        } ${p.collection ?? ""} ${p.categorySlug ?? ""}`
+      );
+      return labelTokens.every((t) => hay.includes(t));
+    };
+    catProducts = products.filter(relaxedMatch);
+  }
 
   const items = catProducts.map((p: any) => ({
     ...p,
@@ -165,7 +171,7 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
   }));
 
   return (
-    <main className="container mx-auto px-4 py-16" data-cat-build="strict-v3">
+    <main className="container mx-auto px-4 py-16" data-cat-build="strict-v4">
       <h1 className="text-3xl md:text-4xl font-bold mb-2">{meta.label}</h1>
       <InlineMore text={meta.description} lines={1} minChars={40} className="text-gray-700 mb-2" />
 
