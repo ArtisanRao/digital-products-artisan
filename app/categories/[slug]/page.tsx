@@ -35,7 +35,7 @@ const LEGACY_TO_NEW: Record<string, string> = {
 
 const pub = (...p: string[]) => path.join(process.cwd(), "public", ...p);
 
-/** Find first existing (absolute + public href) */
+/** First existing (absolute + public href) */
 function firstExistingPublicHref(cands: (string | undefined)[]): { abs: string; href: string } | null {
   for (const href of cands) {
     if (!href) continue;
@@ -76,40 +76,66 @@ function resolveProductThumbs(slug?: string) {
   return files.slice(0, 3).map((f) => `/images/products/${slug}/${f}`);
 }
 
-/** -------- Robust category matching (handles subcategories & spelling) -------- */
-function normalizeLabel(s: string) {
-  return s
+/* ---------------- Robust category matching helpers ---------------- */
+const SEP = /[\/|,;›»:\-\u2013\u2014]+/; // slash, pipe, comma, semicolon, chevrons, colon, dashes
+
+function norm(x?: string) {
+  return String(x ?? "")
     .toLowerCase()
     .replace(/&/g, "and")
-    .replace(/e-?books/g, "ebooks")
     .replace(/\s+/g, " ")
-    .replace(/[^a-z0-9 ]+/g, "")
+    .replace(/[^a-z0-9 ]+/g, " ")
+    .replace(/\s+/g, " ")
     .trim();
 }
-function singularizeToken(tok: string) {
-  return tok.replace(/s$/i, "");
+
+function tokenized(x?: string) {
+  return String(x ?? "")
+    .split(SEP)
+    .map((s) => norm(s))
+    .filter(Boolean);
 }
-function labelTokens(s: string) {
-  return normalizeLabel(s).split(" ").map(singularizeToken).filter(Boolean);
-}
 
-function matchesCategory(p: any, targetLabel: string) {
-  const target = labelTokens(targetLabel);
+function matchesCategory(prod: any, slug: string, label: string) {
+  const want = norm(label);
+  const wantSlug = slug;
 
-  const candidates: string[] = [];
-  if (typeof p.category === "string") candidates.push(p.category);
-  if (Array.isArray(p.categories)) candidates.push(...p.categories);
-  if (typeof p.collection === "string") candidates.push(p.collection);
-  if (typeof p.type === "string") candidates.push(p.type);
-  if (typeof p.label === "string") candidates.push(p.label);
+  // Direct slug fields if present
+  const catSlug = norm((prod as any).categorySlug);
+  const catSlugs: string[] = Array.isArray((prod as any).categorySlugs)
+    ? (prod as any).categorySlugs.map((s: string) => norm(s))
+    : [];
 
-  // Also consider combined strings like "Religious eBooks › Devotionals"
-  const combined = candidates.join(" | ");
+  if (catSlug === wantSlug || catSlugs.includes(wantSlug)) return true;
 
-  const candidateTokens = labelTokens(combined);
+  // Single string category
+  const c = norm((prod as any).category);
+  if (c) {
+    if (c === want) return true;
+    if (c.startsWith(want)) return true;
+    if (c.includes(want)) return true;
+    const parts = tokenized((prod as any).category);
+    if (parts.includes(want)) return true;
+  }
 
-  // All target tokens must appear in candidate tokens
-  return target.every(t => candidateTokens.includes(t));
+  // Array of categories
+  const cs: string[] = Array.isArray((prod as any).categories)
+    ? (prod as any).categories
+    : [];
+  if (cs.length) {
+    const any = cs.some((t) => {
+      const tn = norm(t);
+      return (
+        tn === want ||
+        tn.startsWith(want) ||
+        tn.includes(want) ||
+        tokenized(t).includes(want)
+      );
+    });
+    if (any) return true;
+  }
+
+  return false;
 }
 
 /** Static params for new + legacy slugs */
@@ -159,15 +185,14 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     );
   }
 
-  // Products in this category (match robustly by label; include subcategories)
-  const label = meta.title;
-  const catProducts = products.filter((p) => matchesCategory(p, label));
+  // ✅ Robust product selection for this category (covers subcategories & arrays)
+  const catProducts = products.filter((p) => matchesCategory(p, slug, meta.title));
 
   // Enrich with resolved cover + up to 3 thumbs (used by CategoryProductGrid)
   const items = catProducts.map((p: any) => ({
     ...p,
-    // ensure the card uses the real product title (not subcategory)
-    title: p.title ?? p.name ?? p.label,
+    // Make sure the grid shows the real product name (never the subcategory label)
+    title: p.title ?? p.name ?? p.label ?? String(p.slug ?? p.id ?? "Untitled"),
     image: p.image ?? resolveProductCover(p),
     gallery: p.gallery && p.gallery.length ? p.gallery : resolveProductThumbs(p.slug),
   }));
@@ -184,10 +209,11 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
       ) : (
         <div className="mt-8">
           <p className="text-gray-700">
-            No products surfaced for this category yet. If your items are filed as subcategories,
-            they’ll still show here once published.
+            No products found for this category yet.
           </p>
-          <Link href="/products" className="mt-2 inline-block underline">Browse all products →</Link>
+          <Link href="/products" className="mt-2 inline-block underline">
+            Browse all products →
+          </Link>
         </div>
       )}
     </main>
