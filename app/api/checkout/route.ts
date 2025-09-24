@@ -52,8 +52,8 @@ function getStripe(): Stripe {
   if (!key) {
     throw new Error("Missing STRIPE_SECRET_KEY");
   }
-  // ✅ Use the SDK’s pinned version constant to satisfy typings
-  return new Stripe(key, { apiVersion: Stripe.LatestApiVersion });
+  // ✅ Let the SDK use its pinned api version to satisfy typings
+  return new Stripe(key);
 }
 
 /* -------------------- Core session builder -------------------- */
@@ -124,7 +124,6 @@ async function createSessionFromSingle(opts: {
 }
 
 /* --------------------------- GET --------------------------- */
-/** Works with <Link href="/api/checkout?productId=123&qty=1&currency=EUR"> */
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
@@ -155,12 +154,6 @@ export async function GET(req: NextRequest) {
 }
 
 /* --------------------------- POST --------------------------- */
-/**
- * Accepts one of:
- * 1) { productId | slug, qty?, currency? }
- * 2) { line_items: [{ price, quantity }...], mode? }
- * 3) { items: [{ slug, quantity }...], mode? } // slug can be id or slug
- */
 export async function POST(req: NextRequest) {
   try {
     const stripe = getStripe();
