@@ -11,8 +11,6 @@ import { Button } from "@/components/ui/button";
 import AddToCartButton from "@/components/add-to-cart-button";
 import { products, productsById } from "@/data/products";
 import { getPreferredCurrency } from "@/lib/currency";
-
-// ✅ Use the shared component under /components
 import ProductGallery from "@/components/ProductGallery";
 
 function findProduct(idOrSlug: string) {
@@ -31,39 +29,28 @@ function findProduct(idOrSlug: string) {
   );
 }
 
-// In Next.js 15, `params` is a Promise — await it here.
 export default async function Page(props: { params: Promise<{ slug: string }> }) {
   const { slug } = await props.params;
   const p = findProduct(String(slug ?? ""));
   if (!p) notFound();
 
-  // Gallery images (prefer explicit p.images, else single cover)
   const imgs: string[] = (p.images?.length ? p.images : [p.image]).filter(Boolean) as string[];
 
-  // Currency formatting
   const currencyRaw = getPreferredCurrency();
   const currency = String(currencyRaw).toUpperCase() as "EUR" | "USD";
   const locale = currency === "EUR" ? "de-DE" : "en-US";
   const priceNumber = typeof p.price === "number" ? p.price : Number(p.price) || 0;
   const display = new Intl.NumberFormat(locale, { style: "currency", currency }).format(priceNumber);
 
-  // Canonical (used for the product title link)
   const canonicalHref = `/products/${encodeURIComponent(String(p.slug ?? p.id))}`;
 
   return (
     <main className="product-page mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 py-8 lg:grid-cols-[1.2fr_.8fr]">
-      {/* Scoped hover effects for images on this page */}
-      <style jsx global>{`
-        .product-page img {
-          transition: transform 300ms ease;
-        }
-        .product-page img:hover {
-          transform: scale(1.03);
-        }
-      `}</style>
-
-      <section style={{ zIndex: 1, position: "relative" }}>
-        {/* ProductGallery already renders <img> tags; hover comes from the global style above */}
+      {/* Hover zoom is applied via global CSS (.product-page img:hover) and the utility below */}
+      <section
+        className="hover-zoom"
+        style={{ zIndex: 1, position: "relative" }}
+      >
         <ProductGallery images={imgs} alt={p.title} />
       </section>
 
@@ -91,13 +78,11 @@ export default async function Page(props: { params: Promise<{ slug: string }> })
           className="mt-6 flex flex-wrap gap-3"
           style={{ position: "relative", zIndex: 61, pointerEvents: "auto" }}
         >
-          {/* Add to cart (blue, no redirect; updates badge) */}
           <AddToCartButton
             productId={p.id}
             className="bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
           />
 
-          {/* Buy → server checkout endpoint that redirects to Stripe/payment */}
           <Button
             asChild
             className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
