@@ -5,13 +5,11 @@ import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
 import CategoryProductGrid from "@/components/categories/CategoryProductGrid";
 import { products } from "@/data/products";
-import {
-  CATEGORY_BY_SLUG,
-  CATEGORY_SLUG_ALIASES,
-} from "@/data/categories";
+import { CATEGORY_BY_SLUG, CATEGORY_SLUG_ALIASES } from "@/data/categories";
 
-/* ---------- FS helpers for covers/thumbs (non-blocking) ---------- */
+/* ---------- FS helpers for covers/thumbs ---------- */
 const pub = (...p: string[]) => path.join(process.cwd(), "public", ...p);
+
 function firstExistingPublicHref(cands: (string | undefined)[]) {
   for (const href of cands) {
     if (!href) continue;
@@ -20,6 +18,7 @@ function firstExistingPublicHref(cands: (string | undefined)[]) {
   }
   return undefined;
 }
+
 function resolveProductCover(p: { slug?: string; image?: string }) {
   const fallback = "/images/placeholder.jpg";
   if (!p?.slug) return p?.image ?? fallback;
@@ -32,6 +31,7 @@ function resolveProductCover(p: { slug?: string; image?: string }) {
     ]) ?? fallback
   );
 }
+
 function resolveProductThumbs(slug?: string) {
   if (!slug) return [] as string[];
   const dir = pub("images", "products", slug);
@@ -40,7 +40,7 @@ function resolveProductThumbs(slug?: string) {
     .readdirSync(dir)
     .filter((f) => /\.(png|jpe?g|webp|avif)$/i.test(f))
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-  // Prefer mock/preview-style names first
+
   const mocks = files.filter(
     (f) => /^(mock|thumb|preview)[-_]?\d*/i.test(f) || /-mockup/i.test(f)
   );
@@ -51,29 +51,22 @@ function resolveProductThumbs(slug?: string) {
 }
 
 /* ---------- Category normalization ---------- */
-function norm(s: string) {
-  return s
+const normalize = (s: string) =>
+  s
     .toLowerCase()
     .trim()
     .replace(/&/g, "and")
     .replace(/\be-?books?\b/g, "ebooks")
-    .replace(/[^a-z0-9]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+    .replace(/[^a-z0-9]+/g, "-");
+
+function sameCategory(a: string, b: string) {
+  return normalize(a) === normalize(b);
 }
 
-function altForms(label: string) {
-  const base = label.trim();
-  const set = new Set<string>();
-  const push = (x: string) => set.add(norm(x));
-  push(base);
-  push(base.replace(/&/g, "and"));
-  push(base.replace(/\band\b/gi, "&"));
-  push(base.replace(/\be-?books?\b/gi, "ebooks"));
-  // also try singular (rough heuristic)
-  push(base.replace(/\bebooks\b/i, "ebook"));
-  return set;
-}
+/** Minimal, safe aliasing for Religious eBooks only */
+const CATEGORY_STRICT_ALIASES: Record<string, string[]> = {
+  "religious-ebooks": ["religion-ebooks", "religious-ebook", "religion-ebook"],
+};
 
 /* ---------- Static params ---------- */
 export function generateStaticParams() {
@@ -124,48 +117,32 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     );
   }
 
-  // Robust matching against product.category / product.categories / product.tags
-  const want = altForms(meta.label);
-  const matches = (p: any) => {
-    const cand: string[] = [];
+  // STRICT match: only items whose category/categorySlug/categories/tags/collection
+  // equal this category's label or slug (normalized). No substring fuzziness.
+  const wanted = new Set([
+    normalize(meta.label),
+    normalize(slug),
+    ...(CATEGORY_STRICT_ALIASES[slug] ?? []).map((a) => normalize(a)),
+  ]);
 
-    if (typeof p.category === "string") cand.push(p.category);
-    if (Array.isArray(p.categories)) cand.push(...p.categories);
-    if (Array.isArray(p.tags)) cand.push(...p.tags);
-    if (typeof p.collection === "string") cand.push(p.collection);
+  const catProducts = products.filter((p: any) => {
+    const cands: string[] = [];
+    if (typeof p.category === "string") cands.push(p.category);
+    if (Array.isArray(p.categories)) cands.push(...p.categories);
+    if (typeof p.categorySlug === "string") cands.push(p.categorySlug);
+    if (typeof p.collection === "string") cands.push(p.collection);
+    if (Array.isArray(p.tags)) cands.push(...p.tags);
 
-    // Some data stores category as the slug; include that too
-    if (typeof p.categorySlug === "string") cand.push(p.categorySlug);
+    // sometimes authors put the visible label directly:
+    cands.push(meta.label, slug);
 
-    // ❌ do NOT push `meta.label` into `cand` (this caused all products to match every category)
-
-    // Compare all normalized
-    const hit = cand.some((c) => want.has(norm(String(c))));
-    if (hit) return true;
-
-    // Fallback: substring match if nothing else (helps with minor spelling differences)
-    const combined = cand.map((c) => norm(String(c))).join(" ");
-    return Array.from(want).some((w) => combined.includes(w));
-  };
-
-  let catProducts = products.filter(matches);
-
-  // If still nothing, last resort: look for slug words inside product.category/collection/tags
-  if (catProducts.length === 0) {
-    const slugWords = norm(slug).split(" ").filter(Boolean);
-    catProducts = products.filter((p: any) => {
-      const hay = norm(
-        `${p.category ?? ""} ${Array.isArray(p.categories) ? p.categories.join(" ") : ""} ${
-          Array.isArray(p.tags) ? p.tags.join(" ") : ""
-        } ${p.collection ?? ""}`
-      );
-      return slugWords.every((w) => hay.includes(w));
-    });
-  }
+    return cands.some((c) => wanted.has(normalize(String(c))));
+  });
 
   // Enrich with resolved cover + up to 3 thumbs (used by the grid)
   const items = catProducts.map((p: any) => ({
     ...p,
+    // NEVER override the true product title
     image: p.image ?? resolveProductCover(p),
     gallery: Array.isArray(p.images) && p.images.length ? p.images : resolveProductThumbs(p.slug),
   }));
