@@ -33,13 +33,10 @@ const LEGACY_TO_NEW: Record<string, string> = {
   "fonts": "fonts-and-icons",
 };
 
-/** Helpers */
 const pub = (...p: string[]) => path.join(process.cwd(), "public", ...p);
 
-/** First existing (absolute + public href) */
-function firstExistingPublicHref(
-  cands: (string | undefined)[]
-): { abs: string; href: string } | null {
+/** Find first existing (absolute + public href) */
+function firstExistingPublicHref(cands: (string | undefined)[]): { abs: string; href: string } | null {
   for (const href of cands) {
     if (!href) continue;
     const abs = pub(href.replace(/^\//, ""));
@@ -75,8 +72,44 @@ function resolveProductThumbs(slug?: string) {
     .readdirSync(dir)
     .filter((f) => /\.(png|jpe?g|webp|avif)$/i.test(f))
     .filter((f) => /^(mock|thumb|preview)[-_]?\d*/i.test(f) || /-mockup/i.test(f))
-    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+    .sort();
   return files.slice(0, 3).map((f) => `/images/products/${slug}/${f}`);
+}
+
+/** -------- Robust category matching (handles subcategories & spelling) -------- */
+function normalizeLabel(s: string) {
+  return s
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/e-?books/g, "ebooks")
+    .replace(/\s+/g, " ")
+    .replace(/[^a-z0-9 ]+/g, "")
+    .trim();
+}
+function singularizeToken(tok: string) {
+  return tok.replace(/s$/i, "");
+}
+function labelTokens(s: string) {
+  return normalizeLabel(s).split(" ").map(singularizeToken).filter(Boolean);
+}
+
+function matchesCategory(p: any, targetLabel: string) {
+  const target = labelTokens(targetLabel);
+
+  const candidates: string[] = [];
+  if (typeof p.category === "string") candidates.push(p.category);
+  if (Array.isArray(p.categories)) candidates.push(...p.categories);
+  if (typeof p.collection === "string") candidates.push(p.collection);
+  if (typeof p.type === "string") candidates.push(p.type);
+  if (typeof p.label === "string") candidates.push(p.label);
+
+  // Also consider combined strings like "Religious eBooks › Devotionals"
+  const combined = candidates.join(" | ");
+
+  const candidateTokens = labelTokens(combined);
+
+  // All target tokens must appear in candidate tokens
+  return target.every(t => candidateTokens.includes(t));
 }
 
 /** Static params for new + legacy slugs */
@@ -126,15 +159,17 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     );
   }
 
-  // Products in this category (match by label/title)
+  // Products in this category (match robustly by label; include subcategories)
   const label = meta.title;
-  const catProducts = products.filter((p) => p.category === label);
+  const catProducts = products.filter((p) => matchesCategory(p, label));
 
-  // Enrich with resolved cover + up to 3 thumbs (keeps product titles & all original fields)
+  // Enrich with resolved cover + up to 3 thumbs (used by CategoryProductGrid)
   const items = catProducts.map((p: any) => ({
     ...p,
+    // ensure the card uses the real product title (not subcategory)
+    title: p.title ?? p.name ?? p.label,
     image: p.image ?? resolveProductCover(p),
-    gallery: Array.isArray(p.gallery) && p.gallery.length > 0 ? p.gallery : resolveProductThumbs(p.slug),
+    gallery: p.gallery && p.gallery.length ? p.gallery : resolveProductThumbs(p.slug),
   }));
 
   return (
@@ -148,7 +183,10 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
         </div>
       ) : (
         <div className="mt-8">
-          <p className="text-gray-700">No products listed in this category yet.</p>
+          <p className="text-gray-700">
+            No products surfaced for this category yet. If your items are filed as subcategories,
+            they’ll still show here once published.
+          </p>
           <Link href="/products" className="mt-2 inline-block underline">Browse all products →</Link>
         </div>
       )}
