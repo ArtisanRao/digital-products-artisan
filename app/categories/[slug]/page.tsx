@@ -9,7 +9,6 @@ import { CATEGORY_BY_SLUG, CATEGORY_SLUG_ALIASES } from "@/data/categories";
 
 /* ---------- FS helpers for covers/thumbs ---------- */
 const pub = (...p: string[]) => path.join(process.cwd(), "public", ...p);
-
 function firstExistingPublicHref(cands: (string | undefined)[]) {
   for (const href of cands) {
     if (!href) continue;
@@ -18,7 +17,6 @@ function firstExistingPublicHref(cands: (string | undefined)[]) {
   }
   return undefined;
 }
-
 function resolveProductCover(p: { slug?: string; image?: string }) {
   const fallback = "/images/placeholder.jpg";
   if (!p?.slug) return p?.image ?? fallback;
@@ -31,7 +29,6 @@ function resolveProductCover(p: { slug?: string; image?: string }) {
     ]) ?? fallback
   );
 }
-
 function resolveProductThumbs(slug?: string) {
   if (!slug) return [] as string[];
   const dir = pub("images", "products", slug);
@@ -59,7 +56,7 @@ const normalize = (s: string) =>
     .replace(/\be-?books?\b/g, "ebooks")
     .replace(/[^a-z0-9]+/g, "-");
 
-/** minimal aliasing for tricky categories */
+/** small alias table for tricky categories */
 const CATEGORY_STRICT_ALIASES: Record<string, string[]> = {
   "religious-ebooks": ["religion-ebooks", "religious-ebook", "religion-ebook"],
 };
@@ -120,7 +117,7 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     ...(CATEGORY_STRICT_ALIASES[slug] ?? []).map((a) => normalize(a)),
   ]);
 
-  // Only use each product's OWN fields — do NOT inject current page's label/slug
+  // Only use each product's OWN fields (no injecting meta.label or slug into candidates)
   const catProducts = products.filter((p: any) => {
     const fields: string[] = [];
     if (typeof p.category === "string") fields.push(p.category);
@@ -128,7 +125,6 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     if (typeof p.collection === "string") fields.push(p.collection);
     if (Array.isArray(p.categories)) fields.push(...p.categories);
     if (Array.isArray(p.tags)) fields.push(...p.tags);
-    // normalize and compare exact equality
     return fields.some((f) => wanted.has(normalize(String(f))));
   });
 
