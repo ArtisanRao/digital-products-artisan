@@ -1,4 +1,7 @@
 // app/products/[id]/page.tsx
+export const runtime = "nodejs";
+export const revalidate = 3600;
+
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -7,8 +10,7 @@ import fs from "node:fs";
 import { products } from "@/data/products";
 import AddToCartButton from "@/components/add-to-cart-button";
 import BuyNowButton from "@/components/buy-now-button";
-
-export const revalidate = 3600;
+import ProductGallery from "@/components/ProductGallery";
 
 /** Resolve files under /public */
 const pub = (...p: string[]) => path.join(process.cwd(), "public", ...p);
@@ -79,13 +81,14 @@ export async function generateMetadata({
   const abs = (src: string) =>
     src.startsWith("http") ? src : `https://digitalproductsartisan.com${src}`;
 
-  // Prefer product.images; else discover from /public/images/products/<slug>; else fallback to product.image
+  // Prefer product.images; else discover; else product.image
   const discovered = discoverGallery((product as any).slug);
-  const gallery = Array.isArray((product as any).images) && (product as any).images.length
-    ? (product as any).images as string[]
-    : discovered.length
-    ? discovered
-    : [product.image].filter(Boolean);
+  const gallery =
+    Array.isArray((product as any).images) && (product as any).images.length
+      ? ((product as any).images as string[])
+      : discovered.length
+      ? discovered
+      : [product.image].filter(Boolean);
 
   const ogImage = abs(gallery[0] ?? "/images/placeholder.jpg");
 
@@ -218,16 +221,6 @@ export default async function ProductPage({
 
   return (
     <main className="container mx-auto px-4 py-8 product-page" data-page="product">
-      {/* Global scoped hover styles for images on this page */}
-      <style jsx global>{`
-        .product-page img {
-          transition: transform 300ms ease;
-        }
-        .product-page img:hover {
-          transform: scale(1.03);
-        }
-      `}</style>
-
       <nav className="mb-4 text-sm text-gray-600">
         <Link href="/" className="hover:underline">Home</Link>{" "}
         <span>›</span>{" "}
@@ -237,11 +230,8 @@ export default async function ProductPage({
       </nav>
 
       <div className="grid gap-8 lg:grid-cols-2">
-        {/* Gallery */}
-        <div className="w-full rounded-2xl border bg-white p-3">
-          {/* Use your ProductGallery if you prefer; it inherits the global hover above */}
-          {/* If you want our simple inline gallery instead, replace the block below. */}
-          {/* @ts-expect-error - component may not type className; hover is global anyway */}
+        {/* Gallery (hover zoom comes from your global CSS/utilities) */}
+        <div className="w-full rounded-2xl border bg-white p-3 hover-zoom">
           <ProductGallery images={galleryImages} alt={product.title} />
         </div>
 
@@ -285,9 +275,6 @@ export default async function ProductPage({
             <BuyNowButton
               productId={product.id}
               qty={1}
-              // if your BuyNowButton supports these, they help it go straight to Stripe:
-              // priceId={(product as any).priceId}
-              // buyUrl={(product as any).buyUrl}
               className="bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
             >
               Buy
