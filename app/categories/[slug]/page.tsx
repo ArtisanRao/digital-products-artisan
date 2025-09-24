@@ -1,5 +1,6 @@
 ﻿// app/categories/[slug]/page.tsx
 export const dynamic = "force-dynamic";
+export const dynamicParams = true;
 export const revalidate = 0;
 
 import fs from "node:fs";
@@ -12,8 +13,9 @@ import { CATEGORY_BY_SLUG, CATEGORY_SLUG_ALIASES } from "@/data/categories";
 
 /* ---------- FS helpers for covers/thumbs ---------- */
 const pub = (...p: string[]) => path.join(process.cwd(), "public", ...p);
-function firstExistingPublicHref(cands: (string | undefined)[]) {
-  for (const href of cands) {
+
+function firstExistingPublicHref(hrefs: (string | undefined)[]): string | undefined {
+  for (const href of hrefs) {
     if (!href) continue;
     const abs = pub(href.replace(/^\//, ""));
     if (fs.existsSync(abs)) return href;
@@ -41,25 +43,25 @@ function resolveProductThumbs(slug?: string) {
     .filter((f) => /\.(png|jpe?g|webp|avif)$/i.test(f))
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
   const mocks = files.filter((f) => /^(mock|thumb|preview)[-_]?\d*/i.test(f) || /-mockup/i.test(f));
-  const rest  = files.filter((f) => !(/^(mock|thumb|preview)[-_]?\d*/i.test(f) || /-mockup/i.test(f)));
+  const rest = files.filter((f) => !(/^(mock|thumb|preview)[-_]?\d*/i.test(f) || /-mockup/i.test(f)));
   return [...mocks, ...rest].slice(0, 3).map((f) => `/images/products/${slug}/${f}`);
 }
 
-/* ---------- Normalizers ---------- */
+/* ---------- Category normalization ---------- */
 const normalizeSlug = (s: string) => CATEGORY_SLUG_ALIASES[s] ?? s;
-const normSlug   = (s: string) => s.toLowerCase().trim();
-const normLabel  = (s: string) =>
-  s.toLowerCase().replace(/&/g, "and").replace(/\be-?books?\b/g, "ebooks").replace(/[^a-z0-9]+/g, " ").trim();
 
-/* ---------- Static params ---------- */
-export function generateStaticParams() {
-  const slugs = Object.keys(CATEGORY_BY_SLUG);
-  const legacy = Object.keys(CATEGORY_SLUG_ALIASES);
-  return [...slugs, ...legacy].map((slug) => ({ slug }));
+function toSlug(s: string) {
+  return s
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/\be-?books?\b/g, "ebooks")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 /* ---------- Metadata ---------- */
 type Params = { slug: string };
+
 export async function generateMetadata({ params }: { params: Promise<Params> }) {
   const { slug: raw } = await params;
   const slug = normalizeSlug(raw);
@@ -83,33 +85,46 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
   if (!meta) {
     const pretty = slug.replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
     return (
-      <main className="container mx-auto px-4 py-16" data-version="cat-strict-v3">
+      <main className="container mx-auto px-4 py-16">
         <h1 className="text-3xl md:text-4xl font-bold mb-2">{pretty}</h1>
-        <InlineMore text="We couldn’t find a dedicated page for this category yet. Explore best sellers below or visit all products."
-          lines={1} minChars={40} className="text-gray-700" />
-        <p className="mt-2"><Link href="/products" className="underline">Browse all products →</Link></p>
+        <InlineMore
+          text="We couldn’t find a dedicated page for this category yet. Explore best sellers below or visit all products."
+          lines={1}
+          minChars={40}
+          className="text-gray-700"
+        />
+        <p className="mt-2">
+          <Link href="/products" className="underline">Browse all products →</Link>
+        </p>
       </main>
     );
   }
 
-  const wantedSlug  = normSlug(slug);
-  const wantedLabel = normLabel(meta.label);
+  const labelSlug = toSlug(meta.label);
 
-  // STRICT matcher (no cross-listing)
-  const matches = (p: any) => {
-    if (p?.categorySlug && normSlug(String(p.categorySlug)) === wantedSlug) return true;
+  // STRICT matcher: only exact slug/label matches. No substring fuzziness.
+  function matchesCategory(p: any): boolean {
+    const candText: string[] = [];
+    if (typeof p.category === "string") candText.push(p.category);
+    if (typeof p.collection === "string") candText.push(p.collection);
+    if (typeof p.categorySlug === "string") candText.push(p.categorySlug);
+    if (typeof p.category_slug === "string") candText.push(p.category_slug);
+    if (Array.isArray(p.categories)) candText.push(...p.categories);
+    if (Array.isArray(p.tags)) candText.push(...p.tags);
 
-    const candidates: string[] = [];
-    if (typeof p.category === "string") candidates.push(p.category);
-    if (Array.isArray(p.categories))     candidates.push(...p.categories);
-    if (Array.isArray(p.tags))           candidates.push(...p.tags);
-    if (typeof p.collection === "string") candidates.push(p.collection);
+    const textsLower = candText.map((s) => String(s).trim().toLowerCase());
+    const slugs = candText.map((s) => toSlug(String(s)));
 
-    // DO NOT push meta.label here; that caused every product to match every category.
-    return candidates.some((c) => normLabel(String(c)) === wantedLabel);
-  };
+    // exact slug match (preferred)
+    if (slugs.includes(slug) || slugs.includes(labelSlug)) return true;
 
-  const catProducts = products.filter(matches);
+    // exact label text match (case-insensitive)
+    if (textsLower.includes(meta.label.trim().toLowerCase())) return true;
+
+    return false;
+  }
+
+  const catProducts = products.filter(matchesCategory);
 
   const items = catProducts.map((p: any) => ({
     ...p,
@@ -118,7 +133,7 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
   }));
 
   return (
-    <main className="container mx-auto px-4 py-16" data-version="cat-strict-v3">
+    <main className="container mx-auto px-4 py-16">
       <h1 className="text-3xl md:text-4xl font-bold mb-2">{meta.label}</h1>
       <InlineMore text={meta.description} lines={1} minChars={40} className="text-gray-700 mb-2" />
 
