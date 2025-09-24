@@ -9,7 +9,7 @@ export type GridProduct = {
   slug?: string;
   title?: string;
   name?: string;
-  label?: string;
+  label?: string;        // may be a subcategory label; we won’t use it for titles
   description?: string;
   price?: number | string;
   currency?: string;     // e.g. "EUR"
@@ -56,7 +56,7 @@ function keyFor(p: GridProduct): string | null {
 function cartKeyFor(p: GridProduct, i: number): string {
   const k = keyFor(p);
   if (k) return k;
-  const base = (p.name ?? p.title ?? p.label ?? `item-${i}`)
+  const base = (p.name ?? p.title ?? p.slug ?? `item-${i}`)
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
@@ -70,6 +70,7 @@ function isBundleLike(p: GridProduct) {
 
 function viewHrefFor(p: GridProduct): string {
   if (p.href) return p.href;
+
   const idStr = p.id !== undefined && p.id !== null ? String(p.id).trim() : null;
   const slugStr = p.slug && String(p.slug).trim() !== "" ? String(p.slug).trim() : null;
 
@@ -86,24 +87,30 @@ function viewHrefFor(p: GridProduct): string {
 }
 
 async function buyNow(p: GridProduct) {
-  // Use GET shortcut if we have a numeric id
+  // Direct link if provided
+  if (p.buyUrl) {
+    window.location.href = p.buyUrl;
+    return;
+  }
+
+  // Prefer GET shortcut if we have a numeric id
   const idNum = resolveNumericId(p.id);
   if (idNum) {
     window.location.href = `/api/checkout?productId=${idNum}&qty=1`;
     return;
   }
 
-  // Fallback: POST with slug/id
+  // Fallback: POST with slug/id or priceId
   try {
-    const productKey = keyFor(p);
+    const productKey = keyFor(p) ?? "";
+    const payload = p.priceId
+      ? { line_items: [{ price: p.priceId, quantity: 1 }], mode: "payment" }
+      : { items: [{ slug: productKey, quantity: 1 }], mode: "payment" };
+
     const res = await fetch("/api/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(
-        p.priceId
-          ? { line_items: [{ price: p.priceId, quantity: 1 }], mode: "payment" }
-          : { items: [{ slug: productKey, quantity: 1 }], mode: "payment" }
-      ),
+      body: JSON.stringify(payload),
     });
     const data = await res.json();
     if (data?.url) {
@@ -111,9 +118,8 @@ async function buyNow(p: GridProduct) {
       return;
     }
   } catch {
-    // ignore
+    // ignore and fall through
   }
-  // Final fallback
   window.location.href = "/checkout";
 }
 
@@ -149,20 +155,17 @@ export default function CategoryProductGrid({ items }: { items: GridProduct[] })
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
       {items.map((p, i) => {
-        // ✅ Prefer real product name if present
-        const title = (p.name ?? p.title ?? p.label ?? "Untitled").trim();
+        // ✅ Only use real product identifiers for the title (no subcategory label)
+        const title = (p.name ?? p.title ?? p.slug ?? "Untitled").trim();
         const priceLabel = formatPrice(p.price, p.currency ?? "€");
         const viewHref = viewHrefFor(p);
         const idNum = resolveNumericId(p.id);
-
         const thumbs = Array.isArray(p.gallery) ? p.gallery.slice(0, 3) : [];
 
         const onAddFallback = () => {
           const key = cartKeyFor(p, i);
           addToCart({ id: key, title, price: parsePrice(p.price), image: p.image }, 1);
-          // Fire both event names for maximum compatibility (header badges, etc.)
-          const countEvent = new CustomEvent("cart-change", { detail: { count: 1 } });
-          window.dispatchEvent(countEvent);
+          // addToCart already dispatches "cart-update" from lib/cart.ts, which the badge listens to
         };
 
         return (
@@ -182,7 +185,7 @@ export default function CategoryProductGrid({ items }: { items: GridProduct[] })
               </div>
             </Link>
 
-            {/* Title (now shows actual product name) */}
+            {/* Title */}
             <h3 className="mt-3 text-xl font-semibold leading-snug">
               <Link href={viewHref} className="hover:underline">{title}</Link>
             </h3>
@@ -213,7 +216,7 @@ export default function CategoryProductGrid({ items }: { items: GridProduct[] })
             <div className="mt-4 flex flex-wrap gap-3">
               <BlueLink href={viewHref}>👁️ View</BlueLink>
 
-              {/* ✅ Use the shared AddToCartButton when we have a numeric id (updates badge everywhere) */}
+              {/* Prefer shared button when we have a numeric product id */}
               {idNum !== null ? (
                 <AddToCartButton
                   productId={idNum}
@@ -223,7 +226,7 @@ export default function CategoryProductGrid({ items }: { items: GridProduct[] })
                 <BlueButton onClick={onAddFallback}>🛒 Add to cart</BlueButton>
               )}
 
-              {/* Buy → Stripe checkout (GET shortcut when id is numeric; else POST) */}
+              {/* Buy → Stripe checkout */}
               {idNum !== null ? (
                 <BlueLink href={`/api/checkout?productId=${idNum}&qty=1`}>⚡ Buy</BlueLink>
               ) : (
