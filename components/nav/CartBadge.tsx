@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import * as cart from "@/lib/cart";
 
-/** Get cart count safely across both cart implementations */
+/** Safely get the cart count across both implementations */
 function getCountSafe(): number {
   if (typeof window === "undefined") return 0;
   try {
@@ -10,7 +10,7 @@ function getCountSafe(): number {
     if (typeof mod.getCartCount === "function") return mod.getCartCount();
     if (typeof mod.count === "function") return mod.count();
 
-    // Fallback: read known keys directly
+    // Fallback: read known localStorage keys
     const keys = ["cart.v1", "dpa:cart"];
     for (const k of keys) {
       const raw = window.localStorage.getItem(k);
@@ -30,7 +30,7 @@ export default function CartBadge({ className = "" }: { className?: string }) {
     const update = () => setC(getCountSafe());
     update();
 
-    // Listen to both possible event names for compatibility
+    // Support both event names
     const handler = () => update();
     window.addEventListener("cart-update", handler);
     window.addEventListener("cart:change", handler);
