@@ -1,48 +1,41 @@
-// lib/cart.ts
 "use client";
 
-export type CartItem = {
-  slug: string;
-  title: string;
-  price: number;
-  image?: string;
-  qty: number;
-};
+const KEY = "dpa_cart_v1";
 
-const KEY = "dpa:cart";
-export const CART_EVENT = "cart:change";
+type CartItem = { slug: string; title: string; price: number; image?: string; qty: number };
 
-function read(): CartItem[] {
-  if (typeof window === "undefined") return [];
-  try { return JSON.parse(localStorage.getItem(KEY) || "[]"); } catch { return []; }
+function load(): CartItem[] {
+  try {
+    const raw = localStorage.getItem(KEY);
+    return raw ? (JSON.parse(raw) as CartItem[]) : [];
+  } catch {
+    return [];
+  }
 }
-function write(items: CartItem[]) {
+
+function save(items: CartItem[]) {
   localStorage.setItem(KEY, JSON.stringify(items));
-  window.dispatchEvent(new CustomEvent(CART_EVENT, { detail: { count: count() } }));
+  window.dispatchEvent(new CustomEvent("cart:change")); // notify listeners (badge)
+}
+
+export function get(): CartItem[] {
+  return load();
 }
 
 export function count(): number {
-  return read().reduce((n, it) => n + it.qty, 0);
+  return load().reduce((n, it) => n + it.qty, 0);
 }
 
-export function add(item: Omit<CartItem, "qty">, qty = 1) {
-  const items = read();
-  const i = items.findIndex((x) => x.slug === item.slug);
-  if (i >= 0) items[i].qty += qty; else items.push({ ...item, qty });
-  write(items);
+export function add(base: { slug: string; title: string; price: number; image?: string }, qty = 1) {
+  const items = load();
+  const i = items.findIndex((it) => it.slug === base.slug);
+  if (i >= 0) items[i].qty += qty;
+  else items.push({ ...base, qty });
+  save(items);
 }
 
-export function remove(slug: string, qty = 1) {
-  const items = read()
-    .map((x) => (x.slug === slug ? { ...x, qty: x.qty - qty } : x))
-    .filter((x) => x.qty > 0);
-  write(items);
-}
-
-export function clear() { write([]); }
-
-export function onChange(cb: (count: number) => void) {
-  const handler = (e: Event) => cb((e as CustomEvent).detail?.count ?? count());
-  window.addEventListener(CART_EVENT, handler);
-  return () => window.removeEventListener(CART_EVENT, handler);
+export function onChange(handler: (count: number) => void) {
+  const cb = () => handler(count());
+  window.addEventListener("cart:change", cb);
+  return () => window.removeEventListener("cart:change", cb);
 }

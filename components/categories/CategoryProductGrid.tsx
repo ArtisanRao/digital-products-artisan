@@ -4,15 +4,16 @@ import Link from "next/link";
 import { add } from "@/lib/cart";
 
 export type GridProduct = {
-  slug: string;
-  title: string;
+  id?: string | number;
+  slug?: string;
+  title: string;          // ← real product title
   category: string;
   price: number | string;
-  image?: string;        // cover
-  gallery?: string[];    // mockups (first 3 shown)
+  image?: string;         // cover
+  gallery?: string[];     // mockups (first 3 shown)
   description?: string;
-  priceId?: string;      // if you use Stripe Checkout
-  buyUrl?: string;       // optional direct checkout URL
+  priceId?: string;       // if you use Stripe Checkout
+  buyUrl?: string;        // optional direct checkout URL
 };
 
 function fmtPrice(p: number | string) {
@@ -26,14 +27,17 @@ function fmtPrice(p: number | string) {
   return p;
 }
 
+function productUrl(p: GridProduct) {
+  if (p.slug) return `/products/${p.slug}`;
+  if (p.id !== undefined) return `/products/${p.id}`;
+  return `/products`;
+}
+
 async function buyNow(p: GridProduct) {
-  // Prefer an explicit checkout URL if you’ve put one in the product
   if (p.buyUrl) {
     window.location.href = p.buyUrl;
     return;
   }
-
-  // Try Stripe Checkout via your existing API route
   try {
     const res = await fetch("/api/stripe/create", {
       method: "POST",
@@ -41,7 +45,7 @@ async function buyNow(p: GridProduct) {
       body: JSON.stringify(
         p.priceId
           ? { line_items: [{ price: p.priceId, quantity: 1 }], mode: "payment" }
-          : { items: [{ slug: p.slug, quantity: 1 }], mode: "payment" }
+          : { items: [{ slug: p.slug ?? String(p.id), quantity: 1 }], mode: "payment" }
       ),
     });
     const data = await res.json();
@@ -49,23 +53,20 @@ async function buyNow(p: GridProduct) {
       window.location.href = data.url;
       return;
     }
-  } catch {
-    // ignore and fallback below
-  }
-
-  // Fallback to your /checkout page if Stripe didn't return a URL
-  window.location.href = `/checkout?item=${encodeURIComponent(p.slug)}`;
+  } catch {}
+  // Fallback
+  window.location.href = `/checkout?item=${encodeURIComponent(p.slug ?? String(p.id ?? ""))}`;
 }
 
-function ActionButton(props: React.ComponentProps<"button">) {
+function BlueButton(props: React.ComponentProps<"button">) {
   const { className = "", ...rest } = props;
   return (
     <button
       {...rest}
       className={
         "inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white " +
-        "hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 " +
-        className
+        "hover:bg-blue-700 active:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 " +
+        "transition-colors " + className
       }
     />
   );
@@ -82,39 +83,45 @@ export default function CategoryProductGrid({ items }: { items: GridProduct[] })
             typeof p.price === "number"
               ? p.price
               : Number(String(p.price).replace(/[^\d.]/g, "")) || 0;
-          add({ slug: p.slug, title: p.title, price, image: p.image }, 1);
-          // no redirect; CartBadge (if added) will update automatically
+          add({ slug: p.slug ?? String(p.id ?? ""), title: p.title, price, image: p.image }, 1);
+          // No redirect; CartBadge will update via cart change event.
         };
 
         const onBuy = () => buyNow(p);
 
         return (
-          <article key={p.slug} className="rounded-2xl border bg-white p-4 shadow-sm hover:shadow transition">
-            {/* Cover */}
-            <Link href={`/products/${p.slug}`} className="block">
+          <article
+            key={p.slug ?? String(p.id ?? Math.random())}
+            className="rounded-2xl border bg-white p-4 shadow-sm hover:shadow-md transition"
+          >
+            {/* Cover (hover zoom) */}
+            <Link href={productUrl(p)} className="group block">
               <div className="aspect-[3/2] rounded-xl bg-gray-50 overflow-hidden">
                 <img
                   src={p.image ?? "/images/placeholder.jpg"}
                   alt={p.title}
-                  className="h-full w-full object-contain p-3"
+                  className="h-full w-full object-contain p-3 transition-transform duration-300 group-hover:scale-[1.02]"
                   loading="lazy"
                 />
               </div>
             </Link>
 
-            {/* Title + desc */}
+            {/* Title + description (uses real product title) */}
             <h3 className="mt-3 text-xl font-semibold">
-              <Link href={`/products/${p.slug}`} className="hover:underline">
-                {p.title}
-              </Link>
+              <Link href={productUrl(p)} className="hover:underline">{p.title}</Link>
             </h3>
-            {p.description && <p className="mt-1 text-gray-600 line-clamp-2">{p.description}</p>}
+            {p.description && (
+              <p className="mt-1 text-gray-600 line-clamp-2">{p.description}</p>
+            )}
 
-            {/* Mockups (first 3) */}
+            {/* Mockups (hover ring) */}
             {thumbs.length > 0 && (
               <div className="mt-3 flex gap-3">
                 {thumbs.map((src) => (
-                  <div key={src} className="h-16 w-20 rounded-lg border bg-white overflow-hidden">
+                  <div
+                    key={src}
+                    className="h-16 w-20 rounded-lg border bg-white overflow-hidden hover:ring-2 hover:ring-blue-400 transition"
+                  >
                     <img src={src} alt="" className="h-full w-full object-cover" loading="lazy" />
                   </div>
                 ))}
@@ -124,18 +131,17 @@ export default function CategoryProductGrid({ items }: { items: GridProduct[] })
             {/* Price */}
             <div className="mt-4 text-2xl font-semibold">{fmtPrice(p.price)}</div>
 
-            {/* Actions: all blue bg + white text */}
+            {/* Actions */}
             <div className="mt-4 flex flex-wrap gap-3">
               <Link
-                href={`/products/${p.slug}`}
-                className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50"
+                href={productUrl(p)}
+                className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 active:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 transition-colors"
               >
                 👁️ View
               </Link>
 
-              <ActionButton onClick={onAdd}>🛒 Add to cart</ActionButton>
-
-              <ActionButton onClick={onBuy}>⚡ Buy</ActionButton>
+              <BlueButton onClick={onAdd}>🛒 Add to cart</BlueButton>
+              <BlueButton onClick={onBuy}>⚡ Buy</BlueButton>
             </div>
           </article>
         );
