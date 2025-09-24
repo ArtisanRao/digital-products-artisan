@@ -1,4 +1,7 @@
 ﻿// app/categories/[slug]/page.tsx
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 import fs from "node:fs";
 import path from "node:path";
 import Link from "next/link";
@@ -47,8 +50,8 @@ function resolveProductThumbs(slug?: string) {
   return [...mocks, ...rest].slice(0, 3).map((f) => `/images/products/${slug}/${f}`);
 }
 
-/* ---------- Category normalization ---------- */
-const normalize = (s: string) =>
+/* ---------- Normalization ---------- */
+const norm = (s: string) =>
   s
     .toLowerCase()
     .trim()
@@ -56,7 +59,7 @@ const normalize = (s: string) =>
     .replace(/\be-?books?\b/g, "ebooks")
     .replace(/[^a-z0-9]+/g, "-");
 
-/** small alias table for tricky categories */
+/** extra aliases if needed */
 const CATEGORY_STRICT_ALIASES: Record<string, string[]> = {
   "religious-ebooks": ["religion-ebooks", "religious-ebook", "religion-ebook"],
 };
@@ -110,22 +113,22 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     );
   }
 
-  // STRICT keys we accept for this page (normalized)
-  const wanted = new Set([
-    normalize(meta.label),
-    normalize(slug),
-    ...(CATEGORY_STRICT_ALIASES[slug] ?? []).map((a) => normalize(a)),
+  // STRICT keys for this page
+  const wanted = new Set<string>([
+    norm(meta.label),
+    norm(slug),
+    ...(CATEGORY_STRICT_ALIASES[slug] ?? []).map(norm),
   ]);
 
-  // Only use each product's OWN fields (no injecting meta.label or slug into candidates)
+  // Only use the product's own fields — no injected label/slug, no substring scanning
   const catProducts = products.filter((p: any) => {
-    const fields: string[] = [];
-    if (typeof p.category === "string") fields.push(p.category);
-    if (typeof p.categorySlug === "string") fields.push(p.categorySlug);
-    if (typeof p.collection === "string") fields.push(p.collection);
-    if (Array.isArray(p.categories)) fields.push(...p.categories);
-    if (Array.isArray(p.tags)) fields.push(...p.tags);
-    return fields.some((f) => wanted.has(normalize(String(f))));
+    const cand: string[] = [];
+    if (typeof p.category === "string") cand.push(p.category);
+    if (typeof p.categorySlug === "string") cand.push(p.categorySlug);
+    if (typeof p.collection === "string") cand.push(p.collection);
+    if (Array.isArray(p.categories)) cand.push(...p.categories);
+    if (Array.isArray(p.tags)) cand.push(...p.tags);
+    return cand.some((c) => wanted.has(norm(String(c))));
   });
 
   const items = catProducts.map((p: any) => ({
