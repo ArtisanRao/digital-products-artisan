@@ -4,26 +4,25 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { addToCart } from "@/lib/cart";
 
-/** Minimal shape we consume from /data/products */
 export type GridProduct = {
   id?: string | number;
   slug?: string;
   title?: string;
-  name?: string;                 // some datasets use `name`
-  label?: string;                // rare
+  name?: string;
+  label?: string;
   description?: string;
   price?: number | string;
-  currency?: string;             // e.g. "EUR"
+  currency?: string;     // e.g. "EUR"
   image?: string;
-  gallery?: string[];            // extra thumbs
-  buyUrl?: string;               // direct checkout
-  href?: string;                 // explicit URL override
-  type?: string;                 // e.g. "bundle"
-  collection?: string;           // e.g. "bundles"
-  category?: string;             // may contain "Bundle"
+  gallery?: string[];
+  buyUrl?: string;       // direct checkout (optional)
+  href?: string;         // explicit URL (optional)
+  type?: string;         // "bundle" etc.
+  collection?: string;   // "bundles"
+  category?: string;     // may contain "Bundle"
+  priceId?: string;      // Stripe price id (optional)
 };
 
-/** Format like “9,99 €” */
 function formatPrice(p?: number | string, currency = "€") {
   if (typeof p === "number") {
     const num = p.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -32,24 +31,27 @@ function formatPrice(p?: number | string, currency = "€") {
   return p ?? "";
 }
 
-/** Prefer numeric id (since /products/[id] is SSG), else slug, else null */
 function keyFor(p: GridProduct): string | null {
   if (p.id !== undefined && p.id !== null && String(p.id).trim() !== "") return String(p.id).trim();
   if (p.slug && String(p.slug).trim() !== "") return String(p.slug).trim();
   return null;
 }
 
-function isBundleLike(p: GridProduct): boolean {
+function cartKeyFor(p: GridProduct, i: number): string {
+  const k = keyFor(p);
+  if (k) return k;
+  const base = (p.title ?? p.name ?? p.label ?? `item-${i}`)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return base || `item-${i}`;
+}
+
+function isBundleLike(p: GridProduct) {
   const s = `${p.type ?? ""} ${p.collection ?? ""} ${p.category ?? ""}`.toLowerCase();
   return s.includes("bundle");
 }
 
-/** Compute a safe view URL for this product:
- * 1) explicit p.href wins
- * 2) bundles → /bundles/[slug] (prefer slug for bundles)
- * 3) products → /products/[id] if numeric id exists; else /products/[slug]
- * 4) otherwise /products (no 404)
- */
 function viewHrefFor(p: GridProduct): string {
   if (p.href) return p.href;
 
@@ -57,34 +59,40 @@ function viewHrefFor(p: GridProduct): string {
   const slugStr = p.slug && String(p.slug).trim() !== "" ? String(p.slug).trim() : null;
 
   if (isBundleLike(p)) {
-    // bundles are usually slug-based routes
     if (slugStr) return `/bundles/${encodeURIComponent(slugStr)}`;
     if (idStr) return `/bundles/${encodeURIComponent(idStr)}`;
     return "/bundles";
   }
 
-  // products: prefer numeric id route (SSG), else slug
   if (idStr && /^\d+$/.test(idStr)) return `/products/${idStr}`;
   if (slugStr) return `/products/${encodeURIComponent(slugStr)}`;
   if (idStr) return `/products/${encodeURIComponent(idStr)}`;
-
   return "/products";
 }
 
+function parsePrice(p?: number | string): number {
+  if (typeof p === "number") return p;
+  const s = String(p ?? "").replace(",", ".").replace(/[^\d.]/g, "");
+  const n = Number(s);
+  return Number.isFinite(n) ? n : 0;
+}
+
 async function buyNow(p: GridProduct) {
-  // 1) explicit checkout url
   if (p.buyUrl) {
     window.location.href = p.buyUrl;
     return;
   }
-
-  // 2) Stripe endpoint (if configured)
   try {
-    const key = keyFor(p) ?? "";
+    // Prefer Stripe priceId if provided
+    const payload =
+      p.priceId
+        ? { line_items: [{ price: p.priceId, quantity: 1 }], mode: "payment" }
+        : { items: [{ slug: keyFor(p) ?? "", quantity: 1 }], mode: "payment" };
+
     const res = await fetch("/api/stripe/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items: [{ slug: key, quantity: 1 }], mode: "payment" }),
+      body: JSON.stringify(payload),
     });
     const data = await res.json();
     if (data?.url) {
@@ -92,16 +100,11 @@ async function buyNow(p: GridProduct) {
       return;
     }
   } catch {
-    // ignore and fallback below
+    // ignore and fallback
   }
-
-  // 3) fallback: product page #buy, final fallback: /checkout
-  const v = viewHrefFor(p);
-  if (v && v !== "/products" && v !== "/bundles") {
-    window.location.href = `${v}#buy`;
-  } else {
-    window.location.href = "/checkout";
-  }
+  // Final fallback – native checkout page
+  const k = keyFor(p);
+  window.location.href = k ? `/checkout?item=${encodeURIComponent(k)}` : "/checkout";
 }
 
 function BlueButton(props: React.ComponentProps<"button">) {
@@ -111,8 +114,8 @@ function BlueButton(props: React.ComponentProps<"button">) {
       {...rest}
       className={
         "inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white " +
-        "hover:bg-blue-700 active:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 " +
-        "transition-colors " + className
+        "transition-colors hover:bg-blue-700 active:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 " +
+        className
       }
     />
   );
@@ -131,14 +134,8 @@ export default function CategoryProductGrid({ items }: { items: GridProduct[] })
         );
 
         const onAdd = () => {
-          const key = keyFor(p);
-          if (!key) return; // no route-able key; avoid side-effects
-          const numericPrice =
-            typeof p.price === "number"
-              ? p.price
-              : Number(String(p.price ?? "").replace(",", ".").replace(/[^\d.]/g, "")) || 0;
-
-          addToCart({ id: key, title, price: numericPrice, image: p.image }, 1);
+          const key = cartKeyFor(p, i); // ← always yields a key, even if slug/id missing
+          addToCart({ id: key, title, price: parsePrice(p.price), image: p.image }, 1);
           // no redirect; CartBadge updates via event in lib/cart.ts
         };
 
@@ -161,15 +158,11 @@ export default function CategoryProductGrid({ items }: { items: GridProduct[] })
 
             {/* Title */}
             <h3 className="mt-3 text-xl font-semibold leading-snug">
-              <Link href={viewHref} className="hover:underline">
-                {title}
-              </Link>
+              <Link href={viewHref} className="hover:underline">{title}</Link>
             </h3>
 
             {/* Optional blurb */}
-            {p.description && (
-              <p className="mt-1 line-clamp-2 text-sm text-gray-600">{p.description}</p>
-            )}
+            {p.description && <p className="mt-1 line-clamp-2 text-sm text-gray-600">{p.description}</p>}
 
             {/* Mockups (hover ring) */}
             {thumbs.length > 0 && (
@@ -196,12 +189,8 @@ export default function CategoryProductGrid({ items }: { items: GridProduct[] })
               >
                 👁️ View
               </Link>
-              <BlueButton onClick={onAdd} disabled={!keyFor(p)}>
-                🛒 Add to cart
-              </BlueButton>
-              <BlueButton onClick={() => buyNow(p)}>
-                ⚡ Buy
-              </BlueButton>
+              <BlueButton onClick={onAdd}>🛒 Add to cart</BlueButton>
+              <BlueButton onClick={() => buyNow(p)}>⚡ Buy</BlueButton>
             </div>
           </article>
         );
