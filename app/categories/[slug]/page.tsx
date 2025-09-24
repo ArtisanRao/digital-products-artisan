@@ -35,7 +35,7 @@ const LEGACY_TO_NEW: Record<string, string> = {
 
 const pub = (...p: string[]) => path.join(process.cwd(), "public", ...p);
 
-/** Find first existing (absolute + public href) */
+/** File helpers */
 function firstExistingPublicHref(cands: (string | undefined)[]): { abs: string; href: string } | null {
   for (const href of cands) {
     if (!href) continue;
@@ -44,12 +44,6 @@ function firstExistingPublicHref(cands: (string | undefined)[]): { abs: string; 
   }
   return null;
 }
-
-/** Resolve a product cover:
- *  1) p.image
- *  2) /images/products/<slug>/cover.(jpg|png|webp)
- *  3) /images/placeholder.jpg
- */
 function resolveProductCover(p: { slug?: string; image?: string }) {
   const fallback = "/images/placeholder.jpg";
   if (!p.slug) return p.image ?? fallback;
@@ -62,8 +56,6 @@ function resolveProductCover(p: { slug?: string; image?: string }) {
     ])?.href ?? fallback
   );
 }
-
-/** Pick up to 3 mockups from /public/images/products/<slug> */
 function resolveProductThumbs(slug?: string) {
   if (!slug) return [] as string[];
   const dir = pub("images", "products", slug);
@@ -76,7 +68,7 @@ function resolveProductThumbs(slug?: string) {
   return files.slice(0, 3).map((f) => `/images/products/${slug}/${f}`);
 }
 
-/** Helpers to normalize comparisons */
+/** Normalizers */
 const toSlug = (s: string) =>
   s
     .toLowerCase()
@@ -84,10 +76,21 @@ const toSlug = (s: string) =>
     .replace(/&/g, "and")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
-
 const norm = (s: string) => s.toLowerCase().trim();
+const STOP = new Set([
+  "and","the","of","a","an","to","for","in","on","with",
+  "ebook","ebooks","book","books","e-book","e-books",
+  "template","templates","bundle","bundles","digital","kit","kits"
+]);
+const tokenize = (s: string) => toSlug(s).split("-").filter(t => t && !STOP.has(t));
 
-/** Static params for new + legacy slugs */
+/** Optional per-category alias tokens (helps “Religious eBooks”) */
+const CATEGORY_ALIASES: Record<string,string[]> = {
+  "religious-ebooks": ["religious","religion","faith","christian","christianity","devotional","devotionals","bible","scripture","spiritual","spirituality"],
+  // add others if you ever need
+};
+
+/** Static params */
 export function generateStaticParams() {
   const newSlugs = Object.keys(META);
   const legacySlugs = Object.keys(LEGACY_TO_NEW);
@@ -111,38 +114,47 @@ export async function generateMetadata({ params }: { params: Promise<Params> }) 
   };
 }
 
-/** Robust category matcher: checks label and slug across common product fields */
-function productBelongsToCategory(p: any, label: string, slug: string) {
-  const labelN = norm(label);
-  const slugN = toSlug(slug);
-  const labelSlug = toSlug(label);
+/** Robust category matcher */
+function productBelongsToCategory(p: any, catLabel: string, catSlug: string) {
+  const labelN = norm(catLabel);
+  const slugN = toSlug(catSlug);
+  const labelSlug = toSlug(catLabel);
 
+  // Collect candidate strings from product
   const bucket: string[] = [];
-
-  // Strings
   if (p.category) bucket.push(String(p.category));
   if (p.collection) bucket.push(String(p.collection));
   if (p.type) bucket.push(String(p.type));
   if (p.categorySlug) bucket.push(String(p.categorySlug));
-
-  // Arrays
   if (Array.isArray(p.categories)) bucket.push(...p.categories.map(String));
   if (Array.isArray(p.labels)) bucket.push(...p.labels.map(String));
   if (Array.isArray(p.tags)) bucket.push(...p.tags.map(String));
 
-  // Normalize and test
+  // 1) Exact slug/label matches
   for (const s of bucket) {
     const sNorm = norm(s);
     const sSlug = toSlug(s);
-    if (sNorm === labelN) return true;           // exact label (case-insens)
-    if (sSlug === slugN) return true;            // exact slug match
-    if (sSlug === labelSlug) return true;        // label → slug match
+    if (sNorm === labelN) return true;
+    if (sSlug === slugN) return true;
+    if (sSlug === labelSlug) return true;
   }
 
-  // Soft contains (helps if a value is like "Religious eBooks & Devotionals")
+  // 2) Token overlap (ignore generic words)
+  const labelTokens = new Set([
+    ...tokenize(catLabel),
+    ...tokenize(catSlug),
+    ...(CATEGORY_ALIASES[labelSlug] ?? []),
+  ]);
+  for (const s of bucket) {
+    const tks = tokenize(s);
+    if (!tks.length) continue;
+    if (tks.some(t => labelTokens.has(t))) return true;      // overlap any significant token
+  }
+
+  // 3) Soft contains both ways (handles "Religious & Devotional eBooks" vs "Religious eBooks")
   for (const s of bucket) {
     const sNorm = norm(s);
-    if (sNorm.includes(labelN)) return true;
+    if (sNorm.includes(labelN) || labelN.includes(sNorm)) return true;
   }
 
   return false;
@@ -171,27 +183,25 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     );
   }
 
-  // ✅ Robust match across product fields
+  // Match products robustly
   const matched = products.filter((p: any) => productBelongsToCategory(p, meta.title, slug));
 
-  // Enrich with resolved cover + up to 3 thumbs for the grid
+  // Enrich for the grid
   const items = matched.map((p: any) => ({
-    // Make sure AddToCartButton path works when id is numeric
-    id: p.id,
+    id: p.id,                       // numeric id → AddToCartButton works
     slug: p.slug,
-    // Force real product name, not subcategory:
-    name: p.title,
+    name: p.title,                  // ensure product name shows, not subcategory
     title: p.title,
     description: p.description,
     price: p.price,
-    currency: (p.currency as string | undefined) ?? "€",
+    currency: p.currency ?? "€",
     image: p.image ?? resolveProductCover(p),
     gallery: p.images?.length ? p.images : resolveProductThumbs(p.slug),
     type: p.type,
     collection: p.collection,
     category: p.category,
-    priceId: (p as any).priceId,
-    buyUrl: (p as any).buyUrl,
+    priceId: p.priceId,
+    buyUrl: p.buyUrl,
   }));
 
   return (
