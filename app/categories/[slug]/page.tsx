@@ -137,8 +137,7 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     // Some data stores category as the slug; include that too
     if (typeof p.categorySlug === "string") cand.push(p.categorySlug);
 
-    // Loose alias: the visible category label itself
-    cand.push(meta.label);
+    // ❌ do NOT push `meta.label` into `cand` (this caused all products to match every category)
 
     // Compare all normalized
     const hit = cand.some((c) => want.has(norm(String(c))));
@@ -167,7 +166,6 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
   // Enrich with resolved cover + up to 3 thumbs (used by the grid)
   const items = catProducts.map((p: any) => ({
     ...p,
-    // never override the real title — keep p.title as-is:
     image: p.image ?? resolveProductCover(p),
     gallery: Array.isArray(p.images) && p.images.length ? p.images : resolveProductThumbs(p.slug),
   }));
