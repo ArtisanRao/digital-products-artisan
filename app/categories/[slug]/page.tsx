@@ -33,10 +33,13 @@ const LEGACY_TO_NEW: Record<string, string> = {
   "fonts": "fonts-and-icons",
 };
 
+/** Helpers */
 const pub = (...p: string[]) => path.join(process.cwd(), "public", ...p);
 
-/** Find first existing (absolute + public href) */
-function firstExistingPublicHref(cands: (string | undefined)[]): { abs: string; href: string } | null {
+/** First existing (absolute + public href) */
+function firstExistingPublicHref(
+  cands: (string | undefined)[]
+): { abs: string; href: string } | null {
   for (const href of cands) {
     if (!href) continue;
     const abs = pub(href.replace(/^\//, ""));
@@ -72,7 +75,7 @@ function resolveProductThumbs(slug?: string) {
     .readdirSync(dir)
     .filter((f) => /\.(png|jpe?g|webp|avif)$/i.test(f))
     .filter((f) => /^(mock|thumb|preview)[-_]?\d*/i.test(f) || /-mockup/i.test(f))
-    .sort();
+    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
   return files.slice(0, 3).map((f) => `/images/products/${slug}/${f}`);
 }
 
@@ -127,11 +130,11 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
   const label = meta.title;
   const catProducts = products.filter((p) => p.category === label);
 
-  // Enrich with resolved cover + up to 3 thumbs (used by CategoryProductGrid)
+  // Enrich with resolved cover + up to 3 thumbs (keeps product titles & all original fields)
   const items = catProducts.map((p: any) => ({
     ...p,
     image: p.image ?? resolveProductCover(p),
-    gallery: p.gallery && p.gallery.length ? p.gallery : resolveProductThumbs(p.slug),
+    gallery: Array.isArray(p.gallery) && p.gallery.length > 0 ? p.gallery : resolveProductThumbs(p.slug),
   }));
 
   return (
