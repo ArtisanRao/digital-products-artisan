@@ -10,57 +10,123 @@ export type GridProduct = {
   slug?: string;
   title?: string;
   name?: string;                 // some datasets use `name`
+  label?: string;                // rare, but seen in some data
   description?: string;
   price?: number | string;
   currency?: string;             // e.g. "EUR"
   image?: string;
   gallery?: string[];            // extra thumbs
   buyUrl?: string;               // optional direct checkout
+  href?: string;                 // explicit URL override
+  type?: string;                 // e.g. "bundle"
+  collection?: string;           // e.g. "bundles"
+  category?: string;             // already present; can include "Bundle"
 };
 
-/** Format “9,99 €” to match your site’s style */
 function formatPrice(p?: number | string, currency = "€") {
   if (typeof p === "number") {
-    // produce: 9,99 €
     const num = p.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     return `${num} ${currency}`;
   }
   return p ?? "";
 }
 
-/** Prefer slug route, else numeric id route, else fall back */
-function productPath(p: GridProduct) {
-  if (p.slug) return `/products/${p.slug}`;
-  if (p.id !== undefined && p.id !== null) return `/products/${String(p.id)}`;
-  return "#";
+/** Return slug or id string if available */
+function slugOrId(p: GridProduct): string | null {
+  if (p.slug && String(p.slug).trim()) return String(p.slug).trim();
+  if (p.id !== undefined && p.id !== null) return String(p.id).trim();
+  return null;
 }
 
-/** Card */
+/** Decide if item belongs to the Bundles route */
+function isBundleLike(p: GridProduct): boolean {
+  const s = `${p.type ?? ""} ${p.collection ?? ""} ${p.category ?? ""}`.toLowerCase();
+  return s.includes("bundle");
+}
+
+/** Compute the correct product URL:
+ *  - prefer explicit p.href if provided
+ *  - bundles → /bundles/[slug]
+ *  - otherwise → /products/[slug]
+ *  - if missing slug/id → fall back to /products
+ */
+function viewHrefFor(p: GridProduct): string {
+  if (p.href) return p.href;
+  const key = slugOrId(p);
+  if (!key) return "/products";
+  const base = isBundleLike(p) ? "/bundles" : "/products";
+  return `${base}/${encodeURIComponent(key)}`;
+}
+
+async function buyNow(p: GridProduct) {
+  // explicit checkout URL wins
+  if (p.buyUrl) {
+    window.location.href = p.buyUrl;
+    return;
+  }
+
+  const viewHref = viewHrefFor(p);
+  // try your Stripe endpoint
+  try {
+    const res = await fetch("/api/stripe/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items: [{ slug: slugOrId(p) ?? "", quantity: 1 }], mode: "payment" }),
+    });
+    const data = await res.json();
+    if (data?.url) {
+      window.location.href = data.url;
+      return;
+    }
+  } catch {
+    // ignore
+  }
+
+  // fallback to product page's buy section, or checkout if we don't have a key
+  const key = slugOrId(p);
+  if (key) window.location.href = `${viewHref}#buy`;
+  else window.location.href = "/checkout";
+}
+
+function BlueButton(props: React.ComponentProps<"button">) {
+  const { className = "", ...rest } = props;
+  return (
+    <button
+      {...rest}
+      className={
+        "inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white " +
+        "hover:bg-blue-700 active:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 " +
+        "transition-colors " + className
+      }
+    />
+  );
+}
+
 export default function CategoryProductGrid({ items }: { items: GridProduct[] }) {
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
       {items.map((p, i) => {
-        const title = p.title ?? p.name ?? "Untitled";
+        const title = p.title ?? p.name ?? p.label ?? "Untitled";
         const priceLabel = formatPrice(p.price, p.currency ?? "€");
-        const viewHref = productPath(p);
-        const buyHref = p.buyUrl ?? (viewHref === "#" ? "#" : `${viewHref}#buy`);
+        const viewHref = viewHrefFor(p);
+        const buyHref = p.buyUrl ?? `${viewHref}#buy`;
 
         // thumbs (limit to 3)
-        const thumbs = useMemo(() => (Array.isArray(p.gallery) ? p.gallery.slice(0, 3) : []), [p.gallery]);
+        const thumbs = useMemo(
+          () => (Array.isArray(p.gallery) ? p.gallery.slice(0, 3) : []),
+          [p.gallery]
+        );
 
         const onAdd = () => {
-          if (viewHref === "#") return;
-          // use slug if present, else id
-          const key = p.slug ?? String(p.id ?? "");
-          addToCart(
-            {
-              id: key,
-              title,
-              price: typeof p.price === "number" ? p.price : Number(String(p.price).replace(",", ".")) || 0,
-              image: p.image,
-            },
-            1
-          );
+          const key = slugOrId(p);
+          if (!key) return;
+          const numericPrice =
+            typeof p.price === "number"
+              ? p.price
+              : Number(String(p.price ?? "").replace(",", ".").replace(/[^\d.]/g, "")) || 0;
+
+          addToCart({ id: key, title, price: numericPrice, image: p.image }, 1);
+          // No redirect; CartBadge updates via event from lib/cart.ts
         };
 
         return (
@@ -68,12 +134,11 @@ export default function CategoryProductGrid({ items }: { items: GridProduct[] })
             key={`${p.slug ?? p.id ?? i}`}
             className="group rounded-2xl border bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
           >
-            {/* Cover */}
+            {/* Cover (hover zoom) */}
             <Link href={viewHref} className="block" aria-label={`View ${title}`}>
               <div className="aspect-[3/2] overflow-hidden rounded-xl bg-gray-50">
-                {/* object-contain so covers aren’t cropped; subtle hover zoom */}
                 <img
-                  src={p.image}
+                  src={p.image || "/images/placeholder.jpg"}
                   alt={title}
                   className="h-full w-full object-contain p-3 transition-transform duration-300 group-hover:scale-[1.03]"
                   loading="lazy"
@@ -93,51 +158,38 @@ export default function CategoryProductGrid({ items }: { items: GridProduct[] })
               <p className="mt-1 line-clamp-2 text-sm text-gray-600">{p.description}</p>
             )}
 
-            {/* Thumbs */}
+            {/* Mockups (hover ring) */}
             {thumbs.length > 0 && (
               <div className="mt-3 flex gap-3">
                 {thumbs.map((src) => (
-                  <img
+                  <div
                     key={src}
-                    src={src}
-                    alt=""
-                    className="h-16 w-16 rounded-lg border bg-white object-cover transition duration-300 hover:scale-[1.04] hover:shadow"
-                    loading="lazy"
-                  />
+                    className="h-16 w-20 overflow-hidden rounded-lg border bg-white transition hover:ring-2 hover:ring-blue-400"
+                  >
+                    <img src={src} alt="" className="h-full w-full object-cover" loading="lazy" />
+                  </div>
                 ))}
               </div>
             )}
 
-            {/* Price + actions */}
-            <div className="mt-4 flex items-center justify-between">
-              <div className="text-2xl font-semibold">{priceLabel}</div>
-            </div>
+            {/* Price */}
+            <div className="mt-4 text-2xl font-semibold">{priceLabel}</div>
 
+            {/* Actions */}
             <div className="mt-4 flex flex-wrap gap-3">
-              {/* View (blue button, same style as Products page) */}
               <Link
                 href={viewHref}
-                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40"
+                className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 active:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50"
               >
                 👁️ View
               </Link>
-
-              {/* Add to cart (no redirect, updates badge) */}
-              <button
-                type="button"
-                onClick={onAdd}
-                disabled={viewHref === "#"}
-                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40"
-                aria-label={`Add ${title} to cart`}
-              >
+              <BlueButton onClick={onAdd} disabled={!slugOrId(p)}>
                 🛒 Add to cart
-              </button>
-
-              {/* Buy → go to product page’s buy section (works even without direct API) */}
+              </BlueButton>
               <Link
                 href={buyHref}
                 prefetch={false}
-                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40"
+                className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 active:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50"
               >
                 ⚡ Buy
               </Link>
