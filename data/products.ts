@@ -54,29 +54,43 @@ const CATEGORY_LABELS = {
   RELIGIOUS: "Religious eBooks",
 } as const
 
+/** Optional: direct product-slug → category overrides (super explicit). */
+const SLUG_TO_CATEGORY: Record<string, string> = {
+  // e.g. ensure this exact product always lands where it belongs:
+  "religious-ebooks": CATEGORY_LABELS.RELIGIOUS,
+}
+
 /**
  * Heuristic category inference from folder slug.
- * You can add/adjust patterns as you like.
+ * More specific rules come first; avoid overly-generic tokens.
  */
 function inferCategory(slug: string): string {
   const s = slug.toLowerCase()
 
+  // 0) Hard overrides by exact product slug
+  if (SLUG_TO_CATEGORY[s]) return SLUG_TO_CATEGORY[s]
+
+  // 1) Specific categories first (to avoid generic matches taking over)
+  if (/(religious|religion|bible|qur'?an|quran|islam|christ|church|devotional|devotion(al)?|prayer|faith|exorcist)/.test(s))
+    return CATEGORY_LABELS.RELIGIOUS
+
   if (/(ai|chatgpt|gpt|prompt)/.test(s)) return CATEGORY_LABELS.AI
-  if (/(planner|journal|productivity|organizer|notion|tracker)/.test(s)) return CATEGORY_LABELS.PLANNERS
-  if (/(self[- ]?help|how[- ]?to|mindset|habit|routine)/.test(s)) return CATEGORY_LABELS.SELF_HELP
   if (/(plr|mrr|bundle|resell|resale)/.test(s)) return CATEGORY_LABELS.PLR
-  if (/(video|course|training|lesson)/.test(s)) return CATEGORY_LABELS.VIDEO
   if (/(complete[- ]?shop|shop[- ]?package|storefront|store[- ]?bundle)/.test(s)) return CATEGORY_LABELS.SHOP
-  if (/(health|fitness|wellness|diet|nutrition|ebook)/.test(s)) return CATEGORY_LABELS.HEALTH
-  if (/(keto|low[- ]?carb)/.test(s)) return CATEGORY_LABELS.KETO
-  if (/(passive|side[- ]?hustle|income|freedom)/.test(s)) return CATEGORY_LABELS.PASSIVE
+  if (/(video|course|training|lesson)/.test(s)) return CATEGORY_LABELS.VIDEO
   if (/(web[- ]?template|template|ui[- ]?kit|theme)/.test(s)) return CATEGORY_LABELS.WEB
-  if (/(essential|toolkit|utilities|automation|prompt[- ]?pack)/.test(s)) return CATEGORY_LABELS.ESSENTIALS
   if (/(social[- ]?media|instagram|pinterest|facebook|tiktok|brand(ing)?[- ]?kit)/.test(s)) return CATEGORY_LABELS.SOCIAL
   if (/(font|typeface|icons?)/.test(s)) return CATEGORY_LABELS.FONTS_ICONS
-  if (/(religious|faith|bible|devotional|devotion(al)?|sermon)/.test(s)) return CATEGORY_LABELS.RELIGIOUS
+  if (/(planner|journal|productivity|organizer|notion|tracker)/.test(s)) return CATEGORY_LABELS.PLANNERS
 
-  // Fallback: pick something neutral
+  // ⚠️ Removed the generic “ebook” token to prevent false positives
+  if (/(health|fitness|wellness|diet|nutrition|workout)/.test(s)) return CATEGORY_LABELS.HEALTH
+
+  if (/(keto|low[- ]?carb)/.test(s)) return CATEGORY_LABELS.KETO
+  if (/(passive|side[- ]?hustle|income|freedom)/.test(s)) return CATEGORY_LABELS.PASSIVE
+  if (/(self[- ]?help|how[- ]?to|mindset|habit|routine)/.test(s)) return CATEGORY_LABELS.SELF_HELP
+
+  // Fallback: neutral bucket
   return CATEGORY_LABELS.ESSENTIALS
 }
 

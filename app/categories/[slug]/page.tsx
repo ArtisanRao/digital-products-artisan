@@ -11,7 +11,7 @@ import CategoryProductGrid from "@/components/categories/CategoryProductGrid";
 import { products } from "@/data/products";
 import { CATEGORY_BY_SLUG, CATEGORY_SLUG_ALIASES } from "@/data/categories";
 
-/* ---------- FS helpers for covers/thumbs ---------- */
+/* ---------------- FS helpers for covers/thumbs ---------------- */
 const pub = (...p: string[]) => path.join(process.cwd(), "public", ...p);
 
 function firstExistingPublicHref(hrefs: (string | undefined)[]): string | undefined {
@@ -45,55 +45,91 @@ function resolveProductThumbs(slug?: string) {
     .filter((f) => /\.(png|jpe?g|webp|avif)$/i.test(f))
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
 
-  const mocks = files.filter(
-    (f) => /^(mock|thumb|preview)[-_]?\d*/i.test(f) || /-mockup/i.test(f)
-  );
-  const rest = files.filter(
-    (f) => !(/^(mock|thumb|preview)[-_]?\d*/i.test(f) || /-mockup/i.test(f))
-  );
+  const mocks = files.filter((f) => /^(mock|thumb|preview)[-_]?\d*/i.test(f) || /-mockup/i.test(f));
+  const rest  = files.filter((f) => !(/^(mock|thumb|preview)[-_]?\d*/i.test(f) || /-mockup/i.test(f)));
   return [...mocks, ...rest].slice(0, 3).map((f) => `/images/products/${slug}/${f}`);
 }
 
-/* ---------- Category normalization ---------- */
-const normalize = (s: string) =>
-  s
+/* ---------------- Category normalization & maps ---------------- */
+const norm = (s: string) =>
+  String(s || "")
     .toLowerCase()
     .trim()
+    .replace(/\breligous\b/g, "religious")      // common typo
     .replace(/&/g, "and")
     .replace(/\be-?books?\b/g, "ebooks")
     .replace(/[^a-z0-9]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 
-function formsFor(label: string, slug: string) {
-  const out = new Set<string>();
-  const push = (v: string) => out.add(normalize(v));
+const SLUGS = Object.keys(CATEGORY_BY_SLUG);
+const LABEL_NORM_TO_SLUG = new Map<string, string>(
+  SLUGS.map((slug) => [norm(CATEGORY_BY_SLUG[slug].label), slug]),
+);
 
-  // label
-  push(label);
-  push(label.replace(/&/g, "and"));
-  push(label.replace(/\band\b/gi, "&"));
-  push(label.replace(/\be-?books?\b/gi, "ebooks"));
+const normalizeSlug = (s: string) => CATEGORY_SLUG_ALIASES[s] ?? s;
 
-  // slug variants
-  push(slug.replace(/-/g, " "));
-  push(slug.replace(/-/g, " ").replace(/&/g, "and"));
+/* Very-light keyword fallback for obvious cases only */
+const KEYWORD_RULES: Array<{ re: RegExp; slug: string }> = [
+  { re: /\b(religious|religion|bible|qur'?an|quran|islam|christ|church|devotional|prayer|faith|exorcist)\b/i, slug: "religious-ebooks" },
+  { re: /\b(chatgpt|gpt|prompt|ai)\b/i, slug: "ai-and-chatgpt-guides" },
+  { re: /\b(font|typeface|icon set|icons?)\b/i, slug: "fonts-and-icons" },
+  { re: /\b(plr|mrr|resell rights|private label rights|master resell)\b/i, slug: "plr-and-mrr-bundles" },
+  { re: /\b(template|theme|website|landing page|ui kit)\b/i, slug: "web-templates" },
+  { re: /\b(course|training|masterclass|bootcamp|video lessons?)\b/i, slug: "video-courses-and-training" },
+  { re: /\b(keto|diet|meal plan|weight loss|nutrition|fitness|workout)\b/i, slug: "health-and-fitness-ebooks" },
+  { re: /\b(planner|journal|habit tracker|productivity)\b/i, slug: "planners-and-productivity" },
+  { re: /\b(social media|instagram|facebook|tiktok|pinterest|canva)\b/i, slug: "social-media-kits" },
+  { re: /\b(complete shop|store package|storefront)\b/i, slug: "complete-shop-packages" },
+];
 
-  return out;
+/** Infer ONE canonical category slug for a product */
+function inferCategorySlug(p: any): string | null {
+  // 1) Explicit slug on the product (wins)
+  const explicitSlug: string | undefined =
+    p.categorySlug || p.slugCategory || p.primaryCategorySlug;
+  if (explicitSlug) {
+    const s = normalizeSlug(String(explicitSlug));
+    return SLUGS.includes(s) ? s : null;
+  }
+
+  // 2) Fields that might carry labels or slugs
+  const cands: string[] = [];
+  if (typeof p.category === "string") cands.push(p.category);
+  if (Array.isArray(p.categories)) cands.push(...p.categories);
+  if (Array.isArray(p.tags)) cands.push(...p.tags);
+  if (typeof p.collection === "string") cands.push(p.collection);
+
+  // slug match first
+  for (const raw of cands) {
+    const s = normalizeSlug(String(raw));
+    if (SLUGS.includes(s)) return s;
+  }
+  // label match (normalized) → slug
+  for (const raw of cands) {
+    const n = norm(String(raw));
+    const found = LABEL_NORM_TO_SLUG.get(n);
+    if (found) return found;
+  }
+
+  // 3) Light keyword fallback (title/name/label/description)
+  const hay = `${p.title ?? ""} ${p.name ?? ""} ${p.label ?? ""} ${p.description ?? ""}`;
+  for (const rule of KEYWORD_RULES) {
+    if (rule.re.test(hay)) return rule.slug;
+  }
+
+  return null;
 }
 
-/* ---------- Static params ---------- */
+/* ---------------- Static params ---------------- */
 export function generateStaticParams() {
   const slugs = Object.keys(CATEGORY_BY_SLUG);
   const legacy = Object.keys(CATEGORY_SLUG_ALIASES);
   return [...slugs, ...legacy].map((slug) => ({ slug }));
 }
 
-type Params = { slug: string };
-const normalizeSlug = (s: string) => CATEGORY_SLUG_ALIASES[s] ?? s;
-
-/* ---------- Metadata ---------- */
-export async function generateMetadata({ params }: { params: Promise<Params> }) {
+/* ---------------- Metadata ---------------- */
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug: raw } = await params;
   const slug = normalizeSlug(raw);
   const meta = CATEGORY_BY_SLUG[slug];
@@ -107,8 +143,8 @@ export async function generateMetadata({ params }: { params: Promise<Params> }) 
   };
 }
 
-/* ---------- Page ---------- */
-export default async function CategoryPage({ params }: { params: Promise<Params> }) {
+/* ---------------- Page ---------------- */
+export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug: raw } = await params;
   const slug = normalizeSlug(raw);
   const meta = CATEGORY_BY_SLUG[slug];
@@ -131,25 +167,10 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     );
   }
 
-  // STRICT matching: only trust explicit category fields on the product.
-  const target = formsFor(meta.label, slug);
-  const matches = (p: any) => {
-    const candidates: string[] = [];
+  // ✅ Strict one-to-one: only products whose inferred slug equals this page's slug
+  const catProducts = products.filter((p: any) => inferCategorySlug(p) === slug);
 
-    // ✅ Only these fields – DO NOT use tags/collection/etc.
-    if (typeof p.category === "string") candidates.push(p.category);
-    if (typeof p.categorySlug === "string") candidates.push(p.categorySlug);
-    if (Array.isArray(p.categories)) candidates.push(...p.categories);
-
-    // Compare normalized equality (no substring fuzziness)
-    return candidates
-      .map((c) => normalize(String(c)))
-      .some((c) => target.has(c));
-  };
-
-  const catProducts = products.filter(matches);
-
-  // Enrich with resolved cover + up to 3 thumbs (used by the grid)
+  // Enrich for grid
   const items = catProducts.map((p: any) => ({
     ...p,
     image: p.image ?? resolveProductCover(p),
