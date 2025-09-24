@@ -6,18 +6,13 @@ export type Category = {
   description: string;
 };
 
-/** Legacy + common-misspelling slug redirects (old → new) */
+/** Legacy slug redirects (old → new) */
 export const CATEGORY_SLUG_ALIASES: Record<string, string> = {
-  // Legacy
   "planners-productivity": "planners-and-productivity",
   "plr-mrr-bundles": "plr-and-mrr-bundles",
   "health-fitness-ebooks": "health-and-fitness-ebooks",
   "keto-diet-guides": "keto-and-diet-guides",
   "fonts": "fonts-and-icons",
-
-  // Common typos / near-misses
-  "religous-ebooks": "religious-ebooks",   // typo
-  "religion-ebooks": "religious-ebooks",   // near-match
 };
 
 /** Normalize a slug (apply legacy → new mapping) */
@@ -35,14 +30,10 @@ const BASE: Array<Omit<Category, "image">> = [
   { label: "Health & Fitness eBooks",       slug: "health-and-fitness-ebooks",       description: "Nutrition, fitness and wellness books." },
   { label: "Keto & Diet Guides",            slug: "keto-and-diet-guides",            description: "Keto and nutrition programs and meal plans." },
   { label: "Passive Income & Side Hustles", slug: "passive-income-and-side-hustles", description: "Monetization playbooks and templates." },
-
-  // New/renamed
   { label: "Digital Essentials Hub",        slug: "digital-essentials-hub",          description: "Prompt packs, automations, and utilities." },
   { label: "Social Media Kits",             slug: "social-media-kits",               description: "Post templates and brandable assets for socials." },
   { label: "Fonts & Icons",                 slug: "fonts-and-icons",                 description: "Font families and icon sets." },
   { label: "Religious eBooks",              slug: "religious-ebooks",                description: "Faith-centered books, devotionals and study guides." },
-
-  // Keep
   { label: "Web Templates",                 slug: "web-templates",                   description: "Website templates, UI kits and themes." },
 ];
 
@@ -52,20 +43,55 @@ export const CATEGORIES: Category[] = BASE.map((c) => ({
   image: `/images/categories/${c.slug}/card.jpg`,
 }));
 
-/** Quick lookup maps & helpers */
+/** Maps */
 export const CATEGORY_BY_SLUG: Record<string, Category> = Object.fromEntries(
   CATEGORIES.map((c) => [c.slug, c])
 );
-
 export const CATEGORY_LABELS: string[] = CATEGORIES.map((c) => c.label);
 
-/** Helper to get a category (accepts legacy/alias slug too) */
+/* ---- NEW: label/text → slug helpers (authoritative) ---- */
+function norm(txt: string) {
+  return txt
+    .toLowerCase()
+    .trim()
+    .replace(/&/g, "and")
+    .replace(/\be-?books?\b/g, "ebooks")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+const LABEL_TO_SLUG: Record<string, string> = Object.fromEntries(
+  CATEGORIES.flatMap((c) => {
+    const base = c.label;
+    const variants = new Set<string>([
+      base,
+      base.replace(/&/g, "and"),
+      base.replace(/\band\b/gi, "&"),
+      base.replace(/\be-?books?\b/gi, "ebooks"),
+      base.replace(/\bebooks\b/i, "ebook"), // a rough singular variant
+    ]);
+    return Array.from(variants).map((v) => [norm(v), c.slug] as const);
+  })
+);
+
+/** Try to get a known slug from any free-text (label or sloppy slug). */
+export function slugForText(text?: string): string | undefined {
+  if (!text) return;
+  // first treat it like a slug (apply legacy map)
+  const asSlug = resolveCategorySlug(text);
+  if (CATEGORY_BY_SLUG[asSlug]) return asSlug;
+  // else map a label/phrase to a slug
+  return LABEL_TO_SLUG[norm(text)];
+}
+
+/** Helper to get a category (accepts legacy slug too) */
 export function getCategory(slug: string): Category | undefined {
   const normalized = resolveCategorySlug(slug);
   return CATEGORY_BY_SLUG[normalized];
 }
 
-/** Helper to compute the curated image path (kept here for single source of truth) */
+/** Curated image path (single source of truth) */
 export function categoryImage(slug: string): string {
   const normalized = resolveCategorySlug(slug);
   return `/images/categories/${normalized}/card.jpg`;

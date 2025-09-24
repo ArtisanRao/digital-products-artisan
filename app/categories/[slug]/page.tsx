@@ -8,11 +8,15 @@ import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
 import CategoryProductGrid from "@/components/categories/CategoryProductGrid";
 import { products } from "@/data/products";
-import { CATEGORY_BY_SLUG, CATEGORY_SLUG_ALIASES } from "@/data/categories";
+import {
+  CATEGORY_BY_SLUG,
+  CATEGORY_SLUG_ALIASES,
+  slugForText,
+  resolveCategorySlug,
+} from "@/data/categories";
 
 /* ---------- FS helpers for covers/thumbs ---------- */
 const pub = (...p: string[]) => path.join(process.cwd(), "public", ...p);
-
 function firstExistingPublicHref(cands: (string | undefined)[]) {
   for (const href of cands) {
     if (!href) continue;
@@ -21,7 +25,6 @@ function firstExistingPublicHref(cands: (string | undefined)[]) {
   }
   return undefined;
 }
-
 function resolveProductCover(p: { slug?: string; image?: string }) {
   const fallback = "/images/placeholder.jpg";
   if (!p?.slug) return p?.image ?? fallback;
@@ -34,7 +37,6 @@ function resolveProductCover(p: { slug?: string; image?: string }) {
     ]) ?? fallback
   );
 }
-
 function resolveProductThumbs(slug?: string) {
   if (!slug) return [] as string[];
   const dir = pub("images", "products", slug);
@@ -43,7 +45,6 @@ function resolveProductThumbs(slug?: string) {
     .readdirSync(dir)
     .filter((f) => /\.(png|jpe?g|webp|avif)$/i.test(f))
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-
   const mocks = files.filter(
     (f) => /^(mock|thumb|preview)[-_]?\d*/i.test(f) || /-mockup/i.test(f)
   );
@@ -56,28 +57,24 @@ function resolveProductThumbs(slug?: string) {
 /* ---------- Category normalization ---------- */
 const normalizeSlug = (s: string) => CATEGORY_SLUG_ALIASES[s] ?? s;
 
-function norm(s: string) {
-  return s
-    .toLowerCase()
-    .trim()
-    .replace(/&/g, "and")
-    .replace(/\be-?books?\b/g, "ebooks")
-    .replace(/[^a-z0-9]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
+/** Derive a *canonical* category slug for a product from its fields. */
+function deriveCategorySlug(p: any): string | null {
+  const candidates: string[] = [];
+  if (typeof p.categorySlug === "string") candidates.push(p.categorySlug);
+  if (typeof p.category === "string") candidates.push(p.category);
+  if (typeof p.collection === "string") candidates.push(p.collection);
+  if (Array.isArray(p.categories)) candidates.push(...p.categories);
+  if (Array.isArray(p.tags)) candidates.push(...p.tags);
 
-function altForms(label: string) {
-  const base = label.trim();
-  const set = new Set<string>();
-  const push = (x: string) => set.add(norm(x));
-  push(base);
-  push(base.replace(/&/g, "and"));
-  push(base.replace(/\band\b/gi, "&"));
-  push(base.replace(/\be-?books?\b/gi, "ebooks"));
-  // rough singular variant
-  push(base.replace(/\bebooks\b/i, "ebook"));
-  return set;
+  for (const v of candidates) {
+    // Try as real/legacy slug first
+    const asSlug = resolveCategorySlug(v);
+    if (CATEGORY_BY_SLUG[asSlug]) return asSlug;
+    // Then map a label/phrase → slug
+    const byLabel = slugForText(v);
+    if (byLabel && CATEGORY_BY_SLUG[byLabel]) return byLabel;
+  }
+  return null;
 }
 
 /* ---------- Static params ---------- */
@@ -126,35 +123,19 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     );
   }
 
-  // ✅ STRICT matching: compare only the product's own category/tags/etc. to this category's forms.
-  const wantStrict = new Set<string>([
-    ...altForms(meta.label),
-    norm(slug), // e.g. "religious-ebooks" -> "religious ebooks"
-  ]);
-
-  const matches = (p: any) => {
-    const cand: string[] = [];
-    if (typeof p.category === "string") cand.push(p.category);
-    if (typeof p.categorySlug === "string") cand.push(p.categorySlug);
-    if (typeof p.collection === "string") cand.push(p.collection);
-    if (Array.isArray(p.categories)) cand.push(...p.categories);
-    if (Array.isArray(p.tags)) cand.push(...p.tags);
-
-    // do NOT push meta.label here — that caused cross-listing
-    return cand.some((c) => wantStrict.has(norm(String(c))));
-  };
-
-  const catProducts = products.filter(matches);
+  // ✅ Only include products whose derived canonical slug equals this page's slug.
+  const catProducts = products.filter((p: any) => deriveCategorySlug(p) === slug);
 
   const items = catProducts.map((p: any) => ({
     ...p,
-    // keep the real product title intact
     image: p.image ?? resolveProductCover(p),
     gallery: Array.isArray(p.images) && p.images.length ? p.images : resolveProductThumbs(p.slug),
   }));
 
+  const build = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? "dev";
+
   return (
-    <main className="container mx-auto px-4 py-16">
+    <main className="container mx-auto px-4 py-16" data-build={`cat-${build}`}>
       <h1 className="text-3xl md:text-4xl font-bold mb-2">{meta.label}</h1>
       <InlineMore text={meta.description} lines={1} minChars={40} className="text-gray-700 mb-2" />
 
