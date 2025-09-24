@@ -10,19 +10,20 @@ export type GridProduct = {
   slug?: string;
   title?: string;
   name?: string;                 // some datasets use `name`
-  label?: string;                // rare, but seen in some data
+  label?: string;                // rare
   description?: string;
   price?: number | string;
   currency?: string;             // e.g. "EUR"
   image?: string;
   gallery?: string[];            // extra thumbs
-  buyUrl?: string;               // optional direct checkout
+  buyUrl?: string;               // direct checkout
   href?: string;                 // explicit URL override
   type?: string;                 // e.g. "bundle"
   collection?: string;           // e.g. "bundles"
-  category?: string;             // already present; can include "Bundle"
+  category?: string;             // may contain "Bundle"
 };
 
+/** Format like “9,99 €” */
 function formatPrice(p?: number | string, currency = "€") {
   if (typeof p === "number") {
     const num = p.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -31,47 +32,59 @@ function formatPrice(p?: number | string, currency = "€") {
   return p ?? "";
 }
 
-/** Return slug or id string if available */
-function slugOrId(p: GridProduct): string | null {
-  if (p.slug && String(p.slug).trim()) return String(p.slug).trim();
-  if (p.id !== undefined && p.id !== null) return String(p.id).trim();
+/** Prefer numeric id (since /products/[id] is SSG), else slug, else null */
+function keyFor(p: GridProduct): string | null {
+  if (p.id !== undefined && p.id !== null && String(p.id).trim() !== "") return String(p.id).trim();
+  if (p.slug && String(p.slug).trim() !== "") return String(p.slug).trim();
   return null;
 }
 
-/** Decide if item belongs to the Bundles route */
 function isBundleLike(p: GridProduct): boolean {
   const s = `${p.type ?? ""} ${p.collection ?? ""} ${p.category ?? ""}`.toLowerCase();
   return s.includes("bundle");
 }
 
-/** Compute the correct product URL:
- *  - prefer explicit p.href if provided
- *  - bundles → /bundles/[slug]
- *  - otherwise → /products/[slug]
- *  - if missing slug/id → fall back to /products
+/** Compute a safe view URL for this product:
+ * 1) explicit p.href wins
+ * 2) bundles → /bundles/[slug] (prefer slug for bundles)
+ * 3) products → /products/[id] if numeric id exists; else /products/[slug]
+ * 4) otherwise /products (no 404)
  */
 function viewHrefFor(p: GridProduct): string {
   if (p.href) return p.href;
-  const key = slugOrId(p);
-  if (!key) return "/products";
-  const base = isBundleLike(p) ? "/bundles" : "/products";
-  return `${base}/${encodeURIComponent(key)}`;
+
+  const idStr = p.id !== undefined && p.id !== null ? String(p.id).trim() : null;
+  const slugStr = p.slug && String(p.slug).trim() !== "" ? String(p.slug).trim() : null;
+
+  if (isBundleLike(p)) {
+    // bundles are usually slug-based routes
+    if (slugStr) return `/bundles/${encodeURIComponent(slugStr)}`;
+    if (idStr) return `/bundles/${encodeURIComponent(idStr)}`;
+    return "/bundles";
+  }
+
+  // products: prefer numeric id route (SSG), else slug
+  if (idStr && /^\d+$/.test(idStr)) return `/products/${idStr}`;
+  if (slugStr) return `/products/${encodeURIComponent(slugStr)}`;
+  if (idStr) return `/products/${encodeURIComponent(idStr)}`;
+
+  return "/products";
 }
 
 async function buyNow(p: GridProduct) {
-  // explicit checkout URL wins
+  // 1) explicit checkout url
   if (p.buyUrl) {
     window.location.href = p.buyUrl;
     return;
   }
 
-  const viewHref = viewHrefFor(p);
-  // try your Stripe endpoint
+  // 2) Stripe endpoint (if configured)
   try {
+    const key = keyFor(p) ?? "";
     const res = await fetch("/api/stripe/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items: [{ slug: slugOrId(p) ?? "", quantity: 1 }], mode: "payment" }),
+      body: JSON.stringify({ items: [{ slug: key, quantity: 1 }], mode: "payment" }),
     });
     const data = await res.json();
     if (data?.url) {
@@ -79,13 +92,16 @@ async function buyNow(p: GridProduct) {
       return;
     }
   } catch {
-    // ignore
+    // ignore and fallback below
   }
 
-  // fallback to product page's buy section, or checkout if we don't have a key
-  const key = slugOrId(p);
-  if (key) window.location.href = `${viewHref}#buy`;
-  else window.location.href = "/checkout";
+  // 3) fallback: product page #buy, final fallback: /checkout
+  const v = viewHrefFor(p);
+  if (v && v !== "/products" && v !== "/bundles") {
+    window.location.href = `${v}#buy`;
+  } else {
+    window.location.href = "/checkout";
+  }
 }
 
 function BlueButton(props: React.ComponentProps<"button">) {
@@ -109,24 +125,21 @@ export default function CategoryProductGrid({ items }: { items: GridProduct[] })
         const title = p.title ?? p.name ?? p.label ?? "Untitled";
         const priceLabel = formatPrice(p.price, p.currency ?? "€");
         const viewHref = viewHrefFor(p);
-        const buyHref = p.buyUrl ?? `${viewHref}#buy`;
-
-        // thumbs (limit to 3)
         const thumbs = useMemo(
           () => (Array.isArray(p.gallery) ? p.gallery.slice(0, 3) : []),
           [p.gallery]
         );
 
         const onAdd = () => {
-          const key = slugOrId(p);
-          if (!key) return;
+          const key = keyFor(p);
+          if (!key) return; // no route-able key; avoid side-effects
           const numericPrice =
             typeof p.price === "number"
               ? p.price
               : Number(String(p.price ?? "").replace(",", ".").replace(/[^\d.]/g, "")) || 0;
 
           addToCart({ id: key, title, price: numericPrice, image: p.image }, 1);
-          // No redirect; CartBadge updates via event from lib/cart.ts
+          // no redirect; CartBadge updates via event in lib/cart.ts
         };
 
         return (
@@ -183,16 +196,12 @@ export default function CategoryProductGrid({ items }: { items: GridProduct[] })
               >
                 👁️ View
               </Link>
-              <BlueButton onClick={onAdd} disabled={!slugOrId(p)}>
+              <BlueButton onClick={onAdd} disabled={!keyFor(p)}>
                 🛒 Add to cart
               </BlueButton>
-              <Link
-                href={buyHref}
-                prefetch={false}
-                className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 active:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50"
-              >
+              <BlueButton onClick={() => buyNow(p)}>
                 ⚡ Buy
-              </Link>
+              </BlueButton>
             </div>
           </article>
         );
