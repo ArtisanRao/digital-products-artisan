@@ -1,3 +1,4 @@
+// components/categories/CategoryProductGrid.tsx
 "use client";
 
 import Link from "next/link";
@@ -9,7 +10,6 @@ export type GridProduct = {
   slug?: string;
   title?: string;
   name?: string;
-  // ⚠️ DO NOT use `label` as a product title; it's often a category label
   label?: string;
   description?: string;
   price?: number | string;
@@ -31,7 +31,6 @@ function formatPrice(p?: number | string, currency = "€") {
   }
   return p ?? "";
 }
-
 function parsePrice(p?: number | string): number {
   if (typeof p === "number") return p;
   const s = String(p ?? "").replace(",", ".").replace(/[^\d.]/g, "");
@@ -39,73 +38,34 @@ function parsePrice(p?: number | string): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-function resolveNumericId(id?: string | number | null) {
-  if (typeof id === "number") return id;
-  if (typeof id === "string" && /^\d+$/.test(id)) return Number(id);
-  return null;
-}
-
-function keyFor(p: GridProduct): string | null {
-  if (p.id !== undefined && p.id !== null && String(p.id).trim() !== "") return String(p.id).trim();
-  if (p.slug && String(p.slug).trim() !== "") return String(p.slug).trim();
-  return null;
-}
-
-function cartKeyFor(p: GridProduct, i: number): string {
-  const k = keyFor(p);
-  if (k) return k;
-  const base = (p.name ?? p.title ?? `item-${i}`)
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-  return base || `item-${i}`;
-}
-
-function isBundleLike(p: GridProduct) {
-  const s = `${p.type ?? ""} ${p.collection ?? ""} ${p.category ?? ""}`.toLowerCase();
-  return s.includes("bundle");
-}
-
+/** Always link by slug if available (stable, human-readable). */
 function viewHrefFor(p: GridProduct): string {
   if (p.href) return p.href;
-  const idStr = p.id !== undefined && p.id !== null ? String(p.id).trim() : null;
-  const slugStr = p.slug && String(p.slug).trim() !== "" ? String(p.slug).trim() : null;
-
-  if (isBundleLike(p)) {
-    if (slugStr) return `/bundles/${encodeURIComponent(slugStr)}`;
-    if (idStr) return `/bundles/${encodeURIComponent(idStr)}`;
-    return "/bundles";
-  }
-
-  if (idStr && /^\d+$/.test(idStr)) return `/products/${idStr}`;
-  if (slugStr) return `/products/${encodeURIComponent(slugStr)}`;
-  if (idStr) return `/products/${encodeURIComponent(idStr)}`;
+  const slug = (p.slug ?? "").trim();
+  if (slug) return `/products/${encodeURIComponent(slug)}`;
+  const id = (p.id ?? "").toString().trim();
+  if (id) return `/products/${id}`;
   return "/products";
 }
 
 async function buyNow(p: GridProduct) {
-  const idNum = resolveNumericId(p.id);
-  if (idNum) {
-    window.location.href = `/api/checkout?productId=${idNum}&qty=1`;
-    return;
-  }
   try {
-    const productKey = keyFor(p);
+    // Prefer explicit Stripe price id if provided:
+    const payload = p.priceId
+      ? { line_items: [{ price: p.priceId, quantity: 1 }], mode: "payment" }
+      : { items: [{ slug: (p.slug ?? p.id ?? "").toString(), quantity: 1 }], mode: "payment" };
+
     const res = await fetch("/api/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(
-        p.priceId
-          ? { line_items: [{ price: p.priceId, quantity: 1 }], mode: "payment" }
-          : { items: [{ slug: productKey, quantity: 1 }], mode: "payment" }
-      ),
+      body: JSON.stringify(payload),
     });
     const data = await res.json();
     if (data?.url) {
       window.location.href = data.url;
       return;
     }
-  } catch { /* ignore */ }
+  } catch {}
   window.location.href = "/checkout";
 }
 
@@ -141,25 +101,19 @@ export default function CategoryProductGrid({ items }: { items: GridProduct[] })
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
       {items.map((p, i) => {
-        // ✅ Only real product names — never subcategory labels
-        const title = (p.name ?? p.title ?? "Untitled").trim();
+        const title = (p.name ?? p.title ?? p.label ?? "Untitled").trim();
         const priceLabel = formatPrice(p.price, p.currency ?? "€");
         const viewHref = viewHrefFor(p);
-        const idNum = resolveNumericId(p.id);
         const thumbs = Array.isArray(p.gallery) ? p.gallery.slice(0, 3) : [];
 
         const onAddFallback = () => {
-          const key = cartKeyFor(p, i);
-          addToCart({ id: key, title, price: parsePrice(p.price), image: p.image }, 1);
-          // fire a generic event in case any legacy badge is listening
-          window.dispatchEvent(new CustomEvent("cart-change"));
+          const id = (p.id ?? p.slug ?? `item-${i}`).toString();
+          addToCart({ id, title, price: parsePrice(p.price), image: p.image }, 1);
+          window.dispatchEvent(new CustomEvent("cart-change", { detail: { count: 1 } }));
         };
 
         return (
-          <article
-            key={`${p.slug ?? p.id ?? i}`}
-            className="group rounded-2xl border bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
-          >
+          <article key={`${p.slug ?? p.id ?? i}`} className="group rounded-2xl border bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
             <Link href={viewHref} className="block" aria-label={`View ${title}`}>
               <div className="aspect-[3/2] overflow-hidden rounded-xl bg-gray-50">
                 <img
@@ -175,17 +129,12 @@ export default function CategoryProductGrid({ items }: { items: GridProduct[] })
               <Link href={viewHref} className="hover:underline">{title}</Link>
             </h3>
 
-            {p.description && (
-              <p className="mt-1 line-clamp-2 text-sm text-gray-600">{p.description}</p>
-            )}
+            {p.description && <p className="mt-1 line-clamp-2 text-sm text-gray-600">{p.description}</p>}
 
             {thumbs.length > 0 && (
               <div className="mt-3 flex gap-3">
                 {thumbs.map((src) => (
-                  <div
-                    key={src}
-                    className="h-16 w-20 overflow-hidden rounded-lg border bg-white transition hover:ring-2 hover:ring-blue-400"
-                  >
+                  <div key={src} className="h-16 w-20 overflow-hidden rounded-lg border bg-white transition hover:ring-2 hover:ring-blue-400">
                     <img src={src} alt="" className="h-full w-full object-cover" loading="lazy" />
                   </div>
                 ))}
@@ -196,21 +145,16 @@ export default function CategoryProductGrid({ items }: { items: GridProduct[] })
 
             <div className="mt-4 flex flex-wrap gap-3">
               <BlueLink href={viewHref}>👁️ View</BlueLink>
-
-              {idNum !== null ? (
+              {/* Use shared AddToCart when we have a numeric id; else fallback */}
+              {typeof p.id === "number" ? (
                 <AddToCartButton
-                  productId={idNum}
+                  productId={p.id}
                   className="bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
                 />
               ) : (
                 <BlueButton onClick={onAddFallback}>🛒 Add to cart</BlueButton>
               )}
-
-              {idNum !== null ? (
-                <BlueLink href={`/api/checkout?productId=${idNum}&qty=1`}>⚡ Buy</BlueLink>
-              ) : (
-                <BlueButton onClick={() => buyNow(p)}>⚡ Buy</BlueButton>
-              )}
+              <BlueButton onClick={() => buyNow(p)}>⚡ Buy</BlueButton>
             </div>
           </article>
         );

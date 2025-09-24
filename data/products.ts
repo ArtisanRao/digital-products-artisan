@@ -20,7 +20,7 @@ export type Product = {
   downloadPath?: string
 }
 
-/** Put any filename containing "cover" first. */
+/** Keep "cover" first if present. */
 function coverFirst(list: string[] | undefined): string[] | undefined {
   if (!list?.length) return list
   const covers: string[] = []
@@ -29,12 +29,19 @@ function coverFirst(list: string[] | undefined): string[] | undefined {
   return covers.length ? [...covers, ...others] : list
 }
 
-/** "my-awesome-pack" -> "My Awesome Pack" */
+/** Deterministic, stable numeric ID from slug (djb2). */
+function stableId(slug: string): number {
+  let h = 5381
+  for (const ch of slug) h = ((h << 5) + h) ^ ch.charCodeAt(0)
+  return 10000 + (Math.abs(h) % 90000) // 5-digit, stable
+}
+
+/** Title-case from slug (only used if no manual title). */
 function titleize(slug: string): string {
   return slug.replace(/[-_]+/g, " ").replace(/\b\w/g, (m) => m.toUpperCase())
 }
 
-/** Canonical category LABELS */
+/** Canonical category LABELS (match your categories.ts labels exactly). */
 const CATEGORY_LABELS = {
   AI: "AI & ChatGPT Guides",
   PLANNERS: "Planners & Productivity",
@@ -53,13 +60,12 @@ const CATEGORY_LABELS = {
 } as const
 
 /**
- * Heuristic category inference from folder slug.
- * Order matters: more specific first.
+ * Narrow, safe fallback from folder name.
+ * Order matters: most specific first; no broad "ebook" catch-alls.
  */
 function inferCategory(slug: string): string {
   const s = slug.toLowerCase()
 
-  // Specific first
   if (/(religious|faith|bible|devotion(al)?|sermon|qur'?an|quran|islam|church|christ)/.test(s))
     return CATEGORY_LABELS.RELIGIOUS
 
@@ -69,7 +75,6 @@ function inferCategory(slug: string): string {
   if (/(passive|side[- ]?hustle|income|freedom|wealth|make[- ]?money|as[- ]?you[- ]?sleep)/.test(s))
     return CATEGORY_LABELS.PASSIVE
 
-  // Broad health (no generic "ebook" anymore)
   if (/(health|fitness|wellness|diet|nutrition)/.test(s))
     return CATEGORY_LABELS.HEALTH
 
@@ -100,36 +105,32 @@ function inferCategory(slug: string): string {
   if (/(font|typeface|icons?)/.test(s))
     return CATEGORY_LABELS.FONTS_ICONS
 
-  // Fallback (neutral)
   return CATEGORY_LABELS.ESSENTIALS
 }
 
 /**
- * Per-product overrides (exact titles/categories).
- * Add here whenever you want deterministic control.
+ * Deterministic overrides for titles/categories where needed.
+ * Add more entries here anytime you want exact control.
  */
 const MANUAL_OVERRIDES: Record<string, Partial<Product>> = {
-  // Proper casing / ampersands
+  // Nice casing/ampersands
   "ai-and-chatgpt-guides": { title: "AI & ChatGPT Guides", category: CATEGORY_LABELS.AI },
-  "plr-and-mrr-bundles":  { title: "PLR & MRR Bundles", category: CATEGORY_LABELS.PLR },
+  "plr-and-mrr-bundles":  { title: "PLR & MRR Bundles",   category: CATEGORY_LABELS.PLR },
   "keto-and-diet-guides": { title: "Keto & Diet Guides",  category: CATEGORY_LABELS.KETO },
 
-  // Put these in Passive Income (and thus out of Essentials)
+  // Put “wealth” / “as-you-sleep” in Passive Income (not Essentials)
   "digital-wealth-ultimate-guide": { category: CATEGORY_LABELS.PASSIVE },
   "make-money-as-you-sleep":      { category: CATEGORY_LABELS.PASSIVE },
 }
 
-/**
- * Build products from manifest: one product per folder.
- */
-const autoFromManifest: Omit<Product, "images">[] = Object.keys(imageManifest).map((slug, i) => {
+/** Build products from the image manifest (one per folder). */
+const baseProducts: Omit<Product, "images">[] = Object.keys(imageManifest).map((slug) => {
   const gallery = coverFirst(imageManifest[slug])
   const category = (MANUAL_OVERRIDES[slug]?.category as string) ?? inferCategory(slug)
 
-  const defaults: Omit<Product, "images"> = {
-    id: 1000 + i,
+  const p: Omit<Product, "images"> = {
+    id: stableId(slug),
     slug,
-    // if you set a manual title, use it; otherwise titleize the slug
     title: (MANUAL_OVERRIDES[slug]?.title as string) ?? titleize(slug),
     description: `A curated digital product in ${category}.`,
     longDescription: undefined,
@@ -142,15 +143,15 @@ const autoFromManifest: Omit<Product, "images">[] = Object.keys(imageManifest).m
     downloads: 0,
     bestseller: false,
     image: gallery?.[0] ?? `/images/products/${slug}/cover.jpg`,
+    ...(MANUAL_OVERRIDES[slug] ?? {}),
   }
 
-  return { ...defaults, ...(MANUAL_OVERRIDES[slug] ?? {}) }
+  return p
 })
 
-// Final export with gallery attached
-export const products: Product[] = autoFromManifest.map((p) => {
-  const fromManifest = coverFirst(imageManifest[p.slug])
-  const images = fromManifest?.length ? fromManifest : [p.image]
+export const products: Product[] = baseProducts.map((p) => {
+  const gallery = coverFirst(imageManifest[p.slug])
+  const images = gallery?.length ? gallery : [p.image]
   return { ...p, image: images[0], images }
 })
 
