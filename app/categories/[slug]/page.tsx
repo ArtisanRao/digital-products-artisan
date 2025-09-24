@@ -8,12 +8,7 @@ import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
 import CategoryProductGrid from "@/components/categories/CategoryProductGrid";
 import { products } from "@/data/products";
-import {
-  CATEGORY_BY_SLUG,
-  CATEGORY_SLUG_ALIASES,
-  slugForText,
-  resolveCategorySlug,
-} from "@/data/categories";
+import { CATEGORY_BY_SLUG, CATEGORY_SLUG_ALIASES } from "@/data/categories";
 
 /* ---------- FS helpers for covers/thumbs ---------- */
 const pub = (...p: string[]) => path.join(process.cwd(), "public", ...p);
@@ -45,6 +40,7 @@ function resolveProductThumbs(slug?: string) {
     .readdirSync(dir)
     .filter((f) => /\.(png|jpe?g|webp|avif)$/i.test(f))
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+
   const mocks = files.filter(
     (f) => /^(mock|thumb|preview)[-_]?\d*/i.test(f) || /-mockup/i.test(f)
   );
@@ -54,27 +50,20 @@ function resolveProductThumbs(slug?: string) {
   return [...mocks, ...rest].slice(0, 3).map((f) => `/images/products/${slug}/${f}`);
 }
 
-/* ---------- Category normalization ---------- */
+/* ---------- Normalizers ---------- */
 const normalizeSlug = (s: string) => CATEGORY_SLUG_ALIASES[s] ?? s;
 
-/** Derive a *canonical* category slug for a product from its fields. */
-function deriveCategorySlug(p: any): string | null {
-  const candidates: string[] = [];
-  if (typeof p.categorySlug === "string") candidates.push(p.categorySlug);
-  if (typeof p.category === "string") candidates.push(p.category);
-  if (typeof p.collection === "string") candidates.push(p.collection);
-  if (Array.isArray(p.categories)) candidates.push(...p.categories);
-  if (Array.isArray(p.tags)) candidates.push(...p.tags);
+function normLabel(s: string) {
+  return s
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/\be-?books?\b/g, "ebooks")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
 
-  for (const v of candidates) {
-    // Try as real/legacy slug first
-    const asSlug = resolveCategorySlug(v);
-    if (CATEGORY_BY_SLUG[asSlug]) return asSlug;
-    // Then map a label/phrase → slug
-    const byLabel = slugForText(v);
-    if (byLabel && CATEGORY_BY_SLUG[byLabel]) return byLabel;
-  }
-  return null;
+function normSlug(s: string) {
+  return s.toLowerCase().trim();
 }
 
 /* ---------- Static params ---------- */
@@ -85,7 +74,9 @@ export function generateStaticParams() {
 }
 
 /* ---------- Metadata ---------- */
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+type Params = { slug: string };
+
+export async function generateMetadata({ params }: { params: Promise<Params> }) {
   const { slug: raw } = await params;
   const slug = normalizeSlug(raw);
   const meta = CATEGORY_BY_SLUG[slug];
@@ -100,7 +91,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 /* ---------- Page ---------- */
-export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function CategoryPage({ params }: { params: Promise<Params> }) {
   const { slug: raw } = await params;
   const slug = normalizeSlug(raw);
   const meta = CATEGORY_BY_SLUG[slug];
@@ -108,7 +99,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   if (!meta) {
     const pretty = slug.replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
     return (
-      <main className="container mx-auto px-4 py-16">
+      <main className="container mx-auto px-4 py-16" data-rule="cat-strict-v2">
         <h1 className="text-3xl md:text-4xl font-bold mb-2">{pretty}</h1>
         <InlineMore
           text="We couldn’t find a dedicated page for this category yet. Explore best sellers below or visit all products."
@@ -123,8 +114,25 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     );
   }
 
-  // ✅ Only include products whose derived canonical slug equals this page's slug.
-  const catProducts = products.filter((p: any) => deriveCategorySlug(p) === slug);
+  const wantedSlug = normSlug(slug);
+  const wantedLabel = normLabel(meta.label);
+
+  const matches = (p: any) => {
+    // 1) Prefer exact slug match via product.categorySlug
+    if (p?.categorySlug && normSlug(String(p.categorySlug)) === wantedSlug) return true;
+
+    // 2) Else compare normalized labels across possible fields
+    const candidates: string[] = [];
+    if (typeof p.category === "string") candidates.push(p.category);
+    if (Array.isArray(p.categories)) candidates.push(...p.categories);
+    if (Array.isArray(p.tags)) candidates.push(...p.tags);
+    if (typeof p.collection === "string") candidates.push(p.collection);
+
+    // IMPORTANT: do NOT push meta.label here (that caused cross-listing).
+    return candidates.some((c) => normLabel(String(c)) === wantedLabel);
+  };
+
+  const catProducts = products.filter(matches);
 
   const items = catProducts.map((p: any) => ({
     ...p,
@@ -132,10 +140,8 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     gallery: Array.isArray(p.images) && p.images.length ? p.images : resolveProductThumbs(p.slug),
   }));
 
-  const build = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? "dev";
-
   return (
-    <main className="container mx-auto px-4 py-16" data-build={`cat-${build}`}>
+    <main className="container mx-auto px-4 py-16" data-rule="cat-strict-v2">
       <h1 className="text-3xl md:text-4xl font-bold mb-2">{meta.label}</h1>
       <InlineMore text={meta.description} lines={1} minChars={40} className="text-gray-700 mb-2" />
 
