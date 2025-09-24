@@ -72,6 +72,7 @@ function resolveProductThumbs(slug?: string) {
 }
 
 /** Normalizers */
+const norm = (s: string) => s.toLowerCase().trim();
 const toSlug = (s: string) =>
   s
     .toLowerCase()
@@ -79,7 +80,6 @@ const toSlug = (s: string) =>
     .replace(/&/g, "and")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
-const norm = (s: string) => s.toLowerCase().trim();
 const STOP = new Set([
   "and","the","of","a","an","to","for","in","on","with",
   "ebook","ebooks","book","books","e-book","e-books",
@@ -87,7 +87,7 @@ const STOP = new Set([
 ]);
 const tokenize = (s: string) => toSlug(s).split("-").filter(t => t && !STOP.has(t));
 
-/** Aliases to help matching (esp. Religious eBooks) */
+/** Aliases (helps religious/faith matching too) */
 const CATEGORY_ALIASES: Record<string,string[]> = {
   "religious-ebooks": ["religious","religion","faith","christian","christianity","devotional","devotionals","bible","scripture","spiritual","spirituality"],
 };
@@ -116,47 +116,43 @@ export async function generateMetadata({ params }: { params: Promise<Params> }) 
   };
 }
 
-/** Robust category matcher */
+/** STRICT direct checks first, then soft token checks */
 function productBelongsToCategory(p: any, catLabel: string, catSlug: string) {
   const labelN = norm(catLabel);
-  const slugN = toSlug(catSlug);
   const labelSlug = toSlug(catLabel);
+  const slugN = toSlug(catSlug);
 
-  // candidate strings from product
-  const bucket: string[] = [];
-  if (p.category) bucket.push(String(p.category));
-  if (p.collection) bucket.push(String(p.collection));
-  if (p.type) bucket.push(String(p.type));
-  if (p.categorySlug) bucket.push(String(p.categorySlug));
-  if (Array.isArray(p.categories)) bucket.push(...p.categories.map(String));
-  if (Array.isArray(p.labels)) bucket.push(...p.labels.map(String));
-  if (Array.isArray(p.tags)) bucket.push(...p.tags.map(String));
-
-  // 1) exact/slugged
-  for (const s of bucket) {
-    const sNorm = norm(s);
-    const sSlug = toSlug(s);
-    if (sNorm === labelN) return true;
-    if (sSlug === slugN) return true;
-    if (sSlug === labelSlug) return true;
+  // Candidate single-value fields
+  const singles = [p.category, p.categorySlug, p.collection, p.type, p.section, p.genre];
+  for (const s of singles) {
+    if (!s) continue;
+    const sN = norm(String(s));
+    const sSlug = toSlug(String(s));
+    if (sN === labelN || sSlug === slugN || sSlug === labelSlug) return true;
   }
 
-  // 2) token overlap
+  // Arrays
+  const arrays = [p.categories, p.labels, p.tags];
+  for (const arr of arrays) {
+    if (!Array.isArray(arr)) continue;
+    for (const s of arr) {
+      const sN = norm(String(s));
+      const sSlug = toSlug(String(s));
+      if (sN === labelN || sSlug === slugN || sSlug === labelSlug) return true;
+    }
+  }
+
+  // Soft: token overlap
   const labelTokens = new Set([
     ...tokenize(catLabel),
     ...tokenize(catSlug),
-    ...(CATEGORY_ALIASES[labelSlug] ?? []),
+    ...(CATEGORY_ALIASES[slugN] ?? []),
   ]);
-  for (const s of bucket) {
-    const tks = tokenize(s);
-    if (tks.some(t => labelTokens.has(t))) return true;
-  }
+  const bucket: string[] = [];
+  for (const s of singles) if (s) bucket.push(String(s));
+  for (const arr of arrays) if (Array.isArray(arr)) bucket.push(...arr.map(String));
+  if (bucket.some(s => tokenize(s).some(t => labelTokens.has(t)))) return true;
 
-  // 3) soft contains
-  for (const s of bucket) {
-    const sNorm = norm(s);
-    if (sNorm.includes(labelN) || labelN.includes(sNorm)) return true;
-  }
   return false;
 }
 
@@ -168,7 +164,7 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
   if (!meta) {
     const pretty = slug.replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
     return (
-      <main className="container mx-auto px-4 py-16" data-catgrid="v2">
+      <main className="container mx-auto px-4 py-16" data-catgrid="v3">
         <h1 className="text-3xl md:text-4xl font-bold mb-2">{pretty}</h1>
         <InlineMore
           text="We couldn’t find a dedicated page for this category yet. Explore best sellers below or visit all products."
@@ -183,20 +179,20 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     );
   }
 
-  // Robust match
+  // Use strict direct match first (this mirrors what used to work), then token fallback
   const matched = products.filter((p: any) => productBelongsToCategory(p, meta.title, slug));
 
-  // Enrich for grid; ensure real product names & numeric ids flow through
+  // Build items for the grid — always use real product name
   const items = matched.map((p: any) => ({
     id: p.id,
     slug: p.slug,
-    name: p.title,                // ensure actual product name shows
+    name: p.title,                 // ✅ ensure product title, not subcategory label
     title: p.title,
     description: p.description,
     price: p.price,
     currency: p.currency ?? "€",
     image: p.image ?? resolveProductCover(p),
-    gallery: p.images?.length ? p.images : resolveProductThumbs(p.slug),
+    gallery: Array.isArray(p.images) && p.images.length ? p.images : resolveProductThumbs(p.slug),
     type: p.type,
     collection: p.collection,
     category: p.category,
@@ -205,7 +201,7 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
   }));
 
   return (
-    <main className="container mx-auto px-4 py-16" data-catgrid="v2">
+    <main className="container mx-auto px-4 py-16" data-catgrid="v3">
       <h1 className="text-3xl md:text-4xl font-bold mb-2">{meta.title}</h1>
       <InlineMore text={meta.description} lines={1} minChars={40} className="text-gray-700 mb-2" />
 
