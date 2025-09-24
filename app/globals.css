@@ -34,6 +34,13 @@
     box-shadow: 0 6px 10px -4px rgb(0 0 0 / .08);
   }
 
+  /* Reusable image hover zoom utility (wrap a block that contains <img>) */
+  .hover-zoom img { transition: transform .3s ease; }
+  .hover-zoom:hover img { transform: scale(1.03); }
+
+  /* Consistent blue focus ring helper for interactive elements */
+  .focus-ring-blue { @apply focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none; }
+
   /* Cart count badge helper */
   .cart-badge {
     position: absolute; top: -.4rem; right: -.4rem;
@@ -82,7 +89,7 @@
 
   /* Respect reduced motion */
   @media (prefers-reduced-motion: reduce) {
-    .hover-lift, .animate-fadeIn, .animate-fadeIn-ios {
+    .hover-lift, .animate-fadeIn, .animate-fadeIn-ios, .hover-zoom img {
       transition: none !important; animation: none !important; transform: none !important; box-shadow: none !important;
     }
   }
@@ -118,6 +125,10 @@
     height: auto;
     object-fit: contain;
   }
+
+  /* Product page hover zoom (server-safe, no styled-jsx) */
+  .product-page img { transition: transform .3s ease; }
+  .product-page img:hover { transform: scale(1.03); }
 
   :root {
     --background: 0 0% 100%;
