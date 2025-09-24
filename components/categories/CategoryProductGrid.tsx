@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import AddToCartButton from "@/components/add-to-cart-button";
 import { addToCart } from "@/lib/cart";
 
 export type GridProduct = {
@@ -22,13 +23,28 @@ export type GridProduct = {
   priceId?: string;      // Stripe price id (optional)
 };
 
-/* ---------- helpers ---------- */
 function formatPrice(p?: number | string, currency = "€") {
   if (typeof p === "number") {
-    const num = p.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const num = p.toLocaleString("de-DE", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
     return `${num} ${currency}`;
   }
   return p ?? "";
+}
+
+function parsePrice(p?: number | string): number {
+  if (typeof p === "number") return p;
+  const s = String(p ?? "").replace(",", ".").replace(/[^\d.]/g, "");
+  const n = Number(s);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function resolveNumericId(id?: string | number | null) {
+  if (typeof id === "number") return id;
+  if (typeof id === "string" && /^\d+$/.test(id)) return Number(id);
+  return null;
 }
 
 function keyFor(p: GridProduct): string | null {
@@ -40,7 +56,7 @@ function keyFor(p: GridProduct): string | null {
 function cartKeyFor(p: GridProduct, i: number): string {
   const k = keyFor(p);
   if (k) return k;
-  const base = (p.title ?? p.name ?? p.label ?? `item-${i}`)
+  const base = (p.name ?? p.title ?? p.label ?? `item-${i}`)
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
@@ -54,7 +70,6 @@ function isBundleLike(p: GridProduct) {
 
 function viewHrefFor(p: GridProduct): string {
   if (p.href) return p.href;
-
   const idStr = p.id !== undefined && p.id !== null ? String(p.id).trim() : null;
   const slugStr = p.slug && String(p.slug).trim() !== "" ? String(p.slug).trim() : null;
 
@@ -70,44 +85,25 @@ function viewHrefFor(p: GridProduct): string {
   return "/products";
 }
 
-function parsePrice(p?: number | string): number {
-  if (typeof p === "number") return p;
-  const s = String(p ?? "").replace(",", ".").replace(/[^\d.]/g, "");
-  const n = Number(s);
-  return Number.isFinite(n) ? n : 0;
-}
-
 async function buyNow(p: GridProduct) {
-  // Direct buy link takes precedence
-  if (p.buyUrl) {
-    window.location.href = p.buyUrl;
+  // Use GET shortcut if we have a numeric id
+  const idNum = resolveNumericId(p.id);
+  if (idNum) {
+    window.location.href = `/api/checkout?productId=${idNum}&qty=1`;
     return;
   }
 
-  // Prefer GET → /api/checkout with productId or slug (fast redirect)
-  const k = keyFor(p);
-  const currency = String(p.currency || "EUR").toUpperCase();
-  if (k) {
-    const isNumeric = /^\d+$/.test(k);
-    const qs = new URLSearchParams({
-      [isNumeric ? "productId" : "slug"]: k,
-      qty: "1",
-      currency,
-    }).toString();
-    window.location.href = `/api/checkout?${qs}`;
-    return;
-  }
-
-  // Fallback: POST to /api/checkout with priceId or items[]
+  // Fallback: POST with slug/id
   try {
-    const payload = p.priceId
-      ? { line_items: [{ price: p.priceId, quantity: 1 }], mode: "payment" }
-      : { items: [{ slug: "", quantity: 1 }], mode: "payment" }; // last-resort
-
+    const productKey = keyFor(p);
     const res = await fetch("/api/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(
+        p.priceId
+          ? { line_items: [{ price: p.priceId, quantity: 1 }], mode: "payment" }
+          : { items: [{ slug: productKey, quantity: 1 }], mode: "payment" }
+      ),
     });
     const data = await res.json();
     if (data?.url) {
@@ -115,11 +111,24 @@ async function buyNow(p: GridProduct) {
       return;
     }
   } catch {
-    // ignore and fall through
+    // ignore
   }
+  // Final fallback
+  window.location.href = "/checkout";
+}
 
-  // Absolute last resort
-  window.location.href = "/cart";
+function BlueLink(props: React.ComponentProps<typeof Link>) {
+  const { className = "", ...rest } = props;
+  return (
+    <Link
+      {...rest}
+      className={
+        "inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white " +
+        "transition-colors hover:bg-blue-700 active:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 " +
+        className
+      }
+    />
+  );
 }
 
 function BlueButton(props: React.ComponentProps<"button">) {
@@ -136,22 +145,24 @@ function BlueButton(props: React.ComponentProps<"button">) {
   );
 }
 
-/* ---------- component ---------- */
 export default function CategoryProductGrid({ items }: { items: GridProduct[] }) {
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
       {items.map((p, i) => {
-        const title = p.title ?? p.name ?? p.label ?? "Untitled";
+        // ✅ Prefer real product name if present
+        const title = (p.name ?? p.title ?? p.label ?? "Untitled").trim();
         const priceLabel = formatPrice(p.price, p.currency ?? "€");
         const viewHref = viewHrefFor(p);
+        const idNum = resolveNumericId(p.id);
 
-        // compute thumbs without hooks (don’t call hooks in a loop)
-        const thumbs = (Array.isArray(p.gallery) ? p.gallery.slice(0, 3) : []) as string[];
+        const thumbs = Array.isArray(p.gallery) ? p.gallery.slice(0, 3) : [];
 
-        const onAdd = () => {
-          const key = cartKeyFor(p, i); // always yields a key
+        const onAddFallback = () => {
+          const key = cartKeyFor(p, i);
           addToCart({ id: key, title, price: parsePrice(p.price), image: p.image }, 1);
-          // No redirect; CartBadge updates via 'cart-update' event from lib/cart.ts
+          // Fire both event names for maximum compatibility (header badges, etc.)
+          const countEvent = new CustomEvent("cart-change", { detail: { count: 1 } });
+          window.dispatchEvent(countEvent);
         };
 
         return (
@@ -171,11 +182,9 @@ export default function CategoryProductGrid({ items }: { items: GridProduct[] })
               </div>
             </Link>
 
-            {/* Title */}
+            {/* Title (now shows actual product name) */}
             <h3 className="mt-3 text-xl font-semibold leading-snug">
-              <Link href={viewHref} className="hover:underline">
-                {title}
-              </Link>
+              <Link href={viewHref} className="hover:underline">{title}</Link>
             </h3>
 
             {/* Optional blurb */}
@@ -202,14 +211,24 @@ export default function CategoryProductGrid({ items }: { items: GridProduct[] })
 
             {/* Actions */}
             <div className="mt-4 flex flex-wrap gap-3">
-              <Link
-                href={viewHref}
-                className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 active:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50"
-              >
-                👁️ View
-              </Link>
-              <BlueButton onClick={onAdd}>🛒 Add to cart</BlueButton>
-              <BlueButton onClick={() => buyNow(p)}>⚡ Buy</BlueButton>
+              <BlueLink href={viewHref}>👁️ View</BlueLink>
+
+              {/* ✅ Use the shared AddToCartButton when we have a numeric id (updates badge everywhere) */}
+              {idNum !== null ? (
+                <AddToCartButton
+                  productId={idNum}
+                  className="bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
+                />
+              ) : (
+                <BlueButton onClick={onAddFallback}>🛒 Add to cart</BlueButton>
+              )}
+
+              {/* Buy → Stripe checkout (GET shortcut when id is numeric; else POST) */}
+              {idNum !== null ? (
+                <BlueLink href={`/api/checkout?productId=${idNum}&qty=1`}>⚡ Buy</BlueLink>
+              ) : (
+                <BlueButton onClick={() => buyNow(p)}>⚡ Buy</BlueButton>
+              )}
             </div>
           </article>
         );
