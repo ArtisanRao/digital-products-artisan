@@ -22,6 +22,7 @@ function firstExistingPublicHref(hrefs: (string | undefined)[]): string | undefi
   }
   return undefined;
 }
+
 function resolveProductCover(p: { slug?: string; image?: string }) {
   const fallback = "/images/placeholder.jpg";
   if (!p?.slug) return p?.image ?? fallback;
@@ -34,6 +35,7 @@ function resolveProductCover(p: { slug?: string; image?: string }) {
     ]) ?? fallback
   );
 }
+
 function resolveProductThumbs(slug?: string) {
   if (!slug) return [] as string[];
   const dir = pub("images", "products", slug);
@@ -42,26 +44,55 @@ function resolveProductThumbs(slug?: string) {
     .readdirSync(dir)
     .filter((f) => /\.(png|jpe?g|webp|avif)$/i.test(f))
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-  const mocks = files.filter((f) => /^(mock|thumb|preview)[-_]?\d*/i.test(f) || /-mockup/i.test(f));
-  const rest = files.filter((f) => !(/^(mock|thumb|preview)[-_]?\d*/i.test(f) || /-mockup/i.test(f)));
+
+  const mocks = files.filter(
+    (f) => /^(mock|thumb|preview)[-_]?\d*/i.test(f) || /-mockup/i.test(f)
+  );
+  const rest = files.filter(
+    (f) => !(/^(mock|thumb|preview)[-_]?\d*/i.test(f) || /-mockup/i.test(f))
+  );
   return [...mocks, ...rest].slice(0, 3).map((f) => `/images/products/${slug}/${f}`);
 }
 
 /* ---------- Category normalization ---------- */
-const normalizeSlug = (s: string) => CATEGORY_SLUG_ALIASES[s] ?? s;
-
-function toSlug(s: string) {
-  return s
+const normalize = (s: string) =>
+  s
     .toLowerCase()
+    .trim()
     .replace(/&/g, "and")
     .replace(/\be-?books?\b/g, "ebooks")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+function formsFor(label: string, slug: string) {
+  const out = new Set<string>();
+  const push = (v: string) => out.add(normalize(v));
+
+  // label
+  push(label);
+  push(label.replace(/&/g, "and"));
+  push(label.replace(/\band\b/gi, "&"));
+  push(label.replace(/\be-?books?\b/gi, "ebooks"));
+
+  // slug variants
+  push(slug.replace(/-/g, " "));
+  push(slug.replace(/-/g, " ").replace(/&/g, "and"));
+
+  return out;
 }
 
-/* ---------- Metadata ---------- */
-type Params = { slug: string };
+/* ---------- Static params ---------- */
+export function generateStaticParams() {
+  const slugs = Object.keys(CATEGORY_BY_SLUG);
+  const legacy = Object.keys(CATEGORY_SLUG_ALIASES);
+  return [...slugs, ...legacy].map((slug) => ({ slug }));
+}
 
+type Params = { slug: string };
+const normalizeSlug = (s: string) => CATEGORY_SLUG_ALIASES[s] ?? s;
+
+/* ---------- Metadata ---------- */
 export async function generateMetadata({ params }: { params: Promise<Params> }) {
   const { slug: raw } = await params;
   const slug = normalizeSlug(raw);
@@ -100,32 +131,25 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     );
   }
 
-  const labelSlug = toSlug(meta.label);
+  // STRICT matching: only trust explicit category fields on the product.
+  const target = formsFor(meta.label, slug);
+  const matches = (p: any) => {
+    const candidates: string[] = [];
 
-  // STRICT matcher: only exact slug/label matches. No substring fuzziness.
-  function matchesCategory(p: any): boolean {
-    const candText: string[] = [];
-    if (typeof p.category === "string") candText.push(p.category);
-    if (typeof p.collection === "string") candText.push(p.collection);
-    if (typeof p.categorySlug === "string") candText.push(p.categorySlug);
-    if (typeof p.category_slug === "string") candText.push(p.category_slug);
-    if (Array.isArray(p.categories)) candText.push(...p.categories);
-    if (Array.isArray(p.tags)) candText.push(...p.tags);
+    // ✅ Only these fields – DO NOT use tags/collection/etc.
+    if (typeof p.category === "string") candidates.push(p.category);
+    if (typeof p.categorySlug === "string") candidates.push(p.categorySlug);
+    if (Array.isArray(p.categories)) candidates.push(...p.categories);
 
-    const textsLower = candText.map((s) => String(s).trim().toLowerCase());
-    const slugs = candText.map((s) => toSlug(String(s)));
+    // Compare normalized equality (no substring fuzziness)
+    return candidates
+      .map((c) => normalize(String(c)))
+      .some((c) => target.has(c));
+  };
 
-    // exact slug match (preferred)
-    if (slugs.includes(slug) || slugs.includes(labelSlug)) return true;
+  const catProducts = products.filter(matches);
 
-    // exact label text match (case-insensitive)
-    if (textsLower.includes(meta.label.trim().toLowerCase())) return true;
-
-    return false;
-  }
-
-  const catProducts = products.filter(matchesCategory);
-
+  // Enrich with resolved cover + up to 3 thumbs (used by the grid)
   const items = catProducts.map((p: any) => ({
     ...p,
     image: p.image ?? resolveProductCover(p),
