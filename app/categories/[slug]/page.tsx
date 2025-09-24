@@ -1,7 +1,9 @@
-﻿import fs from "node:fs";
+﻿// app/categories/[slug]/page.tsx
+import fs from "node:fs";
 import path from "node:path";
 import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
+import CategoryProductGrid from "@/components/category/CategoryProductGrid"; // client grid with Buy/Add
 import { products } from "@/data/products";
 
 /** ---- Category metadata (normalized slugs) ---- */
@@ -33,8 +35,8 @@ const LEGACY_TO_NEW: Record<string, string> = {
 
 const pub = (...p: string[]) => path.join(process.cwd(), "public", ...p);
 
-/** First existing (absolute + public href) */
-function firstExistingPublicHref(cands: string[]): { abs: string; href: string } | null {
+/** Find first existing (absolute + public href) */
+function firstExistingPublicHref(cands: (string | undefined)[]): { abs: string; href: string } | null {
   for (const href of cands) {
     if (!href) continue;
     const abs = pub(href.replace(/^\//, ""));
@@ -43,18 +45,38 @@ function firstExistingPublicHref(cands: string[]): { abs: string; href: string }
   return null;
 }
 
-/** Resolve a product cover. Prefer product.image; else /images/products/<slug>/cover.(jpg|png|webp) */
+/** Resolve a product cover:
+ *  1) p.image
+ *  2) /images/products/<slug>/cover.(jpg|png|webp)
+ *  3) /images/placeholder.jpg
+ */
 function resolveProductCover(p: { slug?: string; image?: string }) {
-  const candidates = [
-    p.image,
-    p.slug ? `/images/products/${p.slug}/cover.jpg` : undefined,
-    p.slug ? `/images/products/${p.slug}/cover.png` : undefined,
-    p.slug ? `/images/products/${p.slug}/cover.webp` : undefined,
-  ].filter(Boolean) as string[];
-  return firstExistingPublicHref(candidates)?.href ?? "/images/placeholder.jpg";
+  const fallback = "/images/placeholder.jpg";
+  if (!p.slug) return p.image ?? fallback;
+  return (
+    firstExistingPublicHref([
+      p.image,
+      `/images/products/${p.slug}/cover.jpg`,
+      `/images/products/${p.slug}/cover.png`,
+      `/images/products/${p.slug}/cover.webp`,
+    ])?.href ?? fallback
+  );
 }
 
-/** Static params for new and legacy slugs */
+/** Pick up to 3 mockups from /public/images/products/<slug> */
+function resolveProductThumbs(slug?: string) {
+  if (!slug) return [] as string[];
+  const dir = pub("images", "products", slug);
+  if (!fs.existsSync(dir)) return [];
+  const files = fs
+    .readdirSync(dir)
+    .filter((f) => /\.(png|jpe?g|webp|avif)$/i.test(f))
+    .filter((f) => /^(mock|thumb|preview)[-_]?\d*/i.test(f) || /-mockup/i.test(f))
+    .sort();
+  return files.slice(0, 3).map((f) => `/images/products/${slug}/${f}`);
+}
+
+/** Static params for new + legacy slugs */
 export function generateStaticParams() {
   const newSlugs = Object.keys(META);
   const legacySlugs = Object.keys(LEGACY_TO_NEW);
@@ -105,61 +127,21 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
   const label = meta.title;
   const catProducts = products.filter((p) => p.category === label);
 
+  // Enrich with resolved cover + up to 3 thumbs (used by CategoryProductGrid)
+  const items = catProducts.map((p: any) => ({
+    ...p,
+    image: p.image ?? resolveProductCover(p),
+    gallery: p.gallery && p.gallery.length ? p.gallery : resolveProductThumbs(p.slug),
+  }));
+
   return (
     <main className="container mx-auto px-4 py-16">
       <h1 className="text-3xl md:text-4xl font-bold mb-2">{meta.title}</h1>
       <InlineMore text={meta.description} lines={1} minChars={40} className="text-gray-700 mb-2" />
 
-      {catProducts.length > 0 ? (
-        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {catProducts.map((p) => {
-            const img = resolveProductCover(p);
-            const priceLabel =
-              typeof p.price === "number" ? `${p.price.toFixed(2)} €` : (p.price ?? "");
-            const addHref = (p as any).addToCartUrl ?? `/products/${p.slug}?add=1`;
-            const buyHref = (p as any).buyUrl ?? `/products/${p.slug}#buy`;
-
-            return (
-              <article key={p.slug} className="rounded-2xl border bg-white p-4 shadow-sm hover:shadow transition">
-                <Link href={`/products/${p.slug}`} className="block">
-                  <div className="aspect-[3/2] bg-gray-50 rounded-xl overflow-hidden">
-                    <img src={img} alt={p.title} className="h-full w-full object-contain p-3" loading="lazy" />
-                  </div>
-                </Link>
-
-                <h3 className="mt-3 text-xl font-semibold">
-                  <Link href={`/products/${p.slug}`} className="hover:underline">{p.title}</Link>
-                </h3>
-
-                {p.description && (
-                  <p className="mt-1 text-gray-600 line-clamp-2">{p.description}</p>
-                )}
-
-                <div className="mt-3 flex items-center justify-between">
-                  <div className="text-2xl font-semibold">{priceLabel}</div>
-                  {/* Optional rating if you have p.rating / p.reviews */}
-                  {(p as any).rating && (
-                    <div className="text-sm text-gray-500">⭐ {(p as any).rating} ({(p as any).reviews ?? 0})</div>
-                  )}
-                </div>
-
-                <div className="mt-4 flex gap-3">
-                  <Link href={`/products/${p.slug}`} className="rounded-xl border px-4 py-2 text-sm hover:bg-muted/30">
-                    👁️ View
-                  </Link>
-                  <Link href={addHref} prefetch={false} className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
-                    🛒 Add to cart
-                  </Link>
-                  {/* Show Buy if you wire a direct checkout URL */}
-                  {(p as any).buyUrl && (
-                    <Link href={buyHref} prefetch={false} className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
-                      ⚡ Buy
-                    </Link>
-                  )}
-                </div>
-              </article>
-            );
-          })}
+      {items.length ? (
+        <div className="mt-6">
+          <CategoryProductGrid items={items} />
         </div>
       ) : (
         <div className="mt-8">
