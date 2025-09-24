@@ -10,7 +10,7 @@ import CategoryProductGrid from "@/components/categories/CategoryProductGrid";
 import { products } from "@/data/products";
 import { CATEGORY_BY_SLUG, CATEGORY_SLUG_ALIASES } from "@/data/categories";
 
-/* ---------- FS helpers for covers/thumbs ---------- */
+/* ---------- FS helpers ---------- */
 const pub = (...p: string[]) => path.join(process.cwd(), "public", ...p);
 function firstExistingPublicHref(cands: (string | undefined)[]) {
   for (const href of cands) {
@@ -40,7 +40,6 @@ function resolveProductThumbs(slug?: string) {
     .readdirSync(dir)
     .filter((f) => /\.(png|jpe?g|webp|avif)$/i.test(f))
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-
   const mocks = files.filter(
     (f) => /^(mock|thumb|preview)[-_]?\d*/i.test(f) || /-mockup/i.test(f)
   );
@@ -51,18 +50,37 @@ function resolveProductThumbs(slug?: string) {
 }
 
 /* ---------- Normalization ---------- */
-const norm = (s: string) =>
-  s
-    .toLowerCase()
-    .trim()
-    .replace(/&/g, "and")
-    .replace(/\be-?books?\b/g, "ebooks")
-    .replace(/[^a-z0-9]+/g, "-");
-
-/** extra aliases if needed */
-const CATEGORY_STRICT_ALIASES: Record<string, string[]> = {
-  "religious-ebooks": ["religion-ebooks", "religious-ebook", "religion-ebook"],
-};
+function normalizeTypos(s: string) {
+  return s.replace(/\breligous\b/gi, "religious");
+}
+function norm(s: string) {
+  return normalizeTypos(
+    s
+      .toLowerCase()
+      .trim()
+      .replace(/&/g, "and")
+      .replace(/\be[\s-]?books?\b/g, "ebooks")
+      .replace(/[^a-z0-9]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+  );
+}
+function altForms(label: string, slug?: string) {
+  const set = new Set<string>();
+  const add = (x: string) => set.add(norm(x));
+  add(label);
+  add(label.replace(/&/g, "and"));
+  add(label.replace(/\band\b/gi, "&"));
+  add(label.replace(/\be[\s-]?books?\b/gi, "ebooks"));
+  // singular variant
+  add(label.replace(/\bebooks\b/i, "ebook"));
+  if (slug) {
+    const slugSpaced = slug.replace(/-/g, " ");
+    add(slugSpaced);
+    add(slugSpaced.replace(/&/g, "and"));
+  }
+  return set;
+}
 
 /* ---------- Static params ---------- */
 export function generateStaticParams() {
@@ -70,7 +88,6 @@ export function generateStaticParams() {
   const legacy = Object.keys(CATEGORY_SLUG_ALIASES);
   return [...slugs, ...legacy].map((slug) => ({ slug }));
 }
-
 type Params = { slug: string };
 const normalizeSlug = (s: string) => CATEGORY_SLUG_ALIASES[s] ?? s;
 
@@ -113,23 +130,33 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     );
   }
 
-  // STRICT keys for this page
-  const wanted = new Set<string>([
-    norm(meta.label),
-    norm(slug),
-    ...(CATEGORY_STRICT_ALIASES[slug] ?? []).map(norm),
-  ]);
+  // STRICT: Only match against category/categorySlug/categories[]
+  const wanted = altForms(meta.label, slug);
+  const isInCategory = (p: any) => {
+    const bucket: string[] = [];
+    if (typeof p.category === "string") bucket.push(p.category);
+    if (Array.isArray(p.categories)) bucket.push(...p.categories);
+    if (typeof p.categorySlug === "string") bucket.push(p.categorySlug.replace(/-/g, " "));
 
-  // Only use the product's own fields — no injected label/slug, no substring scanning
-  const catProducts = products.filter((p: any) => {
-    const cand: string[] = [];
-    if (typeof p.category === "string") cand.push(p.category);
-    if (typeof p.categorySlug === "string") cand.push(p.categorySlug);
-    if (typeof p.collection === "string") cand.push(p.collection);
-    if (Array.isArray(p.categories)) cand.push(...p.categories);
-    if (Array.isArray(p.tags)) cand.push(...p.tags);
-    return cand.some((c) => wanted.has(norm(String(c))));
-  });
+    const normalized = bucket.map((s) => norm(String(s)));
+    // exact set intersection only (no substrings)
+    return normalized.some((n) => wanted.has(n));
+  };
+
+  let catProducts = products.filter(isInCategory);
+
+  // Soft fallback ONLY if empty: tolerate tiny spelling drift inside category fields
+  if (catProducts.length === 0) {
+    const wantedList = Array.from(wanted);
+    catProducts = products.filter((p: any) => {
+      const bucket: string[] = [];
+      if (typeof p.category === "string") bucket.push(p.category);
+      if (Array.isArray(p.categories)) bucket.push(...p.categories);
+      if (typeof p.categorySlug === "string") bucket.push(p.categorySlug.replace(/-/g, " "));
+      const hay = norm(bucket.join(" "));
+      return wantedList.some((w) => hay.includes(w));
+    });
+  }
 
   const items = catProducts.map((p: any) => ({
     ...p,
