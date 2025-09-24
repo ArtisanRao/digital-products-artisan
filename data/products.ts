@@ -1,6 +1,5 @@
 // data/products.ts
 import { imageManifest } from "./image-manifest"
-import { CATEGORIES } from "./categories"
 
 export type Product = {
   id: number
@@ -10,7 +9,7 @@ export type Product = {
   longDescription?: string
   price: number
   originalPrice: number
-  category: string              // must match category LABEL (not slug)
+  category: string           // category LABEL
   tags: string[]
   rating: number
   reviews: number
@@ -21,7 +20,6 @@ export type Product = {
   downloadPath?: string
 }
 
-/** Put any filename containing "cover" first. */
 function coverFirst(list: string[] | undefined): string[] | undefined {
   if (!list?.length) return list
   const covers: string[] = []
@@ -30,24 +28,21 @@ function coverFirst(list: string[] | undefined): string[] | undefined {
   return covers.length ? [...covers, ...others] : list
 }
 
-/** Titleize with a few acronym/brand fixes. */
 function titleize(slug: string): string {
-  let t = slug.replace(/[-_]+/g, " ").replace(/\b\w/g, (m) => m.toUpperCase())
-  // Acronyms/brands
-  t = t
+  const base = slug.replace(/[-_]+/g, " ").replace(/\b\w/g, (m) => m.toUpperCase())
+  // fix acronyms / expected casing & symbols for known category-like names
+  return base
     .replace(/\bAi\b/g, "AI")
     .replace(/\bChatgpt\b/g, "ChatGPT")
     .replace(/\bPlr\b/g, "PLR")
     .replace(/\bMrr\b/g, "MRR")
     .replace(/\bEbooks\b/g, "eBooks")
-  // Pretty forms for a couple of known slugs
-  if (slug === "keto-and-diet-guides") t = "Keto & Diet Guides"
-  if (slug === "ai-and-chatgpt-guides") t = "AI & Chatgpt Guides"
-  if (slug === "plr-and-mrr-bundles") t = "PLR & MRR Bundles"
-  return t
+    // targeted title improvements
+    .replace(/^Ai And Chatgpt Guides$/i, "AI & ChatGPT Guides")
+    .replace(/^Plr And Mrr Bundles$/i, "PLR & MRR Bundles")
+    .replace(/^Keto And Diet Guides$/i, "Keto & Diet Guides")
 }
 
-/** Canonical category LABELS (exact strings used on pages) */
 const CATEGORY_LABELS = {
   AI: "AI & ChatGPT Guides",
   PLANNERS: "Planners & Productivity",
@@ -65,56 +60,39 @@ const CATEGORY_LABELS = {
   RELIGIOUS: "Religious eBooks",
 } as const
 
-/** Inference from folder slug. Order matters (more specific first). */
+// ⚠️ Put KETO check before HEALTH so it doesn’t fall into Health by accident.
 function inferCategory(slug: string): string {
   const s = slug.toLowerCase()
-
-  if (/(keto|low[- ]?carb)/.test(s)) return CATEGORY_LABELS.KETO
   if (/(ai|chatgpt|gpt|prompt)/.test(s)) return CATEGORY_LABELS.AI
   if (/(planner|journal|productivity|organizer|notion|tracker)/.test(s)) return CATEGORY_LABELS.PLANNERS
   if (/(self[- ]?help|how[- ]?to|mindset|habit|routine)/.test(s)) return CATEGORY_LABELS.SELF_HELP
   if (/(plr|mrr|bundle|resell|resale)/.test(s)) return CATEGORY_LABELS.PLR
   if (/(video|course|training|lesson)/.test(s)) return CATEGORY_LABELS.VIDEO
   if (/(complete[- ]?shop|shop[- ]?package|storefront|store[- ]?bundle)/.test(s)) return CATEGORY_LABELS.SHOP
-  if (/(religious|faith|bible|devotional|devotion(al)?|sermon)/.test(s)) return CATEGORY_LABELS.RELIGIOUS
-  if (/(font|typeface|icons?)/.test(s)) return CATEGORY_LABELS.FONTS_ICONS
-  if (/(social[- ]?media|instagram|pinterest|facebook|tiktok|brand(ing)?[- ]?kit)/.test(s)) return CATEGORY_LABELS.SOCIAL
-  if (/(web[- ]?template|template|ui[- ]?kit|theme)/.test(s)) return CATEGORY_LABELS.WEB
-  // Wealth / money / biz style → Passive Income by default
-  if (/(wealth|money|business|entrepreneur|online[- ]?business)/.test(s)) return CATEGORY_LABELS.PASSIVE
-  // Broad health last (so Keto can win above)
+  if (/(keto|low[- ]?carb)/.test(s)) return CATEGORY_LABELS.KETO            // ← precedes HEALTH
   if (/(health|fitness|wellness|diet|nutrition|ebook)/.test(s)) return CATEGORY_LABELS.HEALTH
-
+  if (/(passive|side[- ]?hustle|income|freedom)/.test(s)) return CATEGORY_LABELS.PASSIVE
+  if (/(web[- ]?template|template|ui[- ]?kit|theme)/.test(s)) return CATEGORY_LABELS.WEB
+  if (/(essential|toolkit|utilities|automation|prompt[- ]?pack)/.test(s)) return CATEGORY_LABELS.ESSENTIALS
+  if (/(social[- ]?media|instagram|pinterest|facebook|tiktok|brand(ing)?[- ]?kit)/.test(s)) return CATEGORY_LABELS.SOCIAL
+  if (/(font|typeface|icons?)/.test(s)) return CATEGORY_LABELS.FONTS_ICONS
+  if (/(religious|faith|bible|devotional|devotion(al)?|sermon)/.test(s)) return CATEGORY_LABELS.RELIGIOUS
   return CATEGORY_LABELS.ESSENTIALS
 }
 
-/** Manual per-product overrides (by slug). */
+/** Hand fixes / one-offs */
 const MANUAL_OVERRIDES: Record<string, Partial<Product>> = {
-  "ai-and-chatgpt-guides": {
-    title: "AI & Chatgpt Guides",
-  },
-  "plr-and-mrr-bundles": {
-    title: "PLR & MRR Bundles",
-  },
-  "keto-and-diet-guides": {
-    title: "Keto & Diet Guides",
-    category: CATEGORY_LABELS.KETO,
-  },
-  // Move this out of Digital Essentials Hub
-  "digital-wealth-ultimate-guide": {
-    category: CATEGORY_LABELS.PASSIVE,
-  },
+  "ai-and-chatgpt-guides": { title: "AI & ChatGPT Guides", category: CATEGORY_LABELS.AI },
+  "plr-and-mrr-bundles":   { title: "PLR & MRR Bundles",   category: CATEGORY_LABELS.PLR },
+  "keto-and-diet-guides":  { title: "Keto & Diet Guides",  category: CATEGORY_LABELS.KETO },
+
+  // Remove from Digital Essentials: send to Passive Income instead
+  "digital-wealth-ultimate-guide": { category: CATEGORY_LABELS.PASSIVE },
 }
 
-/** Exclude any folder that is actually a category slug (not a real product). */
-const CATEGORY_SLUG_SET = new Set(CATEGORIES.map((c) => c.slug))
-const PRODUCT_SLUGS = Object.keys(imageManifest).filter((slug) => !CATEGORY_SLUG_SET.has(slug))
-
-/** Build core product objects from manifest. */
-const baseProducts: Omit<Product, "images">[] = PRODUCT_SLUGS.map((slug, i) => {
+const autoFromManifest: Omit<Product, "images">[] = Object.keys(imageManifest).map((slug, i) => {
   const gallery = coverFirst(imageManifest[slug])
-  const category = (MANUAL_OVERRIDES[slug]?.category as string) ?? inferCategory(slug)
-
+  const category = inferCategory(slug)
   const defaults: Omit<Product, "images"> = {
     id: 1000 + i,
     slug,
@@ -131,16 +109,14 @@ const baseProducts: Omit<Product, "images">[] = PRODUCT_SLUGS.map((slug, i) => {
     bestseller: false,
     image: gallery?.[0] ?? `/images/products/${slug}/cover.jpg`,
   }
-
   return { ...defaults, ...(MANUAL_OVERRIDES[slug] ?? {}) }
 })
 
-/** Final products with gallery attached. */
-export const products: Product[] = baseProducts.map((p) => {
+export const products: Product[] = autoFromManifest.map((p) => {
   const fromManifest = coverFirst(imageManifest[p.slug])
   const images = fromManifest?.length ? fromManifest : [p.image]
   return { ...p, image: images[0], images }
 })
 
-export const productsById = Object.fromEntries(products.map((p) => [p.id, p])) as Record<number, Product>
-export const productsBySlug = Object.fromEntries(products.map((p) => [p.slug, p])) as Record<string, Product>
+export const productsById  = Object.fromEntries(products.map((p) => [p.id, p])) as Record<number, Product>
+export const productsBySlug= Object.fromEntries(products.map((p) => [p.slug, p])) as Record<string, Product>

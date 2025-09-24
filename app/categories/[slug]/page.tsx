@@ -77,7 +77,9 @@ const KEYWORD_RULES: Array<{ re: RegExp; slug: string }> = [
   { re: /\b(plr|mrr|resell rights|private label rights|master resell)\b/i, slug: "plr-and-mrr-bundles" },
   { re: /\b(template|theme|website|landing page|ui kit)\b/i, slug: "web-templates" },
   { re: /\b(course|training|masterclass|bootcamp|video lessons?)\b/i, slug: "video-courses-and-training" },
-  { re: /\b(keto|diet|meal plan|weight loss|nutrition|fitness|workout)\b/i, slug: "health-and-fitness-ebooks" },
+  // ✅ map Keto correctly to the Keto category
+  { re: /\b(keto|diet|meal plan|weight loss)\b/i, slug: "keto-and-diet-guides" },
+  { re: /\b(nutrition|fitness|workout|wellness)\b/i, slug: "health-and-fitness-ebooks" },
   { re: /\b(planner|journal|habit tracker|productivity)\b/i, slug: "planners-and-productivity" },
   { re: /\b(social media|instagram|facebook|tiktok|pinterest|canva)\b/i, slug: "social-media-kits" },
   { re: /\b(complete shop|store package|storefront)\b/i, slug: "complete-shop-packages" },
@@ -167,8 +169,14 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     );
   }
 
-  // ✅ Strict one-to-one: only products whose inferred slug equals this page's slug
-  const catProducts = products.filter((p: any) => inferCategorySlug(p) === slug);
+  // ✅ Primary: match by canonical product.category LABEL (prevents cross-listing)
+  const want = norm(meta.label);
+  let catProducts = products.filter((p: any) => norm(p.category) === want);
+
+  // ↩️ Fallback only if empty: use inferred slug (helps when some items lack labels)
+  if (catProducts.length === 0) {
+    catProducts = products.filter((p: any) => inferCategorySlug(p) === slug);
+  }
 
   // Enrich for grid
   const items = catProducts.map((p: any) => ({
