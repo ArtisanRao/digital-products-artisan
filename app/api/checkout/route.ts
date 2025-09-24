@@ -52,7 +52,8 @@ function getStripe(): Stripe {
   if (!key) {
     throw new Error("Missing STRIPE_SECRET_KEY");
   }
-  return new Stripe(key, { apiVersion: "2024-06-20" });
+  // ✅ Use the SDK’s pinned version constant to satisfy typings
+  return new Stripe(key, { apiVersion: Stripe.LatestApiVersion });
 }
 
 /* -------------------- Core session builder -------------------- */
