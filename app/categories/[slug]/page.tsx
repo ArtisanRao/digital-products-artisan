@@ -1,4 +1,7 @@
 ﻿// app/categories/[slug]/page.tsx
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 import fs from "node:fs";
 import path from "node:path";
 import Link from "next/link";
@@ -84,10 +87,9 @@ const STOP = new Set([
 ]);
 const tokenize = (s: string) => toSlug(s).split("-").filter(t => t && !STOP.has(t));
 
-/** Optional per-category alias tokens (helps “Religious eBooks”) */
+/** Aliases to help matching (esp. Religious eBooks) */
 const CATEGORY_ALIASES: Record<string,string[]> = {
   "religious-ebooks": ["religious","religion","faith","christian","christianity","devotional","devotionals","bible","scripture","spiritual","spirituality"],
-  // add others if you ever need
 };
 
 /** Static params */
@@ -120,7 +122,7 @@ function productBelongsToCategory(p: any, catLabel: string, catSlug: string) {
   const slugN = toSlug(catSlug);
   const labelSlug = toSlug(catLabel);
 
-  // Collect candidate strings from product
+  // candidate strings from product
   const bucket: string[] = [];
   if (p.category) bucket.push(String(p.category));
   if (p.collection) bucket.push(String(p.collection));
@@ -130,7 +132,7 @@ function productBelongsToCategory(p: any, catLabel: string, catSlug: string) {
   if (Array.isArray(p.labels)) bucket.push(...p.labels.map(String));
   if (Array.isArray(p.tags)) bucket.push(...p.tags.map(String));
 
-  // 1) Exact slug/label matches
+  // 1) exact/slugged
   for (const s of bucket) {
     const sNorm = norm(s);
     const sSlug = toSlug(s);
@@ -139,7 +141,7 @@ function productBelongsToCategory(p: any, catLabel: string, catSlug: string) {
     if (sSlug === labelSlug) return true;
   }
 
-  // 2) Token overlap (ignore generic words)
+  // 2) token overlap
   const labelTokens = new Set([
     ...tokenize(catLabel),
     ...tokenize(catSlug),
@@ -147,16 +149,14 @@ function productBelongsToCategory(p: any, catLabel: string, catSlug: string) {
   ]);
   for (const s of bucket) {
     const tks = tokenize(s);
-    if (!tks.length) continue;
-    if (tks.some(t => labelTokens.has(t))) return true;      // overlap any significant token
+    if (tks.some(t => labelTokens.has(t))) return true;
   }
 
-  // 3) Soft contains both ways (handles "Religious & Devotional eBooks" vs "Religious eBooks")
+  // 3) soft contains
   for (const s of bucket) {
     const sNorm = norm(s);
     if (sNorm.includes(labelN) || labelN.includes(sNorm)) return true;
   }
-
   return false;
 }
 
@@ -168,7 +168,7 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
   if (!meta) {
     const pretty = slug.replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
     return (
-      <main className="container mx-auto px-4 py-16">
+      <main className="container mx-auto px-4 py-16" data-catgrid="v2">
         <h1 className="text-3xl md:text-4xl font-bold mb-2">{pretty}</h1>
         <InlineMore
           text="We couldn’t find a dedicated page for this category yet. Explore best sellers below or visit all products."
@@ -183,14 +183,14 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     );
   }
 
-  // Match products robustly
+  // Robust match
   const matched = products.filter((p: any) => productBelongsToCategory(p, meta.title, slug));
 
-  // Enrich for the grid
+  // Enrich for grid; ensure real product names & numeric ids flow through
   const items = matched.map((p: any) => ({
-    id: p.id,                       // numeric id → AddToCartButton works
+    id: p.id,
     slug: p.slug,
-    name: p.title,                  // ensure product name shows, not subcategory
+    name: p.title,                // ensure actual product name shows
     title: p.title,
     description: p.description,
     price: p.price,
@@ -205,7 +205,7 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
   }));
 
   return (
-    <main className="container mx-auto px-4 py-16">
+    <main className="container mx-auto px-4 py-16" data-catgrid="v2">
       <h1 className="text-3xl md:text-4xl font-bold mb-2">{meta.title}</h1>
       <InlineMore text={meta.description} lines={1} minChars={40} className="text-gray-700 mb-2" />
 
