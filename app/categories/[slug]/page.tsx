@@ -172,8 +172,12 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
 
       {cards.length ? (
         <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {cards.map((c) => (
-            <ProductCard key={String(c.slug ?? c.id)} {...c} />
+          {cards.map((c, i) => (
+            <ProductCard
+              key={String(c.slug ?? c.id)}
+              {...c}
+              priority={i < 3}  // ⟵ preload first row’s hero images for better LCP
+            />
           ))}
         </div>
       ) : (
