@@ -10,15 +10,19 @@ const PUBLIC_ALLOW: RegExp[] = [
   /^\/products(\/.*)?$/,           // products + PDPs
   /^\/categories(\/.*)?$/,         // categories
   /^\/cart$/,                      // cart
-  /^\/checkout$/,                  // ✅ allow guest checkout page
+  /^\/checkout$/,                  // ✅ guest checkout page
   /^\/order-confirmation(\/.*)?$/, // confirmation page(s)
 
-  // ✅ allow guest access to checkout/payment APIs
+  // ✅ guest access to checkout/payment APIs
   /^\/api\/checkout(\/.*)?$/,
   /^\/api\/create-payment-intent(\/.*)?$/,
   /^\/api\/stripe\/create(\/.*)?$/,
   /^\/api\/confirm-payment(\/.*)?$/,
-  /^\/api\/stripe\/webhook$/,      // webhooks should never require auth
+  /^\/api\/stripe\/webhook$/,      // webhooks never require auth
+
+  // auth pages should remain public
+  /^\/login(\/.*)?$/,
+  /^\/signup(\/.*)?$/,
 
   // static/runtime
   /^\/_next\/.*/,
@@ -31,7 +35,6 @@ const PUBLIC_ALLOW: RegExp[] = [
 
 /**
  * Private sections that require auth.
- * (Add more patterns here as needed.)
  */
 const PRIVATE_PROTECT: RegExp[] = [
   /^\/dashboard(\/.*)?$/,
@@ -39,7 +42,22 @@ const PRIVATE_PROTECT: RegExp[] = [
   /^\/admin(\/.*)?$/,
 ];
 
-export async function middleware(req: NextRequest) {
+/** Dependency-free “am I logged in?” check via common session cookie names. */
+function hasSessionCookie(req: NextRequest): boolean {
+  const ck = req.cookies;
+  const names = [
+    "__Secure-next-auth.session-token", // NextAuth (secure)
+    "next-auth.session-token",          // NextAuth (dev)
+    "__Secure-authjs.session-token",    // Auth.js v5+
+    "authjs.session-token",
+    "session",                          // generic
+    "auth",
+    "token",
+  ];
+  return names.some((n) => !!ck.get(n)?.value);
+}
+
+export function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
 
   // 1) Always allow public routes (incl. checkout + APIs)
@@ -47,22 +65,12 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // 2) If route is private, require auth (NextAuth if available)
+  // 2) Protect private areas only
   if (PRIVATE_PROTECT.some((re) => re.test(pathname))) {
-    try {
-      // Dynamically import so this works even if next-auth isn't installed
-      const mod = await import("next-auth/jwt").catch(() => null as any);
-      const token = mod?.getToken ? await mod.getToken({ req }) : null;
-
-      if (!token) {
-        const url = new URL("/login", req.url);
-        url.searchParams.set("redirect", pathname + search);
-        return NextResponse.redirect(url);
-      }
-    } catch {
-      // If auth check fails for any reason, default to letting it through
-      // (prevents accidental lockouts of non-auth sites)
-      return NextResponse.next();
+    if (!hasSessionCookie(req)) {
+      const url = new URL("/login", req.url);
+      url.searchParams.set("redirect", pathname + search);
+      return NextResponse.redirect(url);
     }
   }
 
@@ -70,9 +78,7 @@ export async function middleware(req: NextRequest) {
   return NextResponse.next();
 }
 
-/**
- * Apply to all routes except static/runtime assets.
- */
+/** Apply to all routes except static/runtime assets. */
 export const config = {
   matcher: ["/((?!_next|favicon.ico|sitemap.xml|robots.txt|sw.js|workbox-).*)"],
 };

@@ -78,7 +78,7 @@ export default function CheckoutPage() {
           <Link href="/login?redirect=/checkout" className="underline">
             Sign in
           </Link>{" "}
-          (optional) to save your order to your account.
+            (optional) to save your order to your account.
         </p>
       )}
 
@@ -91,7 +91,10 @@ export default function CheckoutPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               {items.map((item) => (
-                <div key={item.id ?? item.slug} className="flex items-center space-x-4">
+                <div
+                  key={String(item.id ?? item.title)}   // ← no slug usage
+                  className="flex items-center space-x-4"
+                >
                   <Image
                     src={item.image || "/placeholder.svg"}
                     alt={item.title}
