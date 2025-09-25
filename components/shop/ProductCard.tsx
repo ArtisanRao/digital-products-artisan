@@ -45,12 +45,12 @@ export default function ProductCard({
       ? new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(price)
       : (price ?? "");
 
-  // ---- Cart / Checkout wiring ---------------------------------------------
+  // ---- Cart / Badge wiring -------------------------------------------------
   const addToCart = () => {
     try {
       const w = window as any;
-
       const keyName = String(id ?? slug ?? "");
+
       if (w?.dpaCart?.add) {
         w.dpaCart.add({ id: id ?? slug, qty: 1 });
       } else if (w?.__CART__?.add) {
@@ -74,12 +74,39 @@ export default function ProductCard({
     }
   };
 
-  // Ensure the item is in the cart, then navigate straight to /checkout
-  const buyNow = () => {
+  // ---- Buy: create checkout session via API, then redirect -----------------
+  const buyNow = async () => {
+    const keyName = String(id ?? slug ?? "");
+
     try {
+      // Ensure the item is in the cart (so downstream logic finds it)
       addToCart();
-    } finally {
-      router.push("/checkout");
+
+      // Call your existing checkout API to create a payment session (e.g. Stripe)
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        // Adjust the payload keys to match your API if needed:
+        body: JSON.stringify({
+          items: [{ id: keyName, qty: 1 }],
+          // or product: keyName
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const url = data?.url || data?.checkoutUrl || data?.redirectUrl;
+        if (url) {
+          window.location.href = url; // go to payment page (Stripe Checkout, etc.)
+          return;
+        }
+      }
+
+      // Fallback: if API didn't return a URL, go to your local checkout page with product param
+      router.push(`/checkout?product=${encodeURIComponent(keyName)}`);
+    } catch (err) {
+      console.error("buyNow error", err);
+      router.push(`/checkout?product=${encodeURIComponent(keyName)}`);
     }
   };
   // -------------------------------------------------------------------------
