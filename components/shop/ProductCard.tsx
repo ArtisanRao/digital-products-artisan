@@ -34,24 +34,18 @@ export default function ProductCard({
   // Prefer ID route (SSG), then slug
   const productHref =
     href ??
-    (id !== undefined
-      ? `/products/${id}`
-      : slug
-      ? `/products/${slug}`
-      : "/products");
+    (id !== undefined ? `/products/${id}` :
+     slug ? `/products/${slug}` : "/products");
 
   const prev = () => setIdx((i) => (i === 0 ? pics.length - 1 : i - 1));
   const next = () => setIdx((i) => (i + 1) % pics.length);
 
   const priceLabel =
     typeof price === "number"
-      ? new Intl.NumberFormat("de-DE", {
-          style: "currency",
-          currency: "EUR",
-        }).format(price)
-      : price ?? "";
+      ? new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(price)
+      : (price ?? "");
 
-  /* ---------------------- Cart / Badge wiring ---------------------- */
+  // ---- Cart / Badge wiring -------------------------------------------------
   const addToCart = () => {
     try {
       const w = window as any;
@@ -71,61 +65,45 @@ export default function ProductCard({
       // Update badge
       const raw2 = localStorage.getItem("cart");
       const total = raw2
-        ? Object.values(JSON.parse(raw2) as Record<string, number>).reduce(
-            (a, b) => a + Number(b),
-            0
-          )
+        ? Object.values(JSON.parse(raw2) as Record<string, number>).reduce((a, b) => a + Number(b), 0)
         : 0;
-      window.dispatchEvent(
-        new CustomEvent("cart:add", { detail: { id: id ?? slug, qty: 1 } })
-      );
+      window.dispatchEvent(new CustomEvent("cart:add", { detail: { id: id ?? slug, qty: 1 } }));
       window.dispatchEvent(new CustomEvent("cart:count", { detail: total }));
     } catch (e) {
       console.error("addToCart error", e);
     }
   };
 
-  /* ---------------- Buy: create checkout session + fallback -------- */
+  // ---- Buy: create checkout session via API, then redirect -----------------
   const buyNow = async () => {
-    const keyName = String(id ?? slug ?? "");
-
+    const keyName = String(slug ?? id ?? "");
     try {
-      // ensure it's in cart (optional but keeps downstream flows happy)
       addToCart();
-
-      // POST – Case 1 supported by /api/checkout (productId OR slug)
-      const payload =
-        slug !== undefined ? { slug, qty: 1 } : { productId: id, qty: 1 };
 
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        // Align with route.ts: it expects items[].slug and items[].quantity
+        body: JSON.stringify({
+          items: [{ slug: keyName, quantity: 1 }],
+        }),
       });
 
       if (res.ok) {
-        const data = await res.json().catch(() => null);
+        const data = await res.json();
         const url = data?.url || data?.checkoutUrl || data?.redirectUrl;
         if (url) {
           window.location.href = url;
           return;
         }
       }
-
-      // Fallback to GET (303 redirect from the API)
-      const u = new URL("/api/checkout", window.location.origin);
-      if (slug !== undefined) u.searchParams.set("slug", slug);
-      else if (id !== undefined) u.searchParams.set("productId", String(id));
-      window.location.href = u.toString();
+      router.push(`/checkout?product=${encodeURIComponent(keyName)}`);
     } catch (err) {
       console.error("buyNow error", err);
-      const u = new URL("/api/checkout", window.location.origin);
-      if (slug !== undefined) u.searchParams.set("slug", slug);
-      else if (id !== undefined) u.searchParams.set("productId", String(id));
-      window.location.href = u.toString();
+      router.push(`/checkout?product=${encodeURIComponent(keyName)}`);
     }
   };
-  /* ----------------------------------------------------------------- */
+  // -------------------------------------------------------------------------
 
   return (
     <article className="group rounded-2xl border bg-white/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
@@ -142,10 +120,7 @@ export default function ProductCard({
             <>
               <button
                 type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  prev();
-                }}
+                onClick={(e) => { e.preventDefault(); prev(); }}
                 aria-label="Previous"
                 className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-3 py-2 text-sm shadow hover:bg-white"
               >
@@ -153,10 +128,7 @@ export default function ProductCard({
               </button>
               <button
                 type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  next();
-                }}
+                onClick={(e) => { e.preventDefault(); next(); }}
                 aria-label="Next"
                 className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-3 py-2 text-sm shadow hover:bg-white"
               >
@@ -177,9 +149,7 @@ export default function ProductCard({
         </Link>
 
         {description && (
-          <p className="mt-1 line-clamp-2 text-sm text-gray-600">
-            {description}
-          </p>
+          <p className="mt-1 line-clamp-2 text-sm text-gray-600">{description}</p>
         )}
 
         {/* Thumbs → each opens the product page */}
@@ -200,16 +170,13 @@ export default function ProductCard({
         )}
 
         {/* Price */}
-        {priceLabel && (
-          <div className="mt-3 text-xl font-semibold">{priceLabel}</div>
-        )}
+        {priceLabel && <div className="mt-3 text-xl font-semibold">{priceLabel}</div>}
 
-        {/* Actions: single row, compact so "Add to cart" never wraps */}
-        <div className="mt-3 grid grid-cols-3 gap-2">
+        {/* Actions: compact, fixed min-width to prevent wrapping */}
+        <div className="mt-3 grid grid-cols-3 items-stretch gap-2">
           <Link
             href={productHref}
-            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-2
-                       text-[12px] sm:text-[13px] font-medium text-white whitespace-nowrap hover:bg-blue-700"
+            className="inline-flex h-9 min-w-[92px] items-center justify-center rounded-xl bg-blue-600 px-2 text-[13px] font-medium leading-none text-white hover:bg-blue-700 whitespace-nowrap"
             aria-label={`View ${title}`}
           >
             👁️ View
@@ -218,8 +185,7 @@ export default function ProductCard({
           <button
             type="button"
             onClick={addToCart}
-            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-2
-                       text-[12px] sm:text-[13px] font-medium text-white whitespace-nowrap hover:bg-blue-700"
+            className="inline-flex h-9 min-w-[110px] items-center justify-center rounded-xl bg-blue-600 px-2 text-[13px] font-medium leading-none text-white hover:bg-blue-700 whitespace-nowrap"
             aria-label="Add to cart"
           >
             🛒 Add to cart
@@ -228,8 +194,7 @@ export default function ProductCard({
           <button
             type="button"
             onClick={buyNow}
-            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-2
-                       text-[12px] sm:text-[13px] font-medium text-white whitespace-nowrap hover:bg-blue-700"
+            className="inline-flex h-9 min-w-[82px] items-center justify-center rounded-xl bg-blue-600 px-2 text-[13px] font-medium leading-none text-white hover:bg-blue-700 whitespace-nowrap"
             aria-label="Buy now"
           >
             ⚡ Buy
