@@ -3,6 +3,7 @@
 import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
 import { CATEGORIES } from "@/data/categories";
+import { products } from "@/data/products";
 import { useState, useMemo } from "react";
 
 /** Optional descriptions (kept from your version) */
@@ -28,14 +29,12 @@ const GLOBAL_FALLBACKS = [
   "/images/placeholder.jpg",
 ];
 
-/** Build a robust image candidate list for a category */
+/* ---------------- helpers: category card image with fallbacks ---------------- */
+
 function buildCandidates(slug: string, image?: string): string[] {
   const list: string[] = [];
-
-  // 1) Prefer explicit image from data/categories.ts (e.g., /images/categories/<slug>/card.jpg)
   if (image) {
     list.push(image);
-    // try alt extensions
     if (/\.jpe?g$/i.test(image)) {
       list.push(image.replace(/\.jpe?g$/i, ".png"));
       list.push(image.replace(/\.jpe?g$/i, ".webp"));
@@ -47,25 +46,59 @@ function buildCandidates(slug: string, image?: string): string[] {
       list.push(image.replace(/\.webp$/i, ".png"));
     }
   }
-
-  // 2) If data didn't provide an image, follow the convention: /images/categories/<slug>/card.*
   const base = `/images/categories/${slug}/card`;
   list.push(`${base}.jpg`, `${base}.png`, `${base}.webp`);
-
-  // 3) Global fallbacks
   list.push(...GLOBAL_FALLBACKS);
-
-  // Dedup while preserving order
   return Array.from(new Set(list));
 }
 
-/** Small hook to manage onError fallback */
 function useCategoryImage(slug: string, image?: string) {
   const candidates = useMemo(() => buildCandidates(slug, image), [slug, image]);
   const [idx, setIdx] = useState(0);
   const src = candidates[idx] ?? GLOBAL_FALLBACKS[0];
   const onError = () => setIdx((i) => (i + 1 < candidates.length ? i + 1 : i));
   return { src, onError };
+}
+
+/* ---------------- helpers: product mapping + thumb candidates ---------------- */
+
+const toSlug = (s: string) =>
+  s.toLowerCase().trim().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+
+function productCategorySlug(p: any): string | null {
+  if (p?.categorySlug) return toSlug(String(p.categorySlug));
+  if (p?.category) return toSlug(String(p.category));
+  return null;
+}
+
+/** Build a couple of thumbnail candidates for a product by index (1..3) */
+function productThumbCandidates(p: any, index: number): string[] {
+  const idOrSlug = String(p.slug ?? p.id ?? "");
+  const base = `/images/products/${idOrSlug}/thumb-${index}`;
+  const fromFolder = [`${base}.webp`, `${base}.jpg`, `${base}.png`];
+  const fromList = Array.isArray(p.images) ? p.images : [];
+  // cover image is useful as a first thumb
+  const cover = p.image ? [p.image] : [];
+  return Array.from(new Set([...cover, ...fromList, ...fromFolder]));
+}
+
+/** Tiny client-side image that steps through candidates on error */
+function Thumb({ href, candidates, alt }: { href: string; candidates: string[]; alt: string }) {
+  const [i, setI] = useState(0);
+  const src = candidates[i];
+  const onError = () => setI((n) => (n + 1 < candidates.length ? n + 1 : n));
+  if (!src) return null;
+  return (
+    <Link
+      href={href}
+      className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-white opacity-90 transition hover:opacity-100"
+      title={alt}
+      aria-label={alt}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} onError={onError} alt="" className="h-full w-full object-cover" loading="lazy" />
+    </Link>
+  );
 }
 
 export default function CategoriesPage() {
@@ -78,29 +111,47 @@ export default function CategoriesPage() {
           const { src, onError } = useCategoryImage(c.slug, (c as any).image);
           const desc = DESC_BY_LABEL[c.label] ?? "Explore products in this category.";
 
+          // find one representative product for this category (first match)
+          const catProducts = products.filter((p: any) => productCategorySlug(p) === c.slug);
+          const first = catProducts[0];
+          const productHref = first
+            ? first.slug
+              ? `/products/${first.slug}`
+              : first.id
+              ? `/products/${first.id}`
+              : "/products"
+            : undefined;
+
           return (
-            <Link
+            <article
               key={c.slug}
-              href={`/categories/${c.slug}`}
-              aria-label={`Browse ${c.label}`}
-              className="group block rounded-2xl border overflow-hidden bg-white shadow transition-all duration-300 hover:-translate-y-1 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2"
+              className="group rounded-2xl border overflow-hidden bg-white shadow transition-all duration-300 hover:-translate-y-1 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2"
             >
-              <div className="relative w-full bg-gray-50">
-                <div className="aspect-[16/9] md:aspect-[3/2] overflow-hidden">
-                  <img
-                    src={src}
-                    onError={onError}
-                    alt={c.label}
-                    className="h-full w-full object-cover"
-                    loading="lazy"
-                  />
+              <Link href={`/categories/${c.slug}`} aria-label={`Browse ${c.label}`} className="block">
+                <div className="relative w-full bg-gray-50">
+                  <div className="aspect-[16/9] md:aspect-[3/2] overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={src}
+                      onError={onError}
+                      alt={c.label}
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                    />
+                  </div>
                 </div>
-              </div>
+              </Link>
 
               <div className="p-4">
-                <h2 className="text-xl font-semibold transition-colors group-hover:text-blue-600">
-                  {c.label}
-                </h2>
+                <Link
+                  href={`/categories/${c.slug}`}
+                  className="block hover:underline hover:decoration-2 hover:underline-offset-4"
+                >
+                  <h2 className="text-xl font-semibold transition-colors group-hover:text-blue-600">
+                    {c.label}
+                  </h2>
+                </Link>
+
                 <InlineMore
                   text={desc}
                   lines={2}
@@ -109,8 +160,22 @@ export default function CategoriesPage() {
                   moreLabel="more"
                   lessLabel="less"
                 />
+
+                {/* ---- NEW: mini product preview strip (first product in this category) ---- */}
+                {first && (
+                  <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
+                    {[1, 2, 3].map((n) => (
+                      <Thumb
+                        key={`${first.slug ?? first.id}-t${n}`}
+                        href={productHref!}
+                        candidates={productThumbCandidates(first, n)}
+                        alt={`${first.title} preview ${n}`}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
-            </Link>
+            </article>
           );
         })}
       </div>
