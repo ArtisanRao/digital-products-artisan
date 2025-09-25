@@ -49,12 +49,12 @@ const LABEL_TO_SLUG: Record<string, string> = Object.fromEntries(
 );
 
 function productCategorySlug(p: any): string | null {
-  if (p.categorySlug) {
+  if (p?.categorySlug) {
     const s = toSlug(String(p.categorySlug));
     const normalized = LEGACY_TO_NEW[s] ?? s;
     return ALL_SLUGS.has(normalized) ? normalized : null;
   }
-  if (p.category) {
+  if (p?.category) {
     const fromLabel = LABEL_TO_SLUG[String(p.category).toLowerCase()];
     if (fromLabel) return fromLabel;
     const guess = toSlug(String(p.category));
@@ -64,18 +64,31 @@ function productCategorySlug(p: any): string | null {
   return null;
 }
 
-/** Read up to N thumbs from /public/images/products/<slug-or-id>/thumb-*.ext */
-function readProductThumbs(identifier: string | number | undefined, max = 3): string[] {
-  if (identifier === undefined || identifier === null) return [];
-  const folder = String(identifier);
+/* ---------- thumbs: read from /id and /slug, dedupe, numeric sort ---------- */
+const THUMB_RE = /^thumb-(\d+)\.(png|jpe?g|webp|avif)$/i;
+
+function readThumbsFrom(folder: string): string[] {
   const dir = pub("images", "products", folder);
   if (!fs.existsSync(dir)) return [];
-  const names = fs
+  return fs
     .readdirSync(dir)
-    .filter((f) => /^thumb-\d+\.(png|jpe?g|webp|avif)$/i.test(f))
-    .sort()
-    .slice(0, max);
-  return names.map((n) => `/images/products/${folder}/${n}`);
+    .map((f) => {
+      const m = f.match(THUMB_RE);
+      return m ? { n: Number(m[1]), url: `/images/products/${folder}/${f}` } : null;
+    })
+    .filter(Boolean)
+    .sort((a: any, b: any) => a.n - b.n)
+    .map((x: any) => x.url);
+}
+
+function readProductThumbsDual(id?: string | number, slug?: string | number, max = 3): string[] {
+  const byId = id != null ? readThumbsFrom(String(id)) : [];
+  const bySlug = slug != null ? readThumbsFrom(String(slug)) : [];
+  const all = [...byId, ...bySlug];
+  // dedupe while preserving order
+  const uniq: string[] = [];
+  for (const u of all) if (!uniq.includes(u)) uniq.push(u);
+  return uniq.slice(0, max);
 }
 
 /** Static params for new and legacy slugs */
@@ -125,13 +138,17 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     );
   }
 
-  // ✅ Filter by canonical category slug
+  // Filter by canonical category slug
   const catProducts = products.filter((p) => productCategorySlug(p) === slug);
 
-  // ✅ Build cards (cover + thumbs), robust URL (prefer id -> /products/[id], else slug -> /products/[slug])
+  // Build cards (cover + optional list + thumbs from /id and /slug)
   const cards = catProducts.map((p: any) => {
-    const identifier = p.id ?? p.slug; // prefer id for thumbs folder
-    const images = [p.image, ...readProductThumbs(identifier)].filter(Boolean);
+    const thumbs = readProductThumbsDual(p.id, p.slug, 3);
+    const images = Array.from(
+      new Set(
+        [p.image, ...(Array.isArray(p.images) ? p.images : []), ...thumbs].filter(Boolean)
+      )
+    );
     const href =
       p.id   ? `/products/${p.id}`   :
       p.slug ? `/products/${p.slug}` :
@@ -153,7 +170,6 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
       <h1 className="text-3xl md:text-4xl font-bold">{meta.title}</h1>
       <InlineMore text={meta.description} lines={1} minChars={40} className="mt-1 text-gray-700" />
 
-      {/* Dedicated product grid */}
       {cards.length ? (
         <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {cards.map((c) => (
