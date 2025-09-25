@@ -61,14 +61,8 @@ export default function CartBadge({ className = "" }: { className?: string }) {
       else update();
     };
 
-    const events: Array<keyof WindowEventMap> = [
-      "cart:count",
-      "cart:change",
-      "cart-update",
-      "cart:add",
-      "cart:remove",
-    ];
-
+    // Custom app events -> treat as plain strings (not keyof WindowEventMap)
+    const events: string[] = ["cart:count", "cart:change", "cart-update", "cart:add", "cart:remove"];
     events.forEach((name) => window.addEventListener(name, onCount as EventListener));
 
     // Cross-tab sync
