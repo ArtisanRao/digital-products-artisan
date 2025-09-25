@@ -40,33 +40,34 @@ export default function ProductCard({
     try {
       const w = window as any;
 
-      // 1) Prefer existing site cart if available
-      if (w?.dpaCart?.add) { w.dpaCart.add({ slug, qty: 1 }); return; }
-      if (w?.__CART__?.add) { w.__CART__.add({ slug, qty: 1 }); return; }
+      // Prefer your site cart if available
+      if (w?.dpaCart?.add) { w.dpaCart.add({ slug, qty: 1 }); }
+      else if (w?.__CART__?.add) { w.__CART__.add({ slug, qty: 1 }); }
+      else {
+        // Fallback: localStorage cart
+        const key = "cart";
+        const raw = localStorage.getItem(key);
+        const cart: Record<string, number> = raw ? JSON.parse(raw) : {};
+        cart[slug] = (cart[slug] ?? 0) + 1;
+        localStorage.setItem(key, JSON.stringify(cart));
+      }
 
-      // 2) Broadcast event for any site listeners
+      // Notify badge
+      const raw = localStorage.getItem("cart");
+      const total = raw
+        ? Object.values(JSON.parse(raw) as Record<string, number>).reduce((a, b) => a + Number(b), 0)
+        : 0;
       window.dispatchEvent(new CustomEvent("cart:add", { detail: { slug, qty: 1 } }));
-
-      // 3) LocalStorage fallback so Cart page & badge can read it
-      const key = "cart";
-      const raw = localStorage.getItem(key);
-      const cart: Record<string, number> = raw ? JSON.parse(raw) : {};
-      cart[slug] = (cart[slug] ?? 0) + 1;
-      localStorage.setItem(key, JSON.stringify(cart));
-      const count = Object.values(cart).reduce((a, b) => a + Number(b), 0);
-      window.dispatchEvent(new CustomEvent("cart:count", { detail: count }));
+      window.dispatchEvent(new CustomEvent("cart:count", { detail: total }));
     } catch (e) {
-      console.error("addToCart fallback error", e);
+      console.error("addToCart error", e);
     }
   };
 
   const buyNow = () => {
     const w = window as any;
-    if (w?.startCheckout) {
-      w.startCheckout({ slug });
-      return;
-    }
-    // Fallback: navigate to your checkout with product slug param
+    if (w?.startCheckout) { w.startCheckout({ slug }); return; }
+    // Fallback: go to your checkout page with product param
     window.location.href = `/checkout?product=${encodeURIComponent(slug)}`;
   };
   // -------------------------------------------------------------------------
@@ -74,7 +75,7 @@ export default function ProductCard({
   return (
     <article className="group rounded-2xl border bg-white/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
       {/* Main image (clickable) */}
-      <Link href={href} aria-label={`Open ${title}`}>
+      <Link href={href} aria-label={`Open ${title}`} className="block">
         <div className="relative overflow-hidden rounded-t-2xl bg-gray-50">
           <img
             src={pics[idx]}
@@ -106,10 +107,14 @@ export default function ProductCard({
       </Link>
 
       <div className="p-4">
-        {/* Title (clickable) */}
-        <Link href={href} className="block">
+        {/* Title (hover underline + clickable) */}
+        <Link
+          href={href}
+          className="block hover:underline hover:decoration-2 hover:underline-offset-4"
+        >
           <h3 className="line-clamp-2 text-lg font-semibold">{title}</h3>
         </Link>
+
         {description && (
           <p className="mt-1 line-clamp-2 text-sm text-gray-600">{description}</p>
         )}
@@ -137,11 +142,11 @@ export default function ProductCard({
         {/* Price */}
         {priceLabel && <div className="mt-3 text-xl font-semibold">{priceLabel}</div>}
 
-        {/* Actions (uniform blue buttons) */}
-        <div className="mt-3 flex flex-wrap items-center gap-3">
+        {/* Actions: always a single row, 3 equal columns */}
+        <div className="mt-3 grid grid-cols-3 gap-2">
           <Link
             href={href}
-            className="flex h-10 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-medium text-white hover:bg-blue-700"
+            className="flex h-10 items-center justify-center rounded-xl bg-blue-600 px-3 text-sm font-medium text-white hover:bg-blue-700"
             aria-label={`View ${title}`}
           >
             👁️ View
@@ -150,7 +155,7 @@ export default function ProductCard({
           <button
             type="button"
             onClick={addToCart}
-            className="flex h-10 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-medium text-white hover:bg-blue-700"
+            className="flex h-10 items-center justify-center rounded-xl bg-blue-600 px-3 text-sm font-medium text-white hover:bg-blue-700"
             aria-label="Add to cart"
           >
             🛒 Add to cart
@@ -159,7 +164,7 @@ export default function ProductCard({
           <button
             type="button"
             onClick={buyNow}
-            className="flex h-10 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-medium text-white hover:bg-blue-700"
+            className="flex h-10 items-center justify-center rounded-xl bg-blue-600 px-3 text-sm font-medium text-white hover:bg-blue-700"
             aria-label="Buy now"
           >
             ⚡ Buy
