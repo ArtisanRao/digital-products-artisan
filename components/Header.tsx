@@ -1,12 +1,11 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ShoppingCart, Search, Menu, X, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { useCart } from '@/contexts/cart-context'
 import { useAuth } from '@/contexts/auth-context'
 import {
   DropdownMenu,
@@ -15,27 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import Logo from '@/components/Logo'
-
-// Prefer localStorage cartCount, fallback to summing cart (quantity/qty)
-function getCartCountSafe(): number {
-  try {
-    const rawCount = localStorage.getItem('cartCount')
-    if (rawCount != null && rawCount !== '') {
-      const n = Number(rawCount)
-      if (!Number.isNaN(n) && n >= 0) return n
-    }
-    const raw = localStorage.getItem('cart')
-    const items = raw ? JSON.parse(raw) : []
-    if (!Array.isArray(items)) return 0
-    return items.reduce((sum: number, it: any) => {
-      const q = it?.quantity ?? it?.qty ?? 1
-      const v = Number(q)
-      return sum + (Number.isFinite(v) && v > 0 ? v : 1)
-    }, 0)
-  } catch {
-    return 0
-  }
-}
+import CartBadge from '@/components/nav/CartBadge' // ✅ new, listens to lib/cart
 
 export default function Header() {
   const router = useRouter()
@@ -46,42 +25,8 @@ export default function Header() {
   const [isSupportOpenMobile, setIsSupportOpenMobile] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
 
-  const { items } = useCart()
   const { user, logout } = useAuth()
 
-  // Fallback count from context
-  const itemCountContext =
-    Array.isArray(items) ? items.reduce((sum, item: any) => sum + Number(item?.quantity ?? item?.qty ?? 1), 0) : 0
-
-  // Canonical badge count (events + storage), fallback to context
-  const [badgeCount, setBadgeCount] = useState<number>(0)
-  useEffect(() => {
-    const read = () => setBadgeCount(getCartCountSafe())
-    read()
-
-    const onCartUpdated = (e: Event) => {
-      const d = (e as CustomEvent<{ count?: number }>).detail
-      if (d && typeof d.count === 'number') setBadgeCount(d.count)
-      else read()
-    }
-    const onStorage = () => read()
-    const onFocus = () => read()
-    const onVis = () => { if (document.visibilityState === 'visible') read() }
-
-    window.addEventListener('cart:updated', onCartUpdated as EventListener)
-    window.addEventListener('storage', onStorage)
-    window.addEventListener('focus', onFocus as EventListener)
-    document.addEventListener('visibilitychange', onVis)
-
-    return () => {
-      window.removeEventListener('cart:updated', onCartUpdated as EventListener)
-      window.removeEventListener('storage', onStorage)
-      window.removeEventListener('focus', onFocus as EventListener)
-      document.removeEventListener('visibilitychange', onVis)
-    }
-  }, [])
-
-  const itemCount = badgeCount || itemCountContext
   const clearSearch = () => setSearchTerm('')
 
   const routeMap: Record<string, string> = {
@@ -109,7 +54,7 @@ export default function Header() {
       <div className="container mx-auto px-4 !py-0 max-w-full">
         <div className="flex flex-wrap items-center justify-center h-16 gap-2">
 
-          {/* Mobile Header Nav (unchanged) */}
+          {/* Mobile Header Nav */}
           <nav className="flex md:hidden items-center justify-center gap-3 flex-shrink-0 overflow-x-auto no-scrollbar">
             <Logo size="md" className="flex-shrink-0" />
             <Link href="/products" className="nav-link whitespace-nowrap">Products</Link>
@@ -184,7 +129,7 @@ export default function Header() {
               onSubmit={handleSearchSubmit}
               className="flex items-center space-x-2 relative flex-grow min-w-[120px] max-w-[300px] w-full"
             >
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400 w-4 h-4" />
               <Input
                 type="search"
                 placeholder="Search products..."
@@ -198,7 +143,7 @@ export default function Header() {
                   type="button"
                   onClick={clearSearch}
                   aria-label="Clear search input"
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   &times;
                 </button>
@@ -217,33 +162,22 @@ export default function Header() {
               </div>
             ) : null}
 
-            {/* DESKTOP RIGHT: Cart (replaces the three-line menu icon) */}
+            {/* DESKTOP RIGHT: Cart link + badge (badge reads lib/cart events) */}
             <Link href="/cart" className="relative inline-flex items-center hover-lift">
               <ShoppingCart className="h-6 w-6 text-blue-600" />
-              <span
-                className={[
-                  "absolute -right-2 -top-2 min-w-[1.25rem] h-5 px-1",
-                  "rounded-full bg-blue-600 text-white text-xs font-semibold",
-                  "flex items-center justify-center",
-                  itemCount === 0 ? "hidden" : "",
-                ].join(" ")}
-                aria-label={`${itemCount} items in cart`}
-              >
-                {itemCount > 99 ? '99+' : itemCount}
-              </span>
+              <CartBadge className="-right-2 -top-2 absolute h-5 min-w-[1.25rem] px-1" />
               <span className="sr-only">Cart</span>
             </Link>
           </div>
         </div>
 
-        {/* Mobile Menu (unchanged) */}
+        {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-blue-100 bg-blue-50/50 animate-fadeIn overflow-x-hidden">
             <nav className="flex flex-col space-y-4 max-w-full">
-
               {/* Search inside mobile menu */}
               <form onSubmit={handleSearchSubmit} className="relative px-2">
-                <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 text-blue-400 w-4 h-4" />
+                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-blue-400 w-4 h-4" />
                 <Input
                   type="search"
                   placeholder="Search products..."
@@ -282,24 +216,20 @@ export default function Header() {
               <Link href="/cart" className="mobile-link flex items-center space-x-2" onClick={() => setIsMenuOpen(false)}>
                 <ShoppingCart className="w-5 h-5 text-blue-600" />
                 <span>Cart</span>
-                {itemCount > 0 && (
-                  <span className="bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold shadow-lg">
-                    {itemCount > 99 ? '99+' : itemCount}
-                  </span>
-                )}
+                <CartBadge className="ml-2 h-5 min-w-[1.25rem]" />
               </Link>
 
-              {user ? (
+              {!user ? (
+                <>
+                  <Link href="/login" className="mobile-link" onClick={() => setIsMenuOpen(false)}>Login</Link>
+                  <Link href="/signup" className="mobile-link" onClick={() => setIsMenuOpen(false)}>Sign Up</Link>
+                </>
+              ) : (
                 <>
                   <Link href="/dashboard" className="mobile-link" onClick={() => setIsMenuOpen(false)}>Dashboard</Link>
                   <Link href="/orders" className="mobile-link" onClick={() => setIsMenuOpen(false)}>My Orders</Link>
                   <Link href="/subscriptions" className="mobile-link" onClick={() => setIsMenuOpen(false)}>Subscriptions</Link>
                   <button onClick={() => { logout(); setIsMenuOpen(false); }} className="mobile-link text-red-600">Logout</button>
-                </>
-              ) : (
-                <>
-                  <Link href="/login" className="mobile-link" onClick={() => setIsMenuOpen(false)}>Login</Link>
-                  <Link href="/signup" className="mobile-link" onClick={() => setIsMenuOpen(false)}>Sign Up</Link>
                 </>
               )}
             </nav>

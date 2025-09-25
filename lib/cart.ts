@@ -117,15 +117,16 @@ function emit(items: CartItem[], added?: CartItem) {
 
   // Modern event (typed payload)
   try {
-    window.dispatchEvent(new CustomEvent<CartEventDetail>(EVT, { detail }));
+    window.dispatchEvent(new CustomEvent<CartEventDetail>(EVT as any, { detail }));
   } catch {}
 
   // Back-compat events many components already listen to
-  try { window.dispatchEvent(new Event("cart:change")); } catch {}
-  try { window.dispatchEvent(new Event("cart-update")); } catch {}
-  try { window.dispatchEvent(new CustomEvent("cart:count", { detail: count })); } catch {}
+  try { window.dispatchEvent(new Event("cart:change" as any)); } catch {}
+  try { window.dispatchEvent(new Event("cart-update" as any)); } catch {}
+  try { window.dispatchEvent(new CustomEvent("cart:count" as any, { detail: count })); } catch {}
+  try { window.dispatchEvent(new CustomEvent("cart:updated" as any, { detail })); } catch {} // ⬅️ NEW
   if (added) {
-    try { window.dispatchEvent(new CustomEvent("cart:add", { detail: added })); } catch {}
+    try { window.dispatchEvent(new CustomEvent("cart:add" as any, { detail: added })); } catch {}
   }
 }
 
@@ -219,18 +220,40 @@ export function onChange(
   handler: (count: number, detail: CartEventDetail) => void
 ): () => void {
   if (!isClient()) return () => {};
-  const listener = (ev: Event) => {
+
+  // Primary modern listener
+  const primaryListener = (ev: Event) => {
     const ce = ev as CustomEvent<CartEventDetail>;
     const detail = ce.detail ?? snapshot(readRaw());
     handler(detail.count, detail);
   };
-  window.addEventListener(EVT, listener);
-  // Initialize immediately
-  handler(...((() => {
+  window.addEventListener(EVT as any, primaryListener as any);
+
+  // Legacy listeners (fire by re-reading snapshot)
+  const legacyEvents = ["cart:updated", "cart:change", "cart-update", "cart:count", "cart:add"] as const;
+  const legacyListener = () => {
     const snap = snapshot(readRaw());
-    return [snap.count, snap] as const;
-  })()));
-  return () => window.removeEventListener(EVT, listener);
+    handler(snap.count, snap);
+  };
+  legacyEvents.forEach((t) => window.addEventListener(t as any, legacyListener as any));
+
+  // Cross-tab sync
+  const storageListener = (e: StorageEvent) => {
+    if (!e.key || (e.key !== KEY && e.key !== "cart" && e.key !== "dpa:cart")) return;
+    const snap = snapshot(readRaw());
+    handler(snap.count, snap);
+  };
+  window.addEventListener("storage", storageListener);
+
+  // Initialize immediately
+  const init = snapshot(readRaw());
+  handler(init.count, init);
+
+  return () => {
+    window.removeEventListener(EVT as any, primaryListener as any);
+    legacyEvents.forEach((t) => window.removeEventListener(t as any, legacyListener as any));
+    window.removeEventListener("storage", storageListener);
+  };
 }
 
 /* ---------------------- Back-compat aliases ---------------------- */
