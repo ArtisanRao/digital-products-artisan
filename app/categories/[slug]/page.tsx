@@ -128,13 +128,13 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
   // ✅ Filter by canonical category slug
   const catProducts = products.filter((p) => productCategorySlug(p) === slug);
 
-  // ✅ Build cards (cover + thumbs), robust URL (slug -> /products/[slug], else id -> /products/[id])
+  // ✅ Build cards (cover + thumbs), robust URL (prefer id -> /products/[id], else slug -> /products/[slug])
   const cards = catProducts.map((p: any) => {
-    const identifier = p.slug ?? p.id; // used for thumbs folder
+    const identifier = p.id ?? p.slug; // prefer id for thumbs folder
     const images = [p.image, ...readProductThumbs(identifier)].filter(Boolean);
     const href =
-      p.slug ? `/products/${p.slug}` :
       p.id   ? `/products/${p.id}`   :
+      p.slug ? `/products/${p.slug}` :
                "/products";
 
     return {

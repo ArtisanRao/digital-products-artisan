@@ -5,11 +5,11 @@ import { useMemo, useState } from "react";
 
 export type ProductCardData = {
   title: string;
-  slug?: string;                 // product slug (preferred)
-  id?: string | number;          // numeric id (fallback)
+  slug?: string;
+  id?: string | number;
   price?: number | string;
-  images?: string[];             // cover first, then mockups
-  href?: string;                 // explicit product URL (overrides slug/id)
+  images?: string[];   // cover first, then mockups
+  href?: string;       // explicit product url; if given, we use it
   description?: string;
 };
 
@@ -28,10 +28,11 @@ export default function ProductCard({
   );
   const [idx, setIdx] = useState(0);
 
-  // Build a robust product URL that works with either /products/[slug] or /products/[id]
+  // Prefer ID route (SSG), then slug
   const productHref =
     href ??
-    (slug ? `/products/${slug}` : id !== undefined ? `/products/${id}` : "/products");
+    (id !== undefined ? `/products/${id}` :
+     slug ? `/products/${slug}` : "/products");
 
   const prev = () => setIdx((i) => (i === 0 ? pics.length - 1 : i - 1));
   const next = () => setIdx((i) => (i + 1) % pics.length);
@@ -46,25 +47,22 @@ export default function ProductCard({
     try {
       const w = window as any;
 
-      // Prefer your app's cart if it's exposed
-      if (w?.dpaCart?.add) { w.dpaCart.add({ slug: slug ?? id, qty: 1 }); }
-      else if (w?.__CART__?.add) { w.__CART__.add({ slug: slug ?? id, qty: 1 }); }
+      const keyName = String(id ?? slug ?? "");
+      if (w?.dpaCart?.add) { w.dpaCart.add({ id: id ?? slug, qty: 1 }); }
+      else if (w?.__CART__?.add) { w.__CART__.add({ id: id ?? slug, qty: 1 }); }
       else {
-        // Fallback localStorage cart
-        const key = "cart";
-        const raw = localStorage.getItem(key);
+        const raw = localStorage.getItem("cart");
         const cart: Record<string, number> = raw ? JSON.parse(raw) : {};
-        const keyName = String(slug ?? id ?? "");
         cart[keyName] = (cart[keyName] ?? 0) + 1;
-        localStorage.setItem(key, JSON.stringify(cart));
+        localStorage.setItem("cart", JSON.stringify(cart));
       }
 
-      // Notify badge
-      const raw = localStorage.getItem("cart");
-      const total = raw
-        ? Object.values(JSON.parse(raw) as Record<string, number>).reduce((a, b) => a + Number(b), 0)
+      // Update badge
+      const raw2 = localStorage.getItem("cart");
+      const total = raw2
+        ? Object.values(JSON.parse(raw2) as Record<string, number>).reduce((a, b) => a + Number(b), 0)
         : 0;
-      window.dispatchEvent(new CustomEvent("cart:add", { detail: { slug: slug ?? id, qty: 1 } }));
+      window.dispatchEvent(new CustomEvent("cart:add", { detail: { id: id ?? slug, qty: 1 } }));
       window.dispatchEvent(new CustomEvent("cart:count", { detail: total }));
     } catch (e) {
       console.error("addToCart error", e);
@@ -73,9 +71,8 @@ export default function ProductCard({
 
   const buyNow = () => {
     const w = window as any;
-    if (w?.startCheckout) { w.startCheckout({ slug: slug ?? id }); return; }
-    // Fallback: go to your checkout page with product param
-    const keyName = String(slug ?? id ?? "");
+    if (w?.startCheckout) { w.startCheckout({ id: id ?? slug }); return; }
+    const keyName = String(id ?? slug ?? "");
     window.location.href = `/checkout?product=${encodeURIComponent(keyName)}`;
   };
   // -------------------------------------------------------------------------
@@ -127,16 +124,14 @@ export default function ProductCard({
           <p className="mt-1 line-clamp-2 text-sm text-gray-600">{description}</p>
         )}
 
-        {/* Thumbs (under hero) → each thumb also opens the product page */}
+        {/* Thumbs → each opens the product page */}
         {pics.length > 1 && (
           <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
             {pics.map((src, i) => (
               <Link
                 key={src + i}
                 href={productHref}
-                className={`h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-white transition ${
-                  i === 0 ? "ring-0" : ""
-                } opacity-90 hover:opacity-100`}
+                className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-white opacity-90 transition hover:opacity-100"
                 aria-label={`Open ${title}`}
                 title={`Open ${title}`}
               >
