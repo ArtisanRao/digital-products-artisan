@@ -52,7 +52,7 @@ export default function ProductCard({
         localStorage.setItem(key, JSON.stringify(cart));
       }
 
-      // Notify badge
+      // Notify badge (count from localStorage as fallback)
       const raw = localStorage.getItem("cart");
       const total = raw
         ? Object.values(JSON.parse(raw) as Record<string, number>).reduce((a, b) => a + Number(b), 0)
@@ -142,11 +142,11 @@ export default function ProductCard({
         {/* Price */}
         {priceLabel && <div className="mt-3 text-xl font-semibold">{priceLabel}</div>}
 
-        {/* Actions: always a single row, 3 equal columns */}
-        <div className="mt-3 grid grid-cols-3 gap-2">
+        {/* Actions: single row, never wrap */}
+        <div className="mt-3 grid grid-cols-3 items-stretch gap-2">
           <Link
             href={href}
-            className="flex h-10 items-center justify-center rounded-xl bg-blue-600 px-3 text-sm font-medium text-white hover:bg-blue-700"
+            className="flex h-10 items-center justify-center rounded-xl bg-blue-600 px-2 md:px-3 text-xs md:text-sm font-medium text-white hover:bg-blue-700 whitespace-nowrap"
             aria-label={`View ${title}`}
           >
             👁️ View
@@ -155,7 +155,7 @@ export default function ProductCard({
           <button
             type="button"
             onClick={addToCart}
-            className="flex h-10 items-center justify-center rounded-xl bg-blue-600 px-3 text-sm font-medium text-white hover:bg-blue-700"
+            className="flex h-10 items-center justify-center rounded-xl bg-blue-600 px-2 md:px-3 text-xs md:text-sm font-medium text-white hover:bg-blue-700 whitespace-nowrap"
             aria-label="Add to cart"
           >
             🛒 Add to cart
@@ -164,7 +164,7 @@ export default function ProductCard({
           <button
             type="button"
             onClick={buyNow}
-            className="flex h-10 items-center justify-center rounded-xl bg-blue-600 px-3 text-sm font-medium text-white hover:bg-blue-700"
+            className="flex h-10 items-center justify-center rounded-xl bg-blue-600 px-2 md:px-3 text-xs md:text-sm font-medium text-white hover:bg-blue-700 whitespace-nowrap"
             aria-label="Buy now"
           >
             ⚡ Buy
