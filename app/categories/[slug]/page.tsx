@@ -64,16 +64,18 @@ function productCategorySlug(p: any): string | null {
   return null;
 }
 
-/** Read up to N thumbs from /public/images/products/<slug>/thumb-*.ext */
-function readProductThumbs(slug: string, max = 3): string[] {
-  const dir = pub("images", "products", slug);
+/** Read up to N thumbs from /public/images/products/<slug-or-id>/thumb-*.ext */
+function readProductThumbs(identifier: string | number | undefined, max = 3): string[] {
+  if (identifier === undefined || identifier === null) return [];
+  const folder = String(identifier);
+  const dir = pub("images", "products", folder);
   if (!fs.existsSync(dir)) return [];
   const names = fs
     .readdirSync(dir)
     .filter((f) => /^thumb-\d+\.(png|jpe?g|webp|avif)$/i.test(f))
     .sort()
     .slice(0, max);
-  return names.map((n) => `/images/products/${slug}/${n}`);
+  return names.map((n) => `/images/products/${folder}/${n}`);
 }
 
 /** Static params for new and legacy slugs */
@@ -126,15 +128,23 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
   // ✅ Filter by canonical category slug
   const catProducts = products.filter((p) => productCategorySlug(p) === slug);
 
-  // Build cards data (cover + thumbs)
-  const cards = catProducts.map((p) => {
-    const images = [p.image, ...readProductThumbs(p.slug)].filter(Boolean);
+  // Build cards data (cover + thumbs) with robust URL (slug -> /products/[slug], else id -> /products/[id])
+  const cards = catProducts.map((p: any) => {
+    const identifier = p.slug ?? p.id; // used for thumbs folder
+    const images = [p.image, ...readProductThumbs(identifier)].filter(Boolean);
+    const href =
+      p.slug ? `/products/${p.slug}` :
+      p.id   ? `/products/${p.id}`   :
+               "/products";
+
     return {
       title: p.title,
       slug: p.slug,
+      id: p.id,
       price: p.price,
       images,
       description: p.description,
+      href,
     };
   });
 
@@ -143,11 +153,11 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
       <h1 className="text-3xl md:text-4xl font-bold">{meta.title}</h1>
       <InlineMore text={meta.description} lines={1} minChars={40} className="mt-1 text-gray-700" />
 
-      {/* Dedicated product grid (no big cover, no duplicated gallery) */}
+      {/* Dedicated product grid */}
       {cards.length ? (
         <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {cards.map((c) => (
-            <ProductCard key={c.slug} {...c} />
+            <ProductCard key={String(c.slug ?? c.id)} {...c} />
           ))}
         </div>
       ) : (
