@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
-import { CATEGORIES } from "@/data/categories";
+import { CATEGORIES, slugForText } from "@/data/categories";
 import { products } from "@/data/products";
 import { useState, useMemo } from "react";
 
@@ -24,10 +24,7 @@ const DESC_BY_LABEL: Record<string, string> = {
   "Religious eBooks": "Faith-centered books, devotionals, and study guides.",
 };
 
-const GLOBAL_FALLBACKS = [
-  "/images/categories/_default/card.jpg",
-  "/images/placeholder.jpg",
-];
+const GLOBAL_FALLBACKS = ["/images/categories/_default/card.jpg", "/images/placeholder.jpg"];
 
 /* ---------------- helpers: category card image with fallbacks ---------------- */
 
@@ -65,9 +62,10 @@ function useCategoryImage(slug: string, image?: string) {
 const toSlug = (s: string) =>
   s.toLowerCase().trim().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
+/** Normalize whatever a product carries to your canonical category slug */
 function productCategorySlug(p: any): string | null {
-  if (p?.categorySlug) return toSlug(String(p.categorySlug));
-  if (p?.category) return toSlug(String(p.category));
+  if (p?.categorySlug) return slugForText(String(p.categorySlug)) ?? toSlug(String(p.categorySlug));
+  if (p?.category) return slugForText(String(p.category)) ?? toSlug(String(p.category));
   return null;
 }
 
@@ -118,6 +116,22 @@ function Thumb({
 /** Curated reference type: can be object {slug|id} or raw slug/id */
 type CurRef = { slug?: string; id?: string | number } | string | number;
 
+/** More forgiving membership check (slug, label, or tags[]) */
+function belongsToCategory(p: any, targetSlug: string): boolean {
+  const direct = productCategorySlug(p);
+  if (direct && direct === targetSlug) return true;
+
+  // Try tags or extra fields some products might carry
+  const tags: unknown = (p && (p.tags || p.categories || p.labels)) ?? [];
+  if (Array.isArray(tags)) {
+    for (const t of tags) {
+      const s = slugForText(String(t)) ?? toSlug(String(t));
+      if (s === targetSlug) return true;
+    }
+  }
+  return false;
+}
+
 export default function CategoriesPage() {
   return (
     <main className="max-w-7xl mx-auto px-4 py-12">
@@ -153,9 +167,7 @@ export default function CategoriesPage() {
             })
             .filter(Boolean) as any[];
 
-          const fallbackProducts = products.filter(
-            (p: any) => productCategorySlug(p) === c.slug
-          );
+          const fallbackProducts = products.filter((p: any) => belongsToCategory(p, c.slug));
 
           const previewProducts = (curatedProducts.length ? curatedProducts : fallbackProducts).slice(0, 3);
 
