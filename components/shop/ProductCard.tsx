@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export type ProductCardData = {
   title: string;
@@ -22,6 +23,8 @@ export default function ProductCard({
   href,
   description,
 }: ProductCardData) {
+  const router = useRouter();
+
   const pics = useMemo(
     () => (images.length ? images : ["/images/placeholder.jpg"]),
     [images]
@@ -71,9 +74,17 @@ export default function ProductCard({
 
   const buyNow = () => {
     const w = window as any;
-    if (w?.startCheckout) { w.startCheckout({ id: id ?? slug }); return; }
     const keyName = String(id ?? slug ?? "");
-    window.location.href = `/checkout?product=${encodeURIComponent(keyName)}`;
+    const checkoutUrl = `/checkout?product=${encodeURIComponent(keyName)}`;
+
+    if (w?.startCheckout) {
+      // Use your app’s checkout if exposed
+      w.startCheckout({ id: id ?? slug });
+      return;
+    }
+
+    // Fallback: client-side navigate to checkout page
+    router.push(checkoutUrl);
   };
   // -------------------------------------------------------------------------
 
