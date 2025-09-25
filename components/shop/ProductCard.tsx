@@ -124,7 +124,6 @@ export default function ProductCard({
             alt={title}
             className="aspect-[3/2] w-full object-contain p-2 transition-transform duration-300 group-hover:scale-[1.01]"
             loading={priority ? "eager" : "lazy"}
-            // @ts-expect-error - React types may not include it yet in your setup; browsers support it.
             fetchPriority={priority ? "high" : undefined}
           />
           {pics.length > 1 && (
