@@ -27,16 +27,17 @@ function siteBase(req: NextRequest) {
   const url = new URL(req.url);
   return `${url.protocol}//${url.host}`;
 }
-function findProductByKey(key: string | number) {
+function findProductByKey(key: string | number | null | undefined) {
+  if (key === null || key === undefined) return null;
   const s = String(key);
   const asNum = Number(s);
   if (Number.isFinite(asNum)) {
-    const byId = products.find((p) => Number(p.id) === asNum);
+    const byId = products.find((p: any) => Number(p.id) === asNum);
     if (byId) return byId;
   }
   return (
-    products.find((p) => String(p.slug) === s) ||
-    products.find((p) => String(p.id) === s) ||
+    products.find((p: any) => String(p.slug) === s) ||
+    products.find((p: any) => String(p.id) === s) ||
     null
   );
 }
@@ -45,20 +46,20 @@ function imageForProduct(origin: string, product: any) {
     ? product.images[0]
     : product.image;
   if (!rel) return undefined;
-  return rel.startsWith("http") ? rel : `${origin}${rel}`;
+  return String(rel).startsWith("http") ? String(rel) : `${origin}${rel}`;
 }
 function getStripe(): Stripe {
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) {
     throw new Error("Missing STRIPE_SECRET_KEY");
   }
-  // ✅ Let the SDK use its pinned api version to satisfy typings
+  // Use library's pinned API version
   return new Stripe(key);
 }
 
 /* -------------------- Core session builder -------------------- */
 async function createSessionFromSingle(opts: {
-  productKey: string; // id or slug
+  productKey: string | number; // id or slug
   qty?: number;
   currency?: string; // USD/EUR
   origin: string;
@@ -185,14 +186,19 @@ export async function POST(req: NextRequest) {
     }
 
     // Case 3: items by id/slug resolved from our products list
+    // Accepts shapes like:
+    //   { items: [{ id, qty }]}  ← from ProductCard.tsx
+    //   { items: [{ slug, quantity }]}
     if (Array.isArray(body?.items) && body.items.length) {
+      const currency = normalizeCurrency(body?.currency ?? "EUR");
       const resolved: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
 
       for (const it of body.items) {
-        const product = findProductByKey(it.slug);
+        const key = it?.id ?? it?.slug ?? it?.productId;
+        const product = findProductByKey(key);
         if (!product) continue;
 
-        const qty = Math.max(1, Number(it.quantity ?? 1));
+        const qty = Math.max(1, Number(it?.qty ?? it?.quantity ?? 1));
         const priceId: string | undefined = (product as any).priceId;
 
         if (priceId) {
@@ -203,9 +209,16 @@ export async function POST(req: NextRequest) {
           resolved.push({
             quantity: qty,
             price_data: {
-              currency: "eur",
+              currency: lcCurrency(currency),
               unit_amount: toMinorUnits(priceNumber),
-              product_data: { name: product.title },
+              product_data: {
+                name: product.title,
+                description: product.description?.slice(0, 400),
+                images: (() => {
+                  const img = imageForProduct(origin, product);
+                  return img ? [img] : [];
+                })(),
+              },
             },
           });
         }
