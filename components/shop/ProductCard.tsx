@@ -13,6 +13,8 @@ export type ProductCardData = {
   images?: string[];      // cover first, then mockups
   href?: string;          // explicit product url; if given, we use it
   description?: string;
+  /** Preload the hero image (used for the first row on category pages) */
+  priority?: boolean;
 };
 
 export default function ProductCard({
@@ -23,6 +25,7 @@ export default function ProductCard({
   images = [],
   href,
   description,
+  priority = false,
 }: ProductCardData) {
   const router = useRouter();
 
@@ -54,10 +57,9 @@ export default function ProductCard({
       const items = cart.getCart();
       const count = cart.getCartCount();
       window.dispatchEvent(new CustomEvent("cart:updated", { detail: { count, items } }));
-      // also keep a quick numeric cache for other listeners
       localStorage.setItem("cartCount", String(count));
     } catch {
-      // no-op
+      /* no-op */
     }
   };
 
@@ -73,7 +75,7 @@ export default function ProductCard({
         },
         1
       );
-      // lib/cart emits several events; we also emit `cart:updated` for the Header
+      // lib/cart emits events; also emit a bridge event for header
       bridgeCartUpdatedEvent();
     } catch (e) {
       console.error("addToCart error", e);
@@ -84,13 +86,11 @@ export default function ProductCard({
   const buyNow = async () => {
     const key = String(slug ?? id ?? "");
     try {
-      // Ensure item exists (optional, keeps flows consistent + updates badge immediately)
       addToCart();
 
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // Your API supports either single {productId, qty} OR items[].slug
         body: JSON.stringify(
           slug
             ? { items: [{ slug: key, quantity: 1 }] }
@@ -102,12 +102,11 @@ export default function ProductCard({
         const data = await res.json();
         const url = data?.url || data?.checkoutUrl || data?.redirectUrl;
         if (url) {
-          window.location.href = url; // e.g. Stripe Checkout
+          window.location.href = url;
           return;
         }
       }
 
-      // Fallback: local checkout page with product param
       router.push(`/checkout?product=${encodeURIComponent(key)}`);
     } catch (e) {
       console.error("buyNow error", e);
@@ -120,11 +119,14 @@ export default function ProductCard({
       {/* Main image (clickable) */}
       <Link href={productHref} aria-label={`Open ${title}`} className="block">
         <div className="relative overflow-hidden rounded-t-2xl bg-gray-50">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={pics[idx]}
             alt={title}
             className="aspect-[3/2] w-full object-contain p-2 transition-transform duration-300 group-hover:scale-[1.01]"
-            loading="lazy"
+            loading={priority ? "eager" : "lazy"}
+            fetchPriority={priority ? "high" : "auto"}
+            decoding={priority ? "sync" : "async"}
           />
           {pics.length > 1 && (
             <>
@@ -168,20 +170,30 @@ export default function ProductCard({
           <p className="mt-1 line-clamp-2 text-sm text-gray-600">{description}</p>
         )}
 
-        {/* Thumbs → each opens the product page */}
+        {/* Thumbs → interactive: click/hover swaps main image, no navigation */}
         {pics.length > 1 && (
           <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
-            {pics.map((src, i) => (
-              <Link
-                key={src + i}
-                href={productHref}
-                className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-white opacity-90 transition hover:opacity-100"
-                aria-label={`Open ${title}`}
-                title={`Open ${title}`}
-              >
-                <img src={src} alt="" className="h-full w-full object-cover" />
-              </Link>
-            ))}
+            {pics.map((src, i) => {
+              const selected = i === idx;
+              return (
+                <button
+                  key={src + i}
+                  type="button"
+                  onClick={() => setIdx(i)}
+                  onMouseEnter={() => setIdx(i)}
+                  aria-label={`Preview image ${i + 1} of ${pics.length} for ${title}`}
+                  aria-current={selected ? "true" : undefined}
+                  className={[
+                    "h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-white opacity-90 transition hover:opacity-100",
+                    selected ? "ring-2 ring-blue-600 border-blue-600" : "ring-0",
+                  ].join(" ")}
+                  title={title}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={src} alt="" className="h-full w-full object-cover" loading="lazy" />
+                </button>
+              );
+            })}
           </div>
         )}
 
