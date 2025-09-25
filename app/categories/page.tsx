@@ -115,6 +115,9 @@ function Thumb({
   );
 }
 
+/** Curated reference type: can be object {slug|id} or raw slug/id */
+type CurRef = { slug?: string; id?: string | number } | string | number;
+
 export default function CategoriesPage() {
   return (
     <main className="max-w-7xl mx-auto px-4 py-12">
@@ -126,14 +129,27 @@ export default function CategoriesPage() {
           const desc = DESC_BY_LABEL[c.label] ?? "Explore products in this category.";
 
           // Curated list first (from data/categories.ts), else fall back to first 3 products in the category
-          const curatedRefs = Array.isArray((c as any).topProducts) ? (c as any).topProducts : [];
+          const curatedRefs: CurRef[] = Array.isArray((c as any).topProducts)
+            ? ((c as any).topProducts as CurRef[])
+            : [];
 
-          const curatedProducts: any[] = curatedRefs
-            .map((ref) => {
-              if (ref?.slug) return products.find((p: any) => String(p.slug) === String(ref.slug));
-              if (ref?.id != null)
-                return products.find((p: any) => String(p.id) === String(ref.id));
-              return null;
+          const curatedProducts = curatedRefs
+            .map((ref: CurRef) => {
+              if (typeof ref === "string" || typeof ref === "number") {
+                const key = String(ref);
+                return products.find((p: any) => String(p.slug ?? p.id) === key);
+              }
+              if (ref && typeof ref === "object") {
+                if (ref.slug != null) {
+                  const key = String(ref.slug);
+                  return products.find((p: any) => String(p.slug) === key);
+                }
+                if (ref.id != null) {
+                  const key = String(ref.id);
+                  return products.find((p: any) => String(p.id) === key);
+                }
+              }
+              return undefined;
             })
             .filter(Boolean) as any[];
 
@@ -185,7 +201,7 @@ export default function CategoriesPage() {
                 {/* ---- Product preview strip (curated if present, else first up to 3 in this category) ---- */}
                 {previewProducts.length > 0 && (
                   <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
-                    {previewProducts.map((p) => (
+                    {previewProducts.map((p: any) => (
                       <Thumb
                         key={String(p.slug ?? p.id)}
                         href={productHrefFor(p)}
