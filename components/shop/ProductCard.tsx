@@ -5,19 +5,21 @@ import { useMemo, useState } from "react";
 
 export type ProductCardData = {
   title: string;
-  slug: string;
+  slug?: string;                 // product slug (preferred)
+  id?: string | number;          // numeric id (fallback)
   price?: number | string;
-  images?: string[]; // cover first, then mockups
-  href?: string;     // defaults to `/products/<slug>`
+  images?: string[];             // cover first, then mockups
+  href?: string;                 // explicit product URL (overrides slug/id)
   description?: string;
 };
 
 export default function ProductCard({
   title,
   slug,
+  id,
   price,
   images = [],
-  href = `/products/${slug}`,
+  href,
   description,
 }: ProductCardData) {
   const pics = useMemo(
@@ -26,9 +28,13 @@ export default function ProductCard({
   );
   const [idx, setIdx] = useState(0);
 
+  // Build a robust product URL that works with either /products/[slug] or /products/[id]
+  const productHref =
+    href ??
+    (slug ? `/products/${slug}` : id !== undefined ? `/products/${id}` : "/products");
+
   const prev = () => setIdx((i) => (i === 0 ? pics.length - 1 : i - 1));
   const next = () => setIdx((i) => (i + 1) % pics.length);
-  const go = (i: number) => setIdx(i);
 
   const priceLabel =
     typeof price === "number"
@@ -40,24 +46,25 @@ export default function ProductCard({
     try {
       const w = window as any;
 
-      // Prefer your site cart if available
-      if (w?.dpaCart?.add) { w.dpaCart.add({ slug, qty: 1 }); }
-      else if (w?.__CART__?.add) { w.__CART__.add({ slug, qty: 1 }); }
+      // Prefer your app's cart if it's exposed
+      if (w?.dpaCart?.add) { w.dpaCart.add({ slug: slug ?? id, qty: 1 }); }
+      else if (w?.__CART__?.add) { w.__CART__.add({ slug: slug ?? id, qty: 1 }); }
       else {
-        // Fallback: localStorage cart
+        // Fallback localStorage cart
         const key = "cart";
         const raw = localStorage.getItem(key);
         const cart: Record<string, number> = raw ? JSON.parse(raw) : {};
-        cart[slug] = (cart[slug] ?? 0) + 1;
+        const keyName = String(slug ?? id ?? "");
+        cart[keyName] = (cart[keyName] ?? 0) + 1;
         localStorage.setItem(key, JSON.stringify(cart));
       }
 
-      // Notify badge (count from localStorage as fallback)
+      // Notify badge
       const raw = localStorage.getItem("cart");
       const total = raw
         ? Object.values(JSON.parse(raw) as Record<string, number>).reduce((a, b) => a + Number(b), 0)
         : 0;
-      window.dispatchEvent(new CustomEvent("cart:add", { detail: { slug, qty: 1 } }));
+      window.dispatchEvent(new CustomEvent("cart:add", { detail: { slug: slug ?? id, qty: 1 } }));
       window.dispatchEvent(new CustomEvent("cart:count", { detail: total }));
     } catch (e) {
       console.error("addToCart error", e);
@@ -66,16 +73,17 @@ export default function ProductCard({
 
   const buyNow = () => {
     const w = window as any;
-    if (w?.startCheckout) { w.startCheckout({ slug }); return; }
+    if (w?.startCheckout) { w.startCheckout({ slug: slug ?? id }); return; }
     // Fallback: go to your checkout page with product param
-    window.location.href = `/checkout?product=${encodeURIComponent(slug)}`;
+    const keyName = String(slug ?? id ?? "");
+    window.location.href = `/checkout?product=${encodeURIComponent(keyName)}`;
   };
   // -------------------------------------------------------------------------
 
   return (
     <article className="group rounded-2xl border bg-white/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
       {/* Main image (clickable) */}
-      <Link href={href} aria-label={`Open ${title}`} className="block">
+      <Link href={productHref} aria-label={`Open ${title}`} className="block">
         <div className="relative overflow-hidden rounded-t-2xl bg-gray-50">
           <img
             src={pics[idx]}
@@ -109,7 +117,7 @@ export default function ProductCard({
       <div className="p-4">
         {/* Title (hover underline + clickable) */}
         <Link
-          href={href}
+          href={productHref}
           className="block hover:underline hover:decoration-2 hover:underline-offset-4"
         >
           <h3 className="line-clamp-2 text-lg font-semibold">{title}</h3>
@@ -119,22 +127,21 @@ export default function ProductCard({
           <p className="mt-1 line-clamp-2 text-sm text-gray-600">{description}</p>
         )}
 
-        {/* Thumbs (under hero) */}
+        {/* Thumbs (under hero) → each thumb also opens the product page */}
         {pics.length > 1 && (
           <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
             {pics.map((src, i) => (
-              <button
-                type="button"
+              <Link
                 key={src + i}
-                onClick={() => go(i)}
+                href={productHref}
                 className={`h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-white transition ${
-                  idx === i ? "ring-2 ring-blue-500" : "opacity-80 hover:opacity-100"
-                }`}
-                aria-label={`Preview ${i + 1}`}
-                title={`Preview ${i + 1}`}
+                  i === 0 ? "ring-0" : ""
+                } opacity-90 hover:opacity-100`}
+                aria-label={`Open ${title}`}
+                title={`Open ${title}`}
               >
                 <img src={src} alt="" className="h-full w-full object-cover" />
-              </button>
+              </Link>
             ))}
           </div>
         )}
@@ -145,7 +152,7 @@ export default function ProductCard({
         {/* Actions: single row, never wrap */}
         <div className="mt-3 grid grid-cols-3 items-stretch gap-2">
           <Link
-            href={href}
+            href={productHref}
             className="flex h-10 items-center justify-center rounded-xl bg-blue-600 px-2 md:px-3 text-xs md:text-sm font-medium text-white hover:bg-blue-700 whitespace-nowrap"
             aria-label={`View ${title}`}
           >
