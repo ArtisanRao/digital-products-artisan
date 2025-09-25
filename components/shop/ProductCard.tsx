@@ -41,7 +41,7 @@ export default function ProductCard({
   const next = () => setIdx((i) => (i + 1) % pics.length);
 
   const numericPrice =
-    typeof price === "number" ? price : Number(String(price).replace(/[^\d.-]+/g, "")) || 0;
+    typeof price === "number" ? price : Number(String(price ?? "").replace(/[^\d.-]+/g, "")) || 0;
 
   const priceLabel =
     typeof price === "number"
@@ -49,6 +49,18 @@ export default function ProductCard({
       : (price ?? "");
 
   /* ---------------- Cart + badge (uses lib/cart) ---------------- */
+  const bridgeCartUpdatedEvent = () => {
+    try {
+      const items = cart.getCart();
+      const count = cart.getCartCount();
+      window.dispatchEvent(new CustomEvent("cart:updated", { detail: { count, items } }));
+      // also keep a quick numeric cache for other listeners
+      localStorage.setItem("cartCount", String(count));
+    } catch {
+      // no-op
+    }
+  };
+
   const addToCart = () => {
     try {
       const key = String(id ?? slug ?? "");
@@ -61,7 +73,8 @@ export default function ProductCard({
         },
         1
       );
-      // lib/cart emits cart-update + legacy events; badge updates automatically
+      // lib/cart emits several events; we also emit `cart:updated` for the Header
+      bridgeCartUpdatedEvent();
     } catch (e) {
       console.error("addToCart error", e);
     }
@@ -69,23 +82,19 @@ export default function ProductCard({
 
   /* ---------------- Buy → Checkout ---------------- */
   const buyNow = async () => {
-    // Use whichever identifier you have; API accepts slug OR productId
-    const payload =
-      slug != null
-        ? { slug, qty: 1 }
-        : { productId: String(id ?? ""), qty: 1 };
-
+    const key = String(slug ?? id ?? "");
     try {
-      // Ensure item exists (optional, keeps flows consistent)
+      // Ensure item exists (optional, keeps flows consistent + updates badge immediately)
       addToCart();
 
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        // Your API supports either single {productId, qty} OR items[].slug
         body: JSON.stringify(
-          "slug" in payload
-            ? { items: [{ slug: payload.slug, quantity: payload.qty }] }
-            : { productId: payload.productId, qty: payload.qty }
+          slug
+            ? { items: [{ slug: key, quantity: 1 }] }
+            : { productId: String(id ?? ""), qty: 1 }
         ),
       });
 
@@ -93,17 +102,16 @@ export default function ProductCard({
         const data = await res.json();
         const url = data?.url || data?.checkoutUrl || data?.redirectUrl;
         if (url) {
-          window.location.href = url; // Stripe Checkout (or your gateway)
+          window.location.href = url; // e.g. Stripe Checkout
           return;
         }
       }
 
       // Fallback: local checkout page with product param
-      const key = encodeURIComponent(String(slug ?? id ?? ""));
-      router.push(`/checkout?product=${key}`);
-    } catch {
-      const key = encodeURIComponent(String(slug ?? id ?? ""));
-      router.push(`/checkout?product=${key}`);
+      router.push(`/checkout?product=${encodeURIComponent(key)}`);
+    } catch (e) {
+      console.error("buyNow error", e);
+      router.push(`/checkout?product=${encodeURIComponent(key)}`);
     }
   };
 

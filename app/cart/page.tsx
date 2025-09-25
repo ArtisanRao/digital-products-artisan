@@ -1,18 +1,28 @@
+// app/cart/page.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { getPreferredCurrency } from "@/lib/currency";
-import { Button } from "@/components/ui/button";
 import * as cart from "@/lib/cart";
+import { Button } from "@/components/ui/button";
+import { getPreferredCurrency } from "@/lib/currency";
 
 export default function CartPage() {
   const [items, setItems] = useState<cart.CartItem[]>([]);
   const [hydrated, setHydrated] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
   const [currency, setCurrency] = useState<string>("eur");
 
-  // Currency bootstrap + listener (matches your header picker)
+  // Hydrate + subscribe to cart changes
+  useEffect(() => {
+    setItems(cart.getCart());
+    setHydrated(true);
+
+    const unsub = cart.onChange((_count, detail) => setItems(detail.items));
+    return () => unsub();
+  }, []);
+
+  // Keep currency in sync with header selector
   useEffect(() => {
     const initial = (getPreferredCurrency() || "eur").toLowerCase();
     setCurrency(initial);
@@ -25,68 +35,41 @@ export default function CartPage() {
     return () => window.removeEventListener("currency:change", onChange as EventListener);
   }, []);
 
-  // Sync with lib/cart (single source of truth)
-  useEffect(() => {
-    // Initial load
-    setItems(cart.getCart());
-    setHydrated(true);
-
-    // Subscribe to updates (cart emits "cart-update" with detail)
-    const unsubscribe = cart.onChange((_count, detail) => {
-      setItems(detail.items);
-    });
-    return unsubscribe;
-  }, []);
-
-  // Helpers
-  const totalPrice = useMemo(
-    () => items.reduce((sum, it) => sum + (Number(it.price) || 0) * (Number(it.qty) || 0), 0),
+  const total = useMemo(
+    () => items.reduce((s, it) => s + (Number(it.price) || 0) * (Number(it.qty) || 0), 0),
     [items]
   );
 
-  const formatMoney = (n: number) => {
+  const fmt = (n: number) => {
     const code = (currency || "eur").toUpperCase();
-    try {
-      return new Intl.NumberFormat(undefined, {
-        style: "currency",
-        currency: code,
-        maximumFractionDigits: 2,
-      }).format(n);
-    } catch {
-      return new Intl.NumberFormat(undefined, {
-        style: "currency",
-        currency: "EUR",
-        maximumFractionDigits: 2,
-      }).format(n);
-    }
+    try { return new Intl.NumberFormat(undefined, { style: "currency", currency: code }).format(n); }
+    catch { return new Intl.NumberFormat(undefined, { style: "currency", currency: "EUR" }).format(n); }
   };
 
-  // Mutations go through lib/cart so events & storage stay consistent
-  const handleQuantityChange = (id: string, qty: number) => {
+  const handleQty = (id: string, qty: number) => {
     if (qty < 1) return;
     cart.setQty(id, qty);
-    setError(null);
   };
   const handleRemove = (id: string) => cart.removeFromCart(id);
   const handleClear = () => cart.clearCart();
 
-  // Checkout via /api/checkout (multi-item). Your API resolves id/slug either way.
+  // Stripe Checkout (multi-item) via /api/checkout → resolve by slug/id on server
   const handleCheckout = async () => {
     if (!items.length) {
-      setError("Your cart is empty!");
+      setErr("Your cart is empty!");
       return;
     }
-
-    // API supports { items: [{ slug, quantity }] } and resolves slug/id internally
-    const payload = {
-      items: items.map((it) => ({ slug: it.id, quantity: Math.max(1, Number(it.qty) || 1) })),
-      currency, // optional server-side
-    };
-
     setLoading(true);
-    setError(null);
+    setErr(null);
 
     try {
+      // Your /api/checkout POST handler supports the "items" branch that resolves by slug/id:
+      //    items: [{ slug, quantity }]
+      const payload = {
+        items: items.map((it) => ({ slug: it.id, quantity: Math.max(1, Number(it.qty) || 1) })),
+        currency: currency.toUpperCase(),
+      };
+
       const resp = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -94,26 +77,25 @@ export default function CartPage() {
       });
 
       const data = await resp.json();
-      if (!resp.ok || !data?.url) {
-        console.error("Checkout error:", data);
-        setError(data?.error || "Sorry—couldn’t start checkout.");
-        setLoading(false);
+      if (resp.ok && data?.url) {
+        window.location.href = data.url as string; // → Stripe Checkout
         return;
       }
 
-      window.location.href = data.url as string; // ⟶ Stripe Checkout (or your gateway)
+      console.error("Checkout error:", data);
+      setErr(data?.error || "Sorry—couldn’t start checkout.");
     } catch (e) {
       console.error(e);
-      setError("Network error starting checkout.");
+      setErr("Network error starting checkout.");
+    } finally {
       setLoading(false);
     }
   };
 
-  // Hydration guard
   if (!hydrated) {
     return (
       <main className="container mx-auto p-6 text-center">
-        <h1 className="mb-2 text-4xl font-bold">Loading cart…</h1>
+        <h1 className="text-4xl font-bold mb-2">Loading cart…</h1>
         <p className="text-gray-600">Please wait.</p>
       </main>
     );
@@ -122,19 +104,19 @@ export default function CartPage() {
   if (!items.length) {
     return (
       <main className="container mx-auto p-6 text-center">
-        <h1 className="mb-4 text-4xl font-bold">Your Cart is Empty</h1>
+        <h1 className="text-4xl font-bold mb-4">Your Cart is Empty</h1>
         <p className="text-gray-600">Browse products and add them to your cart.</p>
       </main>
     );
   }
 
   return (
-    <main className="container mx-auto max-w-4xl p-6">
-      <h1 className="mb-8 text-4xl font-bold">Your Cart</h1>
+    <main className="container mx-auto p-6 max-w-4xl">
+      <h1 className="text-4xl font-bold mb-8">Your Cart</h1>
 
-      {error && (
+      {err && (
         <div className="mb-4 rounded bg-red-100 p-3 text-red-700" aria-live="polite">
-          {error}
+          {err}
         </div>
       )}
 
@@ -151,9 +133,9 @@ export default function CartPage() {
               />
             ) : null}
 
-            <div className="flex-grow">
-              <h2 className="text-xl font-semibold">{title}</h2>
-              <p className="mt-1 text-gray-700">{formatMoney(price)} each</p>
+            <div className="flex-grow min-w-0">
+              <h2 className="text-xl font-semibold truncate">{title}</h2>
+              <p className="mt-1 text-gray-700">{fmt(price)} each</p>
 
               <div className="mt-2 flex items-center space-x-2">
                 <label htmlFor={`qty-${id}`} className="mr-2 font-medium">
@@ -164,14 +146,14 @@ export default function CartPage() {
                   type="number"
                   min={1}
                   value={qty}
-                  onChange={(e) => handleQuantityChange(id, Number(e.target.value))}
+                  onChange={(e) => handleQty(id, Number(e.target.value))}
                   className="w-16 rounded border p-1 text-center"
                 />
               </div>
             </div>
 
             <div className="ml-6 flex flex-col items-end">
-              <p className="mb-4 text-lg font-bold">{formatMoney(price * (qty || 0))}</p>
+              <p className="mb-4 text-lg font-bold">{fmt(price * qty)}</p>
               <button
                 onClick={() => handleRemove(id)}
                 className="font-semibold text-red-600 hover:text-red-800"
@@ -185,14 +167,15 @@ export default function CartPage() {
       </ul>
 
       <div className="flex flex-col gap-4 border-t border-gray-300 pt-6 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-2xl font-bold">Total: {formatMoney(totalPrice)}</p>
+        <p className="text-2xl font-bold">Total: {fmt(total)}</p>
 
         <div className="flex justify-end gap-3">
           <Button
             onClick={handleClear}
             disabled={loading}
-            className="hidden sm:inline-flex"
+            className="hidden sm:inline-flex clear-cart-btn"
             variant="secondary"
+            data-action="clear-cart"
           >
             Clear Cart
           </Button>
