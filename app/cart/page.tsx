@@ -1,28 +1,18 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getPreferredCurrency } from "@/lib/currency";
 import { Button } from "@/components/ui/button";
-
-type CartItem = {
-  id: string;        // product.id as string
-  name: string;
-  price: number;     // in the currently-selected currency
-  quantity: number;
-  image?: string;
-  url?: string;
-  description?: string;
-  fileGuid?: string;
-};
+import * as cart from "@/lib/cart";
 
 export default function CartPage() {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [hydrated, setHydrated] = useState(false); // ⬅️ avoid flash-of-empty
+  const [items, setItems] = useState<cart.CartItem[]>([]);
+  const [hydrated, setHydrated] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currency, setCurrency] = useState<string>("eur");
 
-  // Bootstrap currency + react to header picker
+  // Currency bootstrap + listener (matches your header picker)
   useEffect(() => {
     const initial = (getPreferredCurrency() || "eur").toLowerCase();
     setCurrency(initial);
@@ -35,66 +25,23 @@ export default function CartPage() {
     return () => window.removeEventListener("currency:change", onChange as EventListener);
   }, []);
 
-  // Helper to persist + broadcast (keeps header badge in sync)
-  const persistAndBroadcast = (items: CartItem[]) => {
-    localStorage.setItem("cart", JSON.stringify(items));
-    const count = items.reduce((n, i) => n + Number(i.quantity || 1), 0);
-    localStorage.setItem("cartCount", String(count));
-    try {
-      window.dispatchEvent(new CustomEvent("cart:updated", { detail: { count, items } }));
-    } catch {
-      /* no-op */
-    }
-  };
-
-  // Load cart from localStorage
+  // Sync with lib/cart (single source of truth)
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem("cart");
-      const items = raw ? (JSON.parse(raw) as CartItem[]) : [];
-      setCartItems(items);
-      persistAndBroadcast(items); // ensure header badge matches
-    } catch {
-      /* ignore parse errors */
-    } finally {
-      setHydrated(true);
-    }
+    // Initial load
+    setItems(cart.getCart());
+    setHydrated(true);
+
+    // Subscribe to updates (cart emits "cart-update" with detail)
+    const unsubscribe = cart.onChange((_count, detail) => {
+      setItems(detail.items);
+    });
+    return unsubscribe;
   }, []);
 
-  // Stay in sync if other parts of the app update the cart
-  useEffect(() => {
-    const onCartUpdated = (e: Event) => {
-      const detail = (e as CustomEvent<{ items?: CartItem[] }>).detail;
-      if (detail?.items) {
-        setCartItems(detail.items);
-      } else {
-        try {
-          const raw = localStorage.getItem("cart");
-          setCartItems(raw ? (JSON.parse(raw) as CartItem[]) : []);
-        } catch {}
-      }
-    };
-    window.addEventListener("cart:updated", onCartUpdated as EventListener);
-    return () => window.removeEventListener("cart:updated", onCartUpdated as EventListener);
-  }, []);
-
-  const updateCart = (items: CartItem[]) => {
-    setCartItems(items);
-    persistAndBroadcast(items);
-    setError(null);
-  };
-
-  const handleQuantityChange = (id: string, quantity: number) => {
-    if (quantity < 1) return;
-    updateCart(cartItems.map((it) => (it.id === id ? { ...it, quantity } : it)));
-  };
-
-  const handleRemove = (id: string) => updateCart(cartItems.filter((it) => it.id !== id));
-  const handleClear = () => updateCart([]);
-
+  // Helpers
   const totalPrice = useMemo(
-    () => cartItems.reduce((sum, it) => sum + it.price * it.quantity, 0),
-    [cartItems]
+    () => items.reduce((sum, it) => sum + (Number(it.price) || 0) * (Number(it.qty) || 0), 0),
+    [items]
   );
 
   const formatMoney = (n: number) => {
@@ -106,7 +53,6 @@ export default function CartPage() {
         maximumFractionDigits: 2,
       }).format(n);
     } catch {
-      // Fallback if a weird/unsupported currency code slips through
       return new Intl.NumberFormat(undefined, {
         style: "currency",
         currency: "EUR",
@@ -115,20 +61,27 @@ export default function CartPage() {
     }
   };
 
-  // Stripe Checkout (multi-item) via /api/checkout — send the "lines" shape
+  // Mutations go through lib/cart so events & storage stay consistent
+  const handleQuantityChange = (id: string, qty: number) => {
+    if (qty < 1) return;
+    cart.setQty(id, qty);
+    setError(null);
+  };
+  const handleRemove = (id: string) => cart.removeFromCart(id);
+  const handleClear = () => cart.clearCart();
+
+  // Checkout via /api/checkout (multi-item). Your API resolves id/slug either way.
   const handleCheckout = async () => {
-    if (!cartItems.length) {
+    if (!items.length) {
       setError("Your cart is empty!");
       return;
     }
 
-    const lines = cartItems.map((ci) => ({
-      id: ci.id,
-      name: ci.name,
-      price: ci.price,
-      image: ci.image,
-      quantity: Math.max(1, Number(ci.quantity) || 1),
-    }));
+    // API supports { items: [{ slug, quantity }] } and resolves slug/id internally
+    const payload = {
+      items: items.map((it) => ({ slug: it.id, quantity: Math.max(1, Number(it.qty) || 1) })),
+      currency, // optional server-side
+    };
 
     setLoading(true);
     setError(null);
@@ -137,7 +90,7 @@ export default function CartPage() {
       const resp = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lines, currency }), // currency is optional server-side
+        body: JSON.stringify(payload),
       });
 
       const data = await resp.json();
@@ -148,7 +101,7 @@ export default function CartPage() {
         return;
       }
 
-      window.location.href = data.url as string; // ⟶ Stripe Checkout
+      window.location.href = data.url as string; // ⟶ Stripe Checkout (or your gateway)
     } catch (e) {
       console.error(e);
       setError("Network error starting checkout.");
@@ -156,28 +109,28 @@ export default function CartPage() {
     }
   };
 
-  // While hydrating, avoid showing "empty" state flash
+  // Hydration guard
   if (!hydrated) {
     return (
       <main className="container mx-auto p-6 text-center">
-        <h1 className="text-4xl font-bold mb-2">Loading cart…</h1>
+        <h1 className="mb-2 text-4xl font-bold">Loading cart…</h1>
         <p className="text-gray-600">Please wait.</p>
       </main>
     );
   }
 
-  if (!cartItems.length) {
+  if (!items.length) {
     return (
       <main className="container mx-auto p-6 text-center">
-        <h1 className="text-4xl font-bold mb-4">Your Cart is Empty</h1>
+        <h1 className="mb-4 text-4xl font-bold">Your Cart is Empty</h1>
         <p className="text-gray-600">Browse products and add them to your cart.</p>
       </main>
     );
   }
 
   return (
-    <main className="container mx-auto p-6 max-w-4xl">
-      <h1 className="text-4xl font-bold mb-8">Your Cart</h1>
+    <main className="container mx-auto max-w-4xl p-6">
+      <h1 className="mb-8 text-4xl font-bold">Your Cart</h1>
 
       {error && (
         <div className="mb-4 rounded bg-red-100 p-3 text-red-700" aria-live="polite">
@@ -186,20 +139,20 @@ export default function CartPage() {
       )}
 
       <ul className="mb-8 divide-y divide-gray-200">
-        {cartItems.map(({ id, name, price, quantity, image }) => (
+        {items.map(({ id, title, price, qty, image }) => (
           <li key={id} className="flex items-center py-6">
             {image ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={image}
-                alt={name}
+                alt={title}
                 className="mr-6 h-24 w-24 rounded object-cover"
                 loading="lazy"
               />
             ) : null}
 
             <div className="flex-grow">
-              <h2 className="text-xl font-semibold">{name}</h2>
+              <h2 className="text-xl font-semibold">{title}</h2>
               <p className="mt-1 text-gray-700">{formatMoney(price)} each</p>
 
               <div className="mt-2 flex items-center space-x-2">
@@ -210,7 +163,7 @@ export default function CartPage() {
                   id={`qty-${id}`}
                   type="number"
                   min={1}
-                  value={quantity}
+                  value={qty}
                   onChange={(e) => handleQuantityChange(id, Number(e.target.value))}
                   className="w-16 rounded border p-1 text-center"
                 />
@@ -218,11 +171,11 @@ export default function CartPage() {
             </div>
 
             <div className="ml-6 flex flex-col items-end">
-              <p className="mb-4 text-lg font-bold">{formatMoney(price * quantity)}</p>
+              <p className="mb-4 text-lg font-bold">{formatMoney(price * (qty || 0))}</p>
               <button
                 onClick={() => handleRemove(id)}
                 className="font-semibold text-red-600 hover:text-red-800"
-                aria-label={`Remove ${name} from cart`}
+                aria-label={`Remove ${title} from cart`}
               >
                 Remove
               </button>
@@ -235,13 +188,11 @@ export default function CartPage() {
         <p className="text-2xl font-bold">Total: {formatMoney(totalPrice)}</p>
 
         <div className="flex justify-end gap-3">
-          {/* Hide Clear Cart on mobile */}
           <Button
             onClick={handleClear}
             disabled={loading}
-            className="hidden sm:inline-flex clear-cart-btn"
+            className="hidden sm:inline-flex"
             variant="secondary"
-            data-action="clear-cart"
           >
             Clear Cart
           </Button>

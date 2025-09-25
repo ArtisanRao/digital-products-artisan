@@ -3,13 +3,13 @@
 export type CartItem = {
   id: string;            // slug or id as string
   title: string;
-  price: number;         // numeric (in display currency units, e.g., EUR)
+  price: number;         // numeric (display currency units, e.g., EUR)
   image?: string;
   qty: number;
 };
 
 const KEY = "cart.v1";
-const EVT = "cart-update";
+const EVT = "cart-update"; // primary modern event
 
 type CartEventDetail = {
   items: CartItem[];
@@ -19,19 +19,20 @@ type CartEventDetail = {
 
 const isClient = () => typeof window !== "undefined";
 
-function safeParse(raw: string | null): CartItem[] {
+/* -------------------- parsing & legacy migration -------------------- */
+
+function safeParseArray(raw: string | null): CartItem[] {
   if (!raw) return [];
   try {
-    const arr = JSON.parse(raw) as CartItem[];
+    const arr = JSON.parse(raw);
     if (!Array.isArray(arr)) return [];
-    // sanitize
     return arr
       .filter(Boolean)
-      .map((it) => ({
+      .map((it: any) => ({
         id: String(it.id),
         title: String(it.title ?? ""),
         price: Number(it.price) || 0,
-        image: it.image ? String(it.image) : undefined,
+        image: it?.image ? String(it.image) : undefined,
         qty: Math.max(1, Number(it.qty) || 1),
       }));
   } catch {
@@ -39,89 +40,157 @@ function safeParse(raw: string | null): CartItem[] {
   }
 }
 
-function read(): CartItem[] {
+/** Support older storages: "cart" as map or array, "dpa:cart" etc. */
+function readLegacy(): CartItem[] {
+  const w = window as any;
+  const ls = w?.localStorage as Storage | undefined;
+  if (!ls) return [];
+
+  // Legacy array under "dpa:cart"
+  const legacyArray = safeParseArray(ls.getItem("dpa:cart"));
+  if (legacyArray.length) return legacyArray;
+
+  // Legacy map under "cart" -> { key: qty }
+  const raw = ls.getItem("cart");
+  if (raw) {
+    try {
+      const data = JSON.parse(raw);
+      // Map/object
+      if (data && typeof data === "object" && !Array.isArray(data)) {
+        const items: CartItem[] = Object.entries(data).map(([k, v]) => ({
+          id: String(k),
+          title: String(k),
+          price: 0,
+          qty: Math.max(1, Number(v) || 1),
+        }));
+        return items;
+      }
+      // Array that looks like items
+      if (Array.isArray(data)) {
+        return safeParseArray(raw);
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  return [];
+}
+
+function readRaw(): CartItem[] {
   if (!isClient()) return [];
-  return safeParse(window.localStorage.getItem(KEY));
+  const ls = window.localStorage;
+
+  // Preferred modern store
+  const current = safeParseArray(ls.getItem(KEY));
+  if (current.length) return current;
+
+  // Try to migrate legacy formats
+  const legacy = readLegacy();
+  if (legacy.length) {
+    // Save as modern and remove obvious legacy keys
+    ls.setItem(KEY, JSON.stringify(legacy));
+    try { ls.removeItem("dpa:cart"); } catch {}
+    // do NOT remove old "cart" key (could be used elsewhere); leave as-is.
+    return legacy;
+  }
+
+  return [];
 }
 
 function snapshot(items: CartItem[]) {
   const count = items.reduce((n, it) => n + (Number(it.qty) || 0), 0);
-  const total = items.reduce((sum, it) => sum + (Number(it.price) || 0) * (Number(it.qty) || 0), 0);
+  const total = items.reduce(
+    (sum, it) => sum + (Number(it.price) || 0) * (Number(it.qty) || 0),
+    0
+  );
   return { items, count, total };
 }
 
-function emit(items: CartItem[]) {
+function emit(items: CartItem[], added?: CartItem) {
   if (!isClient()) return;
-  const { count, total } = snapshot(items);
+
   // Store first so listeners can read immediately
   window.localStorage.setItem(KEY, JSON.stringify(items));
-  window.dispatchEvent(
-    new CustomEvent<CartEventDetail>(EVT, { detail: { items, count, total } })
-  );
+
+  const { count, total } = snapshot(items);
+  const detail: CartEventDetail = { items, count, total };
+
+  // Modern event (typed payload)
+  try {
+    window.dispatchEvent(new CustomEvent<CartEventDetail>(EVT, { detail }));
+  } catch {}
+
+  // Back-compat events many components already listen to
+  try { window.dispatchEvent(new Event("cart:change")); } catch {}
+  try { window.dispatchEvent(new Event("cart-update")); } catch {}
+  try { window.dispatchEvent(new CustomEvent("cart:count", { detail: count })); } catch {}
+  if (added) {
+    try { window.dispatchEvent(new CustomEvent("cart:add", { detail: added })); } catch {}
+  }
 }
 
-function write(items: CartItem[]) {
+function write(items: CartItem[], added?: CartItem) {
   if (!isClient()) return;
-  emit(items);
+  emit(items, added);
 }
 
-// ---------- Public API ----------
+/* --------------------------- Public API --------------------------- */
 
 /** Read a *copy* of the cart array. */
 export function getCart(): CartItem[] {
-  return [...read()];
+  return [...readRaw()];
 }
 
 /** Total item count (badge). */
 export function getCartCount(): number {
-  return read().reduce((n, it) => n + it.qty, 0);
+  return readRaw().reduce((n, it) => n + it.qty, 0);
 }
 
 /** Total price (price * qty). */
 export function getCartTotal(): number {
-  return read().reduce((sum, it) => sum + it.price * it.qty, 0);
+  return readRaw().reduce((sum, it) => sum + it.price * it.qty, 0);
 }
 
 /** Add item (merges by id). */
 export function addToCart(item: Omit<CartItem, "qty">, qty = 1) {
   if (!isClient()) return;
-  const items = read();
+  const items = readRaw();
   const q = Math.max(1, Math.floor(qty));
   const price = Number(item.price) || 0;
 
-  const idx = items.findIndex((i) => i.id === item.id);
+  const idx = items.findIndex((i) => i.id === String(item.id));
+  let added: CartItem | undefined;
+
   if (idx >= 0) {
     items[idx].qty += q;
-    // keep title/price/image fresh
     items[idx].title = item.title;
     items[idx].price = price;
     items[idx].image = item.image ?? items[idx].image;
+    added = { ...items[idx] };
   } else {
-    items.push({ ...item, price, qty: q });
+    added = { ...item, id: String(item.id), price, qty: q };
+    items.push(added);
   }
-  write(items);
+  write(items, added);
 }
 
 /** Set exact quantity; qty <= 0 removes the item. */
 export function setQty(id: string, qty: number) {
   if (!isClient()) return;
-  const items = read();
-  const idx = items.findIndex((i) => i.id === id);
+  const items = readRaw();
+  const idx = items.findIndex((i) => i.id === String(id));
   if (idx < 0) return;
   const q = Math.floor(qty);
-  if (q <= 0) {
-    items.splice(idx, 1);
-  } else {
-    items[idx].qty = q;
-  }
+  if (q <= 0) items.splice(idx, 1);
+  else items[idx].qty = q;
   write(items);
 }
 
 /** Increment or decrement by `by`. Removes if <= 0. */
 export function increment(id: string, by = 1) {
   if (!isClient()) return;
-  const items = read();
-  const idx = items.findIndex((i) => i.id === id);
+  const items = readRaw();
+  const idx = items.findIndex((i) => i.id === String(id));
   if (idx < 0) return;
   const next = (items[idx].qty || 0) + Math.floor(by);
   if (next <= 0) items.splice(idx, 1);
@@ -132,7 +201,7 @@ export function increment(id: string, by = 1) {
 /** Remove one line by id. */
 export function removeFromCart(id: string) {
   if (!isClient()) return;
-  write(read().filter((i) => i.id === id ? false : true));
+  write(readRaw().filter((i) => i.id !== String(id)));
 }
 
 /** Clear all items. */
@@ -152,23 +221,21 @@ export function onChange(
   if (!isClient()) return () => {};
   const listener = (ev: Event) => {
     const ce = ev as CustomEvent<CartEventDetail>;
-    // When invoked before any write, synthesize current detail
-    const detail = ce.detail ?? snapshot(read());
+    const detail = ce.detail ?? snapshot(readRaw());
     handler(detail.count, detail);
   };
   window.addEventListener(EVT, listener);
-  // Fire once with current state so badges can initialize
-  const init = snapshot(read());
-  handler(init.count, init);
+  // Initialize immediately
+  handler(...((() => {
+    const snap = snapshot(readRaw());
+    return [snap.count, snap] as const;
+  })()));
   return () => window.removeEventListener(EVT, listener);
 }
 
-// ---------- Back-compat aliases (older components) ----------
-/** Alias for getCartCount() */
+/* ---------------------- Back-compat aliases ---------------------- */
 export const count = getCartCount;
-/** Alias for getCart() */
 export const getItems = getCart;
-/** Imperative setter (use with care) */
 export function setItems(items: CartItem[]) {
   write(items ?? []);
 }

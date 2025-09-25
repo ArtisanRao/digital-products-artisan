@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import * as cart from "@/lib/cart";
 
 export type ProductCardData = {
   title: string;
@@ -31,7 +32,7 @@ export default function ProductCard({
   );
   const [idx, setIdx] = useState(0);
 
-  // Prefer ID route (SSG), then slug
+  // Prefer numeric/string ID route (SSG), then slug
   const productHref =
     href ??
     (id !== undefined ? `/products/${id}` : slug ? `/products/${slug}` : "/products");
@@ -39,33 +40,28 @@ export default function ProductCard({
   const prev = () => setIdx((i) => (i === 0 ? pics.length - 1 : i - 1));
   const next = () => setIdx((i) => (i + 1) % pics.length);
 
+  const numericPrice =
+    typeof price === "number" ? price : Number(String(price).replace(/[^\d.-]+/g, "")) || 0;
+
   const priceLabel =
     typeof price === "number"
       ? new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(price)
       : (price ?? "");
 
-  /* ---------------- Cart + badge ---------------- */
+  /* ---------------- Cart + badge (uses lib/cart) ---------------- */
   const addToCart = () => {
     try {
-      const w = window as any;
-      const keyName = String(id ?? slug ?? "");
-
-      if (w?.dpaCart?.add) w.dpaCart.add({ id: id ?? slug, qty: 1 });
-      else if (w?.__CART__?.add) w.__CART__.add({ id: id ?? slug, qty: 1 });
-      else {
-        const raw = localStorage.getItem("cart");
-        const cart: Record<string, number> = raw ? JSON.parse(raw) : {};
-        cart[keyName] = (cart[keyName] ?? 0) + 1;
-        localStorage.setItem("cart", JSON.stringify(cart));
-      }
-
-      // update badge
-      const raw2 = localStorage.getItem("cart");
-      const total = raw2
-        ? Object.values(JSON.parse(raw2) as Record<string, number>).reduce((a, b) => a + Number(b), 0)
-        : 0;
-      window.dispatchEvent(new CustomEvent("cart:add", { detail: { id: id ?? slug, qty: 1 } }));
-      window.dispatchEvent(new CustomEvent("cart:count", { detail: total }));
+      const key = String(id ?? slug ?? "");
+      cart.addToCart(
+        {
+          id: key,
+          title,
+          price: numericPrice,
+          image: pics[0],
+        },
+        1
+      );
+      // lib/cart emits cart-update + legacy events; badge updates automatically
     } catch (e) {
       console.error("addToCart error", e);
     }
@@ -73,31 +69,41 @@ export default function ProductCard({
 
   /* ---------------- Buy → Checkout ---------------- */
   const buyNow = async () => {
-    const keyName = String(slug ?? id ?? "");
+    // Use whichever identifier you have; API accepts slug OR productId
+    const payload =
+      slug != null
+        ? { slug, qty: 1 }
+        : { productId: String(id ?? ""), qty: 1 };
+
     try {
-      // ensure item is present for downstream flows
+      // Ensure item exists (optional, keeps flows consistent)
       addToCart();
 
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // matches your API (POST /api/checkout → body.items[].slug)
-        body: JSON.stringify({ items: [{ slug: keyName, quantity: 1 }] }),
+        body: JSON.stringify(
+          "slug" in payload
+            ? { items: [{ slug: payload.slug, quantity: payload.qty }] }
+            : { productId: payload.productId, qty: payload.qty }
+        ),
       });
 
       if (res.ok) {
         const data = await res.json();
         const url = data?.url || data?.checkoutUrl || data?.redirectUrl;
         if (url) {
-          window.location.href = url;
+          window.location.href = url; // Stripe Checkout (or your gateway)
           return;
         }
       }
 
-      // fallback
-      router.push(`/checkout?product=${encodeURIComponent(keyName)}`);
+      // Fallback: local checkout page with product param
+      const key = encodeURIComponent(String(slug ?? id ?? ""));
+      router.push(`/checkout?product=${key}`);
     } catch {
-      router.push(`/checkout?product=${encodeURIComponent(keyName)}`);
+      const key = encodeURIComponent(String(slug ?? id ?? ""));
+      router.push(`/checkout?product=${key}`);
     }
   };
 
@@ -116,7 +122,10 @@ export default function ProductCard({
             <>
               <button
                 type="button"
-                onClick={(e) => { e.preventDefault(); prev(); }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  prev();
+                }}
                 aria-label="Previous"
                 className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-2.5 py-1.5 text-xs shadow hover:bg-white"
               >
@@ -124,7 +133,10 @@ export default function ProductCard({
               </button>
               <button
                 type="button"
-                onClick={(e) => { e.preventDefault(); next(); }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  next();
+                }}
                 aria-label="Next"
                 className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-2.5 py-1.5 text-xs shadow hover:bg-white"
               >
