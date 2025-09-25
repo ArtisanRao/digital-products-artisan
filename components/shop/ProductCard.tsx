@@ -9,8 +9,8 @@ export type ProductCardData = {
   slug?: string;
   id?: string | number;
   price?: number | string;
-  images?: string[];
-  href?: string;
+  images?: string[];      // cover first, then mockups
+  href?: string;          // explicit product url; if given, we use it
   description?: string;
 };
 
@@ -25,11 +25,16 @@ export default function ProductCard({
 }: ProductCardData) {
   const router = useRouter();
 
-  const pics = useMemo(() => (images.length ? images : ["/images/placeholder.jpg"]), [images]);
+  const pics = useMemo(
+    () => (images.length ? images : ["/images/placeholder.jpg"]),
+    [images]
+  );
   const [idx, setIdx] = useState(0);
 
+  // Prefer ID route (SSG), then slug
   const productHref =
-    href ?? (id !== undefined ? `/products/${id}` : slug ? `/products/${slug}` : "/products");
+    href ??
+    (id !== undefined ? `/products/${id}` : slug ? `/products/${slug}` : "/products");
 
   const prev = () => setIdx((i) => (i === 0 ? pics.length - 1 : i - 1));
   const next = () => setIdx((i) => (i + 1) % pics.length);
@@ -39,7 +44,7 @@ export default function ProductCard({
       ? new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(price)
       : (price ?? "");
 
-  // Cart + badge
+  /* ---------------- Cart + badge ---------------- */
   const addToCart = () => {
     try {
       const w = window as any;
@@ -54,6 +59,7 @@ export default function ProductCard({
         localStorage.setItem("cart", JSON.stringify(cart));
       }
 
+      // update badge
       const raw2 = localStorage.getItem("cart");
       const total = raw2
         ? Object.values(JSON.parse(raw2) as Record<string, number>).reduce((a, b) => a + Number(b), 0)
@@ -65,16 +71,20 @@ export default function ProductCard({
     }
   };
 
-  // Buy → Stripe session (fall back to /checkout)
+  /* ---------------- Buy → Checkout ---------------- */
   const buyNow = async () => {
     const keyName = String(slug ?? id ?? "");
     try {
+      // ensure item is present for downstream flows
       addToCart();
+
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items: [{ slug: keyName, quantity: 1 }] }), // matches your API
+        // matches your API (POST /api/checkout → body.items[].slug)
+        body: JSON.stringify({ items: [{ slug: keyName, quantity: 1 }] }),
       });
+
       if (res.ok) {
         const data = await res.json();
         const url = data?.url || data?.checkoutUrl || data?.redirectUrl;
@@ -83,6 +93,8 @@ export default function ProductCard({
           return;
         }
       }
+
+      // fallback
       router.push(`/checkout?product=${encodeURIComponent(keyName)}`);
     } catch {
       router.push(`/checkout?product=${encodeURIComponent(keyName)}`);
@@ -91,7 +103,7 @@ export default function ProductCard({
 
   return (
     <article className="group rounded-2xl border bg-white/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-      {/* hero */}
+      {/* Main image (clickable) */}
       <Link href={productHref} aria-label={`Open ${title}`} className="block">
         <div className="relative overflow-hidden rounded-t-2xl bg-gray-50">
           <img
@@ -106,7 +118,7 @@ export default function ProductCard({
                 type="button"
                 onClick={(e) => { e.preventDefault(); prev(); }}
                 aria-label="Previous"
-                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-3 py-2 text-sm shadow hover:bg-white"
+                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-2.5 py-1.5 text-xs shadow hover:bg-white"
               >
                 ‹
               </button>
@@ -114,7 +126,7 @@ export default function ProductCard({
                 type="button"
                 onClick={(e) => { e.preventDefault(); next(); }}
                 aria-label="Next"
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-3 py-2 text-sm shadow hover:bg-white"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-2.5 py-1.5 text-xs shadow hover:bg-white"
               >
                 ›
               </button>
@@ -124,7 +136,7 @@ export default function ProductCard({
       </Link>
 
       <div className="p-4">
-        {/* title */}
+        {/* Title (hover underline + clickable) */}
         <Link
           href={productHref}
           className="block hover:underline hover:decoration-2 hover:underline-offset-4"
@@ -136,7 +148,7 @@ export default function ProductCard({
           <p className="mt-1 line-clamp-2 text-sm text-gray-600">{description}</p>
         )}
 
-        {/* thumbs */}
+        {/* Thumbs → each opens the product page */}
         {pics.length > 1 && (
           <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
             {pics.map((src, i) => (
@@ -153,35 +165,35 @@ export default function ProductCard({
           </div>
         )}
 
-        {/* price */}
+        {/* Price */}
         {priceLabel && <div className="mt-3 text-xl font-semibold">{priceLabel}</div>}
 
-        {/* actions – compact, one line, content width */}
-        <div className="mt-3 flex flex-nowrap items-center gap-2 overflow-x-auto">
+        {/* Actions – SMALL, single row, no wrapping */}
+        <div className="mt-3 flex flex-nowrap items-center gap-2">
           <Link
             href={productHref}
-            className="inline-flex h-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 px-3 text-[13px] font-medium leading-none text-white hover:bg-blue-700 whitespace-nowrap"
+            className="inline-flex h-8 shrink-0 items-center justify-center rounded-lg bg-blue-600 px-2.5 text-xs font-medium leading-none text-white hover:bg-blue-700 whitespace-nowrap"
             aria-label={`View ${title}`}
           >
-            👁️ View
+            <span className="mr-1">👁️</span> <span>View</span>
           </Link>
 
           <button
             type="button"
             onClick={addToCart}
-            className="inline-flex h-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 px-3 text-[13px] font-medium leading-none text-white hover:bg-blue-700 whitespace-nowrap"
+            className="inline-flex h-8 shrink-0 items-center justify-center rounded-lg bg-blue-600 px-2.5 text-xs font-medium leading-none text-white hover:bg-blue-700 whitespace-nowrap"
             aria-label="Add to cart"
           >
-            🛒 Add to cart
+            <span className="mr-1">🛒</span> <span>Add to cart</span>
           </button>
 
           <button
             type="button"
             onClick={buyNow}
-            className="inline-flex h-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 px-3 text-[13px] font-medium leading-none text-white hover:bg-blue-700 whitespace-nowrap"
+            className="inline-flex h-8 shrink-0 items-center justify-center rounded-lg bg-blue-600 px-2.5 text-xs font-medium leading-none text-white hover:bg-blue-700 whitespace-nowrap"
             aria-label="Buy now"
           >
-            ⚡ Buy
+            <span className="mr-1">⚡</span> <span>Buy</span>
           </button>
         </div>
       </div>

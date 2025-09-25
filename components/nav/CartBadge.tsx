@@ -2,24 +2,49 @@
 import { useEffect, useState } from "react";
 import * as cart from "@/lib/cart";
 
-/** Safely get the cart count across both implementations */
+/** Safely get the cart count across multiple implementations */
 function getCountSafe(): number {
   if (typeof window === "undefined") return 0;
   try {
+    // 1) Prefer your /lib/cart module if it exposes counters
     const mod: any = cart;
-    if (typeof mod.getCartCount === "function") return mod.getCartCount();
-    if (typeof mod.count === "function") return mod.count();
+    if (typeof mod.getCartCount === "function") return Number(mod.getCartCount()) || 0;
+    if (typeof mod.count === "function") return Number(mod.count()) || 0;
 
-    // Fallback: read known localStorage keys
-    const keys = ["cart.v1", "dpa:cart"];
+    // 2) Known globals (legacy shims)
+    const w = window as any;
+    if (w?.__CART__?.count) return Number(w.__CART__.count()) || 0;
+    if (w?.dpaCart?.count) return Number(w.dpaCart.count()) || 0;
+
+    // 3) Fallback: check common localStorage shapes
+    const keys = ["cart:v1", "cart.v1", "dpa:cart", "cart"];
     for (const k of keys) {
       const raw = window.localStorage.getItem(k);
-      if (raw) {
-        const arr = JSON.parse(raw);
-        if (Array.isArray(arr)) return arr.reduce((n, it) => n + (it?.qty ?? 0), 0);
+      if (!raw) continue;
+
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          // Array of items: { quantity } or { qty }
+          return parsed.reduce(
+            (n, it) => n + Number((it && (it.quantity ?? it.qty)) ?? 0),
+            0
+          );
+        }
+        if (parsed && typeof parsed === "object") {
+          // Map { key: qty }
+          return Object.values(parsed as Record<string, unknown>).reduce(
+            (n, q) => n + Number(q ?? 0),
+            0
+          );
+        }
+      } catch {
+        // ignore parse errors and try next key
       }
     }
-  } catch {}
+  } catch {
+    // ignore
+  }
   return 0;
 }
 
@@ -30,14 +55,33 @@ export default function CartBadge({ className = "" }: { className?: string }) {
     const update = () => setC(getCountSafe());
     update();
 
-    // Support both event names
-    const handler = () => update();
-    window.addEventListener("cart-update", handler);
-    window.addEventListener("cart:change", handler);
+    // Prefer numeric detail when available (cart:count)
+    const onCount = (e: Event) => {
+      const d = (e as CustomEvent<number | undefined>).detail;
+      if (typeof d === "number") setC(d);
+      else update();
+    };
+
+    const events: Array<keyof WindowEventMap> = [
+      "cart:count",
+      "cart:change",
+      "cart-update",
+      "cart:add",
+      "cart:remove",
+    ];
+
+    events.forEach((name) => window.addEventListener(name, onCount as EventListener));
+
+    // Cross-tab sync
+    const onStorage = (e: StorageEvent) => {
+      if (!e.key) return;
+      if (["cart:v1", "cart.v1", "dpa:cart", "cart"].includes(e.key)) update();
+    };
+    window.addEventListener("storage", onStorage);
 
     return () => {
-      window.removeEventListener("cart-update", handler);
-      window.removeEventListener("cart:change", handler);
+      events.forEach((name) => window.removeEventListener(name, onCount as EventListener));
+      window.removeEventListener("storage", onStorage);
     };
   }, []);
 

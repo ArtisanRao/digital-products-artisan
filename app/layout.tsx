@@ -10,14 +10,16 @@ import { Toaster } from "@/components/ui/toaster";
 import LiveChat from "@/components/live-chat";
 import AutoCurrency from "@/components/auto-currency";
 import Script from "next/script";
+import React from "react";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const snipcartKey = process.env.NEXT_PUBLIC_SNIPCART_KEY;
+  const hasSnipcart = !!snipcartKey;
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <title>Digital Products Artisan</title>
 
@@ -80,13 +82,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
 
-        {/* --- Snipcart v3: CSS + preconnect --- */}
-        <link rel="preconnect" href="https://app.snipcart.com" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://cdn.snipcart.com" crossOrigin="anonymous" />
-        <link
-          rel="stylesheet"
-          href="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.css"
-        />
+        {/* Snipcart v3 CSS + preconnect (only if key present) */}
+        {hasSnipcart && (
+          <>
+            <link rel="preconnect" href="https://app.snipcart.com" crossOrigin="anonymous" />
+            <link rel="preconnect" href="https://cdn.snipcart.com" crossOrigin="anonymous" />
+            <link
+              rel="stylesheet"
+              href="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.css"
+            />
+          </>
+        )}
       </head>
 
       <body className={inter.className}>
@@ -102,18 +108,29 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <LiveChat />
             <Toaster />
 
-            {/* --- Snipcart v3: Script + Container --- */}
-            <Script
-              src="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.js"
-              strategy="afterInteractive"
-            />
-            <div
-              hidden
-              id="snipcart"
-              data-api-key={snipcartKey}
-              data-config-modal-style="side"
-              data-currency="EUR"
-            />
+            {/* No-JS notice (optional, accessibility) */}
+            <noscript>
+              <div style={{ padding: 8, textAlign: "center", fontSize: 12 }}>
+                JavaScript is required for the best experience on this site.
+              </div>
+            </noscript>
+
+            {/* Snipcart JS + container (only if key present) */}
+            {hasSnipcart && (
+              <>
+                <Script
+                  src="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.js"
+                  strategy="afterInteractive"
+                />
+                <div
+                  hidden
+                  id="snipcart"
+                  data-api-key={snipcartKey}
+                  data-config-modal-style="side"
+                  data-currency="EUR"
+                />
+              </>
+            )}
           </CartProvider>
         </AuthProvider>
       </body>
