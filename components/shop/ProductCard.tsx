@@ -10,10 +10,9 @@ export type ProductCardData = {
   slug?: string;
   id?: string | number;
   price?: number | string;
-  images?: string[];      // cover first, then mockups
-  href?: string;          // explicit product url; if given, we use it
+  images?: string[];
+  href?: string;
   description?: string;
-  /** When true, eagerly load the main image to help LCP on first row */
   priority?: boolean;
 };
 
@@ -29,16 +28,11 @@ export default function ProductCard({
 }: ProductCardData) {
   const router = useRouter();
 
-  const pics = useMemo(
-    () => (images.length ? images : ["/images/placeholder.jpg"]),
-    [images]
-  );
+  const pics = useMemo(() => (images.length ? images : ["/images/placeholder.jpg"]), [images]);
   const [idx, setIdx] = useState(0);
 
-  // Prefer numeric/string ID route (SSG), then slug
   const productHref =
-    href ??
-    (id !== undefined ? `/products/${id}` : slug ? `/products/${slug}` : "/products");
+    href ?? (id !== undefined ? `/products/${id}` : slug ? `/products/${slug}` : "/products");
 
   const prev = () => setIdx((i) => (i === 0 ? pics.length - 1 : i - 1));
   const next = () => setIdx((i) => (i + 1) % pics.length);
@@ -51,52 +45,34 @@ export default function ProductCard({
       ? new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(price)
       : (price ?? "");
 
-  /* ---------------- Cart + badge (uses lib/cart) ---------------- */
   const bridgeCartUpdatedEvent = () => {
     try {
       const items = cart.getCart();
       const count = cart.getCartCount();
       window.dispatchEvent(new CustomEvent("cart:updated", { detail: { count, items } }));
       localStorage.setItem("cartCount", String(count));
-    } catch {
-      // no-op
-    }
+    } catch {}
   };
 
   const addToCart = () => {
     try {
       const key = String(id ?? slug ?? "");
-      cart.addToCart(
-        {
-          id: key,
-          title,
-          price: numericPrice,
-          image: pics[0],
-        },
-        1
-      );
+      cart.addToCart({ id: key, title, price: numericPrice, image: pics[0] }, 1);
       bridgeCartUpdatedEvent();
     } catch (e) {
       console.error("addToCart error", e);
     }
   };
 
-  /* ---------------- Buy → Checkout ---------------- */
   const buyNow = async () => {
     const key = String(slug ?? id ?? "");
     try {
       addToCart();
-
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(
-          slug
-            ? { items: [{ slug: key, quantity: 1 }] }
-            : { productId: String(id ?? ""), qty: 1 }
-        ),
+        body: JSON.stringify(slug ? { items: [{ slug: key, quantity: 1 }] } : { productId: String(id ?? ""), qty: 1 }),
       });
-
       if (res.ok) {
         const data = await res.json();
         const url = data?.url || data?.checkoutUrl || data?.redirectUrl;
@@ -105,7 +81,6 @@ export default function ProductCard({
           return;
         }
       }
-
       router.push(`/checkout?product=${encodeURIComponent(key)}`);
     } catch (e) {
       console.error("buyNow error", e);
@@ -156,40 +131,44 @@ export default function ProductCard({
       </Link>
 
       <div className="p-4">
-        {/* Title (hover underline + clickable) */}
-        <Link
-          href={productHref}
-          className="block hover:underline hover:decoration-2 hover:underline-offset-4"
-        >
+        {/* Title */}
+        <Link href={productHref} className="block hover:underline hover:decoration-2 hover:underline-offset-4">
           <h3 className="line-clamp-2 text-lg font-semibold">{title}</h3>
         </Link>
 
-        {description && (
-          <p className="mt-1 line-clamp-2 text-sm text-gray-600">{description}</p>
-        )}
+        {description && <p className="mt-1 line-clamp-2 text-sm text-gray-600">{description}</p>}
 
-        {/* Thumbs → each opens the product page */}
+        {/* Thumbs → click to set main preview (no navigation) */}
         {pics.length > 1 && (
           <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
-            {pics.map((src, i) => (
-              <Link
-                key={src + i}
-                href={productHref}
-                className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-white opacity-90 transition hover:opacity-100"
-                aria-label={`Open ${title}`}
-                title={`Open ${title}`}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={src} alt="" className="h-full w-full object-cover" loading="lazy" />
-              </Link>
-            ))}
+            {pics.map((src, i) => {
+              const selected = i === idx;
+              return (
+                <button
+                  key={src + i}
+                  type="button"
+                  onClick={() => setIdx(i)}
+                  className={[
+                    "h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-white transition",
+                    "hover:opacity-100",
+                    selected ? "ring-2 ring-blue-500 border-blue-500 opacity-100" : "opacity-90",
+                  ].join(" ")}
+                  aria-label={`Show preview ${i + 1} for ${title}`}
+                  aria-pressed={selected}
+                  title={selected ? "Current preview" : "Show this preview"}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={src} alt="" className="h-full w-full object-cover" loading="lazy" />
+                </button>
+              );
+            })}
           </div>
         )}
 
         {/* Price */}
         {priceLabel && <div className="mt-3 text-xl font-semibold">{priceLabel}</div>}
 
-        {/* Actions – SMALL, single row, no wrapping */}
+        {/* Actions */}
         <div className="mt-3 flex flex-nowrap items-center gap-2">
           <Link
             href={productHref}
