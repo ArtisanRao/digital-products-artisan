@@ -8,7 +8,9 @@ export type CartItem = {
 };
 
 const KEY = "cart.v1";
-const EVT = "cart-update"; // primary modern event
+const EVT = "cart-update"; // primary modern event name (typed payload)
+
+export { EVT as CART_EVENT_NAME };
 
 type CartEventDetail = {
   items: CartItem[];
@@ -20,20 +22,37 @@ const isClient = () => typeof window !== "undefined";
 
 /* -------------------- parsing & legacy migration -------------------- */
 
+function coerceItem(it: any): CartItem | null {
+  if (!it) return null;
+  const id = it.id ?? it.slug ?? it.productId ?? it.key;
+  if (id == null) return null;
+
+  const title = String(it.title ?? it.name ?? id);
+  const image = it.image ?? (Array.isArray(it.images) && it.images.length ? it.images[0] : undefined);
+
+  // accept price, amount, unit_amount, etc.
+  const priceRaw = it.price ?? it.amount ?? it.unit_amount ?? 0;
+  const price = Number(priceRaw) || 0;
+
+  // accept qty, quantity
+  const qtyRaw = it.qty ?? it.quantity ?? 1;
+  const qty = Math.max(1, Number(qtyRaw) || 1);
+
+  return {
+    id: String(id),
+    title,
+    price,
+    image: image ? String(image) : undefined,
+    qty,
+  };
+}
+
 function safeParseArray(raw: string | null): CartItem[] {
   if (!raw) return [];
   try {
     const arr = JSON.parse(raw);
     if (!Array.isArray(arr)) return [];
-    return arr
-      .filter(Boolean)
-      .map((it: any) => ({
-        id: String(it.id),
-        title: String(it.title ?? ""),
-        price: Number(it.price) || 0,
-        image: it?.image ? String(it.image) : undefined,
-        qty: Math.max(1, Number(it.qty) || 1),
-      }));
+    return arr.map(coerceItem).filter(Boolean) as CartItem[];
   } catch {
     return [];
   }
@@ -41,20 +60,20 @@ function safeParseArray(raw: string | null): CartItem[] {
 
 /** Support older storages: "cart" as map or array, "dpa:cart" etc. */
 function readLegacy(): CartItem[] {
-  const w = window as any;
-  const ls = w?.localStorage as Storage | undefined;
-  if (!ls) return [];
+  if (!isClient()) return [];
+  const ls = window.localStorage;
 
   // Legacy array under "dpa:cart"
   const legacyArray = safeParseArray(ls.getItem("dpa:cart"));
   if (legacyArray.length) return legacyArray;
 
-  // Legacy map under "cart" -> { key: qty }
+  // Legacy map under "cart" -> { key: qty } OR array of items
   const raw = ls.getItem("cart");
   if (raw) {
     try {
       const data = JSON.parse(raw);
-      // Map/object
+
+      // Map/object { id: qty }
       if (data && typeof data === "object" && !Array.isArray(data)) {
         const items: CartItem[] = Object.entries(data).map(([k, v]) => ({
           id: String(k),
@@ -64,9 +83,10 @@ function readLegacy(): CartItem[] {
         }));
         return items;
       }
+
       // Array that looks like items
       if (Array.isArray(data)) {
-        return safeParseArray(raw);
+        return (data.map(coerceItem).filter(Boolean) as CartItem[]) || [];
       }
     } catch {
       /* ignore */
@@ -77,22 +97,24 @@ function readLegacy(): CartItem[] {
 
 function readRaw(): CartItem[] {
   if (!isClient()) return [];
-  const ls = window.localStorage;
+  try {
+    const ls = window.localStorage;
 
-  // Preferred modern store
-  const current = safeParseArray(ls.getItem(KEY));
-  if (current.length) return current;
+    // Preferred modern store
+    const current = safeParseArray(ls.getItem(KEY));
+    if (current.length) return current;
 
-  // Try to migrate legacy formats
-  const legacy = readLegacy();
-  if (legacy.length) {
-    // Save as modern and remove obvious legacy keys
-    ls.setItem(KEY, JSON.stringify(legacy));
-    try { ls.removeItem("dpa:cart"); } catch {}
-    // do NOT remove old "cart" key (could be used elsewhere); leave as-is.
-    return legacy;
+    // Try to migrate legacy formats
+    const legacy = readLegacy();
+    if (legacy.length) {
+      ls.setItem(KEY, JSON.stringify(legacy));
+      try { ls.removeItem("dpa:cart"); } catch {}
+      // do NOT remove old "cart" key (could be used elsewhere); leave as-is.
+      return legacy;
+    }
+  } catch {
+    // ignore storage errors
   }
-
   return [];
 }
 
@@ -110,14 +132,17 @@ function emit(items: CartItem[], added?: CartItem) {
 
   const { count, total } = snapshot(items);
 
-  // Store first so listeners can read immediately
-  window.localStorage.setItem(KEY, JSON.stringify(items));
-  // Keep a simple 'cartCount' for UIs that only need a badge
-  try { window.localStorage.setItem("cartCount", String(count)); } catch {}
+  // Store first so listeners can read immediately + trigger cross-tab 'storage'
+  try {
+    window.localStorage.setItem(KEY, JSON.stringify(items));
+    window.localStorage.setItem("cartCount", String(count)); // simple badge
+  } catch {
+    /* ignore quota errors */
+  }
 
   const detail: CartEventDetail = { items, count, total };
 
-  // Modern event (typed payload)
+  // Modern event with detail
   try { window.dispatchEvent(new CustomEvent<CartEventDetail>(EVT, { detail })); } catch {}
 
   // Back-compat events many components already listen to
@@ -125,12 +150,14 @@ function emit(items: CartItem[], added?: CartItem) {
   try { window.dispatchEvent(new Event("cart-update")); } catch {}
   try { window.dispatchEvent(new CustomEvent("cart:updated", { detail })); } catch {}
   try { window.dispatchEvent(new CustomEvent("cart:count", { detail: count })); } catch {}
+
   if (added) {
     try { window.dispatchEvent(new CustomEvent("cart:add", { detail: added })); } catch {}
   }
 }
 
 function write(items: CartItem[], added?: CartItem) {
+  if (!isClient()) return;
   emit(items, added);
 }
 
@@ -149,6 +176,7 @@ export function getCartTotal(): number {
 }
 
 export function addToCart(item: Omit<CartItem, "qty">, qty = 1) {
+  if (!isClient()) return;
   const items = readRaw();
   const q = Math.max(1, Math.floor(qty));
   const price = Number(item.price) || 0;
@@ -170,6 +198,7 @@ export function addToCart(item: Omit<CartItem, "qty">, qty = 1) {
 }
 
 export function setQty(id: string, qty: number) {
+  if (!isClient()) return;
   const items = readRaw();
   const idx = items.findIndex((i) => i.id === String(id));
   if (idx < 0) return;
@@ -180,6 +209,7 @@ export function setQty(id: string, qty: number) {
 }
 
 export function increment(id: string, by = 1) {
+  if (!isClient()) return;
   const items = readRaw();
   const idx = items.findIndex((i) => i.id === String(id));
   if (idx < 0) return;
@@ -190,27 +220,49 @@ export function increment(id: string, by = 1) {
 }
 
 export function removeFromCart(id: string) {
+  if (!isClient()) return;
   write(readRaw().filter((i) => i.id !== String(id)));
 }
 
 export function clearCart() {
+  if (!isClient()) return;
   write([]);
 }
 
-/** Subscribe to cart changes; returns unsubscribe. */
+/**
+ * Subscribe to cart changes; returns unsubscribe.
+ * Calls handler immediately with the current snapshot.
+ */
 export function onChange(
   handler: (count: number, detail: CartEventDetail) => void
 ): () => void {
+  if (!isClient()) return () => {};
+
   const listener = (ev: Event) => {
     const ce = ev as CustomEvent<CartEventDetail>;
     const detail = ce.detail ?? snapshot(readRaw());
     handler(detail.count, detail);
   };
+
   window.addEventListener(EVT, listener);
+
+  // Cross-tab updates via localStorage
+  const onStorage = (e: StorageEvent) => {
+    if (e.key && (e.key === KEY || e.key === "cartCount" || e.key === "cart")) {
+      const snap = snapshot(readRaw());
+      handler(snap.count, snap);
+    }
+  };
+  window.addEventListener("storage", onStorage);
+
   // Initialize immediately
   const snap = snapshot(readRaw());
   handler(snap.count, snap);
-  return () => window.removeEventListener(EVT, listener);
+
+  return () => {
+    window.removeEventListener(EVT, listener);
+    window.removeEventListener("storage", onStorage);
+  };
 }
 
 /* ---------------------- Back-compat aliases ---------------------- */
