@@ -60,7 +60,7 @@ function useCategoryImage(slug: string, image?: string) {
   return { src, onError };
 }
 
-/* ---------------- helpers: product mapping + thumb candidates ---------------- */
+/* ---------------- helpers: product mapping + cover candidates ---------------- */
 
 const toSlug = (s: string) =>
   s.toLowerCase().trim().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -71,19 +71,33 @@ function productCategorySlug(p: any): string | null {
   return null;
 }
 
-/** Build a couple of thumbnail candidates for a product by index (1..3) */
-function productThumbCandidates(p: any, index: number): string[] {
+function productHrefFor(p: any): string {
+  if (p?.slug) return `/products/${p.slug}`;
+  if (p?.id != null) return `/products/${p.id}`;
+  return "/products";
+}
+
+/** Build product preview candidates: cover, listed images, then thumb-1 from folder */
+function productCoverCandidates(p: any): string[] {
   const idOrSlug = String(p.slug ?? p.id ?? "");
-  const base = `/images/products/${idOrSlug}/thumb-${index}`;
-  const fromFolder = [`${base}.webp`, `${base}.jpg`, `${base}.png`];
+  const thumb1Base = `/images/products/${idOrSlug}/thumb-1`;
+  const fromFolder = [`${thumb1Base}.webp`, `${thumb1Base}.jpg`, `${thumb1Base}.png`];
   const fromList = Array.isArray(p.images) ? p.images : [];
-  // cover image is useful as a first thumb
   const cover = p.image ? [p.image] : [];
-  return Array.from(new Set([...cover, ...fromList, ...fromFolder]));
+  const fallbacks = ["/images/placeholder.jpg"];
+  return Array.from(new Set([...cover, ...fromList, ...fromFolder, ...fallbacks]));
 }
 
 /** Tiny client-side image that steps through candidates on error */
-function Thumb({ href, candidates, alt }: { href: string; candidates: string[]; alt: string }) {
+function Thumb({
+  href,
+  candidates,
+  alt,
+}: {
+  href: string;
+  candidates: string[];
+  alt: string;
+}) {
   const [i, setI] = useState(0);
   const src = candidates[i];
   const onError = () => setI((n) => (n + 1 < candidates.length ? n + 1 : n));
@@ -111,16 +125,23 @@ export default function CategoriesPage() {
           const { src, onError } = useCategoryImage(c.slug, (c as any).image);
           const desc = DESC_BY_LABEL[c.label] ?? "Explore products in this category.";
 
-          // find one representative product for this category (first match)
-          const catProducts = products.filter((p: any) => productCategorySlug(p) === c.slug);
-          const first = catProducts[0];
-          const productHref = first
-            ? first.slug
-              ? `/products/${first.slug}`
-              : first.id
-              ? `/products/${first.id}`
-              : "/products"
-            : undefined;
+          // Curated list first (from data/categories.ts), else fall back to first 3 products in the category
+          const curatedRefs = Array.isArray((c as any).topProducts) ? (c as any).topProducts : [];
+
+          const curatedProducts: any[] = curatedRefs
+            .map((ref) => {
+              if (ref?.slug) return products.find((p: any) => String(p.slug) === String(ref.slug));
+              if (ref?.id != null)
+                return products.find((p: any) => String(p.id) === String(ref.id));
+              return null;
+            })
+            .filter(Boolean) as any[];
+
+          const fallbackProducts = products.filter(
+            (p: any) => productCategorySlug(p) === c.slug
+          );
+
+          const previewProducts = (curatedProducts.length ? curatedProducts : fallbackProducts).slice(0, 3);
 
           return (
             <article
@@ -161,15 +182,15 @@ export default function CategoriesPage() {
                   lessLabel="less"
                 />
 
-                {/* ---- NEW: mini product preview strip (first product in this category) ---- */}
-                {first && (
+                {/* ---- Product preview strip (curated if present, else first up to 3 in this category) ---- */}
+                {previewProducts.length > 0 && (
                   <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
-                    {[1, 2, 3].map((n) => (
+                    {previewProducts.map((p) => (
                       <Thumb
-                        key={`${first.slug ?? first.id}-t${n}`}
-                        href={productHref!}
-                        candidates={productThumbCandidates(first, n)}
-                        alt={`${first.title} preview ${n}`}
+                        key={String(p.slug ?? p.id)}
+                        href={productHrefFor(p)}
+                        candidates={productCoverCandidates(p)}
+                        alt={`${p.title} preview`}
                       />
                     ))}
                   </div>
