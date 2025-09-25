@@ -24,19 +24,18 @@ function getCountSafe(): number {
 
       try {
         const parsed = JSON.parse(raw);
+
         if (Array.isArray(parsed)) {
           // Array of items: { quantity } or { qty }
-          return parsed.reduce(
-            (n, it) => n + Number((it && (it.quantity ?? it.qty)) ?? 0),
-            0
-          );
+          const nums = parsed.map((it) => Number((it && (it.quantity ?? it.qty)) ?? 0));
+          return nums.reduce((a, b) => a + b, 0);
         }
+
         if (parsed && typeof parsed === "object") {
           // Map { key: qty }
-          return Object.values(parsed as Record<string, unknown>).reduce(
-            (n, q) => n + Number(q ?? 0),
-            0
-          );
+          const values = Object.values(parsed as Record<string, number | string>);
+          const nums = values.map((q) => (typeof q === "number" ? q : Number(q) || 0));
+          return nums.reduce((a, b) => a + b, 0);
         }
       } catch {
         // ignore parse errors and try next key
