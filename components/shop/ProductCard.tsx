@@ -34,18 +34,24 @@ export default function ProductCard({
   // Prefer ID route (SSG), then slug
   const productHref =
     href ??
-    (id !== undefined ? `/products/${id}` :
-     slug ? `/products/${slug}` : "/products");
+    (id !== undefined
+      ? `/products/${id}`
+      : slug
+      ? `/products/${slug}`
+      : "/products");
 
   const prev = () => setIdx((i) => (i === 0 ? pics.length - 1 : i - 1));
   const next = () => setIdx((i) => (i + 1) % pics.length);
 
   const priceLabel =
     typeof price === "number"
-      ? new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(price)
-      : (price ?? "");
+      ? new Intl.NumberFormat("de-DE", {
+          style: "currency",
+          currency: "EUR",
+        }).format(price)
+      : price ?? "";
 
-  // ---- Cart / Badge wiring -------------------------------------------------
+  /* ---------------------- Cart / Badge wiring ---------------------- */
   const addToCart = () => {
     try {
       const w = window as any;
@@ -65,51 +71,61 @@ export default function ProductCard({
       // Update badge
       const raw2 = localStorage.getItem("cart");
       const total = raw2
-        ? Object.values(JSON.parse(raw2) as Record<string, number>).reduce((a, b) => a + Number(b), 0)
+        ? Object.values(JSON.parse(raw2) as Record<string, number>).reduce(
+            (a, b) => a + Number(b),
+            0
+          )
         : 0;
-      window.dispatchEvent(new CustomEvent("cart:add", { detail: { id: id ?? slug, qty: 1 } }));
+      window.dispatchEvent(
+        new CustomEvent("cart:add", { detail: { id: id ?? slug, qty: 1 } })
+      );
       window.dispatchEvent(new CustomEvent("cart:count", { detail: total }));
     } catch (e) {
       console.error("addToCart error", e);
     }
   };
 
-  // ---- Buy: create checkout session via API, then redirect -----------------
+  /* ---------------- Buy: create checkout session + fallback -------- */
   const buyNow = async () => {
     const keyName = String(id ?? slug ?? "");
 
     try {
-      // Ensure the item is in the cart (so downstream logic finds it)
+      // ensure it's in cart (optional but keeps downstream flows happy)
       addToCart();
 
-      // Call your existing checkout API to create a payment session (e.g. Stripe)
+      // POST – Case 1 supported by /api/checkout (productId OR slug)
+      const payload =
+        slug !== undefined ? { slug, qty: 1 } : { productId: id, qty: 1 };
+
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // Adjust the payload keys to match your API if needed:
-        body: JSON.stringify({
-          items: [{ id: keyName, qty: 1 }],
-          // or product: keyName
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
-        const data = await res.json();
+        const data = await res.json().catch(() => null);
         const url = data?.url || data?.checkoutUrl || data?.redirectUrl;
         if (url) {
-          window.location.href = url; // go to payment page (Stripe Checkout, etc.)
+          window.location.href = url;
           return;
         }
       }
 
-      // Fallback: if API didn't return a URL, go to your local checkout page with product param
-      router.push(`/checkout?product=${encodeURIComponent(keyName)}`);
+      // Fallback to GET (303 redirect from the API)
+      const u = new URL("/api/checkout", window.location.origin);
+      if (slug !== undefined) u.searchParams.set("slug", slug);
+      else if (id !== undefined) u.searchParams.set("productId", String(id));
+      window.location.href = u.toString();
     } catch (err) {
       console.error("buyNow error", err);
-      router.push(`/checkout?product=${encodeURIComponent(keyName)}`);
+      const u = new URL("/api/checkout", window.location.origin);
+      if (slug !== undefined) u.searchParams.set("slug", slug);
+      else if (id !== undefined) u.searchParams.set("productId", String(id));
+      window.location.href = u.toString();
     }
   };
-  // -------------------------------------------------------------------------
+  /* ----------------------------------------------------------------- */
 
   return (
     <article className="group rounded-2xl border bg-white/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
@@ -126,7 +142,10 @@ export default function ProductCard({
             <>
               <button
                 type="button"
-                onClick={(e) => { e.preventDefault(); prev(); }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  prev();
+                }}
                 aria-label="Previous"
                 className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-3 py-2 text-sm shadow hover:bg-white"
               >
@@ -134,7 +153,10 @@ export default function ProductCard({
               </button>
               <button
                 type="button"
-                onClick={(e) => { e.preventDefault(); next(); }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  next();
+                }}
                 aria-label="Next"
                 className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-3 py-2 text-sm shadow hover:bg-white"
               >
@@ -155,7 +177,9 @@ export default function ProductCard({
         </Link>
 
         {description && (
-          <p className="mt-1 line-clamp-2 text-sm text-gray-600">{description}</p>
+          <p className="mt-1 line-clamp-2 text-sm text-gray-600">
+            {description}
+          </p>
         )}
 
         {/* Thumbs → each opens the product page */}
@@ -176,13 +200,16 @@ export default function ProductCard({
         )}
 
         {/* Price */}
-        {priceLabel && <div className="mt-3 text-xl font-semibold">{priceLabel}</div>}
+        {priceLabel && (
+          <div className="mt-3 text-xl font-semibold">{priceLabel}</div>
+        )}
 
-        {/* Actions: single row, never wrap */}
-        <div className="mt-3 grid grid-cols-3 items-stretch gap-2">
+        {/* Actions: single row, compact so "Add to cart" never wraps */}
+        <div className="mt-3 grid grid-cols-3 gap-2">
           <Link
             href={productHref}
-            className="flex h-10 items-center justify-center rounded-xl bg-blue-600 px-2 md:px-3 text-xs md:text-sm font-medium text-white hover:bg-blue-700 whitespace-nowrap"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-2
+                       text-[12px] sm:text-[13px] font-medium text-white whitespace-nowrap hover:bg-blue-700"
             aria-label={`View ${title}`}
           >
             👁️ View
@@ -191,7 +218,8 @@ export default function ProductCard({
           <button
             type="button"
             onClick={addToCart}
-            className="flex h-10 items-center justify-center rounded-xl bg-blue-600 px-2 md:px-3 text-xs md:text-sm font-medium text-white hover:bg-blue-700 whitespace-nowrap"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-2
+                       text-[12px] sm:text-[13px] font-medium text-white whitespace-nowrap hover:bg-blue-700"
             aria-label="Add to cart"
           >
             🛒 Add to cart
@@ -200,7 +228,8 @@ export default function ProductCard({
           <button
             type="button"
             onClick={buyNow}
-            className="flex h-10 items-center justify-center rounded-xl bg-blue-600 px-2 md:px-3 text-xs md:text-sm font-medium text-white hover:bg-blue-700 whitespace-nowrap"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-2
+                       text-[12px] sm:text-[13px] font-medium text-white whitespace-nowrap hover:bg-blue-700"
             aria-label="Buy now"
           >
             ⚡ Buy
