@@ -51,9 +51,11 @@ export default function ProductCard({
       const w = window as any;
 
       const keyName = String(id ?? slug ?? "");
-      if (w?.dpaCart?.add) { w.dpaCart.add({ id: id ?? slug, qty: 1 }); }
-      else if (w?.__CART__?.add) { w.__CART__.add({ id: id ?? slug, qty: 1 }); }
-      else {
+      if (w?.dpaCart?.add) {
+        w.dpaCart.add({ id: id ?? slug, qty: 1 });
+      } else if (w?.__CART__?.add) {
+        w.__CART__.add({ id: id ?? slug, qty: 1 });
+      } else {
         const raw = localStorage.getItem("cart");
         const cart: Record<string, number> = raw ? JSON.parse(raw) : {};
         cart[keyName] = (cart[keyName] ?? 0) + 1;
@@ -72,19 +74,13 @@ export default function ProductCard({
     }
   };
 
+  // Ensure the item is in the cart, then navigate straight to /checkout
   const buyNow = () => {
-    const w = window as any;
-    const keyName = String(id ?? slug ?? "");
-    const checkoutUrl = `/checkout?product=${encodeURIComponent(keyName)}`;
-
-    if (w?.startCheckout) {
-      // Use your app’s checkout if exposed
-      w.startCheckout({ id: id ?? slug });
-      return;
+    try {
+      addToCart();
+    } finally {
+      router.push("/checkout");
     }
-
-    // Fallback: client-side navigate to checkout page
-    router.push(checkoutUrl);
   };
   // -------------------------------------------------------------------------
 
