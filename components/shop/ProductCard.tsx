@@ -13,8 +13,6 @@ export type ProductCardData = {
   images?: string[];      // cover first, then mockups
   href?: string;          // explicit product url; if given, we use it
   description?: string;
-  /** Preload the hero image (used for the first row on category pages) */
-  priority?: boolean;
 };
 
 export default function ProductCard({
@@ -25,7 +23,6 @@ export default function ProductCard({
   images = [],
   href,
   description,
-  priority = false,
 }: ProductCardData) {
   const router = useRouter();
 
@@ -58,9 +55,7 @@ export default function ProductCard({
       const count = cart.getCartCount();
       window.dispatchEvent(new CustomEvent("cart:updated", { detail: { count, items } }));
       localStorage.setItem("cartCount", String(count));
-    } catch {
-      /* no-op */
-    }
+    } catch {/* no-op */}
   };
 
   const addToCart = () => {
@@ -75,7 +70,6 @@ export default function ProductCard({
         },
         1
       );
-      // lib/cart emits events; also emit a bridge event for header
       bridgeCartUpdatedEvent();
     } catch (e) {
       console.error("addToCart error", e);
@@ -106,7 +100,6 @@ export default function ProductCard({
           return;
         }
       }
-
       router.push(`/checkout?product=${encodeURIComponent(key)}`);
     } catch (e) {
       console.error("buyNow error", e);
@@ -124,18 +117,13 @@ export default function ProductCard({
             src={pics[idx]}
             alt={title}
             className="aspect-[3/2] w-full object-contain p-2 transition-transform duration-300 group-hover:scale-[1.01]"
-            loading={priority ? "eager" : "lazy"}
-            fetchPriority={priority ? "high" : "auto"}
-            decoding={priority ? "sync" : "async"}
+            loading="lazy"
           />
           {pics.length > 1 && (
             <>
               <button
                 type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  prev();
-                }}
+                onClick={(e) => { e.preventDefault(); prev(); }}
                 aria-label="Previous"
                 className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-2.5 py-1.5 text-xs shadow hover:bg-white"
               >
@@ -143,10 +131,7 @@ export default function ProductCard({
               </button>
               <button
                 type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  next();
-                }}
+                onClick={(e) => { e.preventDefault(); next(); }}
                 aria-label="Next"
                 className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-2.5 py-1.5 text-xs shadow hover:bg-white"
               >
@@ -170,30 +155,26 @@ export default function ProductCard({
           <p className="mt-1 line-clamp-2 text-sm text-gray-600">{description}</p>
         )}
 
-        {/* Thumbs → interactive: click/hover swaps main image, no navigation */}
+        {/* Thumbs → click to set preview (no hover switching) */}
         {pics.length > 1 && (
           <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
-            {pics.map((src, i) => {
-              const selected = i === idx;
-              return (
-                <button
-                  key={src + i}
-                  type="button"
-                  onClick={() => setIdx(i)}
-                  onMouseEnter={() => setIdx(i)}
-                  aria-label={`Preview image ${i + 1} of ${pics.length} for ${title}`}
-                  aria-current={selected ? "true" : undefined}
-                  className={[
-                    "h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-white opacity-90 transition hover:opacity-100",
-                    selected ? "ring-2 ring-blue-600 border-blue-600" : "ring-0",
-                  ].join(" ")}
-                  title={title}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={src} alt="" className="h-full w-full object-cover" loading="lazy" />
-                </button>
-              );
-            })}
+            {pics.map((src, i) => (
+              <button
+                key={src + i}
+                type="button"
+                onClick={() => setIdx(i)}
+                aria-label={`Show image ${i + 1} for ${title}`}
+                aria-pressed={idx === i}
+                className={[
+                  "h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-white opacity-90 transition",
+                  "hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50",
+                  idx === i ? "ring-2 ring-blue-600" : ""
+                ].join(" ")}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={src} alt="" className="h-full w-full object-cover" loading="lazy" />
+              </button>
+            ))}
           </div>
         )}
 
