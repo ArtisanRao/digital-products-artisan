@@ -29,19 +29,17 @@ export default function ProductCard({
   // 1) Build picture list (deduped), with cover first (and included as a thumbnail).
   const pics = useMemo(() => {
     const base = images.length ? images : ["/images/placeholder.jpg"];
-    // Dedupe while preserving order
     const seen = new Set<string>();
-    const dedup = base.filter((u) => {
+    return base.filter((u) => {
       if (!u) return false;
       if (seen.has(u)) return false;
       seen.add(u);
       return true;
     });
-    return dedup;
   }, [images]);
 
-  // 2) Thumbnail list: include main (index 0) and cap to 3 total.
-  const thumbs = useMemo(() => pics.slice(0, 3), [pics]);
+  // 2) Thumbnail list: include main (index 0) and cap to 4 total.
+  const thumbs = useMemo(() => pics.slice(0, 4), [pics]);
 
   // State: selected (persistent) and hovering (temporary)
   const [selectedIdx, setSelectedIdx] = useState(0);
@@ -205,7 +203,7 @@ export default function ProductCard({
           <p className="mt-1 line-clamp-2 text-sm text-gray-600">{description}</p>
         )}
 
-        {/* Thumbs – include main as first, MAX 3; hover = temp preview, click = persist */}
+        {/* Thumbs – include main as first, MAX 4; hover = temp preview, click = persist */}
         {thumbs.length > 0 && (
           <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
             {thumbs.map((src, i) => {
@@ -228,6 +226,7 @@ export default function ProductCard({
                     isSelected ? "ring-2 ring-red-500" : "hover:ring-2 hover:ring-red-300",
                   ].join(" ")}
                   aria-label={`Preview image ${i + 1}`}
+                  aria-pressed={isSelected}
                   title={`Preview image ${i + 1}`}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
