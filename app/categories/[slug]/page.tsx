@@ -7,7 +7,8 @@ import InlineMore from "@/components/ui/inline-more";
 import { products } from "@/data/products";
 import ProductCardV4 from "../../../components/shop/ProductCardV4";
 
-// Always serve fresh for this route
+// ── Force fresh SSR + Node runtime (we use fs) ───────────────────────────────
+export const runtime = "nodejs";
 export const revalidate = 0;
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -25,7 +26,7 @@ const META: Record<string, { title: string; description: string }> = {
   "health-and-fitness-ebooks":   { title: "Health & Fitness eBooks", description: "Nutrition, fitness and wellness books." },
   "keto-and-diet-guides":        { title: "Keto & Diet Guides",      description: "Keto and nutrition programs and meal plans." },
   "passive-income-and-side-hustles": { title: "Passive Income & Side Hustles", description: "Monetization playbooks and templates." },
-  "web-templates":               { title: "Web Templates",           description: "Website, UI kits and themes." },
+  "web-templates":               { title: "Web Templates",           description: "Website templates, UI kits and themes." },
   "digital-essentials-hub":      { title: "Digital Essentials Hub",  description: "Prompt packs, automations, and utilities." },
   "fonts-and-icons":             { title: "Fonts & Icons",           description: "Font families and icon sets." },
   "religious-ebooks":            { title: "Religious eBooks",        description: "Faith-centered books, devotionals and study guides." },
@@ -106,7 +107,7 @@ function readProductThumbs(slug?: string, max = 4): string[] {
   return names.map((n) => `/images/products/${slug}/${n}`);
 }
 
-// Static params for new and legacy slugs
+// Static params for new and legacy slugs (harmless even with force-dynamic)
 export function generateStaticParams() {
   const newSlugs = Object.keys(META);
   const legacySlugs = Object.keys(LEGACY_TO_NEW);
@@ -115,7 +116,7 @@ export function generateStaticParams() {
 
 const normalizeSlug = (s: string) => LEGACY_TO_NEW[s] ?? s;
 
-// ✅ Use `any` for props to avoid Next’s PageProps constraint (which in your project expects Promise)
+// ✅ Use `any` for props to avoid Next’s PageProps constraint (some templates expect Promise)
 export async function generateMetadata(props: any) {
   const raw = String(props?.params?.slug ?? "");
   const slug = normalizeSlug(raw);
@@ -148,7 +149,7 @@ export default async function CategoryPage(props: any) {
           className="text-gray-700"
         />
         <p className="mt-2">
-          <Link href="/products" className="underline">Browse all products →</Link>
+          <Link href="/products" className="underline" prefetch={false}>Browse all products →</Link>
         </p>
       </main>
     );
@@ -160,7 +161,7 @@ export default async function CategoryPage(props: any) {
     return eff !== "__HIDE__" && eff === slug;
   });
 
-  // Build card data (cover + up to 4 thumbs), include id for robust linking, dedupe images, cache-buster
+  // Card data: 1 cover + up to 4 thumbs (deduped) with cache-buster
   const cards = catProducts.map((p) => {
     const rawImages = [p.image, ...readProductThumbs(p.slug, 4)].filter(Boolean);
     const deduped = Array.from(new Set(rawImages)) as string[];
@@ -206,7 +207,9 @@ export default async function CategoryPage(props: any) {
       ) : (
         <div className="mt-8">
           <p className="text-gray-600">No products in this category yet.</p>
-          <Link href="/products" className="mt-3 inline-block underline">Browse all products →</Link>
+          <Link href="/products" prefetch={false} className="mt-3 inline-block underline">
+            Browse all products →
+          </Link>
         </div>
       )}
     </main>
