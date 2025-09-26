@@ -8,7 +8,7 @@ import Link from "next/link";
 import path from "node:path";
 import fs from "node:fs";
 import { products } from "@/data/products";
-import AddToCartButton from "@/components/shop/AddToCartButton"; // ⟵ use the working client button
+import AddToCartButton from "@/components/shop/AddToCartButton";
 import BuyNowButton from "@/components/buy-now-button";
 import ProductGallery from "@/components/ProductGallery";
 
@@ -230,7 +230,7 @@ export default async function ProductPage({
       </nav>
 
       <div className="grid gap-8 lg:grid-cols-2">
-        {/* Gallery (hover zoom comes from your global CSS/utilities) */}
+        {/* Gallery */}
         <div className="w-full rounded-2xl border bg-white p-3 hover-zoom">
           <ProductGallery images={galleryImages} alt={product.title} />
         </div>

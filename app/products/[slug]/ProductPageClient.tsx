@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import InlineMore from "@/components/ui/inline-more";
 import { Button } from "@/components/ui/button";
-import AddToCartButton from "@/components/add-to-cart-button";
+import AddToCartButton from "@/components/shop/AddToCartButton"; // ← unified, working button
 import { products, productsById } from "@/data/products";
 import { getPreferredCurrency } from "@/lib/currency";
 
@@ -42,7 +42,7 @@ function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
   }, [n]);
 
   return (
-    <div className="grid grid-cols-[86px_1fr] gap-4 lg:gap-6 relative" style={{ zIndex: 1 }}>
+    <div className="relative grid grid-cols-[86px_1fr] gap-4 lg:gap-6" style={{ zIndex: 1 }}>
       <div className="flex max-h-[560px] flex-col gap-3 overflow-auto pr-1">
         {safe.map((src, i) => (
           <button
@@ -52,7 +52,9 @@ function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
             onClick={() => setIdx(i)}
             className={[
               "relative aspect-square w-[86px] overflow-hidden rounded-xl border transition",
-              i === idx ? "ring-2 ring-blue-500 border-transparent" : "border-gray-200 hover:border-blue-300",
+              i === idx
+                ? "ring-2 ring-blue-500 border-transparent"
+                : "border-gray-200 hover:border-blue-300",
             ].join(" ")}
             aria-label={`Preview image ${i + 1}`}
           >
@@ -102,7 +104,6 @@ function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
 export default function ProductPageClient({ slug }: { slug: string }) {
   const handle = String(slug ?? "");
   const p = findProduct(handle);
-  const [buyLoading, setBuyLoading] = React.useState(false);
 
   if (!p) {
     return (
@@ -113,38 +114,13 @@ export default function ProductPageClient({ slug }: { slug: string }) {
   }
 
   const imgs: string[] = (p.images?.length ? p.images : [p.image]).filter(Boolean) as string[];
+  const coverImage = imgs[0] ?? "/images/placeholder.jpg";
 
   const currencyRaw = getPreferredCurrency();
   const currency = String(currencyRaw).toUpperCase() as "EUR" | "USD";
   const locale = currency === "EUR" ? "de-DE" : "en-US";
-  const display = new Intl.NumberFormat(locale, { style: "currency", currency }).format(p.price);
-
-  const handleBuy = async () => {
-    if (buyLoading) return;
-    setBuyLoading(true);
-    try {
-      const res = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId: p.id, qty: 1, currency }),
-      });
-
-      const raw = await res.text();
-      let data: any = {};
-      try { data = JSON.parse(raw); } catch {}
-      if (!res.ok || !data?.url) {
-        const message = data?.error || raw || `Checkout failed (HTTP ${res.status})`;
-        throw new Error(message);
-      }
-
-      window.location.href = data.url as string;
-    } catch (err: any) {
-      console.error("Checkout error:", err);
-      alert(err?.message || "Sorry—couldn't start checkout.");
-    } finally {
-      setBuyLoading(false);
-    }
-  };
+  const priceNumber = typeof p.price === "number" ? p.price : Number(p.price) || 0;
+  const display = new Intl.NumberFormat(locale, { style: "currency", currency }).format(priceNumber);
 
   const canonicalHref = `/products/${encodeURIComponent(String(p.slug ?? p.id))}`;
 
@@ -161,6 +137,7 @@ export default function ProductPageClient({ slug }: { slug: string }) {
         >
           <Link
             href={canonicalHref}
+            prefetch={false}
             className="underline decoration-transparent hover:decoration-current focus:decoration-current"
             style={{ pointerEvents: "auto" }}
           >
@@ -174,19 +151,27 @@ export default function ProductPageClient({ slug }: { slug: string }) {
           <InlineMore text={p.description ?? ""} lines={3} minChars={80} />
         </div>
 
-        <div className="mt-6 flex flex-wrap gap-3" style={{ position: "relative", zIndex: 61, pointerEvents: "auto" }}>
+        {/* Uniform horizontal CTAs */}
+        <div className="mt-6 grid grid-cols-2 gap-3" style={{ position: "relative", zIndex: 61 }}>
           <AddToCartButton
-            productId={p.id}
+            id={p.id}
+            slug={p.slug as string | undefined}
+            title={p.title}
+            price={p.price}
+            image={coverImage}
             className="bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
           />
 
           <Button
-            type="button"
-            onClick={handleBuy}
-            disabled={buyLoading}
+            asChild
             className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
           >
-            {buyLoading ? "Redirecting..." : "Buy"}
+            <Link
+              href={`/api/checkout?productId=${encodeURIComponent(String(p.id))}&qty=1&currency=${currency}`}
+              prefetch={false}
+            >
+              Buy
+            </Link>
           </Button>
         </div>
 
