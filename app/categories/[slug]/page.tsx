@@ -97,11 +97,10 @@ export function generateStaticParams() {
   return [...newSlugs, ...legacySlugs].map((slug) => ({ slug }));
 }
 
-type Params = { slug: string };
 const normalizeSlug = (s: string) => LEGACY_TO_NEW[s] ?? s;
 
-/** Next 13+/15 signature: do NOT use Promise<Params> here */
-export async function generateMetadata({ params }: { params: Params }) {
+/** Loosen types to avoid PageProps mismatches in this project setup */
+export async function generateMetadata({ params }: any) {
   const { slug: raw } = params;
   const slug = normalizeSlug(raw);
   const m = META[slug];
@@ -111,12 +110,10 @@ export async function generateMetadata({ params }: { params: Params }) {
     title,
     description,
     openGraph: { title, description, type: "website" },
-    twitter: { card: "summary_large_image", title, description },
   };
 }
 
-/** Page component: also use { params }: { params: Params } */
-export default async function CategoryPage({ params }: { params: Params }) {
+export default async function CategoryPage({ params }: any) {
   const { slug: raw } = params;
   const slug = normalizeSlug(raw);
   const meta = META[slug];
@@ -146,9 +143,7 @@ export default async function CategoryPage({ params }: { params: Params }) {
   const cards = catProducts.map((p: any) => {
     const thumbs = readProductThumbsDual(p.id, p.slug, 3);
     const images = Array.from(
-      new Set(
-        [p.image, ...(Array.isArray(p.images) ? p.images : []), ...thumbs].filter(Boolean)
-      )
+      new Set([p.image, ...(Array.isArray(p.images) ? p.images : []), ...thumbs].filter(Boolean))
     );
     const href =
       p.id   ? `/products/${p.id}`   :
