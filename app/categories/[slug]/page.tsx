@@ -83,9 +83,8 @@ function readThumbsFrom(folder: string): string[] {
 
 function readProductThumbsDual(id?: string | number, slug?: string | number, max = 3): string[] {
   const byId = id != null ? readThumbsFrom(String(id)) : [];
-  const bySlug = slug != null ? readThumbsFrom(String(slug)) : [];
+  the bySlug = slug != null ? readThumbsFrom(String(slug)) : [];
   const all = [...byId, ...bySlug];
-  // dedupe while preserving order
   const uniq: string[] = [];
   for (const u of all) if (!uniq.includes(u)) uniq.push(u);
   return uniq.slice(0, max);
@@ -172,12 +171,8 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
 
       {cards.length ? (
         <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {cards.map((c, i) => (
-            <ProductCard
-              key={String(c.slug ?? c.id)}
-              {...c}
-              priority={i < 3}  // ⟵ preload first row’s hero images for better LCP
-            />
+          {cards.map((c) => (
+            <ProductCard key={String(c.slug ?? c.id)} {...c} />
           ))}
         </div>
       ) : (
