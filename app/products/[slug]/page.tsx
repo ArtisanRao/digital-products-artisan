@@ -47,7 +47,7 @@ function normalizeImages(p: any): string[] {
 
   // Dedupe, keep order
   const seen = new Set<string>();
-  const list = [];
+  const list: string[] = [];
   for (const src of imgs) {
     if (!src || seen.has(src)) continue;
     seen.add(src);
@@ -179,7 +179,6 @@ export default async function Page(props: { params: Promise<{ slug: string }> })
       {/* JSON-LD */}
       <script
         type="application/ld+json"
-        // Basic product LD; expand as needed
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             "@context": "https://schema.org",
