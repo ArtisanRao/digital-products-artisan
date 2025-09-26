@@ -1,21 +1,22 @@
 // app/products/[id]/page.tsx
 export const runtime = "nodejs";
+export const dynamicParams = true; // allow IDs not listed in generateStaticParams
 export const revalidate = 3600;
 
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import path from "node:path";
 import fs from "node:fs";
-import { products } from "@/data/products";
+import { products, productsById } from "@/data/products";
 import AddToCartButton from "@/components/shop/AddToCartButton";
 import BuyNowButton from "@/components/buy-now-button";
 import ProductGallery from "@/components/ProductGallery";
 
-/** Resolve files under /public */
+/* ------------------------ helpers ------------------------ */
+
 const pub = (...p: string[]) => path.join(process.cwd(), "public", ...p);
 
-/** If file exists under /public, return its public href */
 function firstExistingPublicHref(hrefs: string[]): string | undefined {
   for (const href of hrefs) {
     if (!href) continue;
@@ -25,7 +26,30 @@ function firstExistingPublicHref(hrefs: string[]): string | undefined {
   return undefined;
 }
 
-/** Discover gallery from /public/images/products/<slug> when product.images is absent */
+/** Accepts numeric id *or* slug and returns a product */
+function findProduct(idOrSlug: string) {
+  const raw = String(idOrSlug ?? "").trim();
+  if (!raw) return null;
+
+  // Numeric ID (fast path)
+  if (/^\d+$/.test(raw)) {
+    const idNum = Number(raw);
+    const byId = (productsById as any)?.[idNum];
+    if (byId) return byId;
+    const byIdLinear = products.find((p) => Number(p.id) === idNum);
+    if (byIdLinear) return byIdLinear;
+  }
+
+  // Slug (case-insensitive) or string id fallback
+  const handle = raw.toLowerCase();
+  return (
+    products.find((p) => String(p.slug).toLowerCase() === handle) ||
+    products.find((p) => String(p.id) === raw) ||
+    null
+  );
+}
+
+/** Discover gallery under /public/images/products/<slug> if needed */
 function discoverGallery(slug?: string): string[] {
   if (!slug) return [];
   const dir = pub("images", "products", slug);
@@ -35,7 +59,6 @@ function discoverGallery(slug?: string): string[] {
     .filter((f) => /\.(png|jpe?g|webp|avif)$/i.test(f))
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
 
-  // Prefer explicit cover, then other images (thumb/mock/preview first)
   const cover = firstExistingPublicHref([
     `/images/products/${slug}/cover.jpg`,
     `/images/products/${slug}/cover.png`,
@@ -60,37 +83,42 @@ function discoverGallery(slug?: string): string[] {
   return Array.from(new Set(list));
 }
 
-// Pre-render all product pages by numeric id
+/** Prefer product.images; else discover; else single product.image */
+function buildGallery(p: any): string[] {
+  const explicit = Array.isArray(p?.images) ? (p.images as string[]) : [];
+  if (explicit.length) return Array.from(new Set(explicit.filter(Boolean)));
+  const discovered = discoverGallery(p?.slug);
+  if (discovered.length) return discovered;
+  return [p?.image].filter(Boolean) as string[];
+}
+
+/* ------------------- static params (optional) ------------------- */
+
 export function generateStaticParams() {
+  // Only numeric IDs to avoid conflicts with slug paths
   return products
-    .filter((p) => p.id !== undefined && p.id !== null)
+    .filter((p) => p.id !== undefined && /^\d+$/.test(String(p.id)))
     .map((p) => ({ id: String(p.id) }));
 }
 
-// Per-product SEO (Next 15: params is a Promise)
+/* ------------------------- metadata ------------------------- */
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const product = products.find((p) => String(p.id) === id);
+  const product = findProduct(id);
   if (!product) return {};
 
-  const canonical = `/products/${id}`;
-  const abs = (src: string) =>
-    src.startsWith("http") ? src : `https://digitalproductsartisan.com${src}`;
-
-  // Prefer product.images; else discover; else product.image
-  const discovered = discoverGallery((product as any).slug);
-  const gallery =
-    Array.isArray((product as any).images) && (product as any).images.length
-      ? ((product as any).images as string[])
-      : discovered.length
-      ? discovered
-      : [product.image].filter(Boolean);
-
-  const ogImage = abs(gallery[0] ?? "/images/placeholder.jpg");
+  const canonicalHandle = String(product.slug ?? product.id);
+  const canonical = `/products/${encodeURIComponent(canonicalHandle)}`;
+  const gallery = buildGallery(product);
+  const ogImage =
+    gallery[0]?.startsWith("http")
+      ? gallery[0]
+      : `https://digitalproductsartisan.com${gallery[0] ?? "/images/placeholder.jpg"}`;
 
   return {
     metadataBase: new URL("https://digitalproductsartisan.com"),
@@ -98,19 +126,23 @@ export async function generateMetadata({
     description: product.description,
     alternates: { canonical },
     openGraph: {
-      title: `${product.title} | Digital Products Artisan`,
-      url: `https://digitalproductsartisan.com${canonical}`,
       type: "website",
+      url: `https://digitalproductsartisan.com${canonical}`,
+      title: `${product.title} | Digital Products Artisan`,
+      description: product.description,
       images: [{ url: ogImage }],
     },
     twitter: {
       card: "summary_large_image",
       title: `${product.title} | Digital Products Artisan`,
+      description: product.description,
       images: [ogImage],
     },
     robots: { index: true, follow: true },
   };
 }
+
+/* --------------------------- page --------------------------- */
 
 export default async function ProductPage({
   params,
@@ -118,27 +150,19 @@ export default async function ProductPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const product = products.find((p) => String(p.id) === id);
+
+  // Accept either numeric ID or slug here
+  const product = findProduct(id);
   if (!product) notFound();
 
-  const canonicalAbs = `https://digitalproductsartisan.com/products/${id}`;
-  const slug = (product as any).slug as string | undefined;
+  // If the segment looks like a slug (not all digits) and we *have* a slug,
+  // redirect to the canonical /products/[slug] page to avoid dupes & any
+  // chance of the wrong matcher capturing it.
+  if (!/^\d+$/.test(id) && product.slug) {
+    redirect(`/products/${encodeURIComponent(String(product.slug))}`);
+  }
 
-  // Build gallery (same logic as metadata)
-  const discovered = discoverGallery(slug);
-  const galleryImages: string[] =
-    Array.isArray((product as any).images) && (product as any).images.length
-      ? ((product as any).images as string[])
-      : discovered.length
-      ? discovered
-      : [product.image].filter(Boolean);
-
-  // Absolute URLs for JSON-LD
-  const abs = (src: string) =>
-    src.startsWith("http") ? src : `https://digitalproductsartisan.com${src}`;
-  const imagesAbs = galleryImages.map(abs);
-
-  // Pricing helpers (guard undefined)
+  const galleryImages = buildGallery(product);
   const priceNum =
     typeof product.price === "number" ? product.price : Number(product.price) || 0;
   const originalNum =
@@ -146,23 +170,29 @@ export default async function ProductPage({
       ? (product as any).originalPrice
       : Number((product as any).originalPrice) || 0;
 
-  /** Structured data */
+  const canonicalHandle = String(product.slug ?? product.id);
+  const canonicalAbs = `https://digitalproductsartisan.com/products/${encodeURIComponent(
+    canonicalHandle
+  )}`;
+
   const POLICY_COUNTRIES = [
     "US", "CA", "GB", "DE", "FR", "ES", "IT", "NL", "SE", "NO", "FI", "DK", "IE",
     "PT", "PL", "AT", "BE", "CH", "AU", "NZ",
   ];
   const today = new Date();
   const priceValidFrom = today.toISOString().slice(0, 10);
-  const priceValidUntilDate = new Date(today);
-  priceValidUntilDate.setFullYear(priceValidUntilDate.getFullYear() + 1);
-  const priceValidUntil = priceValidUntilDate.toISOString().slice(0, 10);
+  const until = new Date(today);
+  until.setFullYear(until.getFullYear() + 1);
+  const priceValidUntil = until.toISOString().slice(0, 10);
 
   const productLd: any = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.title,
     url: canonicalAbs,
-    image: imagesAbs,
+    image: galleryImages.map((src) =>
+      src.startsWith("http") ? src : `https://digitalproductsartisan.com${src}`
+    ),
     description: product.description,
     sku: String(product.id),
     brand: { "@type": "Brand", name: "Digital Products Artisan" },
@@ -219,8 +249,7 @@ export default async function ProductPage({
   const teaser = needsToggle ? fullText.slice(0, MAX_CHARS).trimEnd() : fullText;
   const remainder = needsToggle ? fullText.slice(MAX_CHARS) : "";
 
-  // Canonical internal route for title link
-  const canonicalHref = `/products/${encodeURIComponent(String(slug ?? product.id))}`;
+  const canonicalHref = `/products/${encodeURIComponent(canonicalHandle)}`;
 
   return (
     <main className="container mx-auto px-4 py-8 product-page" data-page="product">
@@ -277,11 +306,11 @@ export default async function ProductPage({
             )}
           </div>
 
-          {/* Actions (blue buttons; Add updates badge, Buy → checkout) */}
+          {/* Actions */}
           <div className="mt-6 grid grid-cols-2 gap-3">
             <AddToCartButton
               id={product.id}
-              slug={slug}
+              slug={product.slug as string | undefined}
               title={product.title}
               price={product.price}
               image={galleryImages[0]}
@@ -299,14 +328,8 @@ export default async function ProductPage({
       </div>
 
       {/* JSON-LD */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(productLd) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbsLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbsLd) }} />
     </main>
   );
 }
