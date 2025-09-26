@@ -3,33 +3,31 @@ import path from "node:path";
 import Link from "next/link";
 import Script from "next/script";
 import InlineMore from "@/components/ui/inline-more";
-// use the v4 card
 import ProductCardV4 from "../../../components/shop/ProductCardV4";
 import { products } from "@/data/products";
 
-/* ───────────────── runtime: force dynamic ───────────────── */
+/* runtime: always dynamic */
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const fetchCache = "force-no-store";
-/* ────────────────────────────────────────────────────────── */
 
 const UI_VERSION = "cat-v6-2025-09-26";
 
 const META: Record<string, { title: string; description: string }> = {
-  "ai-and-chatgpt-guides":       { title: "AI & ChatGPT Guides",     description: "Guides, prompts and AI learning resources." },
-  "planners-and-productivity":   { title: "Planners & Productivity", description: "Digital planners, journals and productivity tools." },
-  "self-help-and-how-to":        { title: "Self-Help & How-To",      description: "Practical how-to guides and self-improvement." },
-  "plr-and-mrr-bundles":         { title: "PLR & MRR Bundles",       description: "Done-for-you PLR/MRR products and kits." },
-  "video-courses-and-training":  { title: "Video Courses & Training",description: "Structured video lessons and trainings." },
-  "complete-shop-packages":      { title: "Complete Shop Packages",  description: "Turn-key storefront bundles and assets." },
-  "health-and-fitness-ebooks":   { title: "Health & Fitness eBooks", description: "Nutrition, fitness and wellness books." },
-  "keto-and-diet-guides":        { title: "Keto & Diet Guides",      description: "Keto and nutrition programs and meal plans." },
+  "ai-and-chatgpt-guides": { title: "AI & ChatGPT Guides", description: "Guides, prompts and AI learning resources." },
+  "planners-and-productivity": { title: "Planners & Productivity", description: "Digital planners, journals and productivity tools." },
+  "self-help-and-how-to": { title: "Self-Help & How-To", description: "Practical how-to guides and self-improvement." },
+  "plr-and-mrr-bundles": { title: "PLR & MRR Bundles", description: "Done-for-you PLR/MRR products and kits." },
+  "video-courses-and-training": { title: "Video Courses & Training", description: "Structured video lessons and trainings." },
+  "complete-shop-packages": { title: "Complete Shop Packages", description: "Turn-key storefront bundles and assets." },
+  "health-and-fitness-ebooks": { title: "Health & Fitness eBooks", description: "Nutrition, fitness and wellness books." },
+  "keto-and-diet-guides": { title: "Keto & Diet Guides", description: "Keto and nutrition programs and meal plans." },
   "passive-income-and-side-hustles": { title: "Passive Income & Side Hustles", description: "Monetization playbooks and templates." },
-  "web-templates":               { title: "Web Templates",           description: "Website templates, UI kits and themes." },
-  "digital-essentials-hub":      { title: "Digital Essentials Hub",  description: "Prompt packs, automations, and utilities." },
-  "fonts-and-icons":             { title: "Fonts & Icons",           description: "Font families and icon sets." },
-  "religious-ebooks":            { title: "Religious eBooks",        description: "Faith-centered books, devotionals and study guides." },
-  "social-media-kits":           { title: "Social Media Kits",       description: "Post templates and brandable assets for socials." },
+  "web-templates": { title: "Web Templates", description: "Website templates, UI kits and themes." },
+  "digital-essentials-hub": { title: "Digital Essentials Hub", description: "Prompt packs, automations, and utilities." },
+  "fonts-and-icons": { title: "Fonts & Icons", description: "Font families and icon sets." },
+  "religious-ebooks": { title: "Religious eBooks", description: "Faith-centered books, devotionals and study guides." },
+  "social-media-kits": { title: "Social Media Kits", description: "Post templates and brandable assets for socials." },
 };
 
 const LEGACY_TO_NEW: Record<string, string> = {
@@ -52,12 +50,7 @@ const FIX_BY_TITLE: Record<string, { forceSlug?: string; hide?: boolean }> = {
 };
 
 function toSlug(s: string) {
-  return s
-    .toLowerCase()
-    .trim()
-    .replace(/&/g, "and")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+  return s.toLowerCase().trim().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
 
 const ALL_SLUGS = new Set(Object.keys(META));
@@ -103,13 +96,10 @@ function readProductThumbs(slug?: string, max = 4): string[] {
   return names.map((n) => `/images/products/${slug}/${n}`);
 }
 
-/* ───────────────── metadata (non-Promise params) ───────────────── */
-type Params = { slug: string };
-const normalizeSlug = (s: string) => LEGACY_TO_NEW[s] ?? s;
-
-export async function generateMetadata({ params }: { params: Params }) {
-  const slug = normalizeSlug(params.slug);
-  const m = META[slug];
+/* ---- Metadata with simple typing to avoid Promise<Props> mismatch ---- */
+export async function generateMetadata({ params }: { params: { slug: string } }) {
+  const slug = (LEGACY_TO_NEW[params.slug] ?? params.slug) as keyof typeof META;
+  const m = META[slug as string];
   const title = m ? `${m.title} | Digital Products Artisan` : "Digital Products | Digital Products Artisan";
   const description = m?.description ?? "Browse our curated digital products.";
   return {
@@ -120,13 +110,13 @@ export async function generateMetadata({ params }: { params: Params }) {
   };
 }
 
-/* ───────────────── page ───────────────── */
-export default async function CategoryPage({ params }: { params: Params }) {
-  const slug = normalizeSlug(params.slug);
-  const meta = META[slug];
+/* ---- Page (also using simple props typing) ---- */
+export default function CategoryPage({ params }: { params: { slug: string } }) {
+  const slug = (LEGACY_TO_NEW[params.slug] ?? params.slug) as keyof typeof META;
+  const meta = META[slug as string];
 
   if (!meta) {
-    const pretty = slug.replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
+    const pretty = String(slug).replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
     return (
       <main className="container mx-auto px-4 py-16" data-ui={`CategoryPage@${UI_VERSION}:not-found`}>
         <h1 className="text-3xl md:text-4xl font-bold mb-2">{pretty}</h1>
@@ -136,20 +126,16 @@ export default async function CategoryPage({ params }: { params: Params }) {
           minChars={40}
           className="text-gray-700"
         />
-        <p className="mt-2">
-          <Link href="/products" className="underline">Browse all products →</Link>
-        </p>
+        <p className="mt-2"><Link href="/products" className="underline">Browse all products →</Link></p>
       </main>
     );
   }
 
-  // filter products for this category (plus your manual fixes)
   const catProducts = products.filter((p) => {
     const eff = effectiveProductCategorySlug(p);
     return eff !== "__HIDE__" && eff === slug;
   });
 
-  // build card props: robust href, id/slug, 1 main + up to 4 thumbs
   const cards = catProducts.map((p) => {
     const main = p.image ? [String(p.image)] : [];
     const thumbs = readProductThumbs(p.slug, 4);
@@ -157,25 +143,21 @@ export default async function CategoryPage({ params }: { params: Params }) {
       src.includes("?") ? `${src}&v=${UI_VERSION}` : `${src}?v=${UI_VERSION}`
     );
 
-    const href =
-      p.slug ? `/products/${p.slug}` :
-      p.id != null ? `/products/${p.id}` :
-      "#";
+    const href = p.slug ? `/products/${p.slug}` : p.id != null ? `/products/${p.id}` : "#";
 
     return {
       id: p.id,
       title: p.title,
       slug: p.slug,
       price: p.price,
-      images,
+      images,                // 1 main + up to 4 thumbs
       description: p.description,
-      href, // ← explicit URL so “View / image / title” always work
+      href,                  // robust link so View / image / title work
     };
   });
 
   return (
     <main className="container mx-auto px-4 py-12" data-ui={`CategoryPage@${UI_VERSION}`}>
-      {/* one-time SW/cache reset to avoid stale pages */}
       <Script id="sw-reset" strategy="afterInteractive">
         {`(async()=>{try{
           if('serviceWorker' in navigator){
