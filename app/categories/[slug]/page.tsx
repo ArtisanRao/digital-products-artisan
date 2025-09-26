@@ -34,16 +34,31 @@ const LEGACY_TO_NEW: Record<string, string> = {
 
 const pub = (...p: string[]) => path.join(process.cwd(), "public", ...p);
 
-/* --------------------- exact fixes by product title ---------------------- */
+/* ----------------------- EXACT FIXES YOU ASKED FOR ------------------------ */
+/** Normalize for title-key maps */
 const tnorm = (s: string) => s.toLowerCase().trim();
-const FIX_BY_TITLE: Record<string, { forceSlug?: string; hide?: boolean }> = {
+
+/** Hard overrides by product *title* */
+const FIX_BY_TITLE: Record<
+  string,
+  { forceSlug?: string; hide?: boolean }
+> = {
+  // 1) "AI & ChatGPT Guides": move "Video Courses And Training" to its own category
   [tnorm("Video Courses And Training")]: { forceSlug: "video-courses-and-training" },
+
+  // 2) "Self-Help & How-To": remove the product "Self Help And How To"
   [tnorm("Self Help And How To")]: { hide: true },
+
+  // 3) "Complete Shop Packages": remove "Complete Shop Packages" product
   [tnorm("Complete Shop Packages")]: { hide: true },
+
+  // 4) "Passive Income & Side Hustles": remove "Passive Income And Side Hustles"
   [tnorm("Passive Income And Side Hustles")]: { hide: true },
+
+  // 5) "Digital Essentials Hub": move "The Art Of Giving No Fucks" to Self-Help
   [tnorm("The Art Of Giving No Fucks")]: { forceSlug: "self-help-and-how-to" },
 };
-/* ------------------------------------------------------------------------ */
+/* ------------------------------------------------------------------------- */
 
 function toSlug(s: string) {
   return s
@@ -59,17 +74,20 @@ const LABEL_TO_SLUG: Record<string, string> = Object.fromEntries(
   Object.entries(META).map(([slug, m]) => [m.title.toLowerCase(), slug])
 );
 
+/** Return the *effective* category slug for a product, applying FIX_BY_TITLE when present */
 function effectiveProductCategorySlug(p: any): string | null {
   const titleKey = tnorm(String(p.title ?? ""));
   const fix = FIX_BY_TITLE[titleKey];
   if (fix?.hide) return "__HIDE__";
   if (fix?.forceSlug) return fix.forceSlug;
 
+  // Prefer explicit slug on product if present
   if (p.categorySlug) {
     const s = toSlug(String(p.categorySlug));
     const normalized = LEGACY_TO_NEW[s] ?? s;
     return ALL_SLUGS.has(normalized) ? normalized : null;
   }
+  // Fallback to product.category label text
   if (p.category) {
     const fromLabel = LABEL_TO_SLUG[String(p.category).toLowerCase()];
     if (fromLabel) return fromLabel;
@@ -81,7 +99,7 @@ function effectiveProductCategorySlug(p: any): string | null {
 }
 
 /** Read up to N thumbs from /public/images/products/<slug>/thumb-*.ext */
-function readProductThumbs(slug: string, max = 4): string[] { // ← 4 thumbs
+function readProductThumbs(slug: string, max = 3): string[] {
   const dir = pub("images", "products", slug);
   if (!fs.existsSync(dir)) return [];
   const names = fs
@@ -139,26 +157,21 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     );
   }
 
-  // Filter by effective slug and exclude “hidden” products
+  // ✅ Filter by effective slug and exclude “hidden” products
   const catProducts = products.filter((p) => {
     const eff = effectiveProductCategorySlug(p);
     return eff !== "__HIDE__" && eff === slug;
   });
 
-  // Build card data (cover + 4 thumbs) and a canonical product href
+  // Build card data (cover + thumbs)
   const cards = catProducts.map((p) => {
-    const images = [p.image, ...readProductThumbs(p.slug, 4)].filter(Boolean);
-    const href =
-      p.slug ? `/products/${p.slug}` : p.id !== undefined ? `/products/${p.id}` : "/products";
-
+    const images = [p.image, ...readProductThumbs(p.slug)].filter(Boolean);
     return {
       title: p.title,
       slug: p.slug,
-      id: p.id,            // ProductCard can fall back if needed
       price: p.price,
       images,
       description: p.description,
-      href,               // makes “View/title/image” link correctly (no 404)
     };
   });
 
@@ -170,7 +183,7 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
       {cards.length ? (
         <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {cards.map((c) => (
-            <ProductCard key={String(c.slug ?? c.id ?? c.title)} {...c} />
+            <ProductCard key={c.slug} {...c} />
           ))}
         </div>
       ) : (
