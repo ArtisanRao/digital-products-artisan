@@ -3,7 +3,7 @@
 import InlineMore from "@/components/ui/inline-more";
 import { CATEGORIES } from "@/data/categories";
 import { useMemo, useState } from "react";
-import CatLink from "@/components/ui/CatLink"; // ← no-prefetch Link wrapper
+import CatLink from "@/components/ui/CatLink"; // ← no-prefetch wrapper
 
 /** Optional descriptions */
 const DESC_BY_LABEL: Record<string, string> = {
@@ -28,6 +28,10 @@ const GLOBAL_FALLBACKS = [
   "/images/placeholder.jpg",
 ];
 
+const BUILD_TAG =
+  (process.env.NEXT_PUBLIC_BUILD_TAG as string) ||
+  "catlinks-2025-09-26-f";
+
 /* ---------- helpers: category card image with fallbacks ---------- */
 
 function buildCandidates(slug: string, image?: string): string[] {
@@ -45,7 +49,7 @@ function buildCandidates(slug: string, image?: string): string[] {
       list.push(image.replace(/\.webp$/i, ".png"));
     }
   }
-  // Curated cover only: /images/categories/<slug>/card.*
+  // Curated cover only
   const base = `/images/categories/${slug}/card`;
   list.push(`${base}.jpg`, `${base}.png`, `${base}.webp`);
   list.push(...GLOBAL_FALLBACKS);
@@ -71,11 +75,12 @@ export default function CategoriesPage() {
         {CATEGORIES.map((c) => {
           const { src, onError } = useCategoryImage(c.slug, (c as any).image);
           const desc = DESC_BY_LABEL[c.label] ?? "Explore products in this category.";
+          const href = `/categories/${c.slug}?v=${encodeURIComponent(BUILD_TAG)}`;
 
           return (
             <CatLink
               key={c.slug}
-              href={`/categories/${c.slug}`}
+              href={href}
               aria-label={`Browse ${c.label}`}
               className="group block rounded-2xl border overflow-hidden bg-white shadow transition-all duration-300 hover:-translate-y-1 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2"
             >
