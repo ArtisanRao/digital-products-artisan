@@ -35,27 +35,14 @@ const LEGACY_TO_NEW: Record<string, string> = {
 const pub = (...p: string[]) => path.join(process.cwd(), "public", ...p);
 
 /* ----------------------- EXACT FIXES YOU ASKED FOR ------------------------ */
-/** Normalize for title-key maps */
 const tnorm = (s: string) => s.toLowerCase().trim();
 
 /** Hard overrides by product *title* */
-const FIX_BY_TITLE: Record<
-  string,
-  { forceSlug?: string; hide?: boolean }
-> = {
-  // 1) "AI & ChatGPT Guides": move "Video Courses And Training" to its own category
+const FIX_BY_TITLE: Record<string, { forceSlug?: string; hide?: boolean }> = {
   [tnorm("Video Courses And Training")]: { forceSlug: "video-courses-and-training" },
-
-  // 2) "Self-Help & How-To": remove the product "Self Help And How To"
   [tnorm("Self Help And How To")]: { hide: true },
-
-  // 3) "Complete Shop Packages": remove "Complete Shop Packages" product
   [tnorm("Complete Shop Packages")]: { hide: true },
-
-  // 4) "Passive Income & Side Hustles": remove "Passive Income And Side Hustles"
   [tnorm("Passive Income And Side Hustles")]: { hide: true },
-
-  // 5) "Digital Essentials Hub": move "The Art Of Giving No Fucks" to Self-Help
   [tnorm("The Art Of Giving No Fucks")]: { forceSlug: "self-help-and-how-to" },
 };
 /* ------------------------------------------------------------------------- */
@@ -81,13 +68,11 @@ function effectiveProductCategorySlug(p: any): string | null {
   if (fix?.hide) return "__HIDE__";
   if (fix?.forceSlug) return fix.forceSlug;
 
-  // Prefer explicit slug on product if present
   if (p.categorySlug) {
     const s = toSlug(String(p.categorySlug));
     const normalized = LEGACY_TO_NEW[s] ?? s;
     return ALL_SLUGS.has(normalized) ? normalized : null;
   }
-  // Fallback to product.category label text
   if (p.category) {
     const fromLabel = LABEL_TO_SLUG[String(p.category).toLowerCase()];
     if (fromLabel) return fromLabel;
@@ -99,7 +84,7 @@ function effectiveProductCategorySlug(p: any): string | null {
 }
 
 /** Read up to N thumbs from /public/images/products/<slug>/thumb-*.ext */
-function readProductThumbs(slug: string, max = 3): string[] {
+function readProductThumbs(slug: string, max = 4): string[] { // ← 4 thumbs
   const dir = pub("images", "products", slug);
   if (!fs.existsSync(dir)) return [];
   const names = fs
@@ -163,15 +148,20 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     return eff !== "__HIDE__" && eff === slug;
   });
 
-  // Build card data (cover + thumbs)
+  // Build card data (cover + 4 thumbs) and a canonical product href
   const cards = catProducts.map((p) => {
-    const images = [p.image, ...readProductThumbs(p.slug)].filter(Boolean);
+    const images = [p.image, ...readProductThumbs(p.slug, 4)].filter(Boolean);
+    const href =
+      p.slug ? `/products/${p.slug}` : p.id !== undefined ? `/products/${p.id}` : "/products";
+
     return {
       title: p.title,
       slug: p.slug,
+      id: p.id,            // so ProductCard can also fall back if needed
       price: p.price,
       images,
       description: p.description,
+      href,               // makes “View/title/image” link correctly (no 404)
     };
   });
 
@@ -183,7 +173,7 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
       {cards.length ? (
         <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {cards.map((c) => (
-            <ProductCard key={c.slug} {...c} />
+            <ProductCard key={String(c.slug ?? c.title)} {...c} />
           ))}
         </div>
       ) : (
