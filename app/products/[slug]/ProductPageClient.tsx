@@ -6,28 +6,48 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import InlineMore from "@/components/ui/inline-more";
 import { Button } from "@/components/ui/button";
-import AddToCartButton from "@/components/shop/AddToCartButton"; // ← unified, working button
+import AddToCartButton from "@/components/shop/AddToCartButton";
 import { products, productsById } from "@/data/products";
 import { getPreferredCurrency } from "@/lib/currency";
 
+/* --------------------------- helpers --------------------------- */
+
 function findProduct(idOrSlug: string) {
-  const asNum = Number(idOrSlug);
+  const raw = String(idOrSlug ?? "").trim();
+  if (!raw) return null;
+
+  const asNum = Number(raw);
   if (Number.isFinite(asNum)) {
     const byId = (productsById as any)?.[asNum];
     if (byId) return byId;
-    const byIdLinear = products.find((p) => Number(p.id) === asNum);
-    if (byIdLinear) return byIdLinear;
+    const linear = products.find((p) => Number(p.id) === asNum);
+    if (linear) return linear;
   }
-  const slug = idOrSlug.toLowerCase();
+
+  const slugLc = raw.toLowerCase();
   return (
-    products.find((p) => String(p.slug).toLowerCase() === slug) ||
-    products.find((p) => String(p.id) === idOrSlug) ||
+    products.find((p) => String(p.slug).toLowerCase() === slugLc) ||
+    products.find((p) => String(p.id) === raw) ||
     null
   );
 }
 
+function normalizeImages(imgs?: string[] | null, fallback?: string) {
+  const base = (Array.isArray(imgs) && imgs.length ? imgs : [fallback].filter(Boolean)) as string[];
+  const seen = new Set<string>();
+  const list: string[] = [];
+  for (const src of base) {
+    if (!src || seen.has(src)) continue;
+    seen.add(src);
+    list.push(src);
+  }
+  return list.length ? list : ["/images/placeholder.jpg"];
+}
+
+/* --------------------------- gallery --------------------------- */
+
 function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
-  const safe = images?.length ? images : ["/images/placeholder-cover.jpg"];
+  const safe = images?.length ? images : ["/images/placeholder.jpg"];
   const [idx, setIdx] = React.useState(0);
   const n = safe.length;
   const go = (d: number) => setIdx((i) => (i + d + n) % n);
@@ -43,6 +63,7 @@ function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
 
   return (
     <div className="relative grid grid-cols-[86px_1fr] gap-4 lg:gap-6" style={{ zIndex: 1 }}>
+      {/* thumbs */}
       <div className="flex max-h-[560px] flex-col gap-3 overflow-auto pr-1">
         {safe.map((src, i) => (
           <button
@@ -52,9 +73,7 @@ function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
             onClick={() => setIdx(i)}
             className={[
               "relative aspect-square w-[86px] overflow-hidden rounded-xl border transition",
-              i === idx
-                ? "ring-2 ring-blue-500 border-transparent"
-                : "border-gray-200 hover:border-blue-300",
+              i === idx ? "ring-2 ring-blue-500 border-transparent" : "border-gray-200 hover:border-blue-300",
             ].join(" ")}
             aria-label={`Preview image ${i + 1}`}
           >
@@ -63,6 +82,7 @@ function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
         ))}
       </div>
 
+      {/* main */}
       <div className="relative isolate rounded-2xl border bg-white">
         <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl">
           <Image
@@ -101,6 +121,8 @@ function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
   );
 }
 
+/* --------------------------- page --------------------------- */
+
 export default function ProductPageClient({ slug }: { slug: string }) {
   const handle = String(slug ?? "");
   const p = findProduct(handle);
@@ -113,11 +135,12 @@ export default function ProductPageClient({ slug }: { slug: string }) {
     );
   }
 
-  const imgs: string[] = (p.images?.length ? p.images : [p.image]).filter(Boolean) as string[];
-  const coverImage = imgs[0] ?? "/images/placeholder.jpg";
+  // cover + extras (dedup, ordered)
+  const images = normalizeImages(p.images?.length ? p.images : [p.image], p.image);
+  const coverImage = images[0];
 
   const currencyRaw = getPreferredCurrency();
-  const currency = String(currencyRaw).toUpperCase() as "EUR" | "USD";
+  const currency = String(currencyRaw || "EUR").toUpperCase() as "EUR" | "USD";
   const locale = currency === "EUR" ? "de-DE" : "en-US";
   const priceNumber = typeof p.price === "number" ? p.price : Number(p.price) || 0;
   const display = new Intl.NumberFormat(locale, { style: "currency", currency }).format(priceNumber);
@@ -126,10 +149,12 @@ export default function ProductPageClient({ slug }: { slug: string }) {
 
   return (
     <main className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 py-8 lg:grid-cols-[1.2fr_.8fr]">
+      {/* gallery */}
       <section style={{ zIndex: 1, position: "relative" }}>
-        <ProductGallery images={imgs} alt={p.title} />
+        <ProductGallery images={images} alt={p.title} />
       </section>
 
+      {/* details */}
       <section className="isolate" style={{ position: "relative", zIndex: 60, pointerEvents: "auto" }}>
         <h1
           className="text-4xl font-extrabold leading-tight"
@@ -151,7 +176,7 @@ export default function ProductPageClient({ slug }: { slug: string }) {
           <InlineMore text={p.description ?? ""} lines={3} minChars={80} />
         </div>
 
-        {/* Uniform horizontal CTAs */}
+        {/* uniform horizontal CTAs */}
         <div className="mt-6 grid grid-cols-2 gap-3" style={{ position: "relative", zIndex: 61 }}>
           <AddToCartButton
             id={p.id}
