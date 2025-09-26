@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
 import { CATEGORIES } from "@/data/categories";
 import { useMemo, useState } from "react";
+import CatLink from "@/components/ui/CatLink"; // ← no-prefetch Link wrapper
 
 /** Optional descriptions */
 const DESC_BY_LABEL: Record<string, string> = {
@@ -45,6 +45,7 @@ function buildCandidates(slug: string, image?: string): string[] {
       list.push(image.replace(/\.webp$/i, ".png"));
     }
   }
+  // Curated cover only: /images/categories/<slug>/card.*
   const base = `/images/categories/${slug}/card`;
   list.push(`${base}.jpg`, `${base}.png`, `${base}.webp`);
   list.push(...GLOBAL_FALLBACKS);
@@ -72,7 +73,7 @@ export default function CategoriesPage() {
           const desc = DESC_BY_LABEL[c.label] ?? "Explore products in this category.";
 
           return (
-            <Link
+            <CatLink
               key={c.slug}
               href={`/categories/${c.slug}`}
               aria-label={`Browse ${c.label}`}
@@ -104,7 +105,7 @@ export default function CategoriesPage() {
                   lessLabel="less"
                 />
               </div>
-            </Link>
+            </CatLink>
           );
         })}
       </div>

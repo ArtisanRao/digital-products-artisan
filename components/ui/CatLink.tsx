@@ -4,7 +4,7 @@ import * as React from "react";
 
 type Props = React.ComponentProps<typeof Link>;
 
-/** Link that *never* prefetches (ideal for /categories/* to avoid stale HTML) */
+/** Link that never prefetches (use for /categories/* to avoid stale HTML) */
 export default function CatLink({ prefetch, ...rest }: Props) {
   return <Link prefetch={false} {...rest} />;
 }
