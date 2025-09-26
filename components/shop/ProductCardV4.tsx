@@ -6,10 +6,10 @@ import { useMemo, useState } from "react";
 export type ProductCardData = {
   title: string;
   slug?: string;
-  id?: string | number;     // fallback if slug is missing
+  id?: string | number;
   price?: number | string;
-  images?: string[];        // cover first, then mockups/thumbs
-  href?: string;            // explicit href overrides slug/id
+  images?: string[];
+  href?: string;
   description?: string;
 };
 
@@ -22,28 +22,27 @@ export default function ProductCardV4({
   href,
   description,
 }: ProductCardData) {
-  // Dedup and drop empties
+  // Dedup + drop empties
   const pics = useMemo(
     () => Array.from(new Set((images || []).filter(Boolean))),
     [images]
   );
 
-  // Exactly 1 cover + 4 thumbs (pad with cover if needed)
+  // Exactly: cover + up to 3 unique extras (no padding with cover)
   const displayPics = useMemo(() => {
     const cover = pics[0] ?? "/images/placeholder.jpg";
-    const thumbs = pics.slice(1);
-    while (thumbs.length < 4) thumbs.push(cover);
-    return [cover, ...thumbs.slice(0, 4)];
+    const extras = pics.slice(1).filter((src) => src !== cover).slice(0, 3);
+    return [cover, ...extras];
   }, [pics]);
 
   const [idx, setIdx] = useState(0);
   const prev = () => setIdx((i) => (i === 0 ? displayPics.length - 1 : i - 1));
   const next = () => setIdx((i) => (i + 1) % displayPics.length);
 
-  // Robust URL: href → /products/<slug> → /products/<id> → /products (safe fallback)
+  // Robust URL (href → slug → id → /products)
   const productUrl = useMemo(() => {
     if (href && href.startsWith("/")) return href;
-    if (slug) return `/products/${slug}`;
+    if (slug) return `/products/${encodeURIComponent(slug)}`;
     if (id !== undefined && id !== null) return `/products/${encodeURIComponent(String(id))}`;
     return "/products";
   }, [href, slug, id]);
@@ -53,14 +52,12 @@ export default function ProductCardV4({
       ? new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(price)
       : (price ?? "");
 
-  // Cart + checkout wiring
+  // Cart & checkout
   const addToCart = () => {
     try {
       const key = String(slug ?? id ?? "");
       if (!key) return;
-
       const w = window as any;
-
       if (w?.dpaCart?.add) { w.dpaCart.add({ slug: key, qty: 1 }); return; }
       if (w?.__CART__?.add) { w.__CART__.add({ slug: key, qty: 1 }); return; }
 
@@ -87,14 +84,14 @@ export default function ProductCardV4({
   return (
     <article
       className="group rounded-2xl border bg-white/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-      data-version="ProductCardV4@links-and-1plus4"
+      data-version="ProductCardV4@links-v3-1plus3thumbs-compactCTAs"
     >
       {/* Main image (click → product page) */}
       <Link href={productUrl} prefetch={false} aria-label={`Open ${title}`}>
         <div className="relative overflow-hidden rounded-t-2xl bg-gray-50">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={displayPics[idx]}
+            src={displayPics[idx] ?? "/images/placeholder.jpg"}
             alt={title}
             className="aspect-[3/2] w-full object-contain p-2 transition-transform duration-300 group-hover:scale-[1.01]"
             loading="lazy"
@@ -132,41 +129,43 @@ export default function ProductCardV4({
           <p className="mt-1 line-clamp-2 text-sm text-gray-600">{description}</p>
         )}
 
-        {/* Exactly 4 thumbs under the main preview — hover swaps, click navigates */}
-        <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
-          {displayPics.slice(1, 5).map((src, i) => {
-            const thumbIndex = i + 1;
-            const active = idx === thumbIndex;
-            return (
-              <Link
-                key={src + i}
-                href={productUrl}
-                prefetch={false}
-                aria-label={`Open ${title} (preview ${thumbIndex})`}
-                title={`Open ${title}`}
-                onMouseEnter={() => setIdx(thumbIndex)}
-                onFocus={() => setIdx(thumbIndex)}
-                className={[
-                  "block h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-white transition",
-                  active ? "ring-2 ring-blue-500" : "opacity-80 hover:opacity-100",
-                ].join(" ")}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={src} alt="" className="h-full w-full object-cover" />
-              </Link>
-            );
-          })}
-        </div>
+        {/* Thumbs: extras only; hover swaps, click navigates */}
+        {displayPics.length > 1 && (
+          <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
+            {displayPics.slice(1).map((src, i) => {
+              const thumbIndex = i + 1;
+              const active = idx === thumbIndex;
+              return (
+                <Link
+                  key={src + i}
+                  href={productUrl}
+                  prefetch={false}
+                  aria-label={`Open ${title} (preview ${thumbIndex})`}
+                  title={`Open ${title}`}
+                  onMouseEnter={() => setIdx(thumbIndex)}
+                  onFocus={() => setIdx(thumbIndex)}
+                  className={[
+                    "block h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-white transition",
+                    active ? "ring-2 ring-blue-500" : "opacity-80 hover:opacity-100",
+                  ].join(" ")}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={src} alt="" className="h-full w-full object-cover" />
+                </Link>
+              );
+            })}
+          </div>
+        )}
 
         {/* Price */}
         {priceLabel && <div className="mt-3 text-xl font-semibold">{priceLabel}</div>}
 
-        {/* Actions — aligned horizontally with equal widths */}
-        <div className="mt-3 grid grid-cols-3 gap-3">
+        {/* Compact CTAs (equal width; middle wraps to two lines) */}
+        <div className="mt-3 grid grid-cols-3 gap-2">
           <Link
             href={productUrl}
             prefetch={false}
-            className="flex h-10 items-center justify-center rounded-xl bg-blue-600 text-sm font-medium text-white hover:bg-blue-700"
+            className="flex h-11 items-center justify-center rounded-xl bg-blue-600 px-3 text-[13px] leading-tight text-white hover:bg-blue-700 text-center"
             aria-label={`View ${title}`}
           >
             👁️ View
@@ -175,16 +174,20 @@ export default function ProductCardV4({
           <button
             type="button"
             onClick={addToCart}
-            className="flex h-10 items-center justify-center rounded-xl bg-blue-600 text-sm font-medium text-white hover:bg-blue-700"
+            className="flex h-11 items-center justify-center rounded-xl bg-blue-600 px-2 text-[13px] leading-tight text-white hover:bg-blue-700 text-center"
             aria-label="Add to cart"
+            title="Add to cart"
           >
-            🛒 Add to cart
+            <span className="flex flex-col items-center">
+              <span>🛒 Add&nbsp;to</span>
+              <span>cart</span>
+            </span>
           </button>
 
           <button
             type="button"
             onClick={buyNow}
-            className="flex h-10 items-center justify-center rounded-xl bg-blue-600 text-sm font-medium text-white hover:bg-blue-700"
+            className="flex h-11 items-center justify-center rounded-xl bg-blue-600 px-3 text-[13px] leading-tight text-white hover:bg-blue-700 text-center"
             aria-label="Buy now"
           >
             ⚡ Buy
