@@ -2,17 +2,17 @@
 import fs from "node:fs";
 import path from "node:path";
 import Link from "next/link";
+import Script from "next/script";
 import InlineMore from "@/components/ui/inline-more";
 import { products } from "@/data/products";
-import ProductCard from "../../../components/shop/ProductCardV4";
+import ProductCardV4 from "../../../components/shop/ProductCardV4";
 
-// ── Hard no-cache / dynamic for this route ─────────────────────────
-export const dynamic = "force-dynamic";
+// Force fresh rendering and no caching for this route
 export const revalidate = 0;
+export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
-// ──────────────────────────────────────────────────────────────────
 
-type Params = { slug: string };
+const UI_VERSION = "cat-v10-params-fix";
 
 // ---- Category metadata (normalized slugs) ----
 const META: Record<string, { title: string; description: string }> = {
@@ -32,7 +32,7 @@ const META: Record<string, { title: string; description: string }> = {
   "social-media-kits":           { title: "Social Media Kits",       description: "Post templates and brandable assets for socials." },
 };
 
-// Backward-compat aliases
+// Backward-compat slug aliases (old → new)
 const LEGACY_TO_NEW: Record<string, string> = {
   "planners-productivity": "planners-and-productivity",
   "plr-mrr-bundles": "plr-and-mrr-bundles",
@@ -41,19 +41,11 @@ const LEGACY_TO_NEW: Record<string, string> = {
   "fonts": "fonts-and-icons",
 };
 
-const ALL_SLUGS = new Set(Object.keys(META));
-const LABEL_TO_SLUG: Record<string, string> = Object.fromEntries(
-  Object.entries(META).map(([slug, m]) => [m.title.toLowerCase(), slug])
-);
-
 const pub = (...p: string[]) => path.join(process.cwd(), "public", ...p);
+
+// ----------------------- exact fixes -----------------------
 const tnorm = (s: string) => s.toLowerCase().trim();
-const toSlug = (s: string) =>
-  s.toLowerCase().trim().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
-const normalizeSlug = (s: string) => LEGACY_TO_NEW[s] ?? s;
-
-// Exact fixes you requested earlier
 const FIX_BY_TITLE: Record<string, { forceSlug?: string; hide?: boolean }> = {
   [tnorm("Video Courses And Training")]: { forceSlug: "video-courses-and-training" },
   [tnorm("Self Help And How To")]: { hide: true },
@@ -62,10 +54,23 @@ const FIX_BY_TITLE: Record<string, { forceSlug?: string; hide?: boolean }> = {
   [tnorm("The Art Of Giving No Fucks")]: { forceSlug: "self-help-and-how-to" },
 };
 
-// Effective category slug per product
+function toSlug(s: string) {
+  return s
+    .toLowerCase()
+    .trim()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+const ALL_SLUGS = new Set(Object.keys(META));
+const LABEL_TO_SLUG: Record<string, string> = Object.fromEntries(
+  Object.entries(META).map(([slug, m]) => [m.title.toLowerCase(), slug])
+);
+
 function effectiveProductCategorySlug(p: any): string | null {
-  const key = tnorm(String(p.title ?? ""));
-  const fix = FIX_BY_TITLE[key];
+  const titleKey = tnorm(String(p.title ?? ""));
+  const fix = FIX_BY_TITLE[titleKey];
   if (fix?.hide) return "__HIDE__";
   if (fix?.forceSlug) return fix.forceSlug;
 
@@ -84,37 +89,56 @@ function effectiveProductCategorySlug(p: any): string | null {
   return null;
 }
 
-// Read thumbs /public/images/products/<productSlug>/thumb-*.*
-function readProductThumbs(pSlug?: string, max = 4): string[] {
-  if (!pSlug) return [];
-  const dir = pub("images", "products", pSlug);
+// Read up to N thumbs from /public/images/products/<slug>/thumb-*.ext (default 4, numeric sort)
+function readProductThumbs(slug?: string, max = 4): string[] {
+  if (!slug) return [];
+  const dir = pub("images", "products", slug);
   if (!fs.existsSync(dir)) return [];
-  return fs
+  const names = fs
     .readdirSync(dir)
     .filter((f) => /^thumb-\d+\.(png|jpe?g|webp|avif)$/i.test(f))
-    .sort((a, b) => Number(a.match(/\d+/)?.[0] ?? 0) - Number(b.match(/\d+/)?.[0] ?? 0))
-    .slice(0, max)
-    .map((n) => `/images/products/${pSlug}/${n}`);
+    .sort((a, b) => {
+      const na = Number(a.match(/\d+/)?.[0] ?? 0);
+      const nb = Number(b.match(/\d+/)?.[0] ?? 0);
+      return na - nb;
+    })
+    .slice(0, max);
+  return names.map((n) => `/images/products/${slug}/${n}`);
 }
 
-// Always return EXACTLY 5 images (1 cover + 4 thumbs). If not enough thumbs, pad with the cover.
-function buildFiveImages(cover?: string, pSlug?: string): string[] {
-  const thumbs = readProductThumbs(pSlug, 4);
-  const coverSafe = cover || "/images/placeholder.jpg";
-  const list = [coverSafe, ...thumbs];
-  while (list.length < 5) list.push(coverSafe);
-  return list.slice(0, 5);
+// Static params for new and legacy slugs
+export function generateStaticParams() {
+  const newSlugs = Object.keys(META);
+  const legacySlugs = Object.keys(LEGACY_TO_NEW);
+  return [...newSlugs, ...legacySlugs].map((slug) => ({ slug }));
 }
 
+type Params = { slug: string };
+const normalizeSlug = (s: string) => LEGACY_TO_NEW[s] ?? s;
+
+// ✅ NOTE: params is a plain object, NOT a Promise
+export async function generateMetadata({ params }: { params: Params }) {
+  const slug = normalizeSlug(params.slug);
+  const m = META[slug];
+  const title = m ? `${m.title} | Digital Products Artisan` : "Digital Products | Digital Products Artisan";
+  const description = m?.description ?? "Browse our curated digital products.";
+  return {
+    title,
+    description,
+    openGraph: { title, description, type: "website" },
+    twitter: { card: "summary_large_image", title, description },
+  };
+}
+
+// ✅ NOTE: params is a plain object, NOT a Promise
 export default async function CategoryPage({ params }: { params: Params }) {
-  const raw = params.slug;
-  const slug = normalizeSlug(raw);
+  const slug = normalizeSlug(params.slug);
   const meta = META[slug];
 
   if (!meta) {
     const pretty = slug.replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
     return (
-      <main className="container mx-auto px-4 py-16">
+      <main className="container mx-auto px-4 py-16" data-ui={`CategoryPage@${UI_VERSION}:not-found`}>
         <h1 className="text-3xl md:text-4xl font-bold mb-2">{pretty}</h1>
         <InlineMore
           text="We couldn’t find a dedicated page for this category yet. Explore best sellers below or visit all products."
@@ -129,31 +153,53 @@ export default async function CategoryPage({ params }: { params: Params }) {
     );
   }
 
-  // Filter products by effective slug and exclude hidden
+  // Filter by effective slug and exclude “hidden” products
   const catProducts = products.filter((p) => {
     const eff = effectiveProductCategorySlug(p);
     return eff !== "__HIDE__" && eff === slug;
   });
 
-  // Build card props (robust linking + exactly 5 images)
-  const cards = catProducts.map((p) => ({
-    id: p.id,
-    title: p.title,
-    slug: p.slug,
-    price: p.price,
-    description: p.description,
-    images: buildFiveImages(p.image, p.slug),
-  }));
+  // Build card data (cover + up to 4 thumbs), include id for robust linking, dedupe images, add small cache-buster
+  const cards = catProducts.map((p) => {
+    const rawImages = [p.image, ...readProductThumbs(p.slug, 4)].filter(Boolean);
+    const deduped = Array.from(new Set(rawImages)) as string[];
+    const images = deduped.map((src) =>
+      src.includes("?") ? `${src}&v=${UI_VERSION}` : `${src}?v=${UI_VERSION}`
+    );
+
+    return {
+      id: p.id,
+      title: p.title,
+      slug: p.slug,
+      price: p.price,
+      images,
+      description: p.description,
+    };
+  });
 
   return (
-    <main className="container mx-auto px-4 py-12">
+    <main className="container mx-auto px-4 py-12" data-ui={`CategoryPage@${UI_VERSION}`}>
+      {/* One-time kill of any old SW/cache that may be serving stale bundles */}
+      <Script id="sw-reset-cat" strategy="afterInteractive">
+        {`(async()=>{try{
+          if('serviceWorker' in navigator){
+            const regs = await navigator.serviceWorker.getRegistrations();
+            for(const r of regs){ try{await r.unregister();}catch(_){} }
+          }
+          if('caches' in window){
+            const keys = await caches.keys();
+            for(const k of keys){ if(/^(workbox|next-pwa|static-|pages-cache-)/.test(k)) { try{await caches.delete(k);}catch(_){} } }
+          }
+        }catch(e){console.warn('SW reset failed', e);} })();`}
+      </Script>
+
       <h1 className="text-3xl md:text-4xl font-bold">{meta.title}</h1>
       <InlineMore text={meta.description} lines={1} minChars={40} className="mt-1 text-gray-700" />
 
       {cards.length ? (
-        <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" data-ui={`category-grid@${UI_VERSION}`}>
           {cards.map((c) => (
-            <ProductCard key={String(c.slug ?? c.id)} {...c} />
+            <ProductCardV4 key={`${UI_VERSION}:${String(c.slug ?? c.id)}`} {...c} />
           ))}
         </div>
       ) : (
