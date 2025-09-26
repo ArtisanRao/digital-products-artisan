@@ -6,6 +6,20 @@ const withPWACfg = withPWA({
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === "development",
+
+  /** 👇 NEW: runtime caching — never cache HTML documents */
+  runtimeCaching: [
+    {
+      // Treat navigations / HTML as network-only so stale pages aren't served
+      urlPattern: ({ request, sameOrigin }) =>
+        request.destination === "document" || request.mode === "navigate",
+      handler: "NetworkOnly",
+      options: {
+        cacheName: "html-no-cache",
+      },
+    },
+    // (Keep default asset caching behavior; add more rules here if desired)
+  ],
 });
 
 /** Content Security Policy (tune domains as needed) */
@@ -31,7 +45,11 @@ const securityHeaders = [
   { key: "X-Frame-Options", value: "SAMEORIGIN" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  { key: "Permissions-Policy", value: "accelerometer=(), autoplay=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=(), interest-cohort=()" },
+  {
+    key: "Permissions-Policy",
+    value:
+      "accelerometer=(), autoplay=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=(), interest-cohort=()",
+  },
   { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains; preload" },
   { key: "Origin-Agent-Cluster", value: "?1" },
 ];
@@ -108,6 +126,18 @@ const baseConfig = {
   async headers() {
     return [
       ...assetNoIndexHeaders,
+
+      /** 👇 NEW: never cache category pages at the edge */
+      {
+        source: "/categories",
+        headers: [{ key: "Cache-Control", value: "no-store" }],
+      },
+      {
+        source: "/categories/:slug*",
+        headers: [{ key: "Cache-Control", value: "no-store" }],
+      },
+
+      // Global security headers
       { source: "/(.*)", headers: securityHeaders },
     ];
   },
