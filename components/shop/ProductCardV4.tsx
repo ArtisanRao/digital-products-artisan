@@ -134,22 +134,28 @@ export default function ProductCardV4({
 
         {/* Exactly 4 thumbs under the main preview — hover swaps, click navigates */}
         <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
-          {displayPics.slice(1, 5).map((src, i) => (
-            <Link
-              key={src + i}
-              href={productUrl}
-              prefetch={false}
-              aria-label={`Open ${title}`}
-              onMouseEnter={() => setIdx(i + 1)} // hover shows that thumb as main
-              className={`h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-white transition ${
-                idx === i + 1 ? "ring-2 ring-blue-500" : "opacity-80 hover:opacity-100"
-              }`}
-              title={`Preview ${i + 1}`}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt="" className="h-full w-full object-cover" />
-            </Link>
-          ))}
+          {displayPics.slice(1, 5).map((src, i) => {
+            const thumbIndex = i + 1;
+            const active = idx === thumbIndex;
+            return (
+              <Link
+                key={src + i}
+                href={productUrl}
+                prefetch={false}
+                aria-label={`Open ${title} (preview ${thumbIndex})`}
+                title={`Open ${title}`}
+                onMouseEnter={() => setIdx(thumbIndex)}
+                onFocus={() => setIdx(thumbIndex)}
+                className={[
+                  "block h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-white transition",
+                  active ? "ring-2 ring-blue-500" : "opacity-80 hover:opacity-100",
+                ].join(" ")}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={src} alt="" className="h-full w-full object-cover" />
+              </Link>
+            );
+          })}
         </div>
 
         {/* Price */}
