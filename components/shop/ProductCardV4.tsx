@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export type ProductCardData = {
   title: string;
@@ -28,7 +28,7 @@ export default function ProductCardV4({
     [images]
   );
 
-  // Exactly: cover + up to 3 unique extras (no padding with cover)
+  // Exactly: 1 cover + up to 3 unique extras
   const displayPics = useMemo(() => {
     const cover = pics[0] ?? "/images/placeholder.jpg";
     const extras = pics.slice(1).filter((src) => src !== cover).slice(0, 3);
@@ -36,31 +36,45 @@ export default function ProductCardV4({
   }, [pics]);
 
   const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    // Safety: if images change and idx is OOB, go back to cover
+    if (idx >= displayPics.length) setIdx(0);
+  }, [displayPics.length, idx]);
+
   const prev = () => setIdx((i) => (i === 0 ? displayPics.length - 1 : i - 1));
   const next = () => setIdx((i) => (i + 1) % displayPics.length);
 
-  // Robust URL (href → slug → id → /products)
+  // Canonical URL (href → slug → id → /products)
   const productUrl = useMemo(() => {
     if (href && href.startsWith("/")) return href;
     if (slug) return `/products/${encodeURIComponent(slug)}`;
-    if (id !== undefined && id !== null) return `/products/${encodeURIComponent(String(id))}`;
+    if (id !== undefined && id !== null)
+      return `/products/${encodeURIComponent(String(id))}`;
     return "/products";
   }, [href, slug, id]);
 
   const priceLabel =
     typeof price === "number"
-      ? new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(price)
-      : (price ?? "");
+      ? new Intl.NumberFormat("de-DE", {
+          style: "currency",
+          currency: "EUR",
+        }).format(price)
+      : price ?? "";
 
   // Cart & checkout
   const addToCart = () => {
     try {
       const key = String(slug ?? id ?? "");
       if (!key) return;
-      const w = (window as any);
-      if (w?.dpaCart?.add) { w.dpaCart.add({ slug: key, qty: 1 }); return; }
-      if (w?.__CART__?.add) { w.__CART__.add({ slug: key, qty: 1 }); return; }
-
+      const w = window as any;
+      if (w?.dpaCart?.add) {
+        w.dpaCart.add({ slug: key, qty: 1 });
+        return;
+      }
+      if (w?.__CART__?.add) {
+        w.__CART__.add({ slug: key, qty: 1 });
+        return;
+      }
       window.dispatchEvent(new CustomEvent("cart:add", { detail: { slug: key, qty: 1 } }));
       const raw = localStorage.getItem("cart");
       const cart: Record<string, number> = raw ? JSON.parse(raw) : {};
@@ -76,15 +90,18 @@ export default function ProductCardV4({
   const buyNow = () => {
     const key = String(slug ?? id ?? "");
     if (!key) return;
-    const w = (window as any);
-    if (w?.startCheckout) { w.startCheckout({ slug: key }); return; }
+    const w = window as any;
+    if (w?.startCheckout) {
+      w.startCheckout({ slug: key });
+      return;
+    }
     window.location.href = `/checkout?product=${encodeURIComponent(key)}`;
   };
 
   return (
     <article
       className="group rounded-2xl border bg-white/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-      data-version="ProductCardV4@links-v3-1plus3thumbs-compactCTAs"
+      data-version="ProductCardV4@1+3-compact-ctas-v2"
     >
       {/* Main image (click → product page) */}
       <Link href={productUrl} prefetch={false} aria-label={`Open ${title}`}>
@@ -100,17 +117,23 @@ export default function ProductCardV4({
             <>
               <button
                 type="button"
-                onClick={(e) => { e.preventDefault(); prev(); }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  prev();
+                }}
                 aria-label="Previous"
-                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-3 py-2 text-sm shadow hover:bg-white"
+                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-2.5 py-1.5 text-sm shadow hover:bg-white"
               >
                 ‹
               </button>
               <button
                 type="button"
-                onClick={(e) => { e.preventDefault(); next(); }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  next();
+                }}
                 aria-label="Next"
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-3 py-2 text-sm shadow hover:bg-white"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-2.5 py-1.5 text-sm shadow hover:bg-white"
               >
                 ›
               </button>
@@ -120,16 +143,18 @@ export default function ProductCardV4({
       </Link>
 
       <div className="p-4">
-        {/* Title (clickable → product page) */}
+        {/* Title (click → product page) */}
         <Link href={productUrl} prefetch={false} className="block">
-          <h3 className="line-clamp-2 text-lg font-semibold hover:text-blue-600">{title}</h3>
+          <h3 className="line-clamp-2 text-lg font-semibold hover:text-blue-600">
+            {title}
+          </h3>
         </Link>
 
         {description && (
           <p className="mt-1 line-clamp-2 text-sm text-gray-600">{description}</p>
         )}
 
-        {/* Thumbs: extras only; hover swaps, click navigates */}
+        {/* Thumbs (extras only): hover swaps, click navigates */}
         {displayPics.length > 1 && (
           <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
             {displayPics.slice(1).map((src, i) => {
@@ -146,7 +171,9 @@ export default function ProductCardV4({
                   onFocus={() => setIdx(thumbIndex)}
                   className={[
                     "block h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-white transition",
-                    active ? "ring-2 ring-blue-500" : "opacity-80 hover:opacity-100",
+                    active
+                      ? "ring-2 ring-blue-500"
+                      : "opacity-80 hover:opacity-100",
                   ].join(" ")}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -160,12 +187,12 @@ export default function ProductCardV4({
         {/* Price */}
         {priceLabel && <div className="mt-3 text-xl font-semibold">{priceLabel}</div>}
 
-        {/* Compact CTAs (equal width; middle wraps to two lines) */}
+        {/* Compact CTAs (smaller so “Add / cart” fits) */}
         <div className="mt-3 grid grid-cols-3 gap-2">
           <Link
             href={productUrl}
             prefetch={false}
-            className="flex h-11 items-center justify-center rounded-xl bg-blue-600 px-3 text-[13px] leading-tight text-white hover:bg-blue-700 text-center"
+            className="flex h-10 items-center justify-center rounded-xl bg-blue-600 px-2.5 text-[12px] leading-tight text-white hover:bg-blue-700 text-center"
             aria-label={`View ${title}`}
           >
             👁️ View
@@ -174,7 +201,7 @@ export default function ProductCardV4({
           <button
             type="button"
             onClick={addToCart}
-            className="flex h-11 items-center justify-center rounded-xl bg-blue-600 px-2 text-[13px] leading-tight text-white hover:bg-blue-700 text-center"
+            className="flex h-10 items-center justify-center rounded-xl bg-blue-600 px-2 text-[12px] leading-tight text-white hover:bg-blue-700 text-center"
             aria-label="Add to cart"
             title="Add to cart"
           >
@@ -187,7 +214,7 @@ export default function ProductCardV4({
           <button
             type="button"
             onClick={buyNow}
-            className="flex h-11 items-center justify-center rounded-xl bg-blue-600 px-3 text-[13px] leading-tight text-white hover:bg-blue-700 text-center"
+            className="flex h-10 items-center justify-center rounded-xl bg-blue-600 px-2.5 text-[12px] leading-tight text-white hover:bg-blue-700 text-center"
             aria-label="Buy now"
           >
             ⚡ Buy

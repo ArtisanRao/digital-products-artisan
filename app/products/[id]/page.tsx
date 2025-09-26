@@ -1,6 +1,6 @@
 // app/products/[id]/page.tsx
 export const runtime = "nodejs";
-export const dynamicParams = true; // allow IDs not listed in generateStaticParams
+export const dynamicParams = true; // allow ids not listed below
 export const revalidate = 3600;
 
 import type { Metadata } from "next";
@@ -31,13 +31,13 @@ function findProduct(idOrSlug: string) {
   const raw = String(idOrSlug ?? "").trim();
   if (!raw) return null;
 
-  // Numeric ID (fast path)
+  // Numeric fast-path
   if (/^\d+$/.test(raw)) {
     const idNum = Number(raw);
-    const byId = (productsById as any)?.[idNum];
-    if (byId) return byId;
-    const byIdLinear = products.find((p) => Number(p.id) === idNum);
-    if (byIdLinear) return byIdLinear;
+    const byMap = (productsById as any)?.[idNum];
+    if (byMap) return byMap;
+    const byLinear = products.find((p) => Number(p.id) === idNum);
+    if (byLinear) return byLinear;
   }
 
   // Slug (case-insensitive) or string id fallback
@@ -84,7 +84,7 @@ function discoverGallery(slug?: string): string[] {
 }
 
 /** Prefer product.images; else discover; else single product.image */
-function buildGallery(p: any): string[] {
+function rawGallery(p: any): string[] {
   const explicit = Array.isArray(p?.images) ? (p.images as string[]) : [];
   if (explicit.length) return Array.from(new Set(explicit.filter(Boolean)));
   const discovered = discoverGallery(p?.slug);
@@ -92,10 +92,17 @@ function buildGallery(p: any): string[] {
   return [p?.image].filter(Boolean) as string[];
 }
 
+/** Clamp to exactly cover + up to 3 unique extras */
+function coverPlusThree(imgs: string[]): string[] {
+  const list = imgs.filter(Boolean);
+  const cover = list[0] ?? "/images/placeholder.jpg";
+  const extras = list.slice(1).filter((s) => s !== cover);
+  return [cover, ...extras.slice(0, 3)];
+}
+
 /* ------------------- static params (optional) ------------------- */
 
 export function generateStaticParams() {
-  // Only numeric IDs to avoid conflicts with slug paths
   return products
     .filter((p) => p.id !== undefined && /^\d+$/.test(String(p.id)))
     .map((p) => ({ id: String(p.id) }));
@@ -114,11 +121,11 @@ export async function generateMetadata({
 
   const canonicalHandle = String(product.slug ?? product.id);
   const canonical = `/products/${encodeURIComponent(canonicalHandle)}`;
-  const gallery = buildGallery(product);
-  const ogImage =
-    gallery[0]?.startsWith("http")
-      ? gallery[0]
-      : `https://digitalproductsartisan.com${gallery[0] ?? "/images/placeholder.jpg"}`;
+
+  const gallery = coverPlusThree(rawGallery(product));
+  const ogImage = gallery[0]?.startsWith("http")
+    ? gallery[0]
+    : `https://digitalproductsartisan.com${gallery[0]}`;
 
   return {
     metadataBase: new URL("https://digitalproductsartisan.com"),
@@ -151,18 +158,16 @@ export default async function ProductPage({
 }) {
   const { id } = await params;
 
-  // Accept either numeric ID or slug here
+  // Accept **either** numeric id or slug; if it’s a slug and we have one, canonicalize.
   const product = findProduct(id);
   if (!product) notFound();
 
-  // If the segment looks like a slug (not all digits) and we *have* a slug,
-  // redirect to the canonical /products/[slug] page to avoid dupes & any
-  // chance of the wrong matcher capturing it.
   if (!/^\d+$/.test(id) && product.slug) {
     redirect(`/products/${encodeURIComponent(String(product.slug))}`);
   }
 
-  const galleryImages = buildGallery(product);
+  const galleryImages = coverPlusThree(rawGallery(product));
+
   const priceNum =
     typeof product.price === "number" ? product.price : Number(product.price) || 0;
   const originalNum =
@@ -176,14 +181,13 @@ export default async function ProductPage({
   )}`;
 
   const POLICY_COUNTRIES = [
-    "US", "CA", "GB", "DE", "FR", "ES", "IT", "NL", "SE", "NO", "FI", "DK", "IE",
-    "PT", "PL", "AT", "BE", "CH", "AU", "NZ",
+    "US","CA","GB","DE","FR","ES","IT","NL","SE","NO","FI","DK","IE","PT","PL","AT","BE","CH","AU","NZ",
   ];
   const today = new Date();
   const priceValidFrom = today.toISOString().slice(0, 10);
-  const until = new Date(today);
-  until.setFullYear(until.getFullYear() + 1);
-  const priceValidUntil = until.toISOString().slice(0, 10);
+  const priceValidUntil = new Date(today.getFullYear() + 1, today.getMonth(), today.getDate())
+    .toISOString()
+    .slice(0, 10);
 
   const productLd: any = {
     "@context": "https://schema.org",
@@ -209,35 +213,8 @@ export default async function ProductPage({
         returnPolicyCategory: "https://schema.org/MerchantReturnNotPermitted",
         applicableCountry: POLICY_COUNTRIES,
       },
-      shippingDetails: [
-        {
-          "@type": "OfferShippingDetails",
-          doesNotShip: true,
-          shippingDestination: {
-            "@type": "DefinedRegion",
-            addressCountry: POLICY_COUNTRIES,
-          },
-        },
-      ],
+      shippingDetails: [{ "@type": "OfferShippingDetails", doesNotShip: true }],
     },
-  };
-
-  if ((product as any).rating && (product as any).reviews) {
-    productLd.aggregateRating = {
-      "@type": "AggregateRating",
-      ratingValue: Number((product as any).rating).toFixed(1),
-      reviewCount: String((product as any).reviews),
-    };
-  }
-
-  const breadcrumbsLd = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      { "@type": "ListItem", position: 1, item: { "@id": "https://digitalproductsartisan.com/", name: "Home" } },
-      { "@type": "ListItem", position: 2, item: { "@id": "https://digitalproductsartisan.com/products", name: "Products" } },
-      { "@type": "ListItem", position: 3, item: { "@id": canonicalAbs, name: product.title } },
-    ],
   };
 
   const fullText =
@@ -262,14 +239,14 @@ export default async function ProductPage({
       </nav>
 
       <div className="grid gap-8 lg:grid-cols-2">
-        {/* Gallery */}
+        {/* Gallery (cover + up to 3 extras) */}
         <div className="w-full rounded-2xl border bg-white p-3 hover-zoom">
           <ProductGallery images={galleryImages} alt={product.title} />
         </div>
 
         {/* Details */}
         <section>
-          <h1 className="text-3xl font-bold">
+          <h1 className="text-4xl font-extrabold leading-tight">
             <Link
               href={canonicalHref}
               prefetch={false}
@@ -279,18 +256,21 @@ export default async function ProductPage({
             </Link>
           </h1>
 
-          <div className="mt-3 text-[15px] leading-relaxed text-gray-700">
+          <div className="mt-6 flex items-center gap-3">
+            <span className="text-2xl font-semibold">€{priceNum.toFixed(2)}</span>
+            {originalNum > priceNum && (
+              <span className="text-gray-400 line-through">€{originalNum.toFixed(2)}</span>
+            )}
+          </div>
+
+          <div className="mt-4 text-[15px] leading-relaxed text-gray-700">
             <p className="whitespace-pre-line">
               {teaser}
               {needsToggle && "…"}
             </p>
-
             {needsToggle && (
               <details className="group mt-1">
-                <summary
-                  className="inline cursor-pointer select-none text-blue-700 hover:underline"
-                  aria-label="Toggle full description"
-                >
+                <summary className="inline cursor-pointer select-none text-blue-700 hover:underline">
                   <span className="group-open:hidden">More</span>
                   <span className="hidden group-open:inline">Less</span>
                 </summary>
@@ -299,14 +279,7 @@ export default async function ProductPage({
             )}
           </div>
 
-          <div className="mt-6 flex items-center gap-3">
-            <span className="text-2xl font-semibold">€{priceNum.toFixed(2)}</span>
-            {originalNum > priceNum && (
-              <span className="text-gray-400 line-through">€{originalNum.toFixed(2)}</span>
-            )}
-          </div>
-
-          {/* Actions */}
+          {/* Compact, consistent CTAs (match the good page) */}
           <div className="mt-6 grid grid-cols-2 gap-3">
             <AddToCartButton
               id={product.id}
@@ -329,7 +302,6 @@ export default async function ProductPage({
 
       {/* JSON-LD */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbsLd) }} />
     </main>
   );
 }
