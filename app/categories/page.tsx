@@ -3,7 +3,7 @@
 import InlineMore from "@/components/ui/inline-more";
 import { CATEGORIES } from "@/data/categories";
 import { useMemo, useState } from "react";
-import CatLink from "@/components/ui/CatLink"; // ← no-prefetch wrapper
+import CatLink from "@/components/ui/CatLink"; // no-prefetch wrapper
 
 /** Optional descriptions */
 const DESC_BY_LABEL: Record<string, string> = {
@@ -28,9 +28,15 @@ const GLOBAL_FALLBACKS = [
   "/images/placeholder.jpg",
 ];
 
-const BUILD_TAG =
-  (process.env.NEXT_PUBLIC_BUILD_TAG as string) ||
-  "catlinks-2025-09-26-f";
+// Read the build tag set by app/layout.tsx (<body data-ui-build="...">)
+// fallback to NEXT_PUBLIC_BUILD_TAG, then a static string.
+function useBuildTag() {
+  const tag =
+    (typeof document !== "undefined" && document.body?.dataset?.uiBuild) ||
+    (process.env.NEXT_PUBLIC_BUILD_TAG as string) ||
+    "catlinks-2025-09-26-f";
+  return tag;
+}
 
 /* ---------- helpers: category card image with fallbacks ---------- */
 
@@ -67,6 +73,8 @@ function useCategoryImage(slug: string, image?: string) {
 /* ------------------------------- page ------------------------------- */
 
 export default function CategoriesPage() {
+  const BUILD_TAG = useBuildTag();
+
   return (
     <main className="max-w-7xl mx-auto px-4 py-12">
       <h1 className="text-4xl font-bold text-center mb-12">🗂️ All Categories</h1>
@@ -75,7 +83,10 @@ export default function CategoriesPage() {
         {CATEGORIES.map((c) => {
           const { src, onError } = useCategoryImage(c.slug, (c as any).image);
           const desc = DESC_BY_LABEL[c.label] ?? "Explore products in this category.";
+
+          // Bust both link HTML and image cache using the same tag
           const href = `/categories/${c.slug}?v=${encodeURIComponent(BUILD_TAG)}`;
+          const imgSrc = src.includes("?") ? `${src}&v=${BUILD_TAG}` : `${src}?v=${BUILD_TAG}`;
 
           return (
             <CatLink
@@ -88,11 +99,12 @@ export default function CategoriesPage() {
                 <div className="aspect-[16/9] md:aspect-[3/2] overflow-hidden">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={src}
+                    src={imgSrc}
                     onError={onError}
                     alt={c.label}
                     className="h-full w-full object-cover"
                     loading="lazy"
+                    decoding="async"
                   />
                 </div>
               </div>
