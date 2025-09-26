@@ -1,3 +1,4 @@
+// app/layout.tsx
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -60,7 +61,7 @@ export const viewport: Viewport = {
 };
 
 /** Bump this on each deploy to force clients to unregister old SW and clear caches */
-const BUILD_TAG = "sw-flush-2025-09-26-g";
+const BUILD_TAG = "sw-flush-2025-09-26-i";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const snipcartKey = process.env.NEXT_PUBLIC_SNIPCART_KEY;
@@ -121,17 +122,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         <AuthProvider>
           <CartProvider>
-            {/* Auto-detect & store currency */}
             <AutoCurrency />
 
-            {/* Site chrome */}
             <Header />
             {children}
             <Footer />
             <LiveChat />
             <Toaster />
 
-            {/* No-JS notice (optional, accessibility) */}
             <noscript>
               <div style={{ padding: 8, textAlign: "center", fontSize: 12 }}>
                 JavaScript is required for the best experience on this site.
