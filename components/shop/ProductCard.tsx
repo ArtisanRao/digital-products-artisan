@@ -26,7 +26,7 @@ export default function ProductCard({
 }: ProductCardData) {
   const router = useRouter();
 
-  // 1) Build picture list (deduped), with cover first (and included as a thumbnail).
+  // 1) Build picture list (deduped), with cover first (and not repeated in thumbs).
   const pics = useMemo(() => {
     const base = images.length ? images : ["/images/placeholder.jpg"];
     const seen = new Set<string>();
@@ -38,8 +38,8 @@ export default function ProductCard({
     });
   }, [images]);
 
-  // 2) Thumbnail list: include main (index 0) and cap to 4 total.
-  const thumbs = useMemo(() => pics.slice(0, 4), [pics]);
+  // 2) Thumbnails: EXCLUDE the main (index 0), show up to 4.
+  const thumbs = useMemo(() => pics.slice(1, 5), [pics]);
 
   // State: selected (persistent) and hovering (temporary)
   const [selectedIdx, setSelectedIdx] = useState(0);
@@ -72,10 +72,9 @@ export default function ProductCard({
     }
   };
 
-  // Prefer numeric/string ID route (SSG), then slug
+  // Prefer slug route (usually SSR/SSG), then ID fallback
   const productHref =
-    href ??
-    (id !== undefined ? `/products/${id}` : slug ? `/products/${slug}` : "/products");
+    href ?? (slug ? `/products/${slug}` : id !== undefined ? `/products/${id}` : "/products");
 
   const numericPrice =
     typeof price === "number" ? price : Number(String(price ?? "").replace(/[^\d.-]+/g, "")) || 0;
@@ -203,31 +202,32 @@ export default function ProductCard({
           <p className="mt-1 line-clamp-2 text-sm text-gray-600">{description}</p>
         )}
 
-        {/* Thumbs – include main as first, MAX 4; hover = temp preview, click = persist */}
+        {/* Thumbs – EXCLUDE main, MAX 4; hover = temp preview, click = persist */}
         {thumbs.length > 0 && (
           <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
             {thumbs.map((src, i) => {
-              const isSelected = i === selectedIdx; // selected persists
+              const absoluteIdx = i + 1; // because we sliced from 1
+              const isSelected = absoluteIdx === selectedIdx;
               return (
                 <button
                   key={src + i}
                   type="button"
-                  onMouseEnter={() => setHoverIdx(i)}
-                  onMouseLeave={() => setHoverIdx((h) => (h === i ? null : h))}
-                  onFocus={() => setHoverIdx(i)}
+                  onMouseEnter={() => setHoverIdx(absoluteIdx)}
+                  onMouseLeave={() => setHoverIdx((h) => (h === absoluteIdx ? null : h))}
+                  onFocus={() => setHoverIdx(absoluteIdx)}
                   onBlur={() => setHoverIdx(null)}
                   onClick={() => {
-                    setSelectedIdx(i);
+                    setSelectedIdx(absoluteIdx);
                     setHoverIdx(null);
                   }}
                   className={[
                     "h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-white",
                     "opacity-90 transition hover:opacity-100",
-                    isSelected ? "ring-2 ring-red-500" : "hover:ring-2 hover:ring-red-300",
+                    isSelected ? "ring-2 ring-blue-500" : "hover:ring-2 hover:ring-blue-300",
                   ].join(" ")}
-                  aria-label={`Preview image ${i + 1}`}
+                  aria-label={`Preview image ${absoluteIdx + 1}`}
                   aria-pressed={isSelected}
-                  title={`Preview image ${i + 1}`}
+                  title={`Preview image ${absoluteIdx + 1}`}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={src} alt="" className="h-full w-full object-cover" loading="lazy" />
@@ -240,11 +240,11 @@ export default function ProductCard({
         {/* Price */}
         {priceLabel && <div className="mt-3 text-xl font-semibold">{priceLabel}</div>}
 
-        {/* Actions – SMALL, single row, no wrapping */}
-        <div className="mt-3 flex flex-nowrap items-center gap-2">
+        {/* Actions – three blue buttons in one row, equal width */}
+        <div className="mt-3 flex items-center gap-2">
           <Link
             href={productHref}
-            className="inline-flex h-8 shrink-0 items-center justify-center rounded-lg bg-blue-600 px-2.5 text-xs font-medium leading-none text-white hover:bg-blue-700 whitespace-nowrap"
+            className="flex h-9 flex-1 items-center justify-center rounded-lg bg-blue-600 px-3 text-sm font-medium leading-none text-white hover:bg-blue-700"
             aria-label={`View ${title}`}
           >
             <span className="mr-1">👁️</span> <span>View</span>
@@ -253,7 +253,7 @@ export default function ProductCard({
           <button
             type="button"
             onClick={addToCart}
-            className="inline-flex h-8 shrink-0 items-center justify-center rounded-lg bg-blue-600 px-2.5 text-xs font-medium leading-none text-white hover:bg-blue-700 whitespace-nowrap"
+            className="flex h-9 flex-1 items-center justify-center rounded-lg bg-blue-600 px-3 text-sm font-medium leading-none text-white hover:bg-blue-700"
             aria-label="Add to cart"
           >
             <span className="mr-1">🛒</span> <span>Add to cart</span>
@@ -262,7 +262,7 @@ export default function ProductCard({
           <button
             type="button"
             onClick={buyNow}
-            className="inline-flex h-8 shrink-0 items-center justify-center rounded-lg bg-blue-600 px-2.5 text-xs font-medium leading-none text-white hover:bg-blue-700 whitespace-nowrap"
+            className="flex h-9 flex-1 items-center justify-center rounded-lg bg-blue-600 px-3 text-sm font-medium leading-none text-white hover:bg-blue-700"
             aria-label="Buy now"
           >
             <span className="mr-1">⚡</span> <span>Buy</span>
