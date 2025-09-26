@@ -161,9 +161,11 @@ export default async function CategoryPage(props: any) {
     return eff !== "__HIDE__" && eff === slug;
   });
 
-  // Card data: 1 cover + up to 4 thumbs (deduped) with cache-buster
+  // Card data: 1 cover + up to 3 extras (deduped) with cache-buster
   const cards = catProducts.map((p) => {
-    const rawImages = [p.image, ...readProductThumbs(p.slug, 4)].filter(Boolean);
+    // ⬇️ ONLY change vs before: request 3 thumbs, not 4
+    const extras = readProductThumbs(p.slug, 3);
+    const rawImages = [p.image, ...extras].filter(Boolean);
     const deduped = Array.from(new Set(rawImages)) as string[];
     const images = deduped.map((src) =>
       src.includes("?") ? `${src}&v=${UI_VERSION}` : `${src}?v=${UI_VERSION}`
@@ -174,7 +176,7 @@ export default async function CategoryPage(props: any) {
       title: p.title,
       slug: p.slug,
       price: p.price,
-      images,
+      images,               // cover first, then 3 extras
       description: p.description,
     };
   });
