@@ -57,7 +57,7 @@ export default function ProductCardV4({
     try {
       const key = String(slug ?? id ?? "");
       if (!key) return;
-      const w = window as any;
+      const w = (window as any);
       if (w?.dpaCart?.add) { w.dpaCart.add({ slug: key, qty: 1 }); return; }
       if (w?.__CART__?.add) { w.__CART__.add({ slug: key, qty: 1 }); return; }
 
@@ -76,7 +76,7 @@ export default function ProductCardV4({
   const buyNow = () => {
     const key = String(slug ?? id ?? "");
     if (!key) return;
-    const w = window as any;
+    const w = (window as any);
     if (w?.startCheckout) { w.startCheckout({ slug: key }); return; }
     window.location.href = `/checkout?product=${encodeURIComponent(key)}`;
   };
