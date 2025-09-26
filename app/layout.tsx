@@ -1,5 +1,4 @@
-"use client";
-
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
@@ -14,6 +13,52 @@ import React from "react";
 
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 
+/** Global site metadata (fixes the metadataBase warning) */
+export const metadata: Metadata = {
+  metadataBase: new URL("https://digitalproductsartisan.com"),
+  title: {
+    default: "Digital Products Artisan",
+    template: "%s | Digital Products Artisan",
+  },
+  description:
+    "Premium handcrafted digital downloads for creators and entrepreneurs.",
+  openGraph: {
+    type: "website",
+    url: "https://digitalproductsartisan.com",
+    title: "Digital Products Artisan",
+    description:
+      "Premium handcrafted digital downloads for creators and entrepreneurs.",
+    images: ["/images/logo-new.png"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Digital Products Artisan",
+    description:
+      "Premium handcrafted digital downloads for creators and entrepreneurs.",
+    images: ["/images/logo-new.png"],
+  },
+  manifest: "/site.webmanifest",
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon-48x48.png", sizes: "48x48" },
+      { url: "/favicon-96x96.png", sizes: "96x96" },
+      { url: "/web-app-manifest-192x192.png", sizes: "192x192" },
+      { url: "/web-app-manifest-512x512.png", sizes: "512x512" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
+  alternates: { canonical: "/" },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#ffffff",
+};
+
 /** Bump this on each deploy to force clients to unregister old SW and clear caches */
 const BUILD_TAG = "sw-flush-2025-09-26-g";
 
@@ -24,57 +69,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <title>Digital Products Artisan</title>
-
         {/* Build/debug marker so you can confirm the new layout is live */}
         <meta name="x-build-tag" content={BUILD_TAG} />
 
-        {/* Mobile fit */}
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-
-        <link rel="canonical" href="https://digitalproductsartisan.com/" />
-
-        <meta
-          name="description"
-          content="Premium handcrafted digital downloads for creators and entrepreneurs."
-        />
-
-        {/* PWA / icons (served from /public) */}
-        <meta name="theme-color" content="#ffffff" />
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="application-name" content="Digital Products Artisan" />
-        <meta name="apple-mobile-web-app-title" content="Digital Products Artisan" />
-
-        {/* Favicons */}
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
-        <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
-        <link rel="icon" type="image/png" sizes="192x192" href="/web-app-manifest-192x192.png" />
-        <link rel="icon" type="image/png" sizes="512x512" href="/web-app-manifest-512x512.png" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-        <link rel="manifest" href="/site.webmanifest" />
-
-        {/* Social */}
-        <meta property="og:title" content="Digital Products Artisan" />
-        <meta
-          property="og:description"
-          content="Premium handcrafted digital downloads for creators and entrepreneurs."
-        />
-        <meta property="og:image" content="https://digitalproductsartisan.com/images/logo-new.png" />
-        <meta property="og:url" content="https://digitalproductsartisan.com" />
-        <meta property="og:type" content="website" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Digital Products Artisan" />
-        <meta
-          name="twitter:description"
-          content="Premium handcrafted digital downloads for creators and entrepreneurs."
-        />
-        <meta name="twitter:image" content="https://digitalproductsartisan.com/images/logo-new.png" />
-
-        {/* JSON-LD */}
+        {/* JSON-LD (Organization) */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
