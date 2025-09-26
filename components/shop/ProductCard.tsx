@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 export type ProductCardData = {
   title: string;
   slug?: string;
-  id?: string | number;     // ← added for reliable fallback
+  id?: string | number;     // fallback link id
   price?: number | string;
   images?: string[];        // cover first, then mockups
   href?: string;            // optional explicit href
@@ -45,18 +45,18 @@ export default function ProductCard({
       ? new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(price)
       : (price ?? "");
 
+  // Add-to-cart + Buy wiring
   const addToCart = () => {
     try {
+      const key = String(slug ?? id);
       const w = window as any;
-      if (w?.dpaCart?.add) { w.dpaCart.add({ slug: slug ?? id, qty: 1 }); return; }
-      if (w?.__CART__?.add) { w.__CART__.add({ slug: slug ?? id, qty: 1 }); return; }
-      window.dispatchEvent(new CustomEvent("cart:add", { detail: { slug: slug ?? id, qty: 1 } }));
-      const key = "cart";
-      const raw = localStorage.getItem(key);
+      if (w?.dpaCart?.add) { w.dpaCart.add({ slug: key, qty: 1 }); return; }
+      if (w?.__CART__?.add) { w.__CART__.add({ slug: key, qty: 1 }); return; }
+      window.dispatchEvent(new CustomEvent("cart:add", { detail: { slug: key, qty: 1 } }));
+      const raw = localStorage.getItem("cart");
       const cart: Record<string, number> = raw ? JSON.parse(raw) : {};
-      const k = String(slug ?? id);
-      cart[k] = (cart[k] ?? 0) + 1;
-      localStorage.setItem(key, JSON.stringify(cart));
+      cart[key] = (cart[key] ?? 0) + 1;
+      localStorage.setItem("cart", JSON.stringify(cart));
       const count = Object.values(cart).reduce((a, b) => a + Number(b), 0);
       window.dispatchEvent(new CustomEvent("cart:count", { detail: count }));
     } catch (e) {
@@ -65,14 +65,15 @@ export default function ProductCard({
   };
 
   const buyNow = () => {
+    const key = String(slug ?? id);
     const w = window as any;
-    if (w?.startCheckout) { w.startCheckout({ slug: slug ?? id }); return; }
-    window.location.href = `/checkout?product=${encodeURIComponent(String(slug ?? id))}`;
+    if (w?.startCheckout) { w.startCheckout({ slug: key }); return; }
+    window.location.href = `/checkout?product=${encodeURIComponent(key)}`;
   };
 
   return (
     <article className="group rounded-2xl border bg-white/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-      {/* Main image + link */}
+      {/* Main image (clickable) */}
       <Link href={productUrl} aria-label={`Open ${title}`}>
         <div className="relative overflow-hidden rounded-t-2xl bg-gray-50">
           <img
@@ -105,7 +106,7 @@ export default function ProductCard({
       </Link>
 
       <div className="p-4">
-        {/* Title link */}
+        {/* Title (clickable) */}
         <Link href={productUrl} className="block">
           <h3 className="line-clamp-2 text-lg font-semibold">{title}</h3>
         </Link>
@@ -136,7 +137,7 @@ export default function ProductCard({
         {/* Price */}
         {priceLabel && <div className="mt-3 text-xl font-semibold">{priceLabel}</div>}
 
-        {/* Actions (blue buttons) */}
+        {/* Actions (uniform blue) */}
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <Link
             href={productUrl}
