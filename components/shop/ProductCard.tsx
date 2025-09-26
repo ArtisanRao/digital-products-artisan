@@ -1,17 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import * as cart from "@/lib/cart";
+import { useMemo, useState } from "react";
 
 export type ProductCardData = {
   title: string;
   slug?: string;
-  id?: string | number;
+  id?: string | number;     // ← added for reliable fallback
   price?: number | string;
-  images?: string[];      // cover first, then mockups
-  href?: string;          // explicit product url; if given, we use it
+  images?: string[];        // cover first, then mockups
+  href?: string;            // optional explicit href
   description?: string;
 };
 
@@ -24,138 +22,61 @@ export default function ProductCard({
   href,
   description,
 }: ProductCardData) {
-  const router = useRouter();
+  const pics = useMemo(
+    () => (images.length ? images : ["/images/placeholder.jpg"]),
+    [images]
+  );
+  const [idx, setIdx] = useState(0);
 
-  // 1) Build picture list (deduped), with cover first (and not repeated in thumbs).
-  const pics = useMemo(() => {
-    const base = images.length ? images : ["/images/placeholder.jpg"];
-    const seen = new Set<string>();
-    return base.filter((u) => {
-      if (!u) return false;
-      if (seen.has(u)) return false;
-      seen.add(u);
-      return true;
-    });
-  }, [images]);
+  const prev = () => setIdx((i) => (i === 0 ? pics.length - 1 : i - 1));
+  const next = () => setIdx((i) => (i + 1) % pics.length);
+  const go = (i: number) => setIdx(i);
 
-  // 2) Thumbnails: EXCLUDE the main (index 0), show up to 4.
-  const thumbs = useMemo(() => pics.slice(1, 5), [pics]);
-
-  // State: selected (persistent) and hovering (temporary)
-  const [selectedIdx, setSelectedIdx] = useState(0);
-  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
-
-  // Clamp if images change
-  useEffect(() => {
-    if (selectedIdx >= pics.length) setSelectedIdx(0);
-  }, [pics, selectedIdx]);
-
-  const displayIdx = hoverIdx ?? selectedIdx;
-
-  // Prev/Next for keyboard arrows
-  const prev = useCallback(() => {
-    setSelectedIdx((i) => (i - 1 + pics.length) % pics.length);
-  }, [pics.length]);
-
-  const next = useCallback(() => {
-    setSelectedIdx((i) => (i + 1) % pics.length);
-  }, [pics.length]);
-
-  // Keyboard navigation when the card is focused
-  const onKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "ArrowLeft") {
-      e.preventDefault();
-      prev();
-    } else if (e.key === "ArrowRight") {
-      e.preventDefault();
-      next();
-    }
-  };
-
-  // Prefer slug route (usually SSR/SSG), then ID fallback
-  const productHref =
-    href ?? (slug ? `/products/${slug}` : id !== undefined ? `/products/${id}` : "/products");
-
-  const numericPrice =
-    typeof price === "number" ? price : Number(String(price ?? "").replace(/[^\d.-]+/g, "")) || 0;
+  // Robust product URL: explicit href → slug → id → "#"
+  const productUrl = useMemo(() => {
+    if (href) return href;
+    if (slug) return `/products/${slug}`;
+    if (id !== undefined && id !== null) return `/products/${id}`;
+    return "#";
+  }, [href, slug, id]);
 
   const priceLabel =
     typeof price === "number"
       ? new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(price)
       : (price ?? "");
 
-  /* ---------------- Cart + badge (uses lib/cart) ---------------- */
-  const bridgeCartUpdatedEvent = () => {
-    try {
-      const items = cart.getCart();
-      const count = cart.getCartCount();
-      window.dispatchEvent(new CustomEvent("cart:updated", { detail: { count, items } }));
-      localStorage.setItem("cartCount", String(count));
-    } catch {
-      /* no-op */
-    }
-  };
-
   const addToCart = () => {
     try {
-      const key = String(id ?? slug ?? "");
-      cart.addToCart(
-        {
-          id: key,
-          title,
-          price: numericPrice,
-          image: pics[0],
-        },
-        1
-      );
-      bridgeCartUpdatedEvent();
+      const w = window as any;
+      if (w?.dpaCart?.add) { w.dpaCart.add({ slug: slug ?? id, qty: 1 }); return; }
+      if (w?.__CART__?.add) { w.__CART__.add({ slug: slug ?? id, qty: 1 }); return; }
+      window.dispatchEvent(new CustomEvent("cart:add", { detail: { slug: slug ?? id, qty: 1 } }));
+      const key = "cart";
+      const raw = localStorage.getItem(key);
+      const cart: Record<string, number> = raw ? JSON.parse(raw) : {};
+      const k = String(slug ?? id);
+      cart[k] = (cart[k] ?? 0) + 1;
+      localStorage.setItem(key, JSON.stringify(cart));
+      const count = Object.values(cart).reduce((a, b) => a + Number(b), 0);
+      window.dispatchEvent(new CustomEvent("cart:count", { detail: count }));
     } catch (e) {
-      console.error("addToCart error", e);
+      console.error("addToCart fallback error", e);
     }
   };
 
-  /* ---------------- Buy → Checkout ---------------- */
-  const buyNow = async () => {
-    const key = String(slug ?? id ?? "");
-    try {
-      addToCart();
-      const res = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(
-          slug
-            ? { items: [{ slug: key, quantity: 1 }] }
-            : { productId: String(id ?? ""), qty: 1 }
-        ),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        const url = data?.url || data?.checkoutUrl || data?.redirectUrl;
-        if (url) {
-          window.location.href = url;
-          return;
-        }
-      }
-      router.push(`/checkout?product=${encodeURIComponent(key)}`);
-    } catch (e) {
-      console.error("buyNow error", e);
-      router.push(`/checkout?product=${encodeURIComponent(key)}`);
-    }
+  const buyNow = () => {
+    const w = window as any;
+    if (w?.startCheckout) { w.startCheckout({ slug: slug ?? id }); return; }
+    window.location.href = `/checkout?product=${encodeURIComponent(String(slug ?? id))}`;
   };
 
   return (
-    <article
-      className="group rounded-2xl border bg-white/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-within:ring-2 focus-within:ring-blue-500/30"
-      tabIndex={0}
-      onKeyDown={onKeyDown}
-    >
-      {/* Main image (clickable) */}
-      <Link href={productHref} aria-label={`Open ${title}`} className="block">
+    <article className="group rounded-2xl border bg-white/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+      {/* Main image + link */}
+      <Link href={productUrl} aria-label={`Open ${title}`}>
         <div className="relative overflow-hidden rounded-t-2xl bg-gray-50">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={pics[displayIdx]}
+            src={pics[idx]}
             alt={title}
             className="aspect-[3/2] w-full object-contain p-2 transition-transform duration-300 group-hover:scale-[1.01]"
             loading="lazy"
@@ -164,23 +85,17 @@ export default function ProductCard({
             <>
               <button
                 type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  prev();
-                }}
+                onClick={(e) => { e.preventDefault(); prev(); }}
                 aria-label="Previous"
-                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-2.5 py-1.5 text-xs shadow hover:bg-white"
+                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-3 py-2 text-sm shadow hover:bg-white"
               >
                 ‹
               </button>
               <button
                 type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  next();
-                }}
+                onClick={(e) => { e.preventDefault(); next(); }}
                 aria-label="Next"
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-2.5 py-1.5 text-xs shadow hover:bg-white"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-3 py-2 text-sm shadow hover:bg-white"
               >
                 ›
               </button>
@@ -190,82 +105,63 @@ export default function ProductCard({
       </Link>
 
       <div className="p-4">
-        {/* Title (hover underline + clickable) */}
-        <Link
-          href={productHref}
-          className="block hover:underline hover:decoration-2 hover:underline-offset-4"
-        >
+        {/* Title link */}
+        <Link href={productUrl} className="block">
           <h3 className="line-clamp-2 text-lg font-semibold">{title}</h3>
         </Link>
-
         {description && (
           <p className="mt-1 line-clamp-2 text-sm text-gray-600">{description}</p>
         )}
 
-        {/* Thumbs – EXCLUDE main, MAX 4; hover = temp preview, click = persist */}
-        {thumbs.length > 0 && (
+        {/* Thumbs (max 4) */}
+        {pics.length > 1 && (
           <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
-            {thumbs.map((src, i) => {
-              const absoluteIdx = i + 1; // because we sliced from 1
-              const isSelected = absoluteIdx === selectedIdx;
-              return (
-                <button
-                  key={src + i}
-                  type="button"
-                  onMouseEnter={() => setHoverIdx(absoluteIdx)}
-                  onMouseLeave={() => setHoverIdx((h) => (h === absoluteIdx ? null : h))}
-                  onFocus={() => setHoverIdx(absoluteIdx)}
-                  onBlur={() => setHoverIdx(null)}
-                  onClick={() => {
-                    setSelectedIdx(absoluteIdx);
-                    setHoverIdx(null);
-                  }}
-                  className={[
-                    "h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-white",
-                    "opacity-90 transition hover:opacity-100",
-                    isSelected ? "ring-2 ring-blue-500" : "hover:ring-2 hover:ring-blue-300",
-                  ].join(" ")}
-                  aria-label={`Preview image ${absoluteIdx + 1}`}
-                  aria-pressed={isSelected}
-                  title={`Preview image ${absoluteIdx + 1}`}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={src} alt="" className="h-full w-full object-cover" loading="lazy" />
-                </button>
-              );
-            })}
+            {pics.slice(0, 4).map((src, i) => (
+              <button
+                type="button"
+                key={src + i}
+                onClick={() => go(i)}
+                className={`h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-white transition ${
+                  idx === i ? "ring-2 ring-blue-500" : "opacity-80 hover:opacity-100"
+                }`}
+                aria-label={`Preview ${i + 1}`}
+                title={`Preview ${i + 1}`}
+              >
+                <img src={src} alt="" className="h-full w-full object-cover" />
+              </button>
+            ))}
           </div>
         )}
 
         {/* Price */}
         {priceLabel && <div className="mt-3 text-xl font-semibold">{priceLabel}</div>}
 
-        {/* Actions – three blue buttons in one row, equal width */}
-        <div className="mt-3 flex items-center gap-2">
+        {/* Actions (blue buttons) */}
+        <div className="mt-3 flex flex-wrap items-center gap-3">
           <Link
-            href={productHref}
-            className="flex h-9 flex-1 items-center justify-center rounded-lg bg-blue-600 px-3 text-sm font-medium leading-none text-white hover:bg-blue-700"
+            href={productUrl}
+            className="flex h-10 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-medium text-white hover:bg-blue-700"
             aria-label={`View ${title}`}
           >
-            <span className="mr-1">👁️</span> <span>View</span>
+            👁️ View
           </Link>
 
           <button
             type="button"
             onClick={addToCart}
-            className="flex h-9 flex-1 items-center justify-center rounded-lg bg-blue-600 px-3 text-sm font-medium leading-none text-white hover:bg-blue-700"
+            className="flex h-10 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-medium text-white hover:bg-blue-700"
             aria-label="Add to cart"
           >
-            <span className="mr-1">🛒</span> <span>Add to cart</span>
+            🛒 Add to cart
           </button>
 
           <button
             type="button"
             onClick={buyNow}
-            className="flex h-9 flex-1 items-center justify-center rounded-lg bg-blue-600 px-3 text-sm font-medium leading-none text-white hover:bg-blue-700"
+            className="flex h-10 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-medium text-white hover:bg-blue-700"
             aria-label="Buy now"
           >
-            <span className="mr-1">⚡</span> <span>Buy</span>
+            ⚡ Buy
           </button>
         </div>
       </div>
