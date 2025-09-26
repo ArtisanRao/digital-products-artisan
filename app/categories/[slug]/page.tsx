@@ -34,6 +34,32 @@ const LEGACY_TO_NEW: Record<string, string> = {
 
 const pub = (...p: string[]) => path.join(process.cwd(), "public", ...p);
 
+/* ----------------------- EXACT FIXES YOU ASKED FOR ------------------------ */
+/** Normalize for title-key maps */
+const tnorm = (s: string) => s.toLowerCase().trim();
+
+/** Hard overrides by product *title* */
+const FIX_BY_TITLE: Record<
+  string,
+  { forceSlug?: string; hide?: boolean }
+> = {
+  // 1) "AI & ChatGPT Guides": move "Video Courses And Training" to its own category
+  [tnorm("Video Courses And Training")]: { forceSlug: "video-courses-and-training" },
+
+  // 2) "Self-Help & How-To": remove the product "Self Help And How To"
+  [tnorm("Self Help And How To")]: { hide: true },
+
+  // 3) "Complete Shop Packages": remove "Complete Shop Packages" product
+  [tnorm("Complete Shop Packages")]: { hide: true },
+
+  // 4) "Passive Income & Side Hustles": remove "Passive Income And Side Hustles"
+  [tnorm("Passive Income And Side Hustles")]: { hide: true },
+
+  // 5) "Digital Essentials Hub": move "The Art Of Giving No Fucks" to Self-Help
+  [tnorm("The Art Of Giving No Fucks")]: { forceSlug: "self-help-and-how-to" },
+};
+/* ------------------------------------------------------------------------- */
+
 function toSlug(s: string) {
   return s
     .toLowerCase()
@@ -48,13 +74,21 @@ const LABEL_TO_SLUG: Record<string, string> = Object.fromEntries(
   Object.entries(META).map(([slug, m]) => [m.title.toLowerCase(), slug])
 );
 
-function productCategorySlug(p: any): string | null {
-  if (p?.categorySlug) {
+/** Return the *effective* category slug for a product, applying FIX_BY_TITLE when present */
+function effectiveProductCategorySlug(p: any): string | null {
+  const titleKey = tnorm(String(p.title ?? ""));
+  const fix = FIX_BY_TITLE[titleKey];
+  if (fix?.hide) return "__HIDE__";
+  if (fix?.forceSlug) return fix.forceSlug;
+
+  // Prefer explicit slug on product if present
+  if (p.categorySlug) {
     const s = toSlug(String(p.categorySlug));
     const normalized = LEGACY_TO_NEW[s] ?? s;
     return ALL_SLUGS.has(normalized) ? normalized : null;
   }
-  if (p?.category) {
+  // Fallback to product.category label text
+  if (p.category) {
     const fromLabel = LABEL_TO_SLUG[String(p.category).toLowerCase()];
     if (fromLabel) return fromLabel;
     const guess = toSlug(String(p.category));
@@ -64,34 +98,16 @@ function productCategorySlug(p: any): string | null {
   return null;
 }
 
-/* ---------- thumbs: read from /id and /slug, dedupe, numeric sort ---------- */
-const THUMB_RE = /^thumb-(\d+)\.(png|jpe?g|webp|avif)$/i;
-
-function readThumbsFrom(folder: string): string[] {
-  const dir = pub("images", "products", folder);
+/** Read up to N thumbs from /public/images/products/<slug>/thumb-*.ext */
+function readProductThumbs(slug: string, max = 3): string[] {
+  const dir = pub("images", "products", slug);
   if (!fs.existsSync(dir)) return [];
-  return fs
+  const names = fs
     .readdirSync(dir)
-    .map((f) => {
-      const m = f.match(THUMB_RE);
-      return m ? { n: Number(m[1]), url: `/images/products/${folder}/${f}` } : null;
-    })
-    .filter(Boolean)
-    .sort((a: any, b: any) => a.n - b.n)
-    .map((x: any) => x.url);
-}
-
-function readProductThumbsDual(
-  id?: string | number,
-  slug?: string | number,
-  max = 4 // ⟵ allow up to 4 thumbs from filesystem
-): string[] {
-  const byId = id != null ? readThumbsFrom(String(id)) : [];
-  const bySlug = slug != null ? readThumbsFrom(String(slug)) : [];
-  const all = [...byId, ...bySlug];
-  const uniq: string[] = [];
-  for (const u of all) if (!uniq.includes(u)) uniq.push(u);
-  return uniq.slice(0, max);
+    .filter((f) => /^thumb-\d+\.(png|jpe?g|webp|avif)$/i.test(f))
+    .sort()
+    .slice(0, max);
+  return names.map((n) => `/images/products/${slug}/${n}`);
 }
 
 /** Static params for new and legacy slugs */
@@ -101,11 +117,11 @@ export function generateStaticParams() {
   return [...newSlugs, ...legacySlugs].map((slug) => ({ slug }));
 }
 
+type Params = { slug: string };
 const normalizeSlug = (s: string) => LEGACY_TO_NEW[s] ?? s;
 
-/** Loosen types to avoid PageProps mismatches in this project setup */
-export async function generateMetadata({ params }: any) {
-  const { slug: raw } = params;
+export async function generateMetadata({ params }: { params: Promise<Params> }) {
+  const { slug: raw } = await params;
   const slug = normalizeSlug(raw);
   const m = META[slug];
   const title = m ? `${m.title} | Digital Products Artisan` : "Digital Products | Digital Products Artisan";
@@ -114,11 +130,12 @@ export async function generateMetadata({ params }: any) {
     title,
     description,
     openGraph: { title, description, type: "website" },
+    twitter: { card: "summary_large_image", title, description },
   };
 }
 
-export default async function CategoryPage({ params }: any) {
-  const { slug: raw } = params;
+export default async function CategoryPage({ params }: { params: Promise<Params> }) {
+  const { slug: raw } = await params;
   const slug = normalizeSlug(raw);
   const meta = META[slug];
 
@@ -140,28 +157,21 @@ export default async function CategoryPage({ params }: any) {
     );
   }
 
-  // Filter by canonical category slug
-  const catProducts = products.filter((p) => productCategorySlug(p) === slug);
+  // ✅ Filter by effective slug and exclude “hidden” products
+  const catProducts = products.filter((p) => {
+    const eff = effectiveProductCategorySlug(p);
+    return eff !== "__HIDE__" && eff === slug;
+  });
 
-  // Build cards (cover + optional list + thumbs from /id and /slug)
-  const cards = catProducts.map((p: any) => {
-    const thumbs = readProductThumbsDual(p.id, p.slug, 4); // ⟵ request up to 4 thumbs
-    const images = Array.from(
-      new Set([p.image, ...(Array.isArray(p.images) ? p.images : []), ...thumbs].filter(Boolean))
-    );
-    const href =
-      p.id   ? `/products/${p.id}`   :
-      p.slug ? `/products/${p.slug}` :
-               "/products";
-
+  // Build card data (cover + thumbs)
+  const cards = catProducts.map((p) => {
+    const images = [p.image, ...readProductThumbs(p.slug)].filter(Boolean);
     return {
       title: p.title,
       slug: p.slug,
-      id: p.id,
       price: p.price,
       images,
       description: p.description,
-      href,
     };
   });
 
@@ -173,7 +183,7 @@ export default async function CategoryPage({ params }: any) {
       {cards.length ? (
         <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {cards.map((c) => (
-            <ProductCard key={String(c.slug ?? c.id)} {...c} />
+            <ProductCard key={c.slug} {...c} />
           ))}
         </div>
       ) : (
