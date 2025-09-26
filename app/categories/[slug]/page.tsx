@@ -81,7 +81,11 @@ function readThumbsFrom(folder: string): string[] {
     .map((x: any) => x.url);
 }
 
-function readProductThumbsDual(id?: string | number, slug?: string | number, max = 3): string[] {
+function readProductThumbsDual(
+  id?: string | number,
+  slug?: string | number,
+  max = 4 // ⟵ allow up to 4 thumbs from filesystem
+): string[] {
   const byId = id != null ? readThumbsFrom(String(id)) : [];
   const bySlug = slug != null ? readThumbsFrom(String(slug)) : [];
   const all = [...byId, ...bySlug];
@@ -141,7 +145,7 @@ export default async function CategoryPage({ params }: any) {
 
   // Build cards (cover + optional list + thumbs from /id and /slug)
   const cards = catProducts.map((p: any) => {
-    const thumbs = readProductThumbsDual(p.id, p.slug, 3);
+    const thumbs = readProductThumbsDual(p.id, p.slug, 4); // ⟵ request up to 4 thumbs
     const images = Array.from(
       new Set([p.image, ...(Array.isArray(p.images) ? p.images : []), ...thumbs].filter(Boolean))
     );
