@@ -8,7 +8,7 @@ import Link from "next/link";
 import path from "node:path";
 import fs from "node:fs";
 import { products } from "@/data/products";
-import AddToCartButton from "@/components/add-to-cart-button";
+import AddToCartButton from "@/components/shop/AddToCartButton"; // ⟵ use the working client button
 import BuyNowButton from "@/components/buy-now-button";
 import ProductGallery from "@/components/ProductGallery";
 
@@ -269,7 +269,11 @@ export default async function ProductPage({
           {/* Actions (blue buttons; Add updates badge, Buy → checkout) */}
           <div className="mt-6 flex flex-wrap gap-3">
             <AddToCartButton
-              productId={product.id}
+              id={product.id}
+              slug={slug}
+              title={product.title}
+              price={product.price}
+              image={galleryImages[0]}
               className="bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
             />
             <BuyNowButton

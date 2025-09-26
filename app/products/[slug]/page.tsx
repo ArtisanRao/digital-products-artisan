@@ -8,7 +8,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import InlineMore from "@/components/ui/inline-more";
 import { Button } from "@/components/ui/button";
-import AddToCartButton from "@/components/add-to-cart-button";
+import AddToCartButton from "@/components/shop/AddToCartButton"; // ⟵ use the working button
 import { products, productsById } from "@/data/products";
 import { getPreferredCurrency } from "@/lib/currency";
 import ProductGallery from "@/components/ProductGallery";
@@ -35,6 +35,7 @@ export default async function Page(props: { params: Promise<{ slug: string }> })
   if (!p) notFound();
 
   const imgs: string[] = (p.images?.length ? p.images : [p.image]).filter(Boolean) as string[];
+  const coverImage = imgs[0] ?? "/images/placeholder.jpg";
 
   const currencyRaw = getPreferredCurrency();
   const currency = String(currencyRaw).toUpperCase() as "EUR" | "USD";
@@ -47,10 +48,7 @@ export default async function Page(props: { params: Promise<{ slug: string }> })
   return (
     <main className="product-page mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 py-8 lg:grid-cols-[1.2fr_.8fr]">
       {/* Hover zoom is applied via global CSS (.product-page img:hover) and the utility below */}
-      <section
-        className="hover-zoom"
-        style={{ zIndex: 1, position: "relative" }}
-      >
+      <section className="hover-zoom" style={{ zIndex: 1, position: "relative" }}>
         <ProductGallery images={imgs} alt={p.title} />
       </section>
 
@@ -74,12 +72,13 @@ export default async function Page(props: { params: Promise<{ slug: string }> })
           <InlineMore text={p.description ?? ""} lines={3} minChars={80} />
         </div>
 
-        <div
-          className="mt-6 flex flex-wrap gap-3"
-          style={{ position: "relative", zIndex: 61, pointerEvents: "auto" }}
-        >
+        <div className="mt-6 flex flex-wrap gap-3" style={{ position: "relative", zIndex: 61, pointerEvents: "auto" }}>
           <AddToCartButton
-            productId={p.id}
+            id={p.id}
+            slug={p.slug as string | undefined}
+            title={p.title}
+            price={p.price}
+            image={coverImage}
             className="bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
           />
 
