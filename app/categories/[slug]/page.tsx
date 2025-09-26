@@ -4,12 +4,17 @@ import Link from "next/link";
 import Script from "next/script";
 import InlineMore from "@/components/ui/inline-more";
 import { products } from "@/data/products";
-// ⬇️ Force relative import to a fresh card component
+// Use a *new* card import to avoid any alias/module cache issues
 import ProductCardV4 from "../../../components/shop/ProductCardV4";
 
-const UI_VERSION = "cat-v4-2025-09-26";
+// ── FORCE FRESH RENDERING ON THIS ROUTE ──────────────────────────────────────
+export const revalidate = 0;
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+// ─────────────────────────────────────────────────────────────────────────────
 
-/** ---- Category metadata (normalized slugs) ---- */
+const UI_VERSION = "cat-v5-2025-09-26";
+
 const META: Record<string, { title: string; description: string }> = {
   "ai-and-chatgpt-guides":       { title: "AI & ChatGPT Guides",     description: "Guides, prompts and AI learning resources." },
   "planners-and-productivity":   { title: "Planners & Productivity", description: "Digital planners, journals and productivity tools." },
@@ -27,7 +32,6 @@ const META: Record<string, { title: string; description: string }> = {
   "social-media-kits":           { title: "Social Media Kits",       description: "Post templates and brandable assets for socials." },
 };
 
-/** Backward-compat slug aliases (old → new) */
 const LEGACY_TO_NEW: Record<string, string> = {
   "planners-productivity": "planners-and-productivity",
   "plr-mrr-bundles": "plr-and-mrr-bundles",
@@ -134,7 +138,7 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
   if (!meta) {
     const pretty = slug.replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
     return (
-      <main className="container mx-auto px-4 py-16" data-ui="CategoryPage@v4:not-found">
+      <main className="container mx-auto px-4 py-16" data-ui={`CategoryPage@${UI_VERSION}:not-found`}>
         <h1 className="text-3xl md:text-4xl font-bold mb-2">{pretty}</h1>
         <InlineMore
           text="We couldn’t find a dedicated page for this category yet. Explore best sellers below or visit all products."
@@ -165,7 +169,7 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     );
 
     return {
-      id: p.id,           // allow ProductCard to fall back to /products/<id>
+      id: p.id,
       title: p.title,
       slug: p.slug,
       price: p.price,
@@ -175,7 +179,7 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
   });
 
   return (
-    <main className="container mx-auto px-4 py-12" data-ui="CategoryPage@v4">
+    <main className="container mx-auto px-4 py-12" data-ui={`CategoryPage@${UI_VERSION}`}>
       {/* TEMP: one-time kill of any old SW/cache that may be serving stale bundles */}
       <Script id="sw-reset" strategy="afterInteractive">
         {`(async()=>{try{
@@ -194,9 +198,9 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
       <InlineMore text={meta.description} lines={1} minChars={40} className="mt-1 text-gray-700" />
 
       {cards.length ? (
-        <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" data-ui="category-grid@v4">
+        <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" data-ui={`category-grid@${UI_VERSION}`}>
           {cards.map((c) => (
-            <ProductCardV4 key={String(c.slug ?? c.id)} {...c} />
+            <ProductCardV4 key={`${UI_VERSION}:${String(c.slug ?? c.id)}`} {...c} />
           ))}
         </div>
       ) : (
