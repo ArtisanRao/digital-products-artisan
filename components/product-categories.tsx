@@ -1,11 +1,11 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { FileText, Palette, Zap, Calendar, Code, Camera } from "lucide-react"
-import Link from "next/link"
+import CatLink from "@/components/ui/CatLink" // ← use wrapper instead of next/link
 
 const categories = [
   {
     id: 1,
-    slug: "ebooks",                    // eBooks
+    slug: "ebooks", // (optional) swap to a real category slug like "self-help-and-how-to"
     name: "Ebooks & Guides",
     description: "Comprehensive guides and educational content",
     icon: FileText,
@@ -14,7 +14,7 @@ const categories = [
   },
   {
     id: 2,
-    slug: "templates",                 // Templates
+    slug: "templates", // e.g. change to "web-templates" if you want
     name: "Templates & Graphics",
     description: "Ready-to-use design templates and graphics",
     icon: Palette,
@@ -23,7 +23,7 @@ const categories = [
   },
   {
     id: 3,
-    slug: "marketing-tools",           // Marketing Tools
+    slug: "marketing-tools", // e.g. "digital-essentials-hub" or "ai-and-chatgpt-guides"
     name: "AI Prompts",
     description: "Curated prompts for AI tools and platforms",
     icon: Zap,
@@ -32,7 +32,7 @@ const categories = [
   },
   {
     id: 4,
-    slug: "printable-planners",        // Printable Planners
+    slug: "printable-planners", // e.g. "planners-and-productivity"
     name: "Planners & Organizers",
     description: "Digital planners and productivity tools",
     icon: Calendar,
@@ -41,8 +41,8 @@ const categories = [
   },
   {
     id: 5,
-    slug: "social-media-kits",         // Social Media Kits
-    name: "Code & Development",
+    slug: "social-media-kits",
+    name: "Code & Development", // ⚠️ name/slug mismatch—rename or change slug to a real one
     description: "Scripts, plugins, and development resources",
     icon: Code,
     count: 23,
@@ -50,7 +50,7 @@ const categories = [
   },
   {
     id: 6,
-    slug: "photography-prints",        // Photography Prints
+    slug: "photography-prints", // pick an existing category if you want this to resolve
     name: "Photography & Media",
     description: "Stock photos, presets, and media assets",
     icon: Camera,
@@ -74,7 +74,7 @@ export default function ProductCategories() {
           {categories.map((category) => {
             const IconComponent = category.icon
             return (
-              <Link
+              <CatLink
                 key={category.slug}
                 href={`/categories/${category.slug}`}
                 aria-label={`Browse ${category.name}`}
@@ -100,7 +100,7 @@ export default function ProductCategories() {
                     </div>
                   </CardContent>
                 </Card>
-              </Link>
+              </CatLink>
             )
           })}
         </div>

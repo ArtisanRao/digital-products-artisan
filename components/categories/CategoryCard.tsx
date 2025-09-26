@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import CatLink from "@/components/ui/CatLink"; // no-prefetch wrapper
 import SafeCategoryImage from "@/components/categories/SafeCategoryImage";
 
 export type CategoryLike = {
@@ -19,9 +19,10 @@ export default function CategoryCard({ category, hrefBase = "/categories", class
   const href = `${hrefBase}/${category.slug}`;
 
   return (
-    <Link
+    <CatLink
       href={href}
-      className={`group block overflow-hidden rounded-2xl border border-black/5 bg-white shadow-sm hover:shadow-md transition-shadow ${className ?? ""}`}
+      aria-label={`Browse ${category.label}`}
+      className={`group block overflow-hidden rounded-2xl border border-black/5 bg-white shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2 ${className ?? ""}`}
     >
       <div className="relative w-full aspect-[4/3] bg-neutral-50">
         <SafeCategoryImage
@@ -33,9 +34,11 @@ export default function CategoryCard({ category, hrefBase = "/categories", class
       </div>
 
       <div className="p-4">
-        <h3 className="text-base font-semibold leading-tight">{category.label}</h3>
+        <h3 className="text-base font-semibold leading-tight group-hover:text-blue-600 transition-colors">
+          {category.label}
+        </h3>
         {/* Optional: add a short description if you add it to your data later */}
       </div>
-    </Link>
+    </CatLink>
   );
 }
