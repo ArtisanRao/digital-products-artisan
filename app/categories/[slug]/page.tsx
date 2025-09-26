@@ -34,32 +34,7 @@ const LEGACY_TO_NEW: Record<string, string> = {
 
 const pub = (...p: string[]) => path.join(process.cwd(), "public", ...p);
 
-/* ----------------------- EXACT FIXES YOU ASKED FOR ------------------------ */
-/** Normalize for title-key maps */
-const tnorm = (s: string) => s.toLowerCase().trim();
-
-/** Hard overrides by product *title* */
-const FIX_BY_TITLE: Record<
-  string,
-  { forceSlug?: string; hide?: boolean }
-> = {
-  // 1) "AI & ChatGPT Guides": move "Video Courses And Training" to its own category
-  [tnorm("Video Courses And Training")]: { forceSlug: "video-courses-and-training" },
-
-  // 2) "Self-Help & How-To": remove the product "Self Help And How To"
-  [tnorm("Self Help And How To")]: { hide: true },
-
-  // 3) "Complete Shop Packages": remove "Complete Shop Packages" product
-  [tnorm("Complete Shop Packages")]: { hide: true },
-
-  // 4) "Passive Income & Side Hustles": remove "Passive Income And Side Hustles"
-  [tnorm("Passive Income And Side Hustles")]: { hide: true },
-
-  // 5) "Digital Essentials Hub": move "The Art Of Giving No Fucks" to Self-Help
-  [tnorm("The Art Of Giving No Fucks")]: { forceSlug: "self-help-and-how-to" },
-};
-/* ------------------------------------------------------------------------- */
-
+/** Slugify helper */
 function toSlug(s: string) {
   return s
     .toLowerCase()
@@ -74,20 +49,13 @@ const LABEL_TO_SLUG: Record<string, string> = Object.fromEntries(
   Object.entries(META).map(([slug, m]) => [m.title.toLowerCase(), slug])
 );
 
-/** Return the *effective* category slug for a product, applying FIX_BY_TITLE when present */
-function effectiveProductCategorySlug(p: any): string | null {
-  const titleKey = tnorm(String(p.title ?? ""));
-  const fix = FIX_BY_TITLE[titleKey];
-  if (fix?.hide) return "__HIDE__";
-  if (fix?.forceSlug) return fix.forceSlug;
-
-  // Prefer explicit slug on product if present
+/** Normalize any product to a category slug */
+function productCategorySlug(p: any): string | null {
   if (p.categorySlug) {
     const s = toSlug(String(p.categorySlug));
     const normalized = LEGACY_TO_NEW[s] ?? s;
     return ALL_SLUGS.has(normalized) ? normalized : null;
   }
-  // Fallback to product.category label text
   if (p.category) {
     const fromLabel = LABEL_TO_SLUG[String(p.category).toLowerCase()];
     if (fromLabel) return fromLabel;
@@ -157,13 +125,10 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     );
   }
 
-  // ✅ Filter by effective slug and exclude “hidden” products
-  const catProducts = products.filter((p) => {
-    const eff = effectiveProductCategorySlug(p);
-    return eff !== "__HIDE__" && eff === slug;
-  });
+  // ✅ Filter by canonical category slug
+  const catProducts = products.filter((p) => productCategorySlug(p) === slug);
 
-  // Build card data (cover + thumbs)
+  // Build cards data (cover + thumbs)
   const cards = catProducts.map((p) => {
     const images = [p.image, ...readProductThumbs(p.slug)].filter(Boolean);
     return {
@@ -180,6 +145,7 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
       <h1 className="text-3xl md:text-4xl font-bold">{meta.title}</h1>
       <InlineMore text={meta.description} lines={1} minChars={40} className="mt-1 text-gray-700" />
 
+      {/* Dedicated product grid (no big cover, no duplicated gallery) */}
       {cards.length ? (
         <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {cards.map((c) => (
