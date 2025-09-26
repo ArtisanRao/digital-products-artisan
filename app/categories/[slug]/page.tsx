@@ -4,8 +4,10 @@ import Link from "next/link";
 import Script from "next/script";
 import InlineMore from "@/components/ui/inline-more";
 import { products } from "@/data/products";
-// ⬇️ Force relative import to the exact card file
-import ProductCard from "../../../components/shop/ProductCard";
+// ⬇️ Force relative import to a fresh card component
+import ProductCardV4 from "../../../components/shop/ProductCardV4";
+
+const UI_VERSION = "cat-v4-2025-09-26";
 
 /** ---- Category metadata (normalized slugs) ---- */
 const META: Record<string, { title: string; description: string }> = {
@@ -132,7 +134,7 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
   if (!meta) {
     const pretty = slug.replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
     return (
-      <main className="container mx-auto px-4 py-16" data-ui="CategoryPage@v3:not-found">
+      <main className="container mx-auto px-4 py-16" data-ui="CategoryPage@v4:not-found">
         <h1 className="text-3xl md:text-4xl font-bold mb-2">{pretty}</h1>
         <InlineMore
           text="We couldn’t find a dedicated page for this category yet. Explore best sellers below or visit all products."
@@ -153,11 +155,14 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     return eff !== "__HIDE__" && eff === slug;
   });
 
-  // Build card data (cover + up to 4 thumbs), include id for robust linking, and dedupe images
+  // Build card data (cover + up to 4 thumbs), include id for robust linking,
+  // dedupe images, and append a tiny cache-buster to image URLs.
   const cards = catProducts.map((p) => {
-    const images = Array.from(
-      new Set([p.image, ...readProductThumbs(p.slug, 4)].filter(Boolean))
-    ) as string[];
+    const rawImages = [p.image, ...readProductThumbs(p.slug, 4)].filter(Boolean);
+    const deduped = Array.from(new Set(rawImages)) as string[];
+    const images = deduped.map((src) =>
+      src.includes("?") ? `${src}&v=${UI_VERSION}` : `${src}?v=${UI_VERSION}`
+    );
 
     return {
       id: p.id,           // allow ProductCard to fall back to /products/<id>
@@ -170,7 +175,7 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
   });
 
   return (
-    <main className="container mx-auto px-4 py-12" data-ui="CategoryPage@v3">
+    <main className="container mx-auto px-4 py-12" data-ui="CategoryPage@v4">
       {/* TEMP: one-time kill of any old SW/cache that may be serving stale bundles */}
       <Script id="sw-reset" strategy="afterInteractive">
         {`(async()=>{try{
@@ -182,8 +187,6 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
             const keys = await caches.keys();
             for(const k of keys){ if(/^(workbox|next-pwa|static-|pages-cache-)/.test(k)) { try{await caches.delete(k);}catch(_){} } }
           }
-          // small delay to ensure fresh bundle fetch
-          setTimeout(()=>{ /* no-op */ }, 0);
         }catch(e){console.warn('SW reset failed', e);} })();`}
       </Script>
 
@@ -191,9 +194,9 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
       <InlineMore text={meta.description} lines={1} minChars={40} className="mt-1 text-gray-700" />
 
       {cards.length ? (
-        <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" data-ui="category-grid@v3">
+        <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" data-ui="category-grid@v4">
           {cards.map((c) => (
-            <ProductCard key={String(c.slug ?? c.id)} {...c} />
+            <ProductCardV4 key={String(c.slug ?? c.id)} {...c} />
           ))}
         </div>
       ) : (
