@@ -219,6 +219,9 @@ export default async function ProductPage({
   const teaser = needsToggle ? fullText.slice(0, MAX_CHARS).trimEnd() : fullText;
   const remainder = needsToggle ? fullText.slice(MAX_CHARS) : "";
 
+  // Canonical internal route for title link
+  const canonicalHref = `/products/${encodeURIComponent(String(slug ?? product.id))}`;
+
   return (
     <main className="container mx-auto px-4 py-8 product-page" data-page="product">
       <nav className="mb-4 text-sm text-gray-600">
@@ -237,7 +240,15 @@ export default async function ProductPage({
 
         {/* Details */}
         <section>
-          <h1 className="text-3xl font-bold">{product.title}</h1>
+          <h1 className="text-3xl font-bold">
+            <Link
+              href={canonicalHref}
+              prefetch={false}
+              className="underline decoration-transparent hover:decoration-current focus:decoration-current"
+            >
+              {product.title}
+            </Link>
+          </h1>
 
           <div className="mt-3 text-[15px] leading-relaxed text-gray-700">
             <p className="whitespace-pre-line">
@@ -267,7 +278,7 @@ export default async function ProductPage({
           </div>
 
           {/* Actions (blue buttons; Add updates badge, Buy → checkout) */}
-          <div className="mt-6 flex flex-wrap gap-3">
+          <div className="mt-6 grid grid-cols-2 gap-3">
             <AddToCartButton
               id={product.id}
               slug={slug}
