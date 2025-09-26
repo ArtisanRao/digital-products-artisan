@@ -4,7 +4,7 @@ export const dynamicParams = true; // allow ids not listed below
 export const revalidate = 3600;
 
 import type { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import path from "node:path";
 import fs from "node:fs";
@@ -158,13 +158,9 @@ export default async function ProductPage({
 }) {
   const { id } = await params;
 
-  // Accept **either** numeric id or slug; if it’s a slug and we have one, canonicalize.
+  // Accept **either** numeric id or slug; RENDER DIRECTLY to avoid any redirect loops
   const product = findProduct(id);
   if (!product) notFound();
-
-  if (!/^\d+$/.test(id) && product.slug) {
-    redirect(`/products/${encodeURIComponent(String(product.slug))}`);
-  }
 
   const galleryImages = coverPlusThree(rawGallery(product));
 
@@ -176,9 +172,7 @@ export default async function ProductPage({
       : Number((product as any).originalPrice) || 0;
 
   const canonicalHandle = String(product.slug ?? product.id);
-  const canonicalAbs = `https://digitalproductsartisan.com/products/${encodeURIComponent(
-    canonicalHandle
-  )}`;
+  const canonicalHref = `/products/${encodeURIComponent(canonicalHandle)}`;
 
   const POLICY_COUNTRIES = [
     "US","CA","GB","DE","FR","ES","IT","NL","SE","NO","FI","DK","IE","PT","PL","AT","BE","CH","AU","NZ",
@@ -193,7 +187,7 @@ export default async function ProductPage({
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.title,
-    url: canonicalAbs,
+    url: `https://digitalproductsartisan.com${canonicalHref}`,
     image: galleryImages.map((src) =>
       src.startsWith("http") ? src : `https://digitalproductsartisan.com${src}`
     ),
@@ -202,7 +196,7 @@ export default async function ProductPage({
     brand: { "@type": "Brand", name: "Digital Products Artisan" },
     offers: {
       "@type": "Offer",
-      url: canonicalAbs,
+      url: `https://digitalproductsartisan.com${canonicalHref}`,
       priceCurrency: "EUR",
       price: priceNum.toFixed(2),
       availability: "https://schema.org/InStock",
@@ -225,8 +219,6 @@ export default async function ProductPage({
   const needsToggle = fullText.length > MAX_CHARS;
   const teaser = needsToggle ? fullText.slice(0, MAX_CHARS).trimEnd() : fullText;
   const remainder = needsToggle ? fullText.slice(MAX_CHARS) : "";
-
-  const canonicalHref = `/products/${encodeURIComponent(canonicalHandle)}`;
 
   return (
     <main className="container mx-auto px-4 py-8 product-page" data-page="product">
@@ -279,7 +271,7 @@ export default async function ProductPage({
             )}
           </div>
 
-          {/* Compact, consistent CTAs (match the good page) */}
+          {/* Compact, consistent CTAs */}
           <div className="mt-6 grid grid-cols-2 gap-3">
             <AddToCartButton
               id={product.id}
