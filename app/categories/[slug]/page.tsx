@@ -1,9 +1,10 @@
 ﻿import fs from "node:fs";
 import path from "node:path";
 import Link from "next/link";
+import Script from "next/script";
 import InlineMore from "@/components/ui/inline-more";
 import { products } from "@/data/products";
-// IMPORTANT: Use RELATIVE import to ensure we pick THIS exact file at build time
+// ⬇️ Force relative import to the exact card file
 import ProductCard from "../../../components/shop/ProductCard";
 
 /** ---- Category metadata (normalized slugs) ---- */
@@ -131,7 +132,7 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
   if (!meta) {
     const pretty = slug.replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
     return (
-      <main className="container mx-auto px-4 py-16" data-ui="CategoryPage@v2:not-found">
+      <main className="container mx-auto px-4 py-16" data-ui="CategoryPage@v3:not-found">
         <h1 className="text-3xl md:text-4xl font-bold mb-2">{pretty}</h1>
         <InlineMore
           text="We couldn’t find a dedicated page for this category yet. Explore best sellers below or visit all products."
@@ -169,12 +170,28 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
   });
 
   return (
-    <main className="container mx-auto px-4 py-12" data-ui="CategoryPage@v2">
+    <main className="container mx-auto px-4 py-12" data-ui="CategoryPage@v3">
+      {/* TEMP: one-time kill of any old SW/cache that may be serving stale bundles */}
+      <Script id="sw-reset" strategy="afterInteractive">
+        {`(async()=>{try{
+          if('serviceWorker' in navigator){
+            const regs = await navigator.serviceWorker.getRegistrations();
+            for(const r of regs){ try{await r.unregister();}catch(_){} }
+          }
+          if('caches' in window){
+            const keys = await caches.keys();
+            for(const k of keys){ if(/^(workbox|next-pwa|static-|pages-cache-)/.test(k)) { try{await caches.delete(k);}catch(_){} } }
+          }
+          // small delay to ensure fresh bundle fetch
+          setTimeout(()=>{ /* no-op */ }, 0);
+        }catch(e){console.warn('SW reset failed', e);} })();`}
+      </Script>
+
       <h1 className="text-3xl md:text-4xl font-bold">{meta.title}</h1>
       <InlineMore text={meta.description} lines={1} minChars={40} className="mt-1 text-gray-700" />
 
       {cards.length ? (
-        <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" data-ui="category-grid@v2">
+        <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" data-ui="category-grid@v3">
           {cards.map((c) => (
             <ProductCard key={String(c.slug ?? c.id)} {...c} />
           ))}
