@@ -81,14 +81,19 @@ function effectiveProductCategorySlug(p: any): string | null {
   return null;
 }
 
-/** Read up to N thumbs from /public/images/products/<slug>/thumb-*.ext (default 4) */
-function readProductThumbs(slug: string, max = 4): string[] {
+/** Read up to N thumbs from /public/images/products/<slug>/thumb-*.ext (default 4, numeric sort) */
+function readProductThumbs(slug?: string, max = 4): string[] {
+  if (!slug) return [];
   const dir = pub("images", "products", slug);
   if (!fs.existsSync(dir)) return [];
   const names = fs
     .readdirSync(dir)
     .filter((f) => /^thumb-\d+\.(png|jpe?g|webp|avif)$/i.test(f))
-    .sort()
+    .sort((a, b) => {
+      const na = Number(a.match(/\d+/)?.[0] ?? 0);
+      const nb = Number(b.match(/\d+/)?.[0] ?? 0);
+      return na - nb;
+    })
     .slice(0, max);
   return names.map((n) => `/images/products/${slug}/${n}`);
 }
@@ -146,11 +151,14 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     return eff !== "__HIDE__" && eff === slug;
   });
 
-  // Build card data (cover + up to 4 thumbs) and include id for robust linking
+  // Build card data (cover + up to 4 thumbs), include id for robust linking, and dedupe images
   const cards = catProducts.map((p) => {
-    const images = [p.image, ...readProductThumbs(p.slug, 4)].filter(Boolean);
+    const images = Array.from(
+      new Set([p.image, ...readProductThumbs(p.slug, 4)].filter(Boolean))
+    ) as string[];
+
     return {
-      id: p.id,           // ← allow ProductCard to fall back to /products/<id>
+      id: p.id,           // allow ProductCard to fall back to /products/<id>
       title: p.title,
       slug: p.slug,
       price: p.price,

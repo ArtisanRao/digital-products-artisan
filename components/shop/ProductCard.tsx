@@ -6,10 +6,10 @@ import { useMemo, useState } from "react";
 export type ProductCardData = {
   title: string;
   slug?: string;
-  id?: string | number;     // fallback link id
+  id?: string | number;     // fallback if slug is missing
   price?: number | string;
   images?: string[];        // cover first, then mockups
-  href?: string;            // optional explicit href
+  href?: string;            // explicit href overrides slug/id
   description?: string;
 };
 
@@ -32,7 +32,7 @@ export default function ProductCard({
   const next = () => setIdx((i) => (i + 1) % pics.length);
   const go = (i: number) => setIdx(i);
 
-  // Robust product URL: explicit href → slug → id → "#"
+  // Robust URL: href → /products/<slug> → /products/<id> → "#"
   const productUrl = useMemo(() => {
     if (href) return href;
     if (slug) return `/products/${slug}`;
@@ -45,13 +45,17 @@ export default function ProductCard({
       ? new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(price)
       : (price ?? "");
 
-  // Add-to-cart + Buy wiring
+  // Cart + checkout wiring
   const addToCart = () => {
     try {
       const key = String(slug ?? id);
       const w = window as any;
+
+      // Prefer your site cart if exposed
       if (w?.dpaCart?.add) { w.dpaCart.add({ slug: key, qty: 1 }); return; }
       if (w?.__CART__?.add) { w.__CART__.add({ slug: key, qty: 1 }); return; }
+
+      // Fallback: localStorage + events for badge
       window.dispatchEvent(new CustomEvent("cart:add", { detail: { slug: key, qty: 1 } }));
       const raw = localStorage.getItem("cart");
       const cart: Record<string, number> = raw ? JSON.parse(raw) : {};
@@ -72,7 +76,10 @@ export default function ProductCard({
   };
 
   return (
-    <article className="group rounded-2xl border bg-white/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+    <article
+      className="group rounded-2xl border bg-white/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+      data-version="ProductCard@v3"
+    >
       {/* Main image (clickable) */}
       <Link href={productUrl} aria-label={`Open ${title}`}>
         <div className="relative overflow-hidden rounded-t-2xl bg-gray-50">
