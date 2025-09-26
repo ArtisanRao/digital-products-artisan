@@ -100,8 +100,9 @@ export function generateStaticParams() {
 type Params = { slug: string };
 const normalizeSlug = (s: string) => LEGACY_TO_NEW[s] ?? s;
 
-export async function generateMetadata({ params }: { params: Promise<Params> }) {
-  const { slug: raw } = await params;
+/** Next 13+/15 signature: do NOT use Promise<Params> here */
+export async function generateMetadata({ params }: { params: Params }) {
+  const { slug: raw } = params;
   const slug = normalizeSlug(raw);
   const m = META[slug];
   const title = m ? `${m.title} | Digital Products Artisan` : "Digital Products | Digital Products Artisan";
@@ -114,8 +115,9 @@ export async function generateMetadata({ params }: { params: Promise<Params> }) 
   };
 }
 
-export default async function CategoryPage({ params }: { params: Promise<Params> }) {
-  const { slug: raw } = await params;
+/** Page component: also use { params }: { params: Params } */
+export default async function CategoryPage({ params }: { params: Params }) {
+  const { slug: raw } = params;
   const slug = normalizeSlug(raw);
   const meta = META[slug];
 
