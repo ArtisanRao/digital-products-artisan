@@ -4,17 +4,16 @@ import Link from "next/link";
 import Script from "next/script";
 import InlineMore from "@/components/ui/inline-more";
 import { products } from "@/data/products";
-// Import your latest card
 import ProductCardV4 from "../../../components/shop/ProductCardV4";
 
-/* ───────────────── cache controls: make EVERY slug dynamic ──────────────── */
+/* ── Force dynamic, no cache ─────────────────────────────────────────────── */
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const fetchCache = "force-no-store";
 export const dynamicParams = true;
 /* ────────────────────────────────────────────────────────────────────────── */
 
-const UI_VERSION = "cat-v10-all-slugs";
+const UI_VERSION = "cat-v11-all-slugs";
 
 const META: Record<string, { title: string; description: string }> = {
   "ai-and-chatgpt-guides":       { title: "AI & ChatGPT Guides",     description: "Guides, prompts and AI learning resources." },
@@ -33,7 +32,6 @@ const META: Record<string, { title: string; description: string }> = {
   "social-media-kits":           { title: "Social Media Kits",       description: "Post templates and brandable assets for socials." },
 };
 
-/** Legacy slugs → normalized slugs */
 const LEGACY_TO_NEW: Record<string, string> = {
   "planners-productivity": "planners-and-productivity",
   "plr-mrr-bundles": "plr-and-mrr-bundles",
@@ -44,7 +42,7 @@ const LEGACY_TO_NEW: Record<string, string> = {
 
 const pub = (...p: string[]) => path.join(process.cwd(), "public", ...p);
 
-/* ---------------------- exact fixes by product title ---------------------- */
+/* -------------------- exact fixes by product title ------------------------ */
 const tnorm = (s: string) => s.toLowerCase().trim();
 const FIX_BY_TITLE: Record<string, { forceSlug?: string; hide?: boolean }> = {
   [tnorm("Video Courses And Training")]: { forceSlug: "video-courses-and-training" },
@@ -101,8 +99,10 @@ function readProductThumbs(slug?: string, max = 4): string[] {
 type Params = { slug: string };
 const normalizeSlug = (s: string) => LEGACY_TO_NEW[s] ?? s;
 
-export async function generateMetadata({ params }: { params: Params }) {
-  const slug = normalizeSlug(params.slug);
+/* NOTE: Your project’s types expect Promise for params */
+export async function generateMetadata({ params }: { params: Promise<Params> }) {
+  const { slug: raw } = await params;
+  const slug = normalizeSlug(raw);
   const m = META[slug];
   const title = m ? `${m.title} | Digital Products Artisan` : "Digital Products | Digital Products Artisan";
   const description = m?.description ?? "Browse our curated digital products.";
@@ -110,12 +110,12 @@ export async function generateMetadata({ params }: { params: Params }) {
     title,
     description,
     openGraph: { title, description, type: "website" },
-    twitter: { card: "summary_large_image", title, description },
   };
 }
 
-export default async function CategoryPage({ params }: { params: Params }) {
-  const slug = normalizeSlug(params.slug);
+export default async function CategoryPage({ params }: { params: Promise<Params> }) {
+  const { slug: raw } = await params;
+  const slug = normalizeSlug(raw);
   const meta = META[slug];
 
   if (!meta) {
@@ -142,11 +142,10 @@ export default async function CategoryPage({ params }: { params: Params }) {
     return eff !== "__HIDE__" && eff === slug;
   });
 
-  // Build card models (cover + exactly 4 thumbs)
+  // Card models: 1 cover + up to 4 thumbs, with tiny cache-buster
   const cards = catProducts.map((p) => {
     const raw = [p.image, ...readProductThumbs(p.slug, 4)].filter(Boolean);
     const dedup = Array.from(new Set(raw)) as string[];
-    // Ensure 1 cover + up to 4 thumbs (5 total max)
     const images = [dedup[0], ...dedup.slice(1, 5)].map((src) =>
       src.includes("?") ? `${src}&v=${UI_VERSION}` : `${src}?v=${UI_VERSION}`
     );
