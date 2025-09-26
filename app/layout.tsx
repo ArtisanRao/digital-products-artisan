@@ -101,7 +101,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         )}
       </head>
 
-      <body className={inter.className}>
+      <body className={inter.className} data-ui-build={BUILD_TAG}>
         {/* One-time SW + caches flush when BUILD_TAG changes */}
         <Script id="sw-flush" strategy="afterInteractive">
           {`(async()=>{try{
