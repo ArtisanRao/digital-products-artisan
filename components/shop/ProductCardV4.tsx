@@ -28,7 +28,7 @@ export default function ProductCardV4({
     [images]
   );
 
-  // Build exactly 1 cover + 4 thumbs (pad with cover if needed)
+  // Exactly 1 cover + 4 thumbs (pad with cover if needed)
   const displayPics = useMemo(() => {
     const cover = pics[0] ?? "/images/placeholder.jpg";
     const thumbs = pics.slice(1);
@@ -39,7 +39,6 @@ export default function ProductCardV4({
   const [idx, setIdx] = useState(0);
   const prev = () => setIdx((i) => (i === 0 ? displayPics.length - 1 : i - 1));
   const next = () => setIdx((i) => (i + 1) % displayPics.length);
-  const go = (i: number) => setIdx(i);
 
   // Robust URL: href → /products/<slug> → /products/<id> → /products (safe fallback)
   const productUrl = useMemo(() => {
@@ -62,11 +61,9 @@ export default function ProductCardV4({
 
       const w = window as any;
 
-      // Prefer your site cart if exposed
       if (w?.dpaCart?.add) { w.dpaCart.add({ slug: key, qty: 1 }); return; }
       if (w?.__CART__?.add) { w.__CART__.add({ slug: key, qty: 1 }); return; }
 
-      // Fallback: localStorage + events for badge
       window.dispatchEvent(new CustomEvent("cart:add", { detail: { slug: key, qty: 1 } }));
       const raw = localStorage.getItem("cart");
       const cart: Record<string, number> = raw ? JSON.parse(raw) : {};
@@ -90,9 +87,9 @@ export default function ProductCardV4({
   return (
     <article
       className="group rounded-2xl border bg-white/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-      data-version="ProductCardV4@reliable-link-1cover+4thumbs"
+      data-version="ProductCardV4@links-and-1plus4"
     >
-      {/* Main image (clickable → product page) */}
+      {/* Main image (click → product page) */}
       <Link href={productUrl} prefetch={false} aria-label={`Open ${title}`}>
         <div className="relative overflow-hidden rounded-t-2xl bg-gray-50">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -128,41 +125,42 @@ export default function ProductCardV4({
       <div className="p-4">
         {/* Title (clickable → product page) */}
         <Link href={productUrl} prefetch={false} className="block">
-          <h3 className="line-clamp-2 text-lg font-semibold">{title}</h3>
+          <h3 className="line-clamp-2 text-lg font-semibold hover:text-blue-600">{title}</h3>
         </Link>
 
         {description && (
           <p className="mt-1 line-clamp-2 text-sm text-gray-600">{description}</p>
         )}
 
-        {/* Exactly 4 thumbs under the main preview */}
+        {/* Exactly 4 thumbs under the main preview — hover swaps, click navigates */}
         <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
           {displayPics.slice(1, 5).map((src, i) => (
-            <button
-              type="button"
+            <Link
               key={src + i}
-              onClick={() => go(i + 1)} // thumbs map to indices 1..4
+              href={productUrl}
+              prefetch={false}
+              aria-label={`Open ${title}`}
+              onMouseEnter={() => setIdx(i + 1)} // hover shows that thumb as main
               className={`h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-white transition ${
                 idx === i + 1 ? "ring-2 ring-blue-500" : "opacity-80 hover:opacity-100"
               }`}
-              aria-label={`Preview ${i + 1}`}
               title={`Preview ${i + 1}`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={src} alt="" className="h-full w-full object-cover" />
-            </button>
+            </Link>
           ))}
         </div>
 
         {/* Price */}
         {priceLabel && <div className="mt-3 text-xl font-semibold">{priceLabel}</div>}
 
-        {/* Actions (uniform blue) */}
-        <div className="mt-3 flex flex-wrap items-center gap-3">
+        {/* Actions — aligned horizontally with equal widths */}
+        <div className="mt-3 grid grid-cols-3 gap-3">
           <Link
             href={productUrl}
             prefetch={false}
-            className="flex h-10 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-medium text-white hover:bg-blue-700"
+            className="flex h-10 items-center justify-center rounded-xl bg-blue-600 text-sm font-medium text-white hover:bg-blue-700"
             aria-label={`View ${title}`}
           >
             👁️ View
@@ -171,7 +169,7 @@ export default function ProductCardV4({
           <button
             type="button"
             onClick={addToCart}
-            className="flex h-10 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-medium text-white hover:bg-blue-700"
+            className="flex h-10 items-center justify-center rounded-xl bg-blue-600 text-sm font-medium text-white hover:bg-blue-700"
             aria-label="Add to cart"
           >
             🛒 Add to cart
@@ -180,7 +178,7 @@ export default function ProductCardV4({
           <button
             type="button"
             onClick={buyNow}
-            className="flex h-10 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-medium text-white hover:bg-blue-700"
+            className="flex h-10 items-center justify-center rounded-xl bg-blue-600 text-sm font-medium text-white hover:bg-blue-700"
             aria-label="Buy now"
           >
             ⚡ Buy
