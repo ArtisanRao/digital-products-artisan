@@ -3,7 +3,8 @@ import path from "node:path";
 import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
 import { products } from "@/data/products";
-import ProductCard from "@/components/shop/ProductCard";
+// IMPORTANT: Use RELATIVE import to ensure we pick THIS exact file at build time
+import ProductCard from "../../../components/shop/ProductCard";
 
 /** ---- Category metadata (normalized slugs) ---- */
 const META: Record<string, { title: string; description: string }> = {
@@ -130,7 +131,7 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
   if (!meta) {
     const pretty = slug.replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
     return (
-      <main className="container mx-auto px-4 py-16">
+      <main className="container mx-auto px-4 py-16" data-ui="CategoryPage@v2:not-found">
         <h1 className="text-3xl md:text-4xl font-bold mb-2">{pretty}</h1>
         <InlineMore
           text="We couldn’t find a dedicated page for this category yet. Explore best sellers below or visit all products."
@@ -168,12 +169,12 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
   });
 
   return (
-    <main className="container mx-auto px-4 py-12">
+    <main className="container mx-auto px-4 py-12" data-ui="CategoryPage@v2">
       <h1 className="text-3xl md:text-4xl font-bold">{meta.title}</h1>
       <InlineMore text={meta.description} lines={1} minChars={40} className="mt-1 text-gray-700" />
 
       {cards.length ? (
-        <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" data-ui="category-grid@v2">
           {cards.map((c) => (
             <ProductCard key={String(c.slug ?? c.id)} {...c} />
           ))}
