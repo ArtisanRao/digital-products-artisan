@@ -14,6 +14,9 @@ import React from "react";
 
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 
+/** Bump this on each deploy to force clients to unregister old SW and clear caches */
+const BUILD_TAG = "sw-flush-2025-09-26-g";
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const snipcartKey = process.env.NEXT_PUBLIC_SNIPCART_KEY;
   const hasSnipcart = !!snipcartKey;
@@ -22,6 +25,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <head>
         <title>Digital Products Artisan</title>
+
+        {/* Build/debug marker so you can confirm the new layout is live */}
+        <meta name="x-build-tag" content={BUILD_TAG} />
 
         {/* Mobile fit */}
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -96,6 +102,25 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
 
       <body className={inter.className}>
+        {/* One-time SW + caches flush when BUILD_TAG changes */}
+        <Script id="sw-flush" strategy="afterInteractive">
+          {`(async()=>{try{
+            const tag='${BUILD_TAG}';
+            const prev=localStorage.getItem('BUILD_TAG');
+            if(prev!==tag){
+              if('serviceWorker' in navigator){
+                const regs=await navigator.serviceWorker.getRegistrations();
+                for(const r of regs){ try{await r.unregister();}catch{} }
+              }
+              if('caches' in window){
+                const keys=await caches.keys();
+                for(const k of keys){ try{await caches.delete(k);}catch{} }
+              }
+              localStorage.setItem('BUILD_TAG', tag);
+            }
+          }catch(e){console.warn('SW flush failed', e);}})();`}
+        </Script>
+
         <AuthProvider>
           <CartProvider>
             {/* Auto-detect & store currency */}
