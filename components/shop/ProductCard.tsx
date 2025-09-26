@@ -22,22 +22,24 @@ export default function ProductCard({
   href,
   description,
 }: ProductCardData) {
-  const pics = useMemo(
-    () => (images.length ? images : ["/images/placeholder.jpg"]),
-    [images]
-  );
+  // Dedupe images & ensure at least one placeholder
+  const pics = useMemo(() => {
+    const unique = Array.from(new Set(images.filter(Boolean)));
+    return unique.length ? unique : ["/images/placeholder.jpg"];
+  }, [images]);
+
   const [idx, setIdx] = useState(0);
 
   const prev = () => setIdx((i) => (i === 0 ? pics.length - 1 : i - 1));
   const next = () => setIdx((i) => (i + 1) % pics.length);
   const go = (i: number) => setIdx(i);
 
-  // Robust URL: href → /products/<slug> → /products/<id> → "#"
+  // Robust URL: href → /products/<slug> → /products/<id> → /products
   const productUrl = useMemo(() => {
     if (href) return href;
     if (slug) return `/products/${slug}`;
     if (id !== undefined && id !== null) return `/products/${id}`;
-    return "#";
+    return "/products";
   }, [href, slug, id]);
 
   const priceLabel =
@@ -51,7 +53,7 @@ export default function ProductCard({
       const key = String(slug ?? id);
       const w = window as any;
 
-      // Prefer your site cart if exposed
+      // Prefer site cart if exposed
       if (w?.dpaCart?.add) { w.dpaCart.add({ slug: key, qty: 1 }); return; }
       if (w?.__CART__?.add) { w.__CART__.add({ slug: key, qty: 1 }); return; }
 
@@ -75,13 +77,16 @@ export default function ProductCard({
     window.location.href = `/checkout?product=${encodeURIComponent(key)}`;
   };
 
+  // Exactly up to 4 thumbs
+  const thumbs = pics.slice(0, 4);
+
   return (
     <article
       className="group rounded-2xl border bg-white/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-      data-version="ProductCard@v3"
+      data-version="ProductCard@v6"
     >
       {/* Main image (clickable) */}
-      <Link href={productUrl} aria-label={`Open ${title}`}>
+      <Link href={productUrl} aria-label={`Open ${title}`} prefetch={false}>
         <div className="relative overflow-hidden rounded-t-2xl bg-gray-50">
           <img
             src={pics[idx]}
@@ -94,7 +99,7 @@ export default function ProductCard({
               <button
                 type="button"
                 onClick={(e) => { e.preventDefault(); prev(); }}
-                aria-label="Previous"
+                aria-label="Previous image"
                 className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-3 py-2 text-sm shadow hover:bg-white"
               >
                 ‹
@@ -102,7 +107,7 @@ export default function ProductCard({
               <button
                 type="button"
                 onClick={(e) => { e.preventDefault(); next(); }}
-                aria-label="Next"
+                aria-label="Next image"
                 className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-3 py-2 text-sm shadow hover:bg-white"
               >
                 ›
@@ -114,17 +119,18 @@ export default function ProductCard({
 
       <div className="p-4">
         {/* Title (clickable) */}
-        <Link href={productUrl} className="block">
+        <Link href={productUrl} className="block" prefetch={false}>
           <h3 className="line-clamp-2 text-lg font-semibold">{title}</h3>
         </Link>
+
         {description && (
           <p className="mt-1 line-clamp-2 text-sm text-gray-600">{description}</p>
         )}
 
         {/* Thumbs (max 4) */}
-        {pics.length > 1 && (
+        {thumbs.length > 1 && (
           <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
-            {pics.slice(0, 4).map((src, i) => (
+            {thumbs.map((src, i) => (
               <button
                 type="button"
                 key={src + i}
@@ -148,6 +154,7 @@ export default function ProductCard({
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <Link
             href={productUrl}
+            prefetch={false}
             className="flex h-10 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-medium text-white hover:bg-blue-700"
             aria-label={`View ${title}`}
           >

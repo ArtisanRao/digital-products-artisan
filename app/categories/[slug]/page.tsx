@@ -89,7 +89,9 @@ function effectiveProductCategorySlug(p: any): string | null {
   return null;
 }
 
-/** Read up to N thumbs from /public/images/products/<slug>/thumb-*.ext (default 4, numeric sort) */
+/** Read thumbs from /public/images/products/<slug>/thumb-*.ext
+ *  We reserve 1 slot for the cover, so with max=4 this returns up to 3 files.
+ */
 function readProductThumbs(slug?: string, max = 4): string[] {
   if (!slug) return [];
   const dir = pub("images", "products", slug);
@@ -97,12 +99,13 @@ function readProductThumbs(slug?: string, max = 4): string[] {
   const names = fs
     .readdirSync(dir)
     .filter((f) => /^thumb-\d+\.(png|jpe?g|webp|avif)$/i.test(f))
+    // numeric sort so thumb-02 < thumb-10
     .sort((a, b) => {
       const na = Number(a.match(/\d+/)?.[0] ?? 0);
       const nb = Number(b.match(/\d+/)?.[0] ?? 0);
       return na - nb;
     })
-    .slice(0, max);
+    .slice(0, Math.max(0, max - 1)); // 👈 leave room for the cover
   return names.map((n) => `/images/products/${slug}/${n}`);
 }
 
@@ -159,21 +162,20 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     return eff !== "__HIDE__" && eff === slug;
   });
 
-  // Build card data (cover + up to 4 thumbs), include id for robust linking,
-  // dedupe images, and append a tiny cache-buster to image URLs.
+  // ✅ Build EXACTLY up to 4 images total: [cover, thumb, thumb, thumb]
   const cards = catProducts.map((p) => {
-    const rawImages = [p.image, ...readProductThumbs(p.slug, 4)].filter(Boolean);
-    const deduped = Array.from(new Set(rawImages)) as string[];
-    const images = deduped.map((src) =>
-      src.includes("?") ? `${src}&v=${UI_VERSION}` : `${src}?v=${UI_VERSION}`
-    );
+    const cover = p.image ? String(p.image) : undefined;
+    const thumbs = readProductThumbs(p.slug, 4); // returns up to 3 items
+    const deduped = Array.from(new Set([cover, ...thumbs].filter(Boolean))) as string[];
+    const limited = deduped.slice(0, 4); // ensure max of 4 total
+    const images = limited.map((src) => (src.includes("?") ? `${src}&v=${UI_VERSION}` : `${src}?v=${UI_VERSION}`));
 
     return {
-      id: p.id,
+      id: p.id,        // ✅ id passed
+      slug: p.slug,    // ✅ slug passed
       title: p.title,
-      slug: p.slug,
       price: p.price,
-      images,
+      images,          // ✅ up to 4 total (cover-first)
       description: p.description,
     };
   });
