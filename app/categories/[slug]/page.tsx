@@ -7,12 +7,12 @@ import InlineMore from "@/components/ui/inline-more";
 import { products } from "@/data/products";
 import ProductCardV4 from "../../../components/shop/ProductCardV4";
 
-// Force fresh rendering and no caching for this route
+// Always serve fresh for this route
 export const revalidate = 0;
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
-const UI_VERSION = "cat-v10-params-fix";
+const UI_VERSION = "cat-v11-any-props";
 
 // ---- Category metadata (normalized slugs) ----
 const META: Record<string, { title: string; description: string }> = {
@@ -25,7 +25,7 @@ const META: Record<string, { title: string; description: string }> = {
   "health-and-fitness-ebooks":   { title: "Health & Fitness eBooks", description: "Nutrition, fitness and wellness books." },
   "keto-and-diet-guides":        { title: "Keto & Diet Guides",      description: "Keto and nutrition programs and meal plans." },
   "passive-income-and-side-hustles": { title: "Passive Income & Side Hustles", description: "Monetization playbooks and templates." },
-  "web-templates":               { title: "Web Templates",           description: "Website templates, UI kits and themes." },
+  "web-templates":               { title: "Web Templates",           description: "Website, UI kits and themes." },
   "digital-essentials-hub":      { title: "Digital Essentials Hub",  description: "Prompt packs, automations, and utilities." },
   "fonts-and-icons":             { title: "Fonts & Icons",           description: "Font families and icon sets." },
   "religious-ebooks":            { title: "Religious eBooks",        description: "Faith-centered books, devotionals and study guides." },
@@ -113,12 +113,12 @@ export function generateStaticParams() {
   return [...newSlugs, ...legacySlugs].map((slug) => ({ slug }));
 }
 
-type Params = { slug: string };
 const normalizeSlug = (s: string) => LEGACY_TO_NEW[s] ?? s;
 
-// ✅ NOTE: params is a plain object, NOT a Promise
-export async function generateMetadata({ params }: { params: Params }) {
-  const slug = normalizeSlug(params.slug);
+// ✅ Use `any` for props to avoid Next’s PageProps constraint (which in your project expects Promise)
+export async function generateMetadata(props: any) {
+  const raw = String(props?.params?.slug ?? "");
+  const slug = normalizeSlug(raw);
   const m = META[slug];
   const title = m ? `${m.title} | Digital Products Artisan` : "Digital Products | Digital Products Artisan";
   const description = m?.description ?? "Browse our curated digital products.";
@@ -130,9 +130,10 @@ export async function generateMetadata({ params }: { params: Params }) {
   };
 }
 
-// ✅ NOTE: params is a plain object, NOT a Promise
-export default async function CategoryPage({ params }: { params: Params }) {
-  const slug = normalizeSlug(params.slug);
+// ✅ Same trick here: props as `any`, then safely read params.slug
+export default async function CategoryPage(props: any) {
+  const raw = String(props?.params?.slug ?? "");
+  const slug = normalizeSlug(raw);
   const meta = META[slug];
 
   if (!meta) {
@@ -159,7 +160,7 @@ export default async function CategoryPage({ params }: { params: Params }) {
     return eff !== "__HIDE__" && eff === slug;
   });
 
-  // Build card data (cover + up to 4 thumbs), include id for robust linking, dedupe images, add small cache-buster
+  // Build card data (cover + up to 4 thumbs), include id for robust linking, dedupe images, cache-buster
   const cards = catProducts.map((p) => {
     const rawImages = [p.image, ...readProductThumbs(p.slug, 4)].filter(Boolean);
     const deduped = Array.from(new Set(rawImages)) as string[];
