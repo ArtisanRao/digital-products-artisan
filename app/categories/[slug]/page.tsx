@@ -6,13 +6,14 @@ import InlineMore from "@/components/ui/inline-more";
 import ProductCardV4 from "../../../components/shop/ProductCardV4";
 import { products } from "@/data/products";
 
-/* runtime: always dynamic */
+/* runtime: always dynamic to avoid stale caches */
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const fetchCache = "force-no-store";
 
-const UI_VERSION = "cat-v6-2025-09-26";
+const UI_VERSION = "cat-v7-2025-09-26";
 
+/* -------------------- Category meta -------------------- */
 const META: Record<string, { title: string; description: string }> = {
   "ai-and-chatgpt-guides": { title: "AI & ChatGPT Guides", description: "Guides, prompts and AI learning resources." },
   "planners-and-productivity": { title: "Planners & Productivity", description: "Digital planners, journals and productivity tools." },
@@ -35,7 +36,7 @@ const LEGACY_TO_NEW: Record<string, string> = {
   "plr-mrr-bundles": "plr-and-mrr-bundles",
   "health-fitness-ebooks": "health-and-fitness-ebooks",
   "keto-diet-guides": "keto-and-diet-guides",
-  "fonts": "fonts-and-icons",
+  fonts: "fonts-and-icons",
 };
 
 const pub = (...p: string[]) => path.join(process.cwd(), "public", ...p);
@@ -79,7 +80,7 @@ function effectiveProductCategorySlug(p: any): string | null {
   return null;
 }
 
-/** Read up to 4 thumbs from /public/images/products/<slug>/thumb-*.ext (numeric sort) */
+/** Read up to 4 thumbs from /public/images/products/<slug>/thumb-*.ext */
 function readProductThumbs(slug?: string, max = 4): string[] {
   if (!slug) return [];
   const dir = pub("images", "products", slug);
@@ -96,9 +97,10 @@ function readProductThumbs(slug?: string, max = 4): string[] {
   return names.map((n) => `/images/products/${slug}/${n}`);
 }
 
-/* ---- Metadata with simple typing to avoid Promise<Props> mismatch ---- */
-export async function generateMetadata({ params }: { params: { slug: string } }) {
-  const slug = (LEGACY_TO_NEW[params.slug] ?? params.slug) as keyof typeof META;
+/* -------------------- Metadata (accept either Promise or object) -------------------- */
+export async function generateMetadata(props: any) {
+  const { slug: raw } = await props.params;
+  const slug = (LEGACY_TO_NEW[raw] ?? raw) as keyof typeof META;
   const m = META[slug as string];
   const title = m ? `${m.title} | Digital Products Artisan` : "Digital Products | Digital Products Artisan";
   const description = m?.description ?? "Browse our curated digital products.";
@@ -110,9 +112,10 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   };
 }
 
-/* ---- Page (also using simple props typing) ---- */
-export default function CategoryPage({ params }: { params: { slug: string } }) {
-  const slug = (LEGACY_TO_NEW[params.slug] ?? params.slug) as keyof typeof META;
+/* -------------------- Page (accept either Promise or object) -------------------- */
+export default async function CategoryPage(props: any) {
+  const { slug: raw } = await props.params;
+  const slug = (LEGACY_TO_NEW[raw] ?? raw) as keyof typeof META;
   const meta = META[slug as string];
 
   if (!meta) {
@@ -131,18 +134,19 @@ export default function CategoryPage({ params }: { params: { slug: string } }) {
     );
   }
 
+  // Filter by effective slug and exclude hidden ones
   const catProducts = products.filter((p) => {
     const eff = effectiveProductCategorySlug(p);
     return eff !== "__HIDE__" && eff === slug;
   });
 
+  // Build cards: main cover + up to 4 thumbs, robust href (slug → id)
   const cards = catProducts.map((p) => {
     const main = p.image ? [String(p.image)] : [];
     const thumbs = readProductThumbs(p.slug, 4);
     const images = Array.from(new Set([...main, ...thumbs])).map((src) =>
       src.includes("?") ? `${src}&v=${UI_VERSION}` : `${src}?v=${UI_VERSION}`
     );
-
     const href = p.slug ? `/products/${p.slug}` : p.id != null ? `/products/${p.id}` : "#";
 
     return {
@@ -150,9 +154,9 @@ export default function CategoryPage({ params }: { params: { slug: string } }) {
       title: p.title,
       slug: p.slug,
       price: p.price,
-      images,                // 1 main + up to 4 thumbs
+      images,          // 1 main + max 4 thumbs (deduped)
       description: p.description,
-      href,                  // robust link so View / image / title work
+      href,            // used by ProductCardV4 for View / title / image
     };
   });
 
