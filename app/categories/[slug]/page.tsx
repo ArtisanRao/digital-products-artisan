@@ -83,7 +83,7 @@ function readThumbsFrom(folder: string): string[] {
 
 function readProductThumbsDual(id?: string | number, slug?: string | number, max = 3): string[] {
   const byId = id != null ? readThumbsFrom(String(id)) : [];
-  the bySlug = slug != null ? readThumbsFrom(String(slug)) : [];
+  const bySlug = slug != null ? readThumbsFrom(String(slug)) : [];
   const all = [...byId, ...bySlug];
   const uniq: string[] = [];
   for (const u of all) if (!uniq.includes(u)) uniq.push(u);
