@@ -3,32 +3,33 @@ import path from "node:path";
 import Link from "next/link";
 import Script from "next/script";
 import InlineMore from "@/components/ui/inline-more";
-import ProductCardV4 from "../../../components/shop/ProductCardV4";
+import ProductCardV4 from "@/components/shop/ProductCardV4"; // use alias; it's already used elsewhere
 import { products } from "@/data/products";
 
-/* runtime: always dynamic to avoid stale caches */
+/* ── force dynamic, defeat caches ─────────────────────────────────────────── */
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const fetchCache = "force-no-store";
+export const dynamicParams = true;
+/* ─────────────────────────────────────────────────────────────────────────── */
 
-const UI_VERSION = "cat-v7-2025-09-26";
+const UI_VERSION = "cat-v9-verify";
 
-/* -------------------- Category meta -------------------- */
 const META: Record<string, { title: string; description: string }> = {
-  "ai-and-chatgpt-guides": { title: "AI & ChatGPT Guides", description: "Guides, prompts and AI learning resources." },
-  "planners-and-productivity": { title: "Planners & Productivity", description: "Digital planners, journals and productivity tools." },
-  "self-help-and-how-to": { title: "Self-Help & How-To", description: "Practical how-to guides and self-improvement." },
-  "plr-and-mrr-bundles": { title: "PLR & MRR Bundles", description: "Done-for-you PLR/MRR products and kits." },
-  "video-courses-and-training": { title: "Video Courses & Training", description: "Structured video lessons and trainings." },
-  "complete-shop-packages": { title: "Complete Shop Packages", description: "Turn-key storefront bundles and assets." },
-  "health-and-fitness-ebooks": { title: "Health & Fitness eBooks", description: "Nutrition, fitness and wellness books." },
-  "keto-and-diet-guides": { title: "Keto & Diet Guides", description: "Keto and nutrition programs and meal plans." },
+  "ai-and-chatgpt-guides":       { title: "AI & ChatGPT Guides",     description: "Guides, prompts and AI learning resources." },
+  "planners-and-productivity":   { title: "Planners & Productivity", description: "Digital planners, journals and productivity tools." },
+  "self-help-and-how-to":        { title: "Self-Help & How-To",      description: "Practical how-to guides and self-improvement." },
+  "plr-and-mrr-bundles":         { title: "PLR & MRR Bundles",       description: "Done-for-you PLR/MRR products and kits." },
+  "video-courses-and-training":  { title: "Video Courses & Training",description: "Structured video lessons and trainings." },
+  "complete-shop-packages":      { title: "Complete Shop Packages",  description: "Turn-key storefront bundles and assets." },
+  "health-and-fitness-ebooks":   { title: "Health & Fitness eBooks", description: "Nutrition, fitness and wellness books." },
+  "keto-and-diet-guides":        { title: "Keto & Diet Guides",      description: "Keto and nutrition programs and meal plans." },
   "passive-income-and-side-hustles": { title: "Passive Income & Side Hustles", description: "Monetization playbooks and templates." },
-  "web-templates": { title: "Web Templates", description: "Website templates, UI kits and themes." },
-  "digital-essentials-hub": { title: "Digital Essentials Hub", description: "Prompt packs, automations, and utilities." },
-  "fonts-and-icons": { title: "Fonts & Icons", description: "Font families and icon sets." },
-  "religious-ebooks": { title: "Religious eBooks", description: "Faith-centered books, devotionals and study guides." },
-  "social-media-kits": { title: "Social Media Kits", description: "Post templates and brandable assets for socials." },
+  "web-templates":               { title: "Web Templates",           description: "Website templates, UI kits and themes." },
+  "digital-essentials-hub":      { title: "Digital Essentials Hub",  description: "Prompt packs, automations, and utilities." },
+  "fonts-and-icons":             { title: "Fonts & Icons",           description: "Font families and icon sets." },
+  "religious-ebooks":            { title: "Religious eBooks",        description: "Faith-centered books, devotionals and study guides." },
+  "social-media-kits":           { title: "Social Media Kits",       description: "Post templates and brandable assets for socials." },
 };
 
 const LEGACY_TO_NEW: Record<string, string> = {
@@ -36,7 +37,7 @@ const LEGACY_TO_NEW: Record<string, string> = {
   "plr-mrr-bundles": "plr-and-mrr-bundles",
   "health-fitness-ebooks": "health-and-fitness-ebooks",
   "keto-diet-guides": "keto-and-diet-guides",
-  fonts: "fonts-and-icons",
+  "fonts": "fonts-and-icons",
 };
 
 const pub = (...p: string[]) => path.join(process.cwd(), "public", ...p);
@@ -80,7 +81,7 @@ function effectiveProductCategorySlug(p: any): string | null {
   return null;
 }
 
-/** Read up to 4 thumbs from /public/images/products/<slug>/thumb-*.ext */
+/** Read up to 4 thumbs from /public/images/products/<slug>/thumb-*.ext (numeric sort) */
 function readProductThumbs(slug?: string, max = 4): string[] {
   if (!slug) return [];
   const dir = pub("images", "products", slug);
@@ -97,24 +98,19 @@ function readProductThumbs(slug?: string, max = 4): string[] {
   return names.map((n) => `/images/products/${slug}/${n}`);
 }
 
-/* -------------------- Metadata (accept either Promise or object) -------------------- */
+/* ---- Metadata (accept Promise-style params too) ---- */
 export async function generateMetadata(props: any) {
-  const { slug: raw } = await props.params;
+  const { slug: raw } = await props.params;   // ← works for Promise or plain
   const slug = (LEGACY_TO_NEW[raw] ?? raw) as keyof typeof META;
   const m = META[slug as string];
   const title = m ? `${m.title} | Digital Products Artisan` : "Digital Products | Digital Products Artisan";
   const description = m?.description ?? "Browse our curated digital products.";
-  return {
-    title,
-    description,
-    openGraph: { title, description, type: "website" },
-    twitter: { card: "summary_large_image", title, description },
-  };
+  return { title, description, openGraph: { title, description, type: "website" }, twitter: { card: "summary_large_image", title, description } };
 }
 
-/* -------------------- Page (accept either Promise or object) -------------------- */
+/* ---- Page (accept Promise-style params too) ---- */
 export default async function CategoryPage(props: any) {
-  const { slug: raw } = await props.params;
+  const { slug: raw } = await props.params;   // ← works for Promise or plain
   const slug = (LEGACY_TO_NEW[raw] ?? raw) as keyof typeof META;
   const meta = META[slug as string];
 
@@ -123,41 +119,29 @@ export default async function CategoryPage(props: any) {
     return (
       <main className="container mx-auto px-4 py-16" data-ui={`CategoryPage@${UI_VERSION}:not-found`}>
         <h1 className="text-3xl md:text-4xl font-bold mb-2">{pretty}</h1>
-        <InlineMore
-          text="We couldn’t find a dedicated page for this category yet. Explore best sellers below or visit all products."
-          lines={1}
-          minChars={40}
-          className="text-gray-700"
-        />
+        <InlineMore text="We couldn’t find a dedicated page for this category yet. Explore best sellers below or visit all products." lines={1} minChars={40} className="text-gray-700" />
         <p className="mt-2"><Link href="/products" className="underline">Browse all products →</Link></p>
       </main>
     );
   }
 
-  // Filter by effective slug and exclude hidden ones
+  // Filter for this category
   const catProducts = products.filter((p) => {
     const eff = effectiveProductCategorySlug(p);
     return eff !== "__HIDE__" && eff === slug;
   });
 
-  // Build cards: main cover + up to 4 thumbs, robust href (slug → id)
+  // Build cards: 1 main + up to 4 thumbs (dedup), robust href for product page
   const cards = catProducts.map((p) => {
     const main = p.image ? [String(p.image)] : [];
     const thumbs = readProductThumbs(p.slug, 4);
-    const images = Array.from(new Set([...main, ...thumbs])).map((src) =>
-      src.includes("?") ? `${src}&v=${UI_VERSION}` : `${src}?v=${UI_VERSION}`
-    );
-    const href = p.slug ? `/products/${p.slug}` : p.id != null ? `/products/${p.id}` : "#";
+    const images = Array.from(new Set([...main, ...thumbs]))
+      .slice(0, 5)                                    // 1 + up to 4
+      .map((src) => (src.includes("?") ? `${src}&v=${UI_VERSION}` : `${src}?v=${UI_VERSION}`));
 
-    return {
-      id: p.id,
-      title: p.title,
-      slug: p.slug,
-      price: p.price,
-      images,          // 1 main + max 4 thumbs (deduped)
-      description: p.description,
-      href,            // used by ProductCardV4 for View / title / image
-    };
+    const href = p.slug ? `/products/${p.slug}` : p.id != null ? `/products/${p.id}` : "/products";
+
+    return { id: p.id, title: p.title, slug: p.slug, price: p.price, images, description: p.description, href };
   });
 
   return (
@@ -172,7 +156,7 @@ export default async function CategoryPage(props: any) {
             const keys = await caches.keys();
             for(const k of keys){ if(/^(workbox|next-pwa|static-|pages-cache-)/.test(k)) { try{await caches.delete(k);}catch(_){} } }
           }
-        }catch(e){console.warn('SW reset failed', e);} })();`}
+        }catch(e){}})();`}
       </Script>
 
       <h1 className="text-3xl md:text-4xl font-bold">
@@ -182,9 +166,7 @@ export default async function CategoryPage(props: any) {
 
       {cards.length ? (
         <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" data-ui={`category-grid@${UI_VERSION}`}>
-          {cards.map((c) => (
-            <ProductCardV4 key={`${UI_VERSION}:${String(c.slug ?? c.id)}`} {...c} />
-          ))}
+          {cards.map((c) => <ProductCardV4 key={`${UI_VERSION}:${String(c.slug ?? c.id)}`} {...c} />)}
         </div>
       ) : (
         <div className="mt-8">
