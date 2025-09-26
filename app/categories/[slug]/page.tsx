@@ -34,10 +34,8 @@ const LEGACY_TO_NEW: Record<string, string> = {
 
 const pub = (...p: string[]) => path.join(process.cwd(), "public", ...p);
 
-/* ----------------------- EXACT FIXES YOU ASKED FOR ------------------------ */
+/* --------------------- exact fixes by product title ---------------------- */
 const tnorm = (s: string) => s.toLowerCase().trim();
-
-/** Hard overrides by product *title* */
 const FIX_BY_TITLE: Record<string, { forceSlug?: string; hide?: boolean }> = {
   [tnorm("Video Courses And Training")]: { forceSlug: "video-courses-and-training" },
   [tnorm("Self Help And How To")]: { hide: true },
@@ -45,7 +43,7 @@ const FIX_BY_TITLE: Record<string, { forceSlug?: string; hide?: boolean }> = {
   [tnorm("Passive Income And Side Hustles")]: { hide: true },
   [tnorm("The Art Of Giving No Fucks")]: { forceSlug: "self-help-and-how-to" },
 };
-/* ------------------------------------------------------------------------- */
+/* ------------------------------------------------------------------------ */
 
 function toSlug(s: string) {
   return s
@@ -61,7 +59,6 @@ const LABEL_TO_SLUG: Record<string, string> = Object.fromEntries(
   Object.entries(META).map(([slug, m]) => [m.title.toLowerCase(), slug])
 );
 
-/** Return the *effective* category slug for a product, applying FIX_BY_TITLE when present */
 function effectiveProductCategorySlug(p: any): string | null {
   const titleKey = tnorm(String(p.title ?? ""));
   const fix = FIX_BY_TITLE[titleKey];
@@ -142,7 +139,7 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     );
   }
 
-  // ✅ Filter by effective slug and exclude “hidden” products
+  // Filter by effective slug and exclude “hidden” products
   const catProducts = products.filter((p) => {
     const eff = effectiveProductCategorySlug(p);
     return eff !== "__HIDE__" && eff === slug;
@@ -157,7 +154,7 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
     return {
       title: p.title,
       slug: p.slug,
-      id: p.id,            // so ProductCard can also fall back if needed
+      id: p.id,            // ProductCard can fall back if needed
       price: p.price,
       images,
       description: p.description,
@@ -173,7 +170,7 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
       {cards.length ? (
         <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {cards.map((c) => (
-            <ProductCard key={String(c.slug ?? c.title)} {...c} />
+            <ProductCard key={String(c.slug ?? c.id ?? c.title)} {...c} />
           ))}
         </div>
       ) : (
