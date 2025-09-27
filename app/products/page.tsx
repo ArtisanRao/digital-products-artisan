@@ -12,9 +12,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import HoverableCover from '@/components/ui/hoverable-cover';
 import { products, type Product } from '@/data/products';
-import ProductActions from '@/components/product-actions';
 import DescriptionClamp from '@/components/DescriptionClamp';
-import AddToCartWire from '@/components/catalog/AddToCartWire'; // ← delegated cart handler
+import AddToCartWire from '@/components/catalog/AddToCartWire'; // ✅ delegated handler
 
 const baseCategories = [
   'AI & ChatGPT Guides',
@@ -105,9 +104,9 @@ export default function ProductsPage() {
   }, [filteredProducts, sortBy]);
 
   return (
-    <div className="container mx-auto px-4 py-8" data-catalog-root>
-      {/* Delegated add-to-cart just for this page */}
-      <AddToCartWire rootSelector="[data-catalog-root]" />
+    <div className="container mx-auto px-4 py-8" data-products-grid>
+      {/* mounts the delegated click handler for [data-add-to-cart] within this page */}
+      <AddToCartWire rootSelector="[data-products-grid]" />
 
       <div className="mb-8">
         <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">All Digital Products</h1>
@@ -240,7 +239,7 @@ export default function ProductsPage() {
           </Card>
         </aside>
 
-        {/* Products Grid / List */}
+        {/* Products Grid */}
         <section className="flex-1" aria-label="Products">
           {/* Toolbar */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
@@ -294,7 +293,6 @@ export default function ProductsPage() {
                 const coverSrcs = Array.from(
                   new Set([product.image, ...(((product as any).images ?? []) as string[])].filter(Boolean))
                 );
-                const slug = (product as any).slug as string | undefined;
 
                 return (
                   <Card key={product.id} className="group hover:shadow-lg transition-shadow duration-300" tabIndex={0}>
@@ -363,29 +361,28 @@ export default function ProductsPage() {
                         )}
                       </div>
 
+                      {/* ✅ only the new delegated actions (View + Add to cart) */}
                       <div className="flex items-center gap-2">
-                        <ProductActions
-                          id={product.id}
-                          title={product.title}
-                          price={product.price}
-                          image={product.image}
-                          size="sm"
-                          className="shrink-0"
-                        />
-                        {/* Quick Add wired to unified cart via AddToCartWire */}
-                        <Button
+                        <Link
+                          href={`/products/${product.id}`}
+                          className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 text-xs font-medium leading-tight text-white hover:bg-blue-700"
+                          aria-label={`View ${product.title}`}
+                        >
+                          <span className="inline-block w-4 text-center" aria-hidden>👁️</span>
+                          <span>View</span>
+                        </Link>
+
+                        <button
                           type="button"
-                          size="sm"
-                          className="bg-blue-600 text-white hover:bg-blue-700"
                           data-add-to-cart
                           data-product-id={String(product.id)}
-                          {...(slug ? { 'data-product-slug': slug } : {})}
+                          {...(product.slug ? { 'data-product-slug': String(product.slug) } : {})}
                           data-qty="1"
-                          aria-label={`Add ${product.title} to cart`}
-                          title="Add to cart"
+                          className="inline-flex h-9 items-center justify-center rounded-lg bg-blue-600 px-3 text-xs font-medium leading-tight text-white hover:bg-blue-700"
+                          aria-label="Add to cart"
                         >
                           Add to cart
-                        </Button>
+                        </button>
                       </div>
                     </CardFooter>
                   </Card>
@@ -398,7 +395,6 @@ export default function ProductsPage() {
                 const coverSrcs = Array.from(
                   new Set([product.image, ...(((product as any).images ?? []) as string[])].filter(Boolean))
                 );
-                const slug = (product as any).slug as string | undefined;
 
                 return (
                   <li
@@ -456,7 +452,7 @@ export default function ProductsPage() {
                       </div>
                     </div>
 
-                    <div className="flex flex-col items-end space-y-2">
+                    <div className="flex flex-col items-end gap-2">
                       <span className="text-lg font-semibold text-gray-900">
                         {formatPrice(product.price)}
                       </span>
@@ -466,29 +462,28 @@ export default function ProductsPage() {
                         </span>
                       )}
 
+                      {/* ✅ only the new delegated actions in list view, too */}
                       <div className="flex items-center gap-2">
-                        <ProductActions
-                          id={product.id}
-                          title={product.title}
-                          price={product.price}
-                          image={product.image}
-                          size="sm"
-                          className="justify-end"
-                        />
-                        {/* Quick Add wired to unified cart via AddToCartWire */}
-                        <Button
+                        <Link
+                          href={`/products/${product.id}`}
+                          className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 text-xs font-medium leading-tight text-white hover:bg-blue-700"
+                          aria-label={`View ${product.title}`}
+                        >
+                          <span className="inline-block w-4 text-center" aria-hidden>👁️</span>
+                          <span>View</span>
+                        </Link>
+
+                        <button
                           type="button"
-                          size="sm"
-                          className="bg-blue-600 text-white hover:bg-blue-700"
                           data-add-to-cart
                           data-product-id={String(product.id)}
-                          {...(slug ? { 'data-product-slug': slug } : {})}
+                          {...(product.slug ? { 'data-product-slug': String(product.slug) } : {})}
                           data-qty="1"
-                          aria-label={`Add ${product.title} to cart`}
-                          title="Add to cart"
+                          className="inline-flex h-9 items-center justify-center rounded-lg bg-blue-600 px-3 text-xs font-medium leading-tight text-white hover:bg-blue-700"
+                          aria-label="Add to cart"
                         >
                           Add to cart
-                        </Button>
+                        </button>
                       </div>
                     </div>
                   </li>
