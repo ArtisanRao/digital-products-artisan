@@ -27,16 +27,9 @@ function firstExistingPublicHref(hrefs: string[]): string | undefined {
   return undefined;
 }
 
-/** Unwrap props.params or props.searchParams whether Promises or plain objects */
+/** Unwrap props.params whether Promise or plain object */
 async function resolveParams(props: any): Promise<{ id?: string }> {
   const maybe = props?.params;
-  if (maybe && typeof maybe.then === "function") return (await maybe) ?? {};
-  return maybe ?? {};
-}
-async function resolveSearchParams(
-  props: any,
-): Promise<Record<string, string | string[] | undefined>> {
-  const maybe = props?.searchParams;
   if (maybe && typeof maybe.then === "function") return (await maybe) ?? {};
   return maybe ?? {};
 }
@@ -109,14 +102,6 @@ function coverPlusThree(imgs: string[]): string[] {
   return [cover, ...extras.slice(0, 3)];
 }
 
-/** For page’s compact view: 1 cover + up to N extras */
-function coverPlusN(imgs: string[], n: number): string[] {
-  const list = imgs.filter(Boolean);
-  const cover = list[0] ?? "/images/placeholder.jpg";
-  const extras = list.slice(1).filter((s) => s !== cover);
-  return [cover, ...extras.slice(0, n)];
-}
-
 /* ------------------- static params (optional) ------------------- */
 export function generateStaticParams() {
   return products
@@ -163,17 +148,13 @@ export async function generateMetadata(props: any): Promise<Metadata> {
 /* --------------------------- page --------------------------- */
 export default async function ProductPage(props: any) {
   const { id = "" } = await resolveParams(props);
-  const s = await resolveSearchParams(props);
 
   // Render directly for both ids and slugs
   const product = findProduct(id);
   if (!product) notFound();
 
+  // Pass FULL set; ProductGallery will show 4 thumbs and reveal the rest with its own “More” button
   const allImages = rawGallery(product);
-
-  // Only show cover + 4 extras by default; “More” (?view=all) shows the full gallery
-  const showAll = String(s?.view ?? "") === "all";
-  const galleryImages = showAll ? allImages : coverPlusN(allImages, 4);
 
   const priceNum =
     typeof product.price === "number" ? product.price : Number(product.price) || 0;
@@ -194,9 +175,6 @@ export default async function ProductPage(props: any) {
   const teaser = needsToggle ? fullText.slice(0, MAX_CHARS).trimEnd() : fullText;
   const remainder = needsToggle ? fullText.slice(MAX_CHARS) : "";
 
-  const moreHref = `${canonicalHref}?view=all#gallery`;
-  const lessHref = `${canonicalHref}#gallery`;
-
   return (
     <main className="container mx-auto px-4 py-8 product-page" data-page="product">
       <nav className="mb-4 text-sm text-gray-600">
@@ -208,33 +186,9 @@ export default async function ProductPage(props: any) {
       </nav>
 
       <div className="grid gap-8 lg:grid-cols-2">
-        {/* Gallery (compact or full based on ?view=) */}
+        {/* Gallery — left “More” only (inside component), no right-side links */}
         <div id="gallery" className="w-full rounded-2xl border bg-white p-3 hover-zoom">
-          <ProductGallery images={galleryImages} alt={product.title} />
-
-          {/* “More / Less” toggle */}
-          {allImages.length > galleryImages.length && !showAll && (
-            <div className="mt-2 text-right">
-              <Link
-                href={moreHref}
-                prefetch={false}
-                className="text-sm text-blue-700 hover:underline"
-              >
-                More
-              </Link>
-            </div>
-          )}
-          {showAll && allImages.length > 5 && (
-            <div className="mt-2 text-right">
-              <Link
-                href={lessHref}
-                prefetch={false}
-                className="text-sm text-blue-700 hover:underline"
-              >
-                Less
-              </Link>
-            </div>
-          )}
+          <ProductGallery images={allImages} alt={product.title} maxThumbs={4} />
         </div>
 
         {/* Details */}
@@ -256,6 +210,7 @@ export default async function ProductPage(props: any) {
             )}
           </div>
 
+          {/* Subtitle/description with “More/Less” toggle right below */}
           <div className="mt-4 text-[15px] leading-relaxed text-gray-700">
             <p className="whitespace-pre-line">
               {teaser}
@@ -272,14 +227,14 @@ export default async function ProductPage(props: any) {
             )}
           </div>
 
-          {/* Compact, consistent CTAs */}
+          {/* CTAs */}
           <div className="mt-6 grid grid-cols-2 gap-3">
             <AddToCartButton
               id={product.id}
               slug={product.slug as string | undefined}
               title={product.title}
               price={product.price}
-              image={galleryImages[0]}
+              image={allImages[0]}
               className="bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
             />
             <BuyNowButton
@@ -303,7 +258,7 @@ export default async function ProductPage(props: any) {
             name: product.title,
             url: `https://digitalproductsartisan.com${canonicalHref}`,
             image: allImages.map((src) =>
-              src.startsWith("http") ? src : `https://digitalproductsartisan.com${src}`,
+              src.startsWith("http") ? src : `https://digitalproductsartisan.com${src}`
             ),
             description: product.description,
             sku: String(product.id),

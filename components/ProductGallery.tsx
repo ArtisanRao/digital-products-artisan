@@ -129,8 +129,9 @@ export default function ProductGallery({
             <button
               type="button"
               onClick={() => setShowAll((v) => !v)}
-              className="mt-1 rounded-lg border px-3 py-2 text-sm text-blue-700 hover:bg-blue-50"
+              className="mt-1 w-full rounded-md bg-blue-600 px-3 py-2 text-xs font-medium text-white shadow hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               aria-expanded={showAll}
+              aria-label={showAll ? 'Show fewer images' : 'Show more images'}
             >
               {showAll ? 'Less' : 'More'}
             </button>
@@ -168,7 +169,7 @@ export default function ProductGallery({
             </>
           )}
 
-          {/* Main image: eager + priority for instant paint */}
+          {/* Main image */}
           <div className="w-full">
             <Image
               key={current}
@@ -193,7 +194,7 @@ export default function ProductGallery({
           <DialogTitle className="sr-only">{alt}</DialogTitle>
           <DialogDescription className="sr-only">Fullscreen preview</DialogDescription>
 
-          <div className="relative w-full h-full bg-black/80 flex items-center justify-center">
+        <div className="relative w-full h-full bg-black/80 flex items-center justify-center">
             {/* Close */}
             <button
               onClick={() => setOpen(false)}
