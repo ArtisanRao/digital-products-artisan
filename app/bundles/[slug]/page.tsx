@@ -1,4 +1,4 @@
-import Image from "next/image";
+// app/bundles/[slug]/page.tsx
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import InlineMore from "@/components/ui/inline-more";
@@ -116,7 +116,7 @@ export default async function BundleDetailsPage({
 
   const gallery = bundle.images?.length ? bundle.images : [bundle.image];
 
-  // ✅ Use same GET endpoint as products (shows Klarna/PayPal when enabled)
+  // Use the same GET endpoint as product pages (Klarna/PayPal when enabled in Stripe)
   const checkoutHref = `/api/checkout?slug=${encodeURIComponent(
     `bundle:${bundle.slug}`
   )}&qty=1&currency=EUR`;
@@ -162,14 +162,15 @@ export default async function BundleDetailsPage({
           </div>
 
           <div className="flex gap-3">
-            {/* 🔗 Direct GET → /api/checkout */}
+            {/* GET → /api/checkout */}
             <Button asChild className="flex-1 bg-blue-600 text-white hover:bg-blue-700">
               <Link href={checkoutHref} prefetch={false}>
                 Get This Bundle
               </Link>
             </Button>
 
-            <Button variant="outline" asChild className="flex-1">
+            {/* Violet “Back to Bundles” */}
+            <Button asChild className="flex-1 bg-violet-600 text-white hover:bg-violet-700">
               <Link href="/bundles">Back to Bundles</Link>
             </Button>
           </div>
