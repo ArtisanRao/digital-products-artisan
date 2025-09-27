@@ -45,7 +45,6 @@ export default function ProductCardV4({
 
   const [idx, setIdx] = useState(0);
   useEffect(() => {
-    // Safety: if images change and idx is OOB, go back to cover
     if (idx >= displayPics.length) setIdx(0);
   }, [displayPics.length, idx]);
 
@@ -145,7 +144,7 @@ export default function ProductCardV4({
         {/* Exactly 4 thumbs (first = cover, then up to 3 extras; padded with cover) */}
         <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
           {thumbsRow.map((src, i) => {
-            const active = i < displayPics.length ? idx === i : idx === 0; // padded items map to cover
+            const active = i < displayPics.length ? idx === i : idx === 0; // padded → cover
             return (
               <Link
                 key={`${src}-${i}`}

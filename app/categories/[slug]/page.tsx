@@ -13,7 +13,7 @@ export const revalidate = 0;
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
-const UI_VERSION = "cat-v11-any-props";
+const UI_VERSION = "cat-v12-cover+3extras-prefers-product.images";
 
 // ---- Category metadata (normalized slugs) ----
 const META: Record<string, { title: string; description: string }> = {
@@ -90,8 +90,8 @@ function effectiveProductCategorySlug(p: any): string | null {
   return null;
 }
 
-// Read up to N thumbs from /public/images/products/<slug>/thumb-*.ext (default 4, numeric sort)
-function readProductThumbs(slug?: string, max = 4): string[] {
+// Read up to N thumbs from /public/images/products/<slug>/thumb-*.ext (numeric sort)
+function readProductThumbs(slug?: string, max = 3): string[] {
   if (!slug) return [];
   const dir = pub("images", "products", slug);
   if (!fs.existsSync(dir)) return [];
@@ -105,6 +105,23 @@ function readProductThumbs(slug?: string, max = 4): string[] {
     })
     .slice(0, max);
   return names.map((n) => `/images/products/${slug}/${n}`);
+}
+
+// Build images for the card: cover + up to 3 extras.
+// Prefer product.images (so cards match product page), then fallback to filesystem thumbs.
+function buildCardImages(p: any): string[] {
+  const productImages = Array.isArray(p.images) ? (p.images as string[]) : [];
+  const cover = (productImages[0] ?? p.image ?? "/images/placeholder.jpg") as string;
+
+  const extrasFromProduct = productImages.slice(1).filter(Boolean);
+  const extrasFromFS = readProductThumbs(p.slug, 3);
+
+  const extras = Array.from(new Set([...extrasFromProduct, ...extrasFromFS]))
+    .filter((src) => src && src !== cover)
+    .slice(0, 3);
+
+  const images = [cover, ...extras];
+  return images;
 }
 
 // Static params for new and legacy slugs (harmless even with force-dynamic)
@@ -163,10 +180,8 @@ export default async function CategoryPage(props: any) {
 
   // Card data: 1 cover + up to 3 extras (deduped) with cache-buster
   const cards = catProducts.map((p) => {
-    // ⬇️ ONLY change vs before: request 3 thumbs, not 4
-    const extras = readProductThumbs(p.slug, 3);
-    const rawImages = [p.image, ...extras].filter(Boolean);
-    const deduped = Array.from(new Set(rawImages)) as string[];
+    const imagesRaw = buildCardImages(p);
+    const deduped = Array.from(new Set(imagesRaw)) as string[];
     const images = deduped.map((src) =>
       src.includes("?") ? `${src}&v=${UI_VERSION}` : `${src}?v=${UI_VERSION}`
     );
@@ -176,7 +191,7 @@ export default async function CategoryPage(props: any) {
       title: p.title,
       slug: p.slug,
       price: p.price,
-      images,               // cover first, then 3 extras
+      images, // cover first, then up to 3 extras
       description: p.description,
     };
   });

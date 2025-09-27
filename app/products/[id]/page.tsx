@@ -1,7 +1,9 @@
 // app/products/[id]/page.tsx
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 export const dynamicParams = true; // allow ids not listed below
-export const revalidate = 3600;
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
 
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -158,7 +160,7 @@ export default async function ProductPage({
 }) {
   const { id } = await params;
 
-  // Accept **either** numeric id or slug; RENDER DIRECTLY to avoid any redirect loops
+  // Accept **either** numeric id or slug and render directly.
   const product = findProduct(id);
   if (!product) notFound();
 
