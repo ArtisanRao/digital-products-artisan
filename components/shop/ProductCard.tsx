@@ -37,8 +37,8 @@ export default function ProductCard({
   // Robust URL: href → /products/<slug> → /products/<id> → /products
   const productUrl = useMemo(() => {
     if (href) return href;
-    if (slug) return `/products/${slug}`;
-    if (id !== undefined && id !== null) return `/products/${id}`;
+    if (slug) return `/products/${encodeURIComponent(slug)}`;
+    if (id !== undefined && id !== null) return `/products/${encodeURIComponent(String(id))}`;
     return "/products";
   }, [href, slug, id]);
 
@@ -83,7 +83,7 @@ export default function ProductCard({
   return (
     <article
       className="group rounded-2xl border bg-white/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-      data-version="ProductCard@v6"
+      data-version="ProductCard@v6+always-more"
     >
       {/* Main image (clickable) */}
       <Link href={productUrl} aria-label={`Open ${title}`} prefetch={false}>
@@ -123,8 +123,29 @@ export default function ProductCard({
           <h3 className="line-clamp-2 text-lg font-semibold">{title}</h3>
         </Link>
 
+        {/* Subtitle/description (clamped), with an always-visible 'More' link below it */}
         {description && (
-          <p className="mt-1 line-clamp-2 text-sm text-gray-600">{description}</p>
+          <>
+            <p className="mt-1 line-clamp-2 text-sm text-gray-600">{description}</p>
+            <Link
+              href={productUrl}
+              prefetch={false}
+              className="mt-1 inline-block text-sm font-medium text-blue-600 group-hover:underline"
+              aria-label={`More about ${title}`}
+            >
+              More
+            </Link>
+          </>
+        )}
+        {!description && (
+          <Link
+            href={productUrl}
+            prefetch={false}
+            className="mt-1 inline-block text-sm font-medium text-blue-600 group-hover:underline"
+            aria-label={`More about ${title}`}
+          >
+            More
+          </Link>
         )}
 
         {/* Thumbs (max 4) */}

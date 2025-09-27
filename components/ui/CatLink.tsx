@@ -1,28 +1,32 @@
 // components/ui/CatLink.tsx
 "use client";
 
-import Link, { LinkProps } from "next/link";
 import * as React from "react";
+import Link, { type LinkProps } from "next/link";
 
-type Props = Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, keyof LinkProps> &
-  LinkProps & { className?: string };
+type Props = LinkProps & React.AnchorHTMLAttributes<HTMLAnchorElement> & {
+  className?: string;
+  children: React.ReactNode;
+};
 
-/**
- * Simple Link wrapper:
- * - no legacyBehavior
- * - forwards className/props
- * - prefetch disabled by default
- */
-export default function CatLink({
-  href,
-  prefetch = false,
-  className,
-  children,
-  ...rest
-}: Props) {
+export default function CatLink({ href, className = "", children, ...rest }: Props) {
   return (
-    <Link href={href} prefetch={prefetch} className={className} {...rest}>
-      {children}
+    <Link
+      href={href}
+      prefetch={false}
+      className={[
+        "relative block focus-visible:outline-none",
+        "focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2",
+        className,
+      ].join(" ")}
+      {...rest}
+    >
+      {/* Click/Tab overlay that ensures the card is always tappable */}
+      <span className="absolute inset-0 z-10" aria-hidden="true" />
+      {/* All the visuals are below and don't intercept clicks */}
+      <div className="relative z-0 pointer-events-none">
+        {children}
+      </div>
     </Link>
   );
 }
