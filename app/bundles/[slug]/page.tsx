@@ -116,7 +116,7 @@ export default async function BundleDetailsPage({
 
   const gallery = bundle.images?.length ? bundle.images : [bundle.image];
 
-  // Use the same GET endpoint as product pages (Klarna/PayPal when enabled in Stripe)
+  // Same GET checkout endpoint used by products (Klarna/PayPal when enabled in Stripe)
   const checkoutHref = `/api/checkout?slug=${encodeURIComponent(
     `bundle:${bundle.slug}`
   )}&qty=1&currency=EUR`;
@@ -162,15 +162,18 @@ export default async function BundleDetailsPage({
           </div>
 
           <div className="flex gap-3">
-            {/* GET → /api/checkout */}
+            {/* Checkout */}
             <Button asChild className="flex-1 bg-blue-600 text-white hover:bg-blue-700">
               <Link href={checkoutHref} prefetch={false}>
                 Get This Bundle
               </Link>
             </Button>
 
-            {/* Violet “Back to Bundles” */}
-            <Button asChild className="flex-1 bg-violet-600 text-white hover:bg-violet-700">
+            {/* Violet Back button (force override) */}
+            <Button
+              asChild
+              className="flex-1 !bg-violet-600 !text-white hover:!bg-violet-700 !border-0"
+            >
               <Link href="/bundles">Back to Bundles</Link>
             </Button>
           </div>
