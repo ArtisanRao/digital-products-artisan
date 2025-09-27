@@ -53,11 +53,35 @@ function getStripe(): Stripe {
   if (!key) {
     throw new Error("Missing STRIPE_SECRET_KEY");
   }
-  // Use library's pinned API version
   return new Stripe(key);
 }
 
-/* -------------------- Core session builder -------------------- */
+/* ------------------------ Bundle catalog ------------------------ */
+/** Keep in sync with app/bundles/page.tsx slugs, prices & images. */
+const BUNDLES: Record<string, { name: string; price: number; image: string }> = {
+  "complete-creator-bundle": {
+    name: "Complete Creator Bundle",
+    price: 79.99,
+    image: "/images/bundles/complete-creator-bundle-cover.jpg",
+  },
+  "social-media-master-pack": {
+    name: "Social Media Master Pack",
+    price: 49.99,
+    image: "/images/bundles/social-media-master-pack-cover.jpg",
+  },
+  "business-starter-bundle": {
+    name: "Business Starter Bundle",
+    price: 59.99,
+    image: "/images/bundles/business-starter-bundle-cover.jpg",
+  },
+  "ai-productivity-suite": {
+    name: "AI Productivity Suite",
+    price: 39.99,
+    image: "/images/bundles/ai-productivity-suite-cover.jpg",
+  },
+};
+
+/* -------------------- Core session builders -------------------- */
 async function createSessionFromSingle(opts: {
   productKey: string | number; // id or slug
   qty?: number;
@@ -111,6 +135,7 @@ async function createSessionFromSingle(opts: {
     submit_type: "pay",
     client_reference_id: String(product.id),
     metadata: {
+      kind: "product",
       productId: String(product.id),
       slug: String(product.slug ?? ""),
       qty: String(qty),
@@ -124,16 +149,78 @@ async function createSessionFromSingle(opts: {
   return session.url;
 }
 
+async function createSessionFromBundle(opts: {
+  handle: string; // bundle slug (e.g. "complete-creator-bundle")
+  qty?: number;
+  currency?: string;
+  origin: string;
+}) {
+  const stripe = getStripe();
+  const { handle, qty = 1, currency = "EUR", origin } = opts;
+
+  const b = BUNDLES[handle];
+  if (!b) throw new Error(`Unknown bundle: ${handle}`);
+
+  const payment_method_types: Stripe.Checkout.SessionCreateParams.PaymentMethodType[] =
+    currency === "EUR" ? ["card", "klarna"] : ["card"];
+
+  const session = await stripe.checkout.sessions.create({
+    mode: "payment",
+    payment_method_types,
+    line_items: [
+      {
+        quantity: qty,
+        price_data: {
+          currency: lcCurrency(currency),
+          unit_amount: toMinorUnits(b.price),
+          product_data: {
+            name: b.name,
+            images: [b.image.startsWith("http") ? b.image : `${origin}${b.image}`],
+          },
+        },
+      },
+    ],
+    allow_promotion_codes: true,
+    automatic_tax: { enabled: true },
+    billing_address_collection: "auto",
+    submit_type: "pay",
+    client_reference_id: `bundle:${handle}`,
+    metadata: {
+      kind: "bundle",
+      bundle: handle,
+      qty: String(qty),
+      currency,
+    },
+    success_url: `${origin}/thank-you?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${origin}/bundles/${handle}`,
+  });
+
+  if (!session.url) throw new Error("Stripe session did not return a URL");
+  return session.url;
+}
+
 /* --------------------------- GET --------------------------- */
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
+    const bundleId = url.searchParams.get("bundleId");      // ✅ new
+    let slug = url.searchParams.get("slug");                // may be "bundle:<slug>"
     const productId = url.searchParams.get("productId");
-    const slug = url.searchParams.get("slug");
     const qty = Math.max(1, Number(url.searchParams.get("qty") ?? 1));
     const currency = normalizeCurrency(url.searchParams.get("currency") ?? "EUR");
     const origin = siteBase(req);
 
+    // Normalize bundleId → slug=bundle:<id>
+    if (!slug && bundleId) slug = `bundle:${bundleId}`;
+
+    // Bundle branch
+    if (slug && slug.startsWith("bundle:")) {
+      const handle = slug.replace(/^bundle:/, "");
+      const redirectUrl = await createSessionFromBundle({ handle, qty, currency, origin });
+      return NextResponse.redirect(redirectUrl, { status: 303 });
+    }
+
+    // Product branch (existing)
     const productKey = productId ?? slug;
     if (!productKey) {
       return NextResponse.json({ error: "Missing productId or slug" }, { status: 400 });
@@ -161,6 +248,15 @@ export async function POST(req: NextRequest) {
     const origin = siteBase(req);
     const body = await req.json().catch(() => ({} as any));
 
+    // Case 0: bundle by id or slug=bundle:<handle>
+    if (body?.bundleId || (typeof body?.slug === "string" && body.slug.startsWith("bundle:"))) {
+      const handle = body.bundleId ?? String(body.slug).replace(/^bundle:/, "");
+      const qty = Math.max(1, Number(body?.qty ?? 1));
+      const currency = normalizeCurrency(body?.currency ?? "EUR");
+      const url = await createSessionFromBundle({ handle, qty, currency, origin });
+      return NextResponse.json({ url });
+    }
+
     // Case 1: single product by id or slug
     if (body?.productId || body?.slug) {
       const qty = Math.max(1, Number(body?.qty ?? 1));
@@ -186,9 +282,6 @@ export async function POST(req: NextRequest) {
     }
 
     // Case 3: items by id/slug resolved from our products list
-    // Accepts shapes like:
-    //   { items: [{ id, qty }]}  ← from ProductCard.tsx
-    //   { items: [{ slug, quantity }]}
     if (Array.isArray(body?.items) && body.items.length) {
       const currency = normalizeCurrency(body?.currency ?? "EUR");
       const resolved: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
