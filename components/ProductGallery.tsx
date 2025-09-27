@@ -22,6 +22,9 @@ export default function ProductGallery({
   alt = 'Product image',
   maxThumbs = 4,
 }: Props) {
+  // Normalize maxThumbs (at least 1)
+  const cap = Math.max(1, Math.floor(Number.isFinite(maxThumbs) ? maxThumbs : 4));
+
   // Dedupe + fallback
   const safe = React.useMemo<string[]>(
     () =>
@@ -36,10 +39,12 @@ export default function ProductGallery({
   const [showAll, setShowAll] = React.useState(false);
 
   const len = safe.length;
-  const hasMore = len > maxThumbs;
+  const hasMore = len > cap;
+  const visibleCount = showAll ? len : Math.min(len, cap);
+
   const thumbs = React.useMemo(
-    () => safe.slice(0, showAll ? len : maxThumbs),
-    [safe, showAll, len, maxThumbs]
+    () => safe.slice(0, visibleCount),
+    [safe, visibleCount]
   );
 
   const prev = React.useCallback(() => {
@@ -57,7 +62,7 @@ export default function ProductGallery({
     (idxs: number[]) => {
       if (typeof window === 'undefined') return;
       idxs.forEach((i) => {
-        const j = ((i % len) + len) % len; // clamp
+        const j = ((i % len) + len) % len; // clamp to [0, len)
         if (!loaded.current.has(j) && safe[j]) {
           const img = new window.Image();
           img.src = safe[j]!;
@@ -68,7 +73,7 @@ export default function ProductGallery({
     [safe, len]
   );
 
-  // Preload first 3 on mount / change
+  // Reset preloads when list length changes; warm first 3
   React.useEffect(() => {
     loaded.current.clear();
     if (!len) return;
@@ -80,6 +85,17 @@ export default function ProductGallery({
     if (!len) return;
     preload([index - 1, index + 1]);
   }, [index, len, preload]);
+
+  // Clamp index when images array changes or on toggle Less
+  React.useEffect(() => {
+    if (index >= len) setIndex(0);
+  }, [len, index]);
+
+  React.useEffect(() => {
+    if (!showAll && index >= visibleCount) {
+      setIndex(0);
+    }
+  }, [showAll, visibleCount, index]);
 
   // Keyboard support in fullscreen
   React.useEffect(() => {
@@ -98,7 +114,7 @@ export default function ProductGallery({
   return (
     <>
       <div className="grid grid-cols-[80px,1fr] sm:grid-cols-[96px,1fr] gap-4 w-full items-start">
-        {/* Thumbnails (click-only; show 4, rest behind More/Less) */}
+        {/* Thumbnails (click-only; show first N, reveal the rest via More/Less) */}
         <div className="flex flex-col gap-3 w-20 sm:w-24 sticky top-4 self-start z-20">
           {thumbs.map((src, i) => {
             const active = i === index;
@@ -194,7 +210,7 @@ export default function ProductGallery({
           <DialogTitle className="sr-only">{alt}</DialogTitle>
           <DialogDescription className="sr-only">Fullscreen preview</DialogDescription>
 
-        <div className="relative w-full h-full bg-black/80 flex items-center justify-center">
+          <div className="relative w-full h-full bg-black/80 flex items-center justify-center">
             {/* Close */}
             <button
               onClick={() => setOpen(false)}

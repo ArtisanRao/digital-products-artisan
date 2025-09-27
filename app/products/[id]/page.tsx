@@ -210,15 +210,15 @@ export default async function ProductPage(props: any) {
             )}
           </div>
 
-          {/* Subtitle/description with “More/Less” toggle right below */}
+          {/* Subtitle/description with button-styled “More/Less” just under it */}
           <div className="mt-4 text-[15px] leading-relaxed text-gray-700">
             <p className="whitespace-pre-line">
-              {teaser}
-              {needsToggle && "…"}
+              {needsToggle ? `${teaser}…` : fullText}
             </p>
+
             {needsToggle && (
-              <details className="group mt-1">
-                <summary className="inline cursor-pointer select-none text-blue-700 hover:underline">
+              <details className="group mt-2 [&_summary::-webkit-details-marker]:hidden">
+                <summary className="inline-flex items-center rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white cursor-pointer select-none hover:bg-blue-700">
                   <span className="group-open:hidden">More</span>
                   <span className="hidden group-open:inline">Less</span>
                 </summary>
@@ -258,7 +258,7 @@ export default async function ProductPage(props: any) {
             name: product.title,
             url: `https://digitalproductsartisan.com${canonicalHref}`,
             image: allImages.map((src) =>
-              src.startsWith("http") ? src : `https://digitalproductsartisan.com${src}`
+              src.startsWith("http") ? src : `https://digitalproductsartisan.com${src}`,
             ),
             description: product.description,
             sku: String(product.id),
