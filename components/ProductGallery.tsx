@@ -13,13 +13,34 @@ import {
 type Props = {
   images: string[];
   alt?: string;
+  /** How many thumbnails to show before revealing the rest with “More” */
+  maxThumbs?: number; // default 4
 };
 
-export default function ProductGallery({ images, alt = 'Product image' }: Props) {
+export default function ProductGallery({
+  images,
+  alt = 'Product image',
+  maxThumbs = 4,
+}: Props) {
+  // Dedupe + fallback
+  const safe = React.useMemo<string[]>(
+    () =>
+      Array.isArray(images) && images.length
+        ? Array.from(new Set(images.filter(Boolean)))
+        : ['/images/placeholder-cover.jpg'],
+    [images]
+  );
+
   const [index, setIndex] = React.useState(0);
   const [open, setOpen] = React.useState(false);
+  const [showAll, setShowAll] = React.useState(false);
 
-  const len = images.length;
+  const len = safe.length;
+  const hasMore = len > maxThumbs;
+  const thumbs = React.useMemo(
+    () => safe.slice(0, showAll ? len : maxThumbs),
+    [safe, showAll, len, maxThumbs]
+  );
 
   const prev = React.useCallback(() => {
     setIndex((i) => (i - 1 + len) % len);
@@ -34,28 +55,29 @@ export default function ProductGallery({ images, alt = 'Product image' }: Props)
 
   const preload = React.useCallback(
     (idxs: number[]) => {
+      if (typeof window === 'undefined') return;
       idxs.forEach((i) => {
         const j = ((i % len) + len) % len; // clamp
-        if (!loaded.current.has(j)) {
+        if (!loaded.current.has(j) && safe[j]) {
           const img = new window.Image();
-          img.src = images[j];
+          img.src = safe[j]!;
           loaded.current.add(j);
         }
       });
     },
-    [images, len]
+    [safe, len]
   );
 
-  // Preload first 3 on mount
+  // Preload first 3 on mount / change
   React.useEffect(() => {
-    if (typeof window === 'undefined' || !len) return;
+    loaded.current.clear();
+    if (!len) return;
     preload([0, 1, 2]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [len]);
+  }, [len, preload]);
 
   // Always keep neighbors warm
   React.useEffect(() => {
-    if (typeof window === 'undefined' || !len) return;
+    if (!len) return;
     preload([index - 1, index + 1]);
   }, [index, len, preload]);
 
@@ -71,21 +93,21 @@ export default function ProductGallery({ images, alt = 'Product image' }: Props)
     return () => window.removeEventListener('keydown', onKey);
   }, [open, prev, next]);
 
-  const current = images[index] ?? images[0];
+  const current = safe[index] ?? safe[0];
 
   return (
     <>
       <div className="grid grid-cols-[80px,1fr] sm:grid-cols-[96px,1fr] gap-4 w-full items-start">
-        {/* Thumbnails */}
+        {/* Thumbnails (click-only; show 4, rest behind More/Less) */}
         <div className="flex flex-col gap-3 w-20 sm:w-24 sticky top-4 self-start z-20">
-          {images.map((src, i) => {
+          {thumbs.map((src, i) => {
             const active = i === index;
             return (
               <button
                 key={src + i}
                 onClick={() => setIndex(i)}
                 className={[
-                  'relative aspect-square overflow-hidden rounded-md border transition ring-offset-2',
+                  'relative aspect-square overflow-hidden rounded-md border transition ring-offset-2 cursor-pointer',
                   active
                     ? 'ring-2 ring-blue-600 border-blue-200'
                     : 'hover:shadow-sm border-gray-200',
@@ -102,6 +124,17 @@ export default function ProductGallery({ images, alt = 'Product image' }: Props)
               </button>
             );
           })}
+
+          {hasMore && (
+            <button
+              type="button"
+              onClick={() => setShowAll((v) => !v)}
+              className="mt-1 rounded-lg border px-3 py-2 text-sm text-blue-700 hover:bg-blue-50"
+              aria-expanded={showAll}
+            >
+              {showAll ? 'Less' : 'More'}
+            </button>
+          )}
         </div>
 
         {/* Main image / viewer */}
