@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export type ProductCardData = {
   title: string;
@@ -28,10 +28,18 @@ export default function ProductCard({
     return unique.length ? unique : ["/images/placeholder.jpg"];
   }, [images]);
 
-  const [idx, setIdx] = useState(0);
+  // Build capped display set: cover + up to 3 extras (max 4 total)
+  const cover = pics[0] ?? "/images/placeholder.jpg";
+  const extras = useMemo(() => pics.slice(1).filter((src) => src !== cover), [pics, cover]);
+  const displayPics = useMemo(() => [cover, ...extras.slice(0, 3)], [cover, extras]); // <= 4
 
-  const prev = () => setIdx((i) => (i === 0 ? pics.length - 1 : i - 1));
-  const next = () => setIdx((i) => (i + 1) % pics.length);
+  const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    if (idx >= displayPics.length) setIdx(0);
+  }, [displayPics.length, idx]);
+
+  const prev = () => setIdx((i) => (i === 0 ? displayPics.length - 1 : i - 1));
+  const next = () => setIdx((i) => (i + 1) % displayPics.length);
   const go = (i: number) => setIdx(i);
 
   // Robust URL: href → /products/<slug> → /products/<id> → /products
@@ -77,24 +85,24 @@ export default function ProductCard({
     window.location.href = `/checkout?product=${encodeURIComponent(key)}`;
   };
 
-  // Exactly up to 4 thumbs
-  const thumbs = pics.slice(0, 4);
+  // Thumbs = exactly the capped set (cover + up to 3 extras)
+  const thumbs = displayPics;
 
   return (
     <article
       className="group rounded-2xl border bg-white/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-      data-version="ProductCard@v6+always-more"
+      data-version="ProductCard@v6+always-more+1main+3thumbs"
     >
       {/* Main image (clickable) */}
       <Link href={productUrl} aria-label={`Open ${title}`} prefetch={false}>
         <div className="relative overflow-hidden rounded-t-2xl bg-gray-50">
           <img
-            src={pics[idx]}
+            src={displayPics[idx] ?? "/images/placeholder.jpg"}
             alt={title}
             className="aspect-[3/2] w-full object-contain p-2 transition-transform duration-300 group-hover:scale-[1.01]"
             loading="lazy"
           />
-          {pics.length > 1 && (
+          {displayPics.length > 1 && (
             <>
               <button
                 type="button"
@@ -148,7 +156,7 @@ export default function ProductCard({
           </Link>
         )}
 
-        {/* Thumbs (max 4) */}
+        {/* Thumbs (cover + up to 3 extras) */}
         {thumbs.length > 1 && (
           <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
             {thumbs.map((src, i) => (
