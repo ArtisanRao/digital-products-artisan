@@ -28,18 +28,18 @@ export default function ProductCardV4({
     [images]
   );
 
-  // Cover + up to 4 unique extras (for 5 total: 1 main + 4 thumbs)
+  // Cover + up to 3 unique extras (for 4 total: 1 main + 3 thumbs)
   const cover = pics[0] ?? "/images/placeholder.jpg";
   const extras = useMemo(
     () => pics.slice(1).filter((src) => src !== cover),
     [pics, cover]
   );
-  const displayPics = useMemo(() => [cover, ...extras.slice(0, 4)], [cover, extras]); // <= 5
+  const displayPics = useMemo(() => [cover, ...extras.slice(0, 3)], [cover, extras]); // <= 4
 
-  // Thumbs row: exactly 5 items; first = cover, then up to 4 extras; pad with cover
+  // Thumbs row: exactly 4 items; pad with cover
   const thumbsRow = useMemo(() => {
-    const row = [cover, ...extras.slice(0, 4)];
-    while (row.length < 5) row.push(cover);
+    const row = [cover, ...extras.slice(0, 3)];
+    while (row.length < 4) row.push(cover);
     return row;
   }, [cover, extras]);
 
@@ -95,7 +95,7 @@ export default function ProductCardV4({
   return (
     <article
       className="group rounded-2xl border bg-white/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-      data-version="ProductCardV4@1main+4thumbs"
+      data-version="ProductCardV4@1main+3thumbs+hoverUnderlines+MorePill"
     >
       {/* Main image (click → product page) */}
       <Link href={productUrl} prefetch={false} aria-label={`Open ${title}`}>
@@ -131,20 +131,35 @@ export default function ProductCardV4({
       </Link>
 
       <div className="p-4">
-        {/* Title (click → product page) */}
+        {/* Title (hover underline) */}
         <Link href={productUrl} prefetch={false} className="block">
-          <h3 className="line-clamp-2 text-lg font-semibold hover:text-blue-600">{title}</h3>
+          <h3 className="line-clamp-2 text-lg font-semibold hover:underline">{title}</h3>
         </Link>
 
+        {/* Subtitle with hover underline + “More” pill linking to #description */}
         {description && (
-          <p className="mt-1 line-clamp-2 text-sm text-gray-600">{description}</p>
+          <>
+            <Link href={productUrl} prefetch={false} className="block mt-1">
+              <p className="line-clamp-2 text-sm text-gray-600 hover:underline">
+                {description}
+              </p>
+            </Link>
+            <Link
+              href={`${productUrl}#description`}
+              prefetch={false}
+              className="mt-2 inline-flex items-center rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
+              aria-label={`Read more about ${title}`}
+            >
+              More
+            </Link>
+          </>
         )}
 
-        {/* Exactly 5 thumbs (first = cover, then up to 4 extras; padded with cover). Click to select. */}
+        {/* Exactly 4 thumbs (first = cover, then up to 3 extras; padded with cover). Click to select. */}
         <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
           {thumbsRow.map((src, i) => {
             const isReal = i < displayPics.length;
-            const targetIndex = isReal ? i : 0; // padded items map to cover
+            const targetIndex = isReal ? i : 0;
             const active = idx === targetIndex;
             return (
               <button
@@ -172,12 +187,12 @@ export default function ProductCardV4({
         {/* Price */}
         {priceLabel && <div className="mt-3 text-xl font-semibold">{priceLabel}</div>}
 
-        {/* Compact CTAs */}
+        {/* CTAs: equal size & alignment */}
         <div className="mt-3 grid grid-cols-3 gap-2">
           <Link
             href={productUrl}
             prefetch={false}
-            className="flex h-9 items-center justify-center rounded-lg bg-blue-600 px-2 text-[12px] leading-tight text-white hover:bg-blue-700 text-center"
+            className="inline-flex h-10 items-center justify-center rounded-xl bg-blue-600 px-3 text-sm font-medium text-white hover:bg-blue-700"
             aria-label={`View ${title}`}
           >
             👁️ View
@@ -186,20 +201,16 @@ export default function ProductCardV4({
           <button
             type="button"
             onClick={addToCart}
-            className="flex h-9 items-center justify-center rounded-lg bg-blue-600 px-2 text-[12px] leading-tight text-white hover:bg-blue-700 text-center"
+            className="inline-flex h-10 items-center justify-center rounded-xl bg-blue-600 px-3 text-sm font-medium text-white hover:bg-blue-700"
             aria-label="Add to cart"
-            title="Add to cart"
           >
-            <span className="flex flex-col items-center">
-              <span>🛒 Add&nbsp;to</span>
-              <span>cart</span>
-            </span>
+            🛒 Add to cart
           </button>
 
           <button
             type="button"
             onClick={buyNow}
-            className="flex h-9 items-center justify-center rounded-lg bg-blue-600 px-2 text-[12px] leading-tight text-white hover:bg-blue-700 text-center"
+            className="inline-flex h-10 items-center justify-center rounded-xl bg-blue-600 px-3 text-sm font-medium text-white hover:bg-blue-700"
             aria-label="Buy now"
           >
             ⚡ Buy
