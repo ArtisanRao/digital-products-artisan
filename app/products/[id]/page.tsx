@@ -27,14 +27,12 @@ function firstExistingPublicHref(hrefs: string[]): string | undefined {
   return undefined;
 }
 
-/** Unwrap props.params whether Promise or plain object */
 async function resolveParams(props: any): Promise<{ id?: string }> {
   const maybe = props?.params;
   if (maybe && typeof maybe.then === "function") return (await maybe) ?? {};
   return maybe ?? {};
 }
 
-/** Find by numeric id or by slug (case-insensitive) */
 function findProduct(idOrSlug: string) {
   const raw = String(idOrSlug ?? "").trim();
   if (!raw) return null;
@@ -51,7 +49,6 @@ function findProduct(idOrSlug: string) {
   );
 }
 
-/** Discover gallery under /public/images/products/<slug> if needed */
 function discoverGallery(slug?: string): string[] {
   if (!slug) return [];
   const dir = pub("images", "products", slug);
@@ -85,7 +82,6 @@ function discoverGallery(slug?: string): string[] {
   return Array.from(new Set(list));
 }
 
-/** Prefer product.images; else discover; else single product.image */
 function rawGallery(p: any): string[] {
   const explicit = Array.isArray(p?.images) ? (p.images as string[]) : [];
   if (explicit.length) return Array.from(new Set(explicit.filter(Boolean)));
@@ -94,7 +90,6 @@ function rawGallery(p: any): string[] {
   return [p?.image].filter(Boolean) as string[];
 }
 
-/** For OG/Twitter only: 1 cover + up to 3 extras */
 function coverPlusThree(imgs: string[]): string[] {
   const list = imgs.filter(Boolean);
   const cover = list[0] ?? "/images/placeholder.jpg";
@@ -148,12 +143,9 @@ export async function generateMetadata(props: any): Promise<Metadata> {
 /* --------------------------- page --------------------------- */
 export default async function ProductPage(props: any) {
   const { id = "" } = await resolveParams(props);
-
-  // Render directly for both ids and slugs
   const product = findProduct(id);
   if (!product) notFound();
 
-  // FULL set; component shows cover + 3 extras, rest behind its own “More”
   const allImages = rawGallery(product);
 
   const priceNum =
@@ -171,7 +163,6 @@ export default async function ProductPage(props: any) {
     product.description ||
     "";
 
-  // Always show the toggle; reveal extra only when present
   const MAX_CHARS = 140;
   const hasExtra = fullText.length > MAX_CHARS;
   const teaser = hasExtra ? fullText.slice(0, MAX_CHARS).trimEnd() : fullText;
