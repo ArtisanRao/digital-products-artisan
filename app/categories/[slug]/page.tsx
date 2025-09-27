@@ -13,7 +13,7 @@ export const revalidate = 0;
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
-const UI_VERSION = "cat-v13-cover+4thumbs-href-fallback";
+const UI_VERSION = "cat-v15-cover+3thumbs-href-fallback";
 
 // ---- Category metadata (normalized slugs) ----
 const META: Record<string, { title: string; description: string }> = {
@@ -91,7 +91,7 @@ function effectiveProductCategorySlug(p: any): string | null {
 }
 
 // Read up to N thumbs from /public/images/products/<slug>/thumb-*.ext (numeric sort)
-function readProductThumbs(slug?: string, max = 4): string[] {
+function readProductThumbs(slug?: string, max = 3): string[] {
   if (!slug) return [];
   const dir = pub("images", "products", slug);
   if (!fs.existsSync(dir)) return [];
@@ -107,21 +107,20 @@ function readProductThumbs(slug?: string, max = 4): string[] {
   return names.map((n) => `/images/products/${slug}/${n}`);
 }
 
-// Build images for the card: cover + up to 4 extras.
+// Build images for the card: cover + up to 3 extras.
 // Prefer product.images (so cards match product page), then fallback to filesystem thumbs.
 function buildCardImages(p: any): string[] {
   const productImages = Array.isArray(p.images) ? (p.images as string[]) : [];
   const cover = (productImages[0] ?? p.image ?? "/images/placeholder.jpg") as string;
 
   const extrasFromProduct = productImages.slice(1).filter(Boolean);
-  const extrasFromFS = readProductThumbs(p.slug, 4);
+  const extrasFromFS = readProductThumbs(p.slug, 3);
 
   const extras = Array.from(new Set([...extrasFromProduct, ...extrasFromFS]))
     .filter((src) => src && src !== cover)
-    .slice(0, 4);
+    .slice(0, 3);
 
-  const images = [cover, ...extras]; // total <= 5 (1 + 4)
-  return images;
+  return [cover, ...extras]; // <= 4 total (1 main + 3 thumbs)
 }
 
 // Static params for new and legacy slugs (harmless even with force-dynamic)
@@ -178,7 +177,7 @@ export default async function CategoryPage(props: any) {
     return eff !== "__HIDE__" && eff === slug;
   });
 
-  // Card data: 1 cover + up to 4 extras (deduped) with cache-buster + reliable href
+  // Card data: 1 cover + up to 3 extras (deduped) with cache-buster + reliable href
   const cards = catProducts.map((p) => {
     const imagesRaw = buildCardImages(p);
     const deduped = Array.from(new Set(imagesRaw)) as string[];
@@ -193,9 +192,9 @@ export default async function CategoryPage(props: any) {
       title: p.title,
       slug: p.slug,
       price: p.price,
-      images,        // cover first, then up to 4 extras
+      images,        // cover first, then up to 3 extras
       description: p.description,
-      href,          // ← pass reliable link
+      href,          // reliable link
     };
   });
 
