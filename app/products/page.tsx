@@ -10,10 +10,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Star, Search, Filter, Grid, List } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import HoverableCover from '@/components/ui/hoverable-cover';         // ⬅️ bring back hover cover
+import HoverableCover from '@/components/ui/hoverable-cover';
 import { products, type Product } from '@/data/products';
 import ProductActions from '@/components/product-actions';
 import DescriptionClamp from '@/components/DescriptionClamp';
+import AddToCartWire from '@/components/catalog/AddToCartWire'; // ← delegated cart handler
 
 const baseCategories = [
   'AI & ChatGPT Guides',
@@ -104,7 +105,10 @@ export default function ProductsPage() {
   }, [filteredProducts, sortBy]);
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8" data-catalog-root>
+      {/* Delegated add-to-cart just for this page */}
+      <AddToCartWire rootSelector="[data-catalog-root]" />
+
       <div className="mb-8">
         <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">All Digital Products</h1>
         <p className="text-lg text-gray-600">
@@ -236,7 +240,7 @@ export default function ProductsPage() {
           </Card>
         </aside>
 
-        {/* Products Grid */}
+        {/* Products Grid / List */}
         <section className="flex-1" aria-label="Products">
           {/* Toolbar */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
@@ -287,10 +291,10 @@ export default function ProductsPage() {
           {viewMode === 'grid' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {sortedProducts.map((product, idx) => {
-                // 👉 Build cover + additional mockups (deduped)
                 const coverSrcs = Array.from(
                   new Set([product.image, ...(((product as any).images ?? []) as string[])].filter(Boolean))
                 );
+                const slug = (product as any).slug as string | undefined;
 
                 return (
                   <Card key={product.id} className="group hover:shadow-lg transition-shadow duration-300" tabIndex={0}>
@@ -321,7 +325,6 @@ export default function ProductsPage() {
                         className="text-sm text-gray-600"
                       />
 
-                      {/* 👇 extra mockup thumbnails */}
                       {coverSrcs.length > 1 && (
                         <div className="mt-3 grid grid-cols-3 gap-2">
                           {coverSrcs.slice(1, 4).map((thumb) => (
@@ -360,14 +363,30 @@ export default function ProductsPage() {
                         )}
                       </div>
 
-                      <ProductActions
-                        id={product.id}
-                        title={product.title}
-                        price={product.price}
-                        image={product.image}
-                        size="sm"
-                        className="shrink-0"
-                      />
+                      <div className="flex items-center gap-2">
+                        <ProductActions
+                          id={product.id}
+                          title={product.title}
+                          price={product.price}
+                          image={product.image}
+                          size="sm"
+                          className="shrink-0"
+                        />
+                        {/* Quick Add wired to unified cart via AddToCartWire */}
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="bg-blue-600 text-white hover:bg-blue-700"
+                          data-add-to-cart
+                          data-product-id={String(product.id)}
+                          {...(slug ? { 'data-product-slug': slug } : {})}
+                          data-qty="1"
+                          aria-label={`Add ${product.title} to cart`}
+                          title="Add to cart"
+                        >
+                          Add to cart
+                        </Button>
+                      </div>
                     </CardFooter>
                   </Card>
                 );
@@ -379,6 +398,7 @@ export default function ProductsPage() {
                 const coverSrcs = Array.from(
                   new Set([product.image, ...(((product as any).images ?? []) as string[])].filter(Boolean))
                 );
+                const slug = (product as any).slug as string | undefined;
 
                 return (
                   <li
@@ -410,7 +430,6 @@ export default function ProductsPage() {
                         className="text-sm text-gray-600"
                       />
 
-                      {/* small inline thumbs on list rows too */}
                       {coverSrcs.length > 1 && (
                         <div className="mt-2 flex gap-2">
                           {coverSrcs.slice(1, 4).map((thumb) => (
@@ -447,14 +466,30 @@ export default function ProductsPage() {
                         </span>
                       )}
 
-                      <ProductActions
-                        id={product.id}
-                        title={product.title}
-                        price={product.price}
-                        image={product.image}
-                        size="sm"
-                        className="justify-end"
-                      />
+                      <div className="flex items-center gap-2">
+                        <ProductActions
+                          id={product.id}
+                          title={product.title}
+                          price={product.price}
+                          image={product.image}
+                          size="sm"
+                          className="justify-end"
+                        />
+                        {/* Quick Add wired to unified cart via AddToCartWire */}
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="bg-blue-600 text-white hover:bg-blue-700"
+                          data-add-to-cart
+                          data-product-id={String(product.id)}
+                          {...(slug ? { 'data-product-slug': slug } : {})}
+                          data-qty="1"
+                          aria-label={`Add ${product.title} to cart`}
+                          title="Add to cart"
+                        >
+                          Add to cart
+                        </Button>
+                      </div>
                     </div>
                   </li>
                 );
