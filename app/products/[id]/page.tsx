@@ -153,7 +153,7 @@ export default async function ProductPage(props: any) {
   const product = findProduct(id);
   if (!product) notFound();
 
-  // Pass FULL set; ProductGallery will show 4 thumbs and reveal the rest with its own “More” button
+  // FULL set; component shows cover + 4 extras, rest behind its own “More”
   const allImages = rawGallery(product);
 
   const priceNum =
@@ -170,7 +170,9 @@ export default async function ProductPage(props: any) {
     ((product as any).longDescription as string | undefined)?.trim() ||
     product.description ||
     "";
-  const MAX_CHARS = 220;
+
+  // ↓ Lower threshold so the “More” button under subtitle appears more reliably
+  const MAX_CHARS = 140;
   const needsToggle = fullText.length > MAX_CHARS;
   const teaser = needsToggle ? fullText.slice(0, MAX_CHARS).trimEnd() : fullText;
   const remainder = needsToggle ? fullText.slice(MAX_CHARS) : "";
@@ -211,18 +213,23 @@ export default async function ProductPage(props: any) {
           </div>
 
           {/* Subtitle/description with button-styled “More/Less” just under it */}
-          <div className="mt-4 text-[15px] leading-relaxed text-gray-700">
-            <p className="whitespace-pre-line">
+          <div className="mt-4 text-[15px] leading-relaxed text-gray-700" id="description">
+            <p className="whitespace-pre-line" id="description-teaser">
               {needsToggle ? `${teaser}…` : fullText}
             </p>
 
             {needsToggle && (
               <details className="group mt-2 [&_summary::-webkit-details-marker]:hidden">
-                <summary className="inline-flex items-center rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white cursor-pointer select-none hover:bg-blue-700">
+                <summary
+                  className="inline-flex items-center rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white cursor-pointer select-none hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                  aria-controls="description-more"
+                >
                   <span className="group-open:hidden">More</span>
                   <span className="hidden group-open:inline">Less</span>
                 </summary>
-                <div className="mt-2 whitespace-pre-line">{remainder}</div>
+                <div id="description-more" className="mt-2 whitespace-pre-line">
+                  {remainder}
+                </div>
               </details>
             )}
           </div>

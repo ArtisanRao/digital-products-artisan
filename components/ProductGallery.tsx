@@ -13,8 +13,8 @@ import {
 type Props = {
   images: string[];
   alt?: string;
-  /** How many thumbnails to show before revealing the rest with “More” */
-  maxThumbs?: number; // default 4
+  /** How many EXTRA thumbnails (beyond the first/cover) to show before revealing the rest */
+  maxThumbs?: number; // default 4 extras => cover + 4
 };
 
 export default function ProductGallery({
@@ -22,8 +22,8 @@ export default function ProductGallery({
   alt = 'Product image',
   maxThumbs = 4,
 }: Props) {
-  // Normalize maxThumbs (at least 1)
-  const cap = Math.max(1, Math.floor(Number.isFinite(maxThumbs) ? maxThumbs : 4));
+  // Normalize extras cap (>= 0)
+  const cap = Math.max(0, Math.floor(Number.isFinite(maxThumbs) ? maxThumbs : 4));
 
   // Dedupe + fallback
   const safe = React.useMemo<string[]>(
@@ -39,13 +39,13 @@ export default function ProductGallery({
   const [showAll, setShowAll] = React.useState(false);
 
   const len = safe.length;
-  const hasMore = len > cap;
-  const visibleCount = showAll ? len : Math.min(len, cap);
 
-  const thumbs = React.useMemo(
-    () => safe.slice(0, visibleCount),
-    [safe, visibleCount]
-  );
+  // When collapsed, show: cover (1) + extras (cap)
+  const collapsedCount = Math.min(len, 1 + cap);
+  const hasMore = len > collapsedCount;
+  const visibleCount = showAll ? len : collapsedCount;
+
+  const thumbs = React.useMemo(() => safe.slice(0, visibleCount), [safe, visibleCount]);
 
   const prev = React.useCallback(() => {
     setIndex((i) => (i - 1 + len) % len);
@@ -86,14 +86,15 @@ export default function ProductGallery({
     preload([index - 1, index + 1]);
   }, [index, len, preload]);
 
-  // Clamp index when images array changes or on toggle Less
+  // Clamp index when images array changes
   React.useEffect(() => {
     if (index >= len) setIndex(0);
   }, [len, index]);
 
+  // If collapsing hides the current index, clamp to last visible instead of jumping to 0
   React.useEffect(() => {
     if (!showAll && index >= visibleCount) {
-      setIndex(0);
+      setIndex(Math.max(0, visibleCount - 1));
     }
   }, [showAll, visibleCount, index]);
 
@@ -114,7 +115,7 @@ export default function ProductGallery({
   return (
     <>
       <div className="grid grid-cols-[80px,1fr] sm:grid-cols-[96px,1fr] gap-4 w-full items-start">
-        {/* Thumbnails (click-only; show first N, reveal the rest via More/Less) */}
+        {/* Thumbnails (click-only; cover + up to `maxThumbs` extras, rest behind More/Less) */}
         <div className="flex flex-col gap-3 w-20 sm:w-24 sticky top-4 self-start z-20">
           {thumbs.map((src, i) => {
             const active = i === index;
@@ -129,6 +130,7 @@ export default function ProductGallery({
                     : 'hover:shadow-sm border-gray-200',
                 ].join(' ')}
                 aria-label={`Show image ${i + 1}`}
+                title={`Show image ${i + 1}`}
               >
                 <Image
                   src={src}
