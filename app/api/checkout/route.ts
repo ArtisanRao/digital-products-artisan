@@ -42,9 +42,10 @@ function findProductByKey(key: string | number | null | undefined) {
   );
 }
 function imageForProduct(origin: string, product: any) {
-  const rel = Array.isArray(product.images) && product.images.length
-    ? product.images[0]
-    : product.image;
+  const rel =
+    Array.isArray(product.images) && product.images.length
+      ? product.images[0]
+      : product.image;
   if (!rel) return undefined;
   return String(rel).startsWith("http") ? String(rel) : `${origin}${rel}`;
 }
@@ -54,6 +55,14 @@ function getStripe(): Stripe {
     throw new Error("Missing STRIPE_SECRET_KEY");
   }
   return new Stripe(key);
+}
+
+/** Build desired payment methods. Adds PayPal for all, Klarna for EUR.
+ * NOTE: Some @types/stripe versions don't include "paypal" yet.
+ * Casting to any keeps TS happy while Stripe accepts it at runtime. */
+function paymentMethodsForCurrency(c?: string) {
+  const cur = normalizeCurrency(c);
+  return (cur === "EUR" ? ["card", "klarna", "paypal"] : ["card", "paypal"]) as any;
 }
 
 /* ------------------------ Bundle catalog ------------------------ */
@@ -118,8 +127,7 @@ async function createSessionFromSingle(opts: {
         },
       ];
 
-  const payment_method_types: Stripe.Checkout.SessionCreateParams.PaymentMethodType[] =
-    currency === "EUR" ? ["card", "klarna"] : ["card"];
+  const payment_method_types = paymentMethodsForCurrency(currency);
 
   const prodPath = product.slug
     ? `/products/${encodeURIComponent(String(product.slug))}`
@@ -139,7 +147,7 @@ async function createSessionFromSingle(opts: {
       productId: String(product.id),
       slug: String(product.slug ?? ""),
       qty: String(qty),
-      currency,
+      currency: normalizeCurrency(currency),
     },
     success_url: `${origin}/thank-you?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}${prodPath}`,
@@ -161,8 +169,7 @@ async function createSessionFromBundle(opts: {
   const b = BUNDLES[handle];
   if (!b) throw new Error(`Unknown bundle: ${handle}`);
 
-  const payment_method_types: Stripe.Checkout.SessionCreateParams.PaymentMethodType[] =
-    currency === "EUR" ? ["card", "klarna"] : ["card"];
+  const payment_method_types = paymentMethodsForCurrency(currency);
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
@@ -189,7 +196,7 @@ async function createSessionFromBundle(opts: {
       kind: "bundle",
       bundle: handle,
       qty: String(qty),
-      currency,
+      currency: normalizeCurrency(currency),
     },
     success_url: `${origin}/thank-you?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/bundles/${handle}`,
@@ -203,8 +210,8 @@ async function createSessionFromBundle(opts: {
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
-    const bundleId = url.searchParams.get("bundleId");      // ✅ new
-    let slug = url.searchParams.get("slug");                // may be "bundle:<slug>"
+    const bundleId = url.searchParams.get("bundleId"); // ✅ bundle support
+    let slug = url.searchParams.get("slug"); // may be "bundle:<slug>"
     const productId = url.searchParams.get("productId");
     const qty = Math.max(1, Number(url.searchParams.get("qty") ?? 1));
     const currency = normalizeCurrency(url.searchParams.get("currency") ?? "EUR");
@@ -270,6 +277,7 @@ export async function POST(req: NextRequest) {
     if (Array.isArray(body?.line_items) && body.line_items.length) {
       const session = await stripe.checkout.sessions.create({
         mode: (body.mode as "payment" | undefined) ?? "payment",
+        payment_method_types: paymentMethodsForCurrency(body?.currency),
         line_items: body.line_items,
         allow_promotion_codes: true,
         automatic_tax: { enabled: true },
@@ -323,6 +331,7 @@ export async function POST(req: NextRequest) {
 
       const session = await stripe.checkout.sessions.create({
         mode: (body.mode as "payment" | undefined) ?? "payment",
+        payment_method_types: paymentMethodsForCurrency(currency),
         line_items: resolved,
         allow_promotion_codes: true,
         automatic_tax: { enabled: true },
