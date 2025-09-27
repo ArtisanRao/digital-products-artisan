@@ -153,7 +153,7 @@ export default async function ProductPage(props: any) {
   const product = findProduct(id);
   if (!product) notFound();
 
-  // FULL set; component shows cover + 4 extras, rest behind its own “More”
+  // FULL set; component shows cover + 3 extras, rest behind its own “More”
   const allImages = rawGallery(product);
 
   const priceNum =
@@ -171,7 +171,7 @@ export default async function ProductPage(props: any) {
     product.description ||
     "";
 
-  // ↓ Always show the toggle; only reveal extra content if there IS extra.
+  // Always show the toggle; reveal extra only when present
   const MAX_CHARS = 140;
   const hasExtra = fullText.length > MAX_CHARS;
   const teaser = hasExtra ? fullText.slice(0, MAX_CHARS).trimEnd() : fullText;
@@ -188,9 +188,9 @@ export default async function ProductPage(props: any) {
       </nav>
 
       <div className="grid gap-8 lg:grid-cols-2">
-        {/* Gallery — left “More” only (inside component), no right-side links */}
+        {/* Gallery — 1 main + 3 thumbs */}
         <div id="gallery" className="w-full rounded-2xl border bg-white p-3 hover-zoom">
-          <ProductGallery images={allImages} alt={product.title} maxThumbs={4} />
+          <ProductGallery images={allImages} alt={product.title} maxThumbs={3} />
         </div>
 
         {/* Details */}
