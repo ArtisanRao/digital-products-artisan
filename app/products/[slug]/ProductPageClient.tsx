@@ -179,11 +179,7 @@ export default function ProductPageClient({ slug }: { slug: string }) {
         {/* uniform horizontal CTAs */}
         <div className="mt-6 grid grid-cols-2 gap-3" style={{ position: "relative", zIndex: 61 }}>
           <AddToCartButton
-            id={p.id}
-            slug={p.slug as string | undefined}
-            title={p.title}
-            price={p.price}
-            image={coverImage}
+            productId={Number(p.id)}  {/* ← updated prop */}
             className="bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
           />
 
