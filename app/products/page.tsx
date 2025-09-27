@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -13,7 +13,9 @@ import Image from 'next/image';
 import HoverableCover from '@/components/ui/hoverable-cover';
 import { products, type Product } from '@/data/products';
 import DescriptionClamp from '@/components/DescriptionClamp';
-import AddToCartWire from '@/components/catalog/AddToCartWire'; // ✅ delegated handler
+import AddToCartWire from '@/components/catalog/AddToCartWire'; // delegated handler
+
+/* ---------------- helpers ---------------- */
 
 const baseCategories = [
   'AI & ChatGPT Guides',
@@ -31,13 +33,10 @@ const baseCategories = [
   'Prompt Packs & AI Tools',
 ];
 
-const categoriesWithCounts = (products: Product[]) => {
+const categoriesWithCounts = (items: Product[]) => {
   const counts: Record<string, number> = {};
-  baseCategories.forEach((cat) => (counts[cat] = 0));
-  products.forEach((p) => {
-    if (counts[p.category] !== undefined) counts[p.category] += 1;
-    else counts[p.category] = 1;
-  });
+  baseCategories.forEach((c) => (counts[c] = 0));
+  items.forEach((p) => (counts[p.category] = (counts[p.category] ?? 0) + 1));
   return counts;
 };
 
@@ -49,11 +48,16 @@ const sortOptions = [
   { value: 'rating', label: 'Highest Rated' },
 ];
 
-const formatPrice = (value: number, currency: string = 'EUR', locale: string = 'de-DE') =>
+const formatPrice = (value: number, currency = 'EUR', locale = 'de-DE') =>
   new Intl.NumberFormat(locale, { style: 'currency', currency }).format(value);
 
 const slugify = (s: string) =>
   s.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '').replace(/\-+/g, '-');
+
+const buildImages = (p: Product) =>
+  Array.from(new Set([p.image, ...(((p as any).images ?? []) as string[])].filter(Boolean)));
+
+/* ---------------- page ---------------- */
 
 export default function ProductsPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -65,13 +69,6 @@ export default function ProductsPage() {
 
   const allTags = useMemo(() => Array.from(new Set(products.flatMap((p) => p.tags))), []);
   const categoryCounts = useMemo(() => categoriesWithCounts(products), []);
-
-  const handleMinPriceChange = (value: number) => {
-    setPriceRange((prev) => ({ min: Math.min(value, prev.max), max: prev.max }));
-  };
-  const handleMaxPriceChange = (value: number) => {
-    setPriceRange((prev) => ({ min: prev.min, max: Math.max(value, prev.min) }));
-  };
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
@@ -89,23 +86,18 @@ export default function ProductsPage() {
   const sortedProducts = useMemo(() => {
     return [...filteredProducts].sort((a, b) => {
       switch (sortBy) {
-        case 'newest':
-          return Number(b.id) - Number(a.id);
-        case 'price-low':
-          return a.price - b.price;
-        case 'price-high':
-          return b.price - a.price;
-        case 'rating':
-          return b.rating - a.rating;
-        default:
-          return b.downloads - a.downloads;
+        case 'newest': return Number(b.id) - Number(a.id);
+        case 'price-low': return a.price - b.price;
+        case 'price-high': return b.price - a.price;
+        case 'rating': return b.rating - a.rating;
+        default: return b.downloads - a.downloads;
       }
     });
   }, [filteredProducts, sortBy]);
 
   return (
     <div className="container mx-auto px-4 py-8" data-products-grid>
-      {/* mounts the delegated click handler for [data-add-to-cart] within this page */}
+      {/* Mount delegated click handler for [data-add-to-cart] inside this page */}
       <AddToCartWire rootSelector="[data-products-grid]" />
 
       <div className="mb-8">
@@ -116,21 +108,18 @@ export default function ProductsPage() {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
-        {/* Filters Sidebar */}
+        {/* Filters */}
         <aside className="lg:w-64 space-y-6" aria-label="Filters">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Filter className="w-5 h-5 mr-2" aria-hidden />
-                Filters
+                <Filter className="w-5 h-5 mr-2" aria-hidden /> Filters
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <div className="px-6 pb-6 space-y-6">
               {/* Search */}
               <div>
-                <label htmlFor="product-search" className="text-sm font-medium text-gray-700 mb-2 block">
-                  Search
-                </label>
+                <label htmlFor="product-search" className="text-sm font-medium text-gray-700 mb-2 block">Search</label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" aria-hidden />
                   <Input
@@ -149,63 +138,42 @@ export default function ProductsPage() {
               <fieldset>
                 <legend className="text-sm font-medium text-gray-700 mb-2 block">Category</legend>
                 <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
+                  <label className="flex items-center space-x-2">
                     <input
-                      id="category-all"
-                      name="category"
-                      type="radio"
-                      checked={selectedCategory === 'All'}
-                      onChange={() => setSelectedCategory('All')}
-                      className="h-4 w-4"
+                      type="radio" name="category" checked={selectedCategory === 'All'}
+                      onChange={() => setSelectedCategory('All')} className="h-4 w-4"
                     />
-                    <label htmlFor="category-all" className="text-sm text-gray-700 cursor-pointer">
-                      All ({products.length})
-                    </label>
-                  </div>
+                    <span className="text-sm text-gray-700 cursor-pointer">All ({products.length})</span>
+                  </label>
 
-                  {baseCategories.map((category) => {
-                    const id = `category-${slugify(category)}`;
-                    return (
-                      <div key={category} className="flex items-center space-x-2">
-                        <input
-                          id={id}
-                          name="category"
-                          type="radio"
-                          checked={selectedCategory === category}
-                          onChange={() => setSelectedCategory(category)}
-                          className="h-4 w-4"
-                        />
-                        <label htmlFor={id} className="text-sm text-gray-700 cursor-pointer">
-                          {category} ({categoryCounts[category] || 0})
-                        </label>
-                      </div>
-                    );
-                  })}
+                  {baseCategories.map((category) => (
+                    <label key={category} className="flex items-center space-x-2">
+                      <input
+                        type="radio" name="category" checked={selectedCategory === category}
+                        onChange={() => setSelectedCategory(category)} className="h-4 w-4"
+                      />
+                      <span className="text-sm text-gray-700 cursor-pointer">
+                        {category} ({categoryCounts[category] || 0})
+                      </span>
+                    </label>
+                  ))}
                 </div>
               </fieldset>
 
-              {/* Price Range */}
+              {/* Price */}
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">Price Range</label>
                 <div className="flex space-x-2">
                   <Input
-                    type="number"
-                    placeholder="Min"
-                    value={priceRange.min}
-                    onChange={(e) => handleMinPriceChange(Number(e.target.value))}
-                    className="w-20"
-                    min={0}
-                    aria-label="Minimum price"
+                    type="number" placeholder="Min" value={priceRange.min}
+                    onChange={(e) => setPriceRange((p) => ({ ...p, min: Math.min(Number(e.target.value), p.max) }))}
+                    className="w-20" min={0} aria-label="Minimum price"
                   />
                   <span className="text-gray-500">-</span>
                   <Input
-                    type="number"
-                    placeholder="Max"
-                    value={priceRange.max}
-                    onChange={(e) => handleMaxPriceChange(Number(e.target.value))}
-                    className="w-20"
-                    min={0}
-                    aria-label="Maximum price"
+                    type="number" placeholder="Max" value={priceRange.max}
+                    onChange={(e) => setPriceRange((p) => ({ ...p, max: Math.max(Number(e.target.value), p.min) }))}
+                    className="w-20" min={0} aria-label="Maximum price"
                   />
                 </div>
               </div>
@@ -215,52 +183,40 @@ export default function ProductsPage() {
                 <label className="text-sm font-medium text-gray-700 mb-2 block">Tags</label>
                 <div className="space-y-2 max-h-40 overflow-y-auto" role="group" aria-label="Filter by tags">
                   {allTags.map((tag) => {
-                    const id = `tag-${slugify(tag)}`;
                     const checked = selectedTags.includes(tag);
                     return (
-                      <div key={tag} className="flex items-center space-x-2">
+                      <label key={tag} className="flex items-center space-x-2">
                         <Checkbox
-                          id={id}
                           checked={checked}
                           onCheckedChange={(v) => {
                             if (typeof v !== 'boolean') return;
                             setSelectedTags((prev) => (v ? [...prev, tag] : prev.filter((t) => t !== tag)));
                           }}
                         />
-                        <label htmlFor={id} className="text-sm text-gray-700 cursor-pointer">
-                          {tag}
-                        </label>
-                      </div>
+                        <span className="text-sm text-gray-700 cursor-pointer">{tag}</span>
+                      </label>
                     );
                   })}
                 </div>
               </div>
-            </CardContent>
+            </div>
           </Card>
         </aside>
 
-        {/* Products Grid */}
+        {/* Products */}
         <section className="flex-1" aria-label="Products">
           {/* Toolbar */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <div className="text-sm text-gray-600" aria-live="polite">
               Showing {sortedProducts.length} of {products.length} products
             </div>
-
             <div className="flex items-center space-x-4">
               <Select value={sortBy} onValueChange={setSortBy} aria-label="Sort products">
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Sort" />
-                </SelectTrigger>
+                <SelectTrigger className="w-48"><SelectValue placeholder="Sort" /></SelectTrigger>
                 <SelectContent>
-                  {sortOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
+                  {sortOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
                 </SelectContent>
               </Select>
-
               <div className="flex border rounded-lg" role="group" aria-label="Toggle view mode">
                 <Button
                   variant={viewMode === 'grid' ? 'default' : 'ghost'}
@@ -286,47 +242,62 @@ export default function ProductsPage() {
             </div>
           </div>
 
-          {/* Products List */}
+          {/* Grid view */}
           {viewMode === 'grid' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {sortedProducts.map((product, idx) => {
-                const coverSrcs = Array.from(
-                  new Set([product.image, ...(((product as any).images ?? []) as string[])].filter(Boolean))
-                );
+                const imgs = buildImages(product);
+                const productHref = `/products/${product.id}`;
+                const buyNow = () => {
+                  const key = String(product.slug ?? product.id);
+                  const w = window as any;
+                  if (w?.startCheckout) { w.startCheckout({ slug: key }); return; }
+                  window.location.href = `/checkout?product=${encodeURIComponent(key)}`;
+                };
 
                 return (
                   <Card key={product.id} className="group hover:shadow-lg transition-shadow duration-300" tabIndex={0}>
                     <CardHeader className="p-0">
                       <div className="relative overflow-hidden rounded-t-lg">
-                        <Link href={`/products/${product.id}`} aria-label={`View ${product.title}`}>
-                          <HoverableCover srcs={coverSrcs} alt={product.title} ratio="16/9" fit="contain" />
+                        <Link href={productHref} aria-label={`View ${product.title}`}>
+                          <HoverableCover srcs={imgs} alt={product.title} ratio="16/9" fit="contain" />
                         </Link>
                         {product.bestseller && (
-                          <Badge className="absolute top-3 left-3 bg-yellow-400 text-black font-semibold">
-                            Bestseller
-                          </Badge>
+                          <Badge className="absolute top-3 left-3 bg-yellow-400 text-black font-semibold">Bestseller</Badge>
                         )}
                       </div>
                     </CardHeader>
 
                     <CardContent className="p-4">
+                      {/* Title */}
                       <Link
-                        href={`/products/${product.id}`}
+                        href={productHref}
                         className="hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-sm"
                       >
                         <CardTitle className="text-lg font-semibold line-clamp-2">{product.title}</CardTitle>
                       </Link>
 
-                      <DescriptionClamp
-                        text={(product as any).longDescription ?? product.description ?? ''}
-                        maxChars={120}
-                        className="text-sm text-gray-600"
-                      />
+                      {/* Subtitle with hover underline + More pill */}
+                      <Link href={`${productHref}#description`} className="block mt-1 hover:underline">
+                        <DescriptionClamp
+                          text={(product as any).longDescription ?? product.description ?? ''}
+                          maxChars={120}
+                          className="text-sm text-gray-600"
+                        />
+                      </Link>
+                      <Link
+                        href={`${productHref}#description`}
+                        className="mt-2 inline-flex items-center rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
+                        aria-label={`Read more about ${product.title}`}
+                      >
+                        More
+                      </Link>
 
-                      {coverSrcs.length > 1 && (
+                      {/* Extra thumbs */}
+                      {imgs.length > 1 && (
                         <div className="mt-3 grid grid-cols-3 gap-2">
-                          {coverSrcs.slice(1, 4).map((thumb) => (
-                            <Link href={`/products/${product.id}`} key={thumb} aria-label="View details">
+                          {imgs.slice(1, 4).map((thumb) => (
+                            <Link href={productHref} key={thumb} aria-label="View details">
                               <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-gray-50">
                                 <Image
                                   src={thumb}
@@ -342,33 +313,27 @@ export default function ProductsPage() {
                         </div>
                       )}
 
+                      {/* Rating */}
                       <div className="mt-3 flex items-center space-x-2">
                         <Star className="w-4 h-4 text-yellow-400" aria-hidden />
                         <span className="text-sm font-medium text-gray-800">{product.rating}</span>
                         <span className="text-sm text-gray-500">({product.reviews})</span>
                       </div>
-                    </CardContent>
 
-                    <CardFooter className="p-4 flex items-center justify-between gap-3">
-                      <div>
-                        <span className="text-lg font-semibold text-gray-900">
-                          {formatPrice(product.price)}
-                        </span>
-                        {product.originalPrice > product.price && (
-                          <span className="line-through text-gray-400 ml-2">
-                            {formatPrice(product.originalPrice)}
-                          </span>
-                        )}
-                      </div>
+                      {/* Price */}
+                      <div className="mt-3 text-xl font-semibold">{formatPrice(product.price)}</div>
+                      {product.originalPrice > product.price && (
+                        <div className="text-gray-400 line-through">{formatPrice(product.originalPrice)}</div>
+                      )}
 
-                      {/* ✅ only the new delegated actions (View + Add to cart) */}
-                      <div className="flex items-center gap-2">
+                      {/* CTAs — EXACT layout from ProductCardV4 */}
+                      <div className="mt-3 grid gap-2 [grid-template-columns:.9fr_1.2fr_.9fr]">
                         <Link
-                          href={`/products/${product.id}`}
-                          className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 text-xs font-medium leading-tight text-white hover:bg-blue-700"
+                          href={productHref}
+                          className="inline-flex !h-8 items-center justify-center gap-2 rounded-lg bg-blue-600 !px-2 text-xs font-medium leading-tight text-white hover:bg-blue-700 whitespace-nowrap"
                           aria-label={`View ${product.title}`}
                         >
-                          <span className="inline-block w-4 text-center" aria-hidden>👁️</span>
+                          <span aria-hidden className="inline-block w-3 text-center">👁️</span>
                           <span>View</span>
                         </Link>
 
@@ -378,31 +343,48 @@ export default function ProductsPage() {
                           data-product-id={String(product.id)}
                           {...(product.slug ? { 'data-product-slug': String(product.slug) } : {})}
                           data-qty="1"
-                          className="inline-flex h-9 items-center justify-center rounded-lg bg-blue-600 px-3 text-xs font-medium leading-tight text-white hover:bg-blue-700"
+                          className="inline-flex !h-8 items-center justify-center gap-2 rounded-lg bg-blue-600 !px-3 text-xs font-medium leading-tight text-white hover:bg-blue-700 whitespace-nowrap"
                           aria-label="Add to cart"
                         >
-                          Add to cart
+                          <span aria-hidden className="inline-block w-5 text-center">🛒</span>
+                          <span>Add to cart</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={buyNow}
+                          className="inline-flex !h-8 items-center justify-center gap-2 rounded-lg bg-blue-600 !px-2 text-xs font-medium leading-tight text-white hover:bg-blue-700 whitespace-nowrap"
+                          aria-label="Buy now"
+                        >
+                          <span aria-hidden className="inline-block w-3 text-center">⚡</span>
+                          <span>Buy</span>
                         </button>
                       </div>
-                    </CardFooter>
+                    </CardContent>
                   </Card>
                 );
               })}
             </div>
           ) : (
+            /* List view */
             <ul className="space-y-4">
               {sortedProducts.map((product) => {
-                const coverSrcs = Array.from(
-                  new Set([product.image, ...(((product as any).images ?? []) as string[])].filter(Boolean))
-                );
+                const imgs = buildImages(product);
+                const productHref = `/products/${product.id}`;
+                const buyNow = () => {
+                  const key = String(product.slug ?? product.id);
+                  const w = window as any;
+                  if (w?.startCheckout) { w.startCheckout({ slug: key }); return; }
+                  window.location.href = `/checkout?product=${encodeURIComponent(key)}`;
+                };
 
                 return (
                   <li
                     key={product.id}
-                    className="flex items-center space-x-4 p-4 border rounded-lg hover:shadow-md transition-shadow duration-300"
+                    className="flex items-center gap-4 p-4 border rounded-lg hover:shadow-md transition-shadow duration-300"
                     tabIndex={0}
                   >
-                    <Link href={`/products/${product.id}`} className="flex-shrink-0" aria-label={`View ${product.title}`}>
+                    <Link href={productHref} className="flex-shrink-0" aria-label={`View ${product.title}`}>
                       <div className="relative w-[120px] h-[90px] bg-white rounded-md">
                         <Image
                           src={product.image || '/placeholder.svg'}
@@ -410,42 +392,42 @@ export default function ProductsPage() {
                           fill
                           className="object-contain"
                           sizes="120px"
-                          priority={false}
                         />
                       </div>
                     </Link>
 
                     <div className="flex-1 min-w-0">
-                      <Link href={`/products/${product.id}`} className="hover:underline">
+                      <Link href={productHref} className="hover:underline">
                         <h3 className="text-lg font-semibold truncate">{product.title}</h3>
                       </Link>
 
-                      <DescriptionClamp
-                        text={(product as any).longDescription ?? product.description ?? ''}
-                        maxChars={160}
-                        className="text-sm text-gray-600"
-                      />
+                      <Link href={`${productHref}#description`} className="block mt-1 hover:underline">
+                        <DescriptionClamp
+                          text={(product as any).longDescription ?? product.description ?? ''}
+                          maxChars={160}
+                          className="text-sm text-gray-600"
+                        />
+                      </Link>
+                      <Link
+                        href={`${productHref}#description`}
+                        className="mt-2 inline-flex items-center rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
+                      >
+                        More
+                      </Link>
 
-                      {coverSrcs.length > 1 && (
+                      {imgs.length > 1 && (
                         <div className="mt-2 flex gap-2">
-                          {coverSrcs.slice(1, 4).map((thumb) => (
-                            <Link href={`/products/${product.id}`} key={thumb} aria-label="View details">
+                          {imgs.slice(1, 4).map((thumb) => (
+                            <Link href={productHref} key={thumb} aria-label="View details">
                               <div className="relative w-14 h-10 rounded-md overflow-hidden bg-gray-50">
-                                <Image
-                                  src={thumb}
-                                  alt={`${product.title} mockup`}
-                                  fill
-                                  className="object-cover"
-                                  sizes="56px"
-                                  loading="lazy"
-                                />
+                                <Image src={thumb} alt={`${product.title} mockup`} fill className="object-cover" sizes="56px" />
                               </div>
                             </Link>
                           ))}
                         </div>
                       )}
 
-                      <div className="flex items-center space-x-2 mt-2">
+                      <div className="flex items-center gap-2 mt-2">
                         <Star className="w-4 h-4 text-yellow-400" aria-hidden />
                         <span className="text-sm font-medium text-gray-800">{product.rating}</span>
                         <span className="text-sm text-gray-500">({product.reviews})</span>
@@ -457,19 +439,16 @@ export default function ProductsPage() {
                         {formatPrice(product.price)}
                       </span>
                       {product.originalPrice > product.price && (
-                        <span className="line-through text-gray-400">
-                          {formatPrice(product.originalPrice)}
-                        </span>
+                        <span className="line-through text-gray-400">{formatPrice(product.originalPrice)}</span>
                       )}
 
-                      {/* ✅ only the new delegated actions in list view, too */}
-                      <div className="flex items-center gap-2">
+                      <div className="mt-1 grid gap-2 [grid-template-columns:.9fr_1.2fr_.9fr]">
                         <Link
-                          href={`/products/${product.id}`}
-                          className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 text-xs font-medium leading-tight text-white hover:bg-blue-700"
+                          href={productHref}
+                          className="inline-flex !h-8 items-center justify-center gap-2 rounded-lg bg-blue-600 !px-2 text-xs font-medium leading-tight text-white hover:bg-blue-700 whitespace-nowrap"
                           aria-label={`View ${product.title}`}
                         >
-                          <span className="inline-block w-4 text-center" aria-hidden>👁️</span>
+                          <span aria-hidden className="inline-block w-3 text-center">👁️</span>
                           <span>View</span>
                         </Link>
 
@@ -479,10 +458,21 @@ export default function ProductsPage() {
                           data-product-id={String(product.id)}
                           {...(product.slug ? { 'data-product-slug': String(product.slug) } : {})}
                           data-qty="1"
-                          className="inline-flex h-9 items-center justify-center rounded-lg bg-blue-600 px-3 text-xs font-medium leading-tight text-white hover:bg-blue-700"
+                          className="inline-flex !h-8 items-center justify-center gap-2 rounded-lg bg-blue-600 !px-3 text-xs font-medium leading-tight text-white hover:bg-blue-700 whitespace-nowrap"
                           aria-label="Add to cart"
                         >
-                          Add to cart
+                          <span aria-hidden className="inline-block w-5 text-center">🛒</span>
+                          <span>Add to cart</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={buyNow}
+                          className="inline-flex !h-8 items-center justify-center gap-2 rounded-lg bg-blue-600 !px-2 text-xs font-medium leading-tight text-white hover:bg-blue-700 whitespace-nowrap"
+                          aria-label="Buy now"
+                        >
+                          <span aria-hidden className="inline-block w-3 text-center">⚡</span>
+                          <span>Buy</span>
                         </button>
                       </div>
                     </div>
