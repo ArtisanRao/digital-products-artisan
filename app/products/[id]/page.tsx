@@ -227,7 +227,6 @@ export default async function ProductPage(props: any) {
                 <span className="hidden group-open:inline">Less</span>
               </summary>
 
-              {/* Only renders content when there is extra text */}
               {hasExtra && (
                 <div id="description-more" className="mt-2 whitespace-pre-line">
                   {remainder}
@@ -239,11 +238,7 @@ export default async function ProductPage(props: any) {
           {/* CTAs */}
           <div className="mt-6 grid grid-cols-2 gap-3">
             <AddToCartButton
-              id={product.id}
-              slug={product.slug as string | undefined}
-              title={product.title}
-              price={product.price}
-              image={allImages[0]}
+              productId={Number(product.id)}
               className="bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
             />
             <BuyNowButton
