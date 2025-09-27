@@ -42,10 +42,9 @@ function findProductByKey(key: string | number | null | undefined) {
   );
 }
 function imageForProduct(origin: string, product: any) {
-  const rel =
-    Array.isArray(product.images) && product.images.length
-      ? product.images[0]
-      : product.image;
+  const rel = Array.isArray(product.images) && product.images.length
+    ? product.images[0]
+    : product.image;
   if (!rel) return undefined;
   return String(rel).startsWith("http") ? String(rel) : `${origin}${rel}`;
 }
@@ -57,16 +56,16 @@ function getStripe(): Stripe {
   return new Stripe(key);
 }
 
-/** Build desired payment methods. Adds PayPal for all, Klarna for EUR.
- * NOTE: Some @types/stripe versions don't include "paypal" yet.
- * Casting to any keeps TS happy while Stripe accepts it at runtime. */
-function paymentMethodsForCurrency(c?: string) {
+/* Payment methods we allow for Checkout */
+function paymentMethodsForCurrency(c?: string): Stripe.Checkout.SessionCreateParams.PaymentMethodType[] {
   const cur = normalizeCurrency(c);
-  return (cur === "EUR" ? ["card", "klarna", "paypal"] : ["card", "paypal"]) as any;
+  // You must enable each of these in Stripe Dashboard for them to appear to customers
+  if (cur === "EUR") return ["card", "klarna", "paypal"];
+  if (cur === "USD") return ["card", "paypal"];
+  return ["card"];
 }
 
 /* ------------------------ Bundle catalog ------------------------ */
-/** Keep in sync with app/bundles/page.tsx slugs, prices & images. */
 const BUNDLES: Record<string, { name: string; price: number; image: string }> = {
   "complete-creator-bundle": {
     name: "Complete Creator Bundle",
@@ -127,15 +126,13 @@ async function createSessionFromSingle(opts: {
         },
       ];
 
-  const payment_method_types = paymentMethodsForCurrency(currency);
-
   const prodPath = product.slug
     ? `/products/${encodeURIComponent(String(product.slug))}`
     : `/products/${encodeURIComponent(String(product.id))}`;
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
-    payment_method_types,
+    payment_method_types: paymentMethodsForCurrency(currency),
     line_items,
     allow_promotion_codes: true,
     automatic_tax: { enabled: true },
@@ -147,7 +144,7 @@ async function createSessionFromSingle(opts: {
       productId: String(product.id),
       slug: String(product.slug ?? ""),
       qty: String(qty),
-      currency: normalizeCurrency(currency),
+      currency,
     },
     success_url: `${origin}/thank-you?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}${prodPath}`,
@@ -169,11 +166,9 @@ async function createSessionFromBundle(opts: {
   const b = BUNDLES[handle];
   if (!b) throw new Error(`Unknown bundle: ${handle}`);
 
-  const payment_method_types = paymentMethodsForCurrency(currency);
-
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
-    payment_method_types,
+    payment_method_types: paymentMethodsForCurrency(currency),
     line_items: [
       {
         quantity: qty,
@@ -196,7 +191,7 @@ async function createSessionFromBundle(opts: {
       kind: "bundle",
       bundle: handle,
       qty: String(qty),
-      currency: normalizeCurrency(currency),
+      currency,
     },
     success_url: `${origin}/thank-you?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/bundles/${handle}`,
@@ -210,24 +205,21 @@ async function createSessionFromBundle(opts: {
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
-    const bundleId = url.searchParams.get("bundleId"); // ✅ bundle support
+    const bundleId = url.searchParams.get("bundleId");
     let slug = url.searchParams.get("slug"); // may be "bundle:<slug>"
     const productId = url.searchParams.get("productId");
     const qty = Math.max(1, Number(url.searchParams.get("qty") ?? 1));
     const currency = normalizeCurrency(url.searchParams.get("currency") ?? "EUR");
     const origin = siteBase(req);
 
-    // Normalize bundleId → slug=bundle:<id>
     if (!slug && bundleId) slug = `bundle:${bundleId}`;
 
-    // Bundle branch
     if (slug && slug.startsWith("bundle:")) {
       const handle = slug.replace(/^bundle:/, "");
       const redirectUrl = await createSessionFromBundle({ handle, qty, currency, origin });
       return NextResponse.redirect(redirectUrl, { status: 303 });
     }
 
-    // Product branch (existing)
     const productKey = productId ?? slug;
     if (!productKey) {
       return NextResponse.json({ error: "Missing productId or slug" }, { status: 400 });
@@ -255,7 +247,7 @@ export async function POST(req: NextRequest) {
     const origin = siteBase(req);
     const body = await req.json().catch(() => ({} as any));
 
-    // Case 0: bundle by id or slug=bundle:<handle>
+    // Bundle
     if (body?.bundleId || (typeof body?.slug === "string" && body.slug.startsWith("bundle:"))) {
       const handle = body.bundleId ?? String(body.slug).replace(/^bundle:/, "");
       const qty = Math.max(1, Number(body?.qty ?? 1));
@@ -264,7 +256,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ url });
     }
 
-    // Case 1: single product by id or slug
+    // Single product
     if (body?.productId || body?.slug) {
       const qty = Math.max(1, Number(body?.qty ?? 1));
       const currency = normalizeCurrency(body?.currency ?? "EUR");
@@ -273,7 +265,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ url });
     }
 
-    // Case 2: explicit Stripe price ids
+    // Raw price IDs
     if (Array.isArray(body?.line_items) && body.line_items.length) {
       const session = await stripe.checkout.sessions.create({
         mode: (body.mode as "payment" | undefined) ?? "payment",
@@ -289,7 +281,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ url: session.url });
     }
 
-    // Case 3: items by id/slug resolved from our products list
+    // Items resolved from our catalog
     if (Array.isArray(body?.items) && body.items.length) {
       const currency = normalizeCurrency(body?.currency ?? "EUR");
       const resolved: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
