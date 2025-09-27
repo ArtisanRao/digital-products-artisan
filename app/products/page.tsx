@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -60,12 +60,18 @@ const buildImages = (p: Product) =>
 /* ---------------- page ---------------- */
 
 export default function ProductsPage() {
+  const PAGE_SIZE = 8;
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [sortBy, setSortBy] = useState('popular');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [priceRange, setPriceRange] = useState({ min: 0, max: 100 });
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [showAll, setShowAll] = useState(false);
+
+  // Reset pagination when filters/search/sort change
+  useEffect(() => { setShowAll(false); }, [searchQuery, selectedCategory, sortBy, priceRange.min, priceRange.max, selectedTags]);
 
   const allTags = useMemo(() => Array.from(new Set(products.flatMap((p) => p.tags))), []);
   const categoryCounts = useMemo(() => categoriesWithCounts(products), []);
@@ -95,9 +101,14 @@ export default function ProductsPage() {
     });
   }, [filteredProducts, sortBy]);
 
+  const visibleProducts = useMemo(
+    () => (showAll ? sortedProducts : sortedProducts.slice(0, PAGE_SIZE)),
+    [sortedProducts, showAll]
+  );
+
   return (
     <div className="container mx-auto px-4 py-8" data-products-grid>
-      {/* Mount delegated click handler for [data-add-to-cart] inside this page */}
+      {/* Delegated click handler for [data-add-to-cart] on this page */}
       <AddToCartWire rootSelector="[data-products-grid]" />
 
       <div className="mb-8">
@@ -111,11 +122,11 @@ export default function ProductsPage() {
         {/* Filters */}
         <aside className="lg:w-64 space-y-6" aria-label="Filters">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
+            <div className="px-6 pt-6 pb-0">
+              <div className="text-base font-semibold flex items-center">
                 <Filter className="w-5 h-5 mr-2" aria-hidden /> Filters
-              </CardTitle>
-            </CardHeader>
+              </div>
+            </div>
             <div className="px-6 pb-6 space-y-6">
               {/* Search */}
               <div>
@@ -208,7 +219,7 @@ export default function ProductsPage() {
           {/* Toolbar */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <div className="text-sm text-gray-600" aria-live="polite">
-              Showing {sortedProducts.length} of {products.length} products
+              Showing {visibleProducts.length} of {sortedProducts.length} products
             </div>
             <div className="flex items-center space-x-4">
               <Select value={sortBy} onValueChange={setSortBy} aria-label="Sort products">
@@ -244,8 +255,8 @@ export default function ProductsPage() {
 
           {/* Grid view */}
           {viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {sortedProducts.map((product, idx) => {
+            <div id="products-list" className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {visibleProducts.map((product, idx) => {
                 const imgs = buildImages(product);
                 const productHref = `/products/${product.id}`;
                 const buyNow = () => {
@@ -326,7 +337,7 @@ export default function ProductsPage() {
                         <div className="text-gray-400 line-through">{formatPrice(product.originalPrice)}</div>
                       )}
 
-                      {/* CTAs — EXACT layout from ProductCardV4 */}
+                      {/* CTAs — View / Add to cart / Buy */}
                       <div className="mt-3 grid gap-2 [grid-template-columns:.9fr_1.2fr_.9fr]">
                         <Link
                           href={productHref}
@@ -367,8 +378,8 @@ export default function ProductsPage() {
             </div>
           ) : (
             /* List view */
-            <ul className="space-y-4">
-              {sortedProducts.map((product) => {
+            <ul id="products-list" className="space-y-4">
+              {visibleProducts.map((product) => {
                 const imgs = buildImages(product);
                 const productHref = `/products/${product.id}`;
                 const buyNow = () => {
@@ -480,6 +491,19 @@ export default function ProductsPage() {
                 );
               })}
             </ul>
+          )}
+
+          {/* See more */}
+          {!showAll && sortedProducts.length > PAGE_SIZE && (
+            <div className="mt-8 flex justify-center">
+              <Button
+                onClick={() => setShowAll(true)}
+                className="bg-blue-600 text-white hover:bg-blue-700"
+                aria-controls="products-list"
+              >
+                See more products
+              </Button>
+            </div>
           )}
         </section>
       </div>
