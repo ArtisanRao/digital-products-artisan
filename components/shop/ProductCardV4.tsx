@@ -28,18 +28,18 @@ export default function ProductCardV4({
     [images]
   );
 
-  // Cover + up to 3 unique extras (for the main carousel)
+  // Cover + up to 4 unique extras (for 5 total: 1 main + 4 thumbs)
   const cover = pics[0] ?? "/images/placeholder.jpg";
   const extras = useMemo(
     () => pics.slice(1).filter((src) => src !== cover),
     [pics, cover]
   );
-  const displayPics = useMemo(() => [cover, ...extras.slice(0, 3)], [cover, extras]);
+  const displayPics = useMemo(() => [cover, ...extras.slice(0, 4)], [cover, extras]); // <= 5
 
-  // Thumbs row: exactly 4 items; first = cover, then up to 3 extras; pad with cover
+  // Thumbs row: exactly 5 items; first = cover, then up to 4 extras; pad with cover
   const thumbsRow = useMemo(() => {
-    const row = [cover, ...extras.slice(0, 3)];
-    while (row.length < 4) row.push(cover);
+    const row = [cover, ...extras.slice(0, 4)];
+    while (row.length < 5) row.push(cover);
     return row;
   }, [cover, extras]);
 
@@ -65,7 +65,6 @@ export default function ProductCardV4({
       ? new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(price)
       : price ?? "";
 
-  // Cart & checkout
   const addToCart = () => {
     try {
       const key = String(slug ?? id ?? "");
@@ -96,7 +95,7 @@ export default function ProductCardV4({
   return (
     <article
       className="group rounded-2xl border bg-white/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-      data-version="ProductCardV4@click-thumb-preview+compact-ctas"
+      data-version="ProductCardV4@1main+4thumbs"
     >
       {/* Main image (click → product page) */}
       <Link href={productUrl} prefetch={false} aria-label={`Open ${title}`}>
@@ -141,7 +140,7 @@ export default function ProductCardV4({
           <p className="mt-1 line-clamp-2 text-sm text-gray-600">{description}</p>
         )}
 
-        {/* Exactly 4 thumbs (first = cover, then up to 3 extras; padded with cover). Click to select. */}
+        {/* Exactly 5 thumbs (first = cover, then up to 4 extras; padded with cover). Click to select. */}
         <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
           {thumbsRow.map((src, i) => {
             const isReal = i < displayPics.length;
@@ -173,7 +172,7 @@ export default function ProductCardV4({
         {/* Price */}
         {priceLabel && <div className="mt-3 text-xl font-semibold">{priceLabel}</div>}
 
-        {/* Compact CTAs (slightly smaller so all fit cleanly) */}
+        {/* Compact CTAs */}
         <div className="mt-3 grid grid-cols-3 gap-2">
           <Link
             href={productUrl}
