@@ -8,8 +8,11 @@ export type CartItem = {
 };
 
 const KEY = "cart.v1";
-const EVT = "cart-update"; // primary modern event name (typed payload)
+const LEGACY_ARRAY_KEY = "cart";      // could be array OR map
+const LEGACY_MAP_KEY   = "dpa:cart";  // could be map OR array in older builds
+const COUNT_KEY = "cartCount";
 
+const EVT = "cart-update"; // primary modern event name (typed payload)
 export { EVT as CART_EVENT_NAME };
 
 type CartEventDetail = {
@@ -47,51 +50,58 @@ function coerceItem(it: any): CartItem | null {
   };
 }
 
-function safeParseArray(raw: string | null): CartItem[] {
-  if (!raw) return [];
-  try {
-    const arr = JSON.parse(raw);
-    if (!Array.isArray(arr)) return [];
-    return arr.map(coerceItem).filter(Boolean) as CartItem[];
-  } catch {
-    return [];
-  }
+function safeParse(raw: string | null): any {
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch { return null; }
 }
 
-/** Support older storages: "cart" as map or array, "dpa:cart" etc. */
+function safeParseArray(raw: string | null): CartItem[] {
+  const parsed = safeParse(raw);
+  if (!Array.isArray(parsed)) return [];
+  return parsed.map(coerceItem).filter(Boolean) as CartItem[];
+}
+
+/** Normalize a map-like object { key: qty } into CartItem[] (title = key, price=0) */
+function mapToItems(obj: any): CartItem[] {
+  if (!obj || typeof obj !== "object" || Array.isArray(obj)) return [];
+  return Object.entries(obj).map(([k, v]) => ({
+    id: String(k),
+    title: String(k),
+    price: 0,
+    qty: Math.max(1, Number(v) || 1),
+  }));
+}
+
+/** Support older storages: "cart" and "dpa:cart" may be map or array */
 function readLegacy(): CartItem[] {
   if (!isClient()) return [];
   const ls = window.localStorage;
 
-  // Legacy array under "dpa:cart"
-  const legacyArray = safeParseArray(ls.getItem("dpa:cart"));
-  if (legacyArray.length) return legacyArray;
-
-  // Legacy map under "cart" -> { key: qty } OR array of items
-  const raw = ls.getItem("cart");
-  if (raw) {
-    try {
-      const data = JSON.parse(raw);
-
-      // Map/object { id: qty }
-      if (data && typeof data === "object" && !Array.isArray(data)) {
-        const items: CartItem[] = Object.entries(data).map(([k, v]) => ({
-          id: String(k),
-          title: String(k),
-          price: 0,
-          qty: Math.max(1, Number(v) || 1),
-        }));
-        return items;
-      }
-
-      // Array that looks like items
-      if (Array.isArray(data)) {
-        return (data.map(coerceItem).filter(Boolean) as CartItem[]) || [];
-      }
-    } catch {
-      /* ignore */
+  // Try dpa:cart first (older builds sometimes stored array here, newer code stored map)
+  const dpaRaw = ls.getItem(LEGACY_MAP_KEY);
+  if (dpaRaw) {
+    const dpaParsed = safeParse(dpaRaw);
+    if (Array.isArray(dpaParsed)) {
+      const arr = (dpaParsed.map(coerceItem).filter(Boolean) as CartItem[]);
+      if (arr.length) return arr;
+    } else if (dpaParsed && typeof dpaParsed === "object") {
+      const arr = mapToItems(dpaParsed);
+      if (arr.length) return arr;
     }
   }
+
+  // "cart" may be {id: qty} OR array of items
+  const raw = ls.getItem(LEGACY_ARRAY_KEY);
+  if (raw) {
+    const parsed = safeParse(raw);
+    if (Array.isArray(parsed)) {
+      return (parsed.map(coerceItem).filter(Boolean) as CartItem[]) || [];
+    }
+    if (parsed && typeof parsed === "object") {
+      return mapToItems(parsed);
+    }
+  }
+
   return [];
 }
 
@@ -100,16 +110,18 @@ function readRaw(): CartItem[] {
   try {
     const ls = window.localStorage;
 
-    // Preferred modern store
+    // Preferred modern store (array of CartItem)
     const current = safeParseArray(ls.getItem(KEY));
     if (current.length) return current;
 
     // Try to migrate legacy formats
     const legacy = readLegacy();
     if (legacy.length) {
+      // write modern
       ls.setItem(KEY, JSON.stringify(legacy));
-      try { ls.removeItem("dpa:cart"); } catch {}
-      // do NOT remove old "cart" key (could be used elsewhere); leave as-is.
+      // mirror to map for maximum compatibility
+      mirrorToMap(legacy);
+      // keep old keys (some pages still read them); but clear obviously broken shapes
       return legacy;
     }
   } catch {
@@ -120,11 +132,29 @@ function readRaw(): CartItem[] {
 
 function snapshot(items: CartItem[]) {
   const count = items.reduce((n, it) => n + (Number(it.qty) || 0), 0);
-  const total = items.reduce(
-    (sum, it) => sum + (Number(it.price) || 0) * (Number(it.qty) || 0),
-    0
-  );
+  const total = items.reduce((sum, it) => sum + (Number(it.price) || 0) * (Number(it.qty) || 0), 0);
   return { items, count, total };
+}
+
+/** Mirror array → map under dpa:cart for codepaths expecting { key: qty } */
+function mirrorToMap(items: CartItem[]) {
+  try {
+    const map: Record<string, number> = {};
+    for (const it of items) {
+      const id = String(it.id);
+      const qty = Math.max(1, Number(it.qty) || 1);
+      map[id] = (map[id] ?? 0) + qty;
+    }
+    window.localStorage.setItem(LEGACY_MAP_KEY, JSON.stringify(map));
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Update visible badges that don't use React */
+function updateDomBadge(count: number) {
+  const badge = document.querySelector<HTMLElement>("[data-cart-badge]");
+  if (badge) badge.textContent = String(count);
 }
 
 function emit(items: CartItem[], added?: CartItem) {
@@ -132,17 +162,18 @@ function emit(items: CartItem[], added?: CartItem) {
 
   const { count, total } = snapshot(items);
 
-  // Store first so listeners can read immediately + trigger cross-tab 'storage'
+  // Store modern first so listeners can read immediately; trigger cross-tab 'storage'
   try {
     window.localStorage.setItem(KEY, JSON.stringify(items));
-    window.localStorage.setItem("cartCount", String(count)); // simple badge
+    window.localStorage.setItem(COUNT_KEY, String(count)); // simple badge
+    mirrorToMap(items); // keep the map mirror in sync
   } catch {
     /* ignore quota errors */
   }
 
   const detail: CartEventDetail = { items, count, total };
 
-  // Modern event with detail
+  // Modern typed event
   try { window.dispatchEvent(new CustomEvent<CartEventDetail>(EVT, { detail })); } catch {}
 
   // Back-compat events many components already listen to
@@ -154,6 +185,9 @@ function emit(items: CartItem[], added?: CartItem) {
   if (added) {
     try { window.dispatchEvent(new CustomEvent("cart:add", { detail: added })); } catch {}
   }
+
+  // Non-React badge
+  updateDomBadge(count);
 }
 
 function write(items: CartItem[], added?: CartItem) {
@@ -168,11 +202,43 @@ export function getCart(): CartItem[] {
 }
 
 export function getCartCount(): number {
-  return readRaw().reduce((n, it) => n + it.qty, 0);
+  return snapshot(readRaw()).count;
 }
 
 export function getCartTotal(): number {
-  return readRaw().reduce((sum, it) => sum + it.price * it.qty, 0);
+  return snapshot(readRaw()).total;
+}
+
+/**
+ * Convenience: add by id/slug.
+ * If item exists, increments qty; else creates with provided patch or sensible defaults.
+ *
+ * Example: add("my-slug", 1, { title: "Nice Product", price: 9.99, image: "/images/x.jpg" })
+ */
+export function add(id: string, qty = 1, patch: Partial<Omit<CartItem, "id" | "qty">> = {}) {
+  if (!isClient()) return;
+  const items = readRaw();
+  const q = Math.max(1, Math.floor(qty));
+  const idx = items.findIndex((i) => i.id === String(id));
+
+  let added: CartItem;
+  if (idx >= 0) {
+    items[idx].qty += q;
+    if (patch.title) items[idx].title = patch.title;
+    if (patch.price != null) items[idx].price = Number(patch.price) || 0;
+    if (patch.image != null) items[idx].image = patch.image || undefined;
+    added = { ...items[idx] };
+  } else {
+    added = {
+      id: String(id),
+      title: String(patch.title ?? id),
+      price: Number(patch.price ?? 0) || 0,
+      image: patch.image,
+      qty: q,
+    };
+    items.push(added);
+  }
+  write(items, added);
 }
 
 export function addToCart(item: Omit<CartItem, "qty">, qty = 1) {
@@ -226,7 +292,20 @@ export function removeFromCart(id: string) {
 
 export function clearCart() {
   if (!isClient()) return;
-  write([]);
+  try {
+    // Clear modern + mirrors + legacy
+    window.localStorage.removeItem(KEY);
+    window.localStorage.removeItem(LEGACY_MAP_KEY);
+    // If "cart" was used as array, clearing to "{}" avoids consumers that expect object
+    const legacy = safeParse(window.localStorage.getItem(LEGACY_ARRAY_KEY));
+    if (legacy && typeof legacy === "object" && !Array.isArray(legacy)) {
+      window.localStorage.setItem(LEGACY_ARRAY_KEY, "{}");
+    } else {
+      window.localStorage.setItem(LEGACY_ARRAY_KEY, "[]");
+    }
+    window.localStorage.setItem(COUNT_KEY, "0");
+  } catch {}
+  write([]); // emits events + badge
 }
 
 /**
@@ -246,9 +325,18 @@ export function onChange(
 
   window.addEventListener(EVT, listener);
 
+  // Back-compat legacy events as well
+  const legacyNames = ["cart:updated", "cart:change", "cart-update", "cart:count"];
+  const legacyListener = () => {
+    const snap = snapshot(readRaw());
+    handler(snap.count, snap);
+  };
+  legacyNames.forEach((n) => window.addEventListener(n as any, legacyListener as EventListener));
+
   // Cross-tab updates via localStorage
   const onStorage = (e: StorageEvent) => {
-    if (e.key && (e.key === KEY || e.key === "cartCount" || e.key === "cart")) {
+    if (!e.key) return;
+    if ([KEY, COUNT_KEY, LEGACY_ARRAY_KEY, LEGACY_MAP_KEY].includes(e.key)) {
       const snap = snapshot(readRaw());
       handler(snap.count, snap);
     }
@@ -261,6 +349,7 @@ export function onChange(
 
   return () => {
     window.removeEventListener(EVT, listener);
+    legacyNames.forEach((n) => window.removeEventListener(n as any, legacyListener as EventListener));
     window.removeEventListener("storage", onStorage);
   };
 }
