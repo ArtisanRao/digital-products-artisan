@@ -178,8 +178,9 @@ export default function ProductPageClient({ slug }: { slug: string }) {
 
         {/* uniform horizontal CTAs */}
         <div className="mt-6 grid grid-cols-2 gap-3" style={{ position: "relative", zIndex: 61 }}>
+          {/* ✅ Only productId is required by the component */}
           <AddToCartButton
-            productId={Number(p.id)}  {/* ← updated prop */}
+            productId={Number(p.id)}
             className="bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
           />
 
