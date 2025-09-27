@@ -94,11 +94,16 @@ export default function ProductsPage() {
   const sortedProducts = useMemo(() => {
     return [...filteredProducts].sort((a, b) => {
       switch (sortBy) {
-        case 'newest': return Number(b.id) - Number(a.id);
-        case 'price-low': return a.price - b.price;
-        case 'price-high': return b.price - a.price;
-        case 'rating': return b.rating - a.rating;
-        default: return b.downloads - a.downloads;
+        case 'newest':
+          return Number(b.id) - Number(a.id);
+        case 'price-low':
+          return a.price - b.price;
+        case 'price-high':
+          return b.price - a.price;
+        case 'rating':
+          return b.rating - a.rating;
+        default:
+          return b.downloads - a.downloads;
       }
     });
   }, [filteredProducts, sortBy]);
@@ -132,7 +137,9 @@ export default function ProductsPage() {
             <div className="px-6 pb-6 space-y-6">
               {/* Search */}
               <div>
-                <label htmlFor="product-search" className="text-sm font-medium text-gray-700 mb-2 block">Search</label>
+                <label htmlFor="product-search" className="text-sm font-medium text-gray-700 mb-2 block">
+                  Search
+                </label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" aria-hidden />
                   <Input
@@ -153,8 +160,11 @@ export default function ProductsPage() {
                 <div className="space-y-2">
                   <label className="flex items-center space-x-2">
                     <input
-                      type="radio" name="category" checked={selectedCategory === 'All'}
-                      onChange={() => setSelectedCategory('All')} className="h-4 w-4"
+                      type="radio"
+                      name="category"
+                      checked={selectedCategory === 'All'}
+                      onChange={() => setSelectedCategory('All')}
+                      className="h-4 w-4"
                     />
                     <span className="text-sm text-gray-700 cursor-pointer">All ({products.length})</span>
                   </label>
@@ -162,8 +172,11 @@ export default function ProductsPage() {
                   {baseCategories.map((category) => (
                     <label key={category} className="flex items-center space-x-2">
                       <input
-                        type="radio" name="category" checked={selectedCategory === category}
-                        onChange={() => setSelectedCategory(category)} className="h-4 w-4"
+                        type="radio"
+                        name="category"
+                        checked={selectedCategory === category}
+                        onChange={() => setSelectedCategory(category)}
+                        className="h-4 w-4"
                       />
                       <span className="text-sm text-gray-700 cursor-pointer">
                         {category} ({categoryCounts[category] || 0})
@@ -178,15 +191,27 @@ export default function ProductsPage() {
                 <label className="text-sm font-medium text-gray-700 mb-2 block">Price Range</label>
                 <div className="flex space-x-2">
                   <Input
-                    type="number" placeholder="Min" value={priceRange.min}
-                    onChange={(e) => setPriceRange((p) => ({ ...p, min: Math.min(Number(e.target.value), p.max) }))}
-                    className="w-20" min={0} aria-label="Minimum price"
+                    type="number"
+                    placeholder="Min"
+                    value={priceRange.min}
+                    onChange={(e) =>
+                      setPriceRange((p) => ({ ...p, min: Math.min(Number(e.target.value), p.max) }))
+                    }
+                    className="w-20"
+                    min={0}
+                    aria-label="Minimum price"
                   />
                   <span className="text-gray-500">-</span>
                   <Input
-                    type="number" placeholder="Max" value={priceRange.max}
-                    onChange={(e) => setPriceRange((p) => ({ ...p, max: Math.max(Number(e.target.value), p.min) }))}
-                    className="w-20" min={0} aria-label="Maximum price"
+                    type="number"
+                    placeholder="Max"
+                    value={priceRange.max}
+                    onChange={(e) =>
+                      setPriceRange((p) => ({ ...p, max: Math.max(Number(e.target.value), p.min) }))
+                    }
+                    className="w-20"
+                    min={0}
+                    aria-label="Maximum price"
                   />
                 </div>
               </div>
@@ -225,9 +250,15 @@ export default function ProductsPage() {
             </div>
             <div className="flex items-center space-x-4">
               <Select value={sortBy} onValueChange={setSortBy} aria-label="Sort products">
-                <SelectTrigger className="w-48"><SelectValue placeholder="Sort" /></SelectTrigger>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Sort" />
+                </SelectTrigger>
                 <SelectContent>
-                  {sortOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                  {sortOptions.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <div className="flex border rounded-lg" role="group" aria-label="Toggle view mode">
@@ -261,12 +292,6 @@ export default function ProductsPage() {
               {visibleProducts.map((product, idx) => {
                 const imgs = buildImages(product);
                 const productHref = `/products/${product.id}`;
-                const buyNow = () => {
-                  const key = String(product.slug ?? product.id);
-                  const w = window as any;
-                  if (w?.startCheckout) { w.startCheckout({ slug: key }); return; }
-                  window.location.href = `/checkout?product=${encodeURIComponent(key)}`;
-                };
 
                 return (
                   <Card key={product.id} className="group hover:shadow-lg transition-shadow duration-300" tabIndex={0}>
@@ -276,7 +301,9 @@ export default function ProductsPage() {
                           <HoverableCover srcs={imgs} alt={product.title} ratio="16/9" fit="contain" />
                         </Link>
                         {product.bestseller && (
-                          <Badge className="absolute top-3 left-3 bg-yellow-400 text-black font-semibold">Bestseller</Badge>
+                          <Badge className="absolute top-3 left-3 bg-yellow-400 text-black font-semibold">
+                            Bestseller
+                          </Badge>
                         )}
                       </div>
                     </CardHeader>
@@ -290,7 +317,7 @@ export default function ProductsPage() {
                         <CardTitle className="text-lg font-semibold line-clamp-2">{product.title}</CardTitle>
                       </Link>
 
-                      {/* Subtitle with hover underline + More pill */}
+                      {/* Subtitle + More */}
                       <Link href={`${productHref}#description`} className="block mt-1 hover:underline">
                         <DescriptionClamp
                           text={(product as any).longDescription ?? product.description ?? ''}
@@ -336,7 +363,9 @@ export default function ProductsPage() {
                       {/* Price */}
                       <div className="mt-3 text-xl font-semibold">{formatPrice(product.price)}</div>
                       {product.originalPrice > product.price && (
-                        <div className="text-gray-400 line-through">{formatPrice(product.originalPrice)}</div>
+                        <div className="text-gray-400 line-through">
+                          {formatPrice(product.originalPrice)}
+                        </div>
                       )}
 
                       {/* CTAs — View / Add to cart / Buy */}
@@ -363,15 +392,16 @@ export default function ProductsPage() {
                           <span>Add to cart</span>
                         </button>
 
-                        <button
-                          type="button"
-                          onClick={buyNow}
+                        {/* Buy -> direct checkout */}
+                        <Link
+                          href={`/api/checkout?productId=${encodeURIComponent(String(product.id))}&qty=1`}
+                          prefetch={false}
                           className="inline-flex !h-8 items-center justify-center gap-2 rounded-lg bg-blue-600 !px-2 text-xs font-medium leading-tight text-white hover:bg-blue-700 whitespace-nowrap"
                           aria-label="Buy now"
                         >
                           <span aria-hidden className="inline-block w-3 text-center">⚡</span>
                           <span>Buy</span>
-                        </button>
+                        </Link>
                       </div>
                     </CardContent>
                   </Card>
@@ -384,12 +414,6 @@ export default function ProductsPage() {
               {visibleProducts.map((product) => {
                 const imgs = buildImages(product);
                 const productHref = `/products/${product.id}`;
-                const buyNow = () => {
-                  const key = String(product.slug ?? product.id);
-                  const w = window as any;
-                  if (w?.startCheckout) { w.startCheckout({ slug: key }); return; }
-                  window.location.href = `/checkout?product=${encodeURIComponent(key)}`;
-                };
 
                 return (
                   <li
@@ -433,7 +457,13 @@ export default function ProductsPage() {
                           {imgs.slice(1, 4).map((thumb) => (
                             <Link href={productHref} key={thumb} aria-label="View details">
                               <div className="relative w-14 h-10 rounded-md overflow-hidden bg-gray-50">
-                                <Image src={thumb} alt={`${product.title} mockup`} fill className="object-cover" sizes="56px" />
+                                <Image
+                                  src={thumb}
+                                  alt={`${product.title} mockup`}
+                                  fill
+                                  className="object-cover"
+                                  sizes="56px"
+                                />
                               </div>
                             </Link>
                           ))}
@@ -452,7 +482,9 @@ export default function ProductsPage() {
                         {formatPrice(product.price)}
                       </span>
                       {product.originalPrice > product.price && (
-                        <span className="line-through text-gray-400">{formatPrice(product.originalPrice)}</span>
+                        <span className="line-through text-gray-400">
+                          {formatPrice(product.originalPrice)}
+                        </span>
                       )}
 
                       <div className="mt-1 grid gap-2 [grid-template-columns:.9fr_1.2fr_.9fr]">
@@ -478,15 +510,16 @@ export default function ProductsPage() {
                           <span>Add to cart</span>
                         </button>
 
-                        <button
-                          type="button"
-                          onClick={buyNow}
+                        {/* Buy -> direct checkout */}
+                        <Link
+                          href={`/api/checkout?productId=${encodeURIComponent(String(product.id))}&qty=1`}
+                          prefetch={false}
                           className="inline-flex !h-8 items-center justify-center gap-2 rounded-lg bg-blue-600 !px-2 text-xs font-medium leading-tight text-white hover:bg-blue-700 whitespace-nowrap"
                           aria-label="Buy now"
                         >
                           <span aria-hidden className="inline-block w-3 text-center">⚡</span>
                           <span>Buy</span>
-                        </button>
+                        </Link>
                       </div>
                     </div>
                   </li>
@@ -495,24 +528,15 @@ export default function ProductsPage() {
             </ul>
           )}
 
-          {/* See more / See less */}
-          {sortedProducts.length > PAGE_SIZE && (
+          {/* See more */}
+          {!showAll && sortedProducts.length > PAGE_SIZE && (
             <div className="mt-8 flex justify-center">
               <Button
-                onClick={() => {
-                  const next = !showAll;
-                  setShowAll(next);
-                  if (!next) {
-                    document
-                      .getElementById('products-list')
-                      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }
-                }}
+                onClick={() => setShowAll(true)}
                 className="bg-blue-600 text-white hover:bg-blue-700"
                 aria-controls="products-list"
-                aria-expanded={showAll}
               >
-                {showAll ? 'See less products' : 'See more products'}
+                See more products
               </Button>
             </div>
           )}
