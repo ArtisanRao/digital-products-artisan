@@ -13,7 +13,7 @@ type Bundle = {
   price: number;
   originalPrice: number;
   image: string;
-  images?: string[];          // ← optional extra mockups
+  images?: string[];
   items: string[];
   rating: number;
   reviews: number;
@@ -29,9 +29,6 @@ const BUNDLES: Bundle[] = [
     image: "/images/bundles/complete-creator-bundle-cover.jpg",
     images: [
       "/images/bundles/complete-creator-bundle-cover.jpg",
-      // add more mockups when you have them:
-      // "/images/bundles/complete-creator-bundle-2.jpg",
-      // "/images/bundles/complete-creator-bundle-3.jpg",
     ],
     items: [
       "Ultimate AI Prompt Pack",
@@ -106,7 +103,6 @@ export function generateStaticParams() {
   return BUNDLES.map((b) => ({ slug: b.slug }));
 }
 
-// Next 15 compatible
 type Params = { slug: string };
 
 const formatEUR = (n: number) =>
@@ -126,23 +122,20 @@ export default async function BundleDetailsPage({
   return (
     <main className="container mx-auto px-4 py-12">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Left: nicer fit + optional thumbnails */}
         <SimpleGallery
           images={gallery}
           alt={bundle.title}
           className="rounded-xl border bg-white p-2"
-          ratioClass="aspect-[3/2]"        // consistent with product cards
-          object="contain"                 // no more cropped cover
+          ratioClass="aspect-[3/2]"
+          object="contain"
         />
 
-        {/* Right: details */}
         <div>
           <h1 className="text-3xl md:text-4xl font-bold mb-2">{bundle.title}</h1>
           <div className="text-sm text-gray-600 mb-2">
             ⭐ {bundle.rating} ({bundle.reviews} reviews)
           </div>
 
-          {/* Force the tiny “More” link even for short blurbs */}
           <InlineMore
             text={bundle.description}
             lines={2}
@@ -166,9 +159,9 @@ export default async function BundleDetailsPage({
             </ul>
           </div>
 
-          {/* Actions side-by-side */}
           <div className="flex gap-3">
-            {/* POST to /api/checkout – avoids the GET 405 */}
+            {/* Posts to /api/checkout with id="bundle:<slug>" so the route knows it’s a bundle.
+               Your route enables Card/Klarna/PayPal based on currency settings. */}
             <CheckoutButton
               id={`bundle:${bundle.slug}`}
               name={bundle.title}
