@@ -171,11 +171,11 @@ export default async function ProductPage(props: any) {
     product.description ||
     "";
 
-  // ↓ Lower threshold so the “More” button under subtitle appears more reliably
+  // ↓ Always show the toggle; only reveal extra content if there IS extra.
   const MAX_CHARS = 140;
-  const needsToggle = fullText.length > MAX_CHARS;
-  const teaser = needsToggle ? fullText.slice(0, MAX_CHARS).trimEnd() : fullText;
-  const remainder = needsToggle ? fullText.slice(MAX_CHARS) : "";
+  const hasExtra = fullText.length > MAX_CHARS;
+  const teaser = hasExtra ? fullText.slice(0, MAX_CHARS).trimEnd() : fullText;
+  const remainder = hasExtra ? fullText.slice(MAX_CHARS) : "";
 
   return (
     <main className="container mx-auto px-4 py-8 product-page" data-page="product">
@@ -212,26 +212,28 @@ export default async function ProductPage(props: any) {
             )}
           </div>
 
-          {/* Subtitle/description with button-styled “More/Less” just under it */}
+          {/* Subtitle/description with always-visible “More/Less” toggle */}
           <div className="mt-4 text-[15px] leading-relaxed text-gray-700" id="description">
             <p className="whitespace-pre-line" id="description-teaser">
-              {needsToggle ? `${teaser}…` : fullText}
+              {hasExtra ? `${teaser}…` : teaser}
             </p>
 
-            {needsToggle && (
-              <details className="group mt-2 [&_summary::-webkit-details-marker]:hidden">
-                <summary
-                  className="inline-flex items-center rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white cursor-pointer select-none hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                  aria-controls="description-more"
-                >
-                  <span className="group-open:hidden">More</span>
-                  <span className="hidden group-open:inline">Less</span>
-                </summary>
+            <details className="group mt-2 [&_summary::-webkit-details-marker]:hidden">
+              <summary
+                className="inline-flex items-center rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white cursor-pointer select-none hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                aria-controls="description-more"
+              >
+                <span className="group-open:hidden">More</span>
+                <span className="hidden group-open:inline">Less</span>
+              </summary>
+
+              {/* Only renders content when there is extra text */}
+              {hasExtra && (
                 <div id="description-more" className="mt-2 whitespace-pre-line">
                   {remainder}
                 </div>
-              </details>
-            )}
+              )}
+            </details>
           </div>
 
           {/* CTAs */}
