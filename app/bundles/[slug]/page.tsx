@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import InlineMore from "@/components/ui/inline-more";
 import Link from "next/link";
-import CheckoutButton from "@/components/checkout/CheckoutButton";
 import SimpleGallery from "@/components/ui/simple-gallery";
 
 type Bundle = {
@@ -27,9 +26,7 @@ const BUNDLES: Bundle[] = [
     price: 79.99,
     originalPrice: 149.99,
     image: "/images/bundles/complete-creator-bundle-cover.jpg",
-    images: [
-      "/images/bundles/complete-creator-bundle-cover.jpg",
-    ],
+    images: ["/images/bundles/complete-creator-bundle-cover.jpg"],
     items: [
       "Ultimate AI Prompt Pack",
       "Canva Template Bundle",
@@ -119,6 +116,11 @@ export default async function BundleDetailsPage({
 
   const gallery = bundle.images?.length ? bundle.images : [bundle.image];
 
+  // ✅ Use same GET endpoint as products (shows Klarna/PayPal when enabled)
+  const checkoutHref = `/api/checkout?slug=${encodeURIComponent(
+    `bundle:${bundle.slug}`
+  )}&qty=1&currency=EUR`;
+
   return (
     <main className="container mx-auto px-4 py-12">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -160,15 +162,12 @@ export default async function BundleDetailsPage({
           </div>
 
           <div className="flex gap-3">
-            {/* Posts to /api/checkout with id="bundle:<slug>" so the route knows it’s a bundle.
-               Your route enables Card/Klarna/PayPal based on currency settings. */}
-            <CheckoutButton
-              id={`bundle:${bundle.slug}`}
-              name={bundle.title}
-              price={bundle.price}
-              image={bundle.image}
-              className="flex-1"
-            />
+            {/* 🔗 Direct GET → /api/checkout */}
+            <Button asChild className="flex-1 bg-blue-600 text-white hover:bg-blue-700">
+              <Link href={checkoutHref} prefetch={false}>
+                Get This Bundle
+              </Link>
+            </Button>
 
             <Button variant="outline" asChild className="flex-1">
               <Link href="/bundles">Back to Bundles</Link>
