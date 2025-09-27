@@ -56,15 +56,14 @@ export default function ProductCardV4({
     return "/products";
   }, [href, slug, id]);
 
-  const priceNumber =
-    typeof price === "number" ? price : Number(price) || 0;
+  const priceNumber = typeof price === "number" ? price : Number(price) || 0;
 
   const priceLabel =
     typeof price === "number"
       ? new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(price)
       : price ?? "";
 
-  // 🔗 Use the unified cart so badge & all listeners update
+  // Fall-back add for pages without the delegated wire
   const addToCart = () => {
     const key = String(slug ?? id ?? "");
     if (!key) return;
@@ -86,7 +85,7 @@ export default function ProductCardV4({
   return (
     <article
       className="group rounded-2xl border bg-white/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-      data-version="ProductCardV4@cart-unified"
+      data-version="ProductCardV4@cart-unified+delegated"
     >
       {/* Main image (click → product page) */}
       <Link href={productUrl} prefetch={false} aria-label={`Open ${title}`}>
@@ -174,7 +173,7 @@ export default function ProductCardV4({
         {/* Price */}
         {priceLabel && <div className="mt-3 text-xl font-semibold">{priceLabel}</div>}
 
-        {/* CTAs — icons in fixed 16px slots so labels are perfectly centered */}
+        {/* CTAs — icons in fixed slots; middle wider; delegated add-to-cart attrs */}
         <div className="mt-3 grid gap-2 [grid-template-columns:.9fr_1.2fr_.9fr]">
           <Link
             href={productUrl}
@@ -188,7 +187,19 @@ export default function ProductCardV4({
 
           <button
             type="button"
-            onClick={addToCart}
+            // Fallback: only run locally when delegated handler isn't active
+            onClick={() => {
+              if (typeof document !== "undefined" &&
+                  (document.documentElement as any)?.dataset?.delegatedCart === "1") {
+                return; // let the delegated listener handle it
+              }
+              addToCart();
+            }}
+            // 👇 Delegated wire hooks for the All Products page
+            data-add-to-cart
+            data-product-id={String(id ?? "")}
+            data-product-slug={slug ?? ""}
+            data-qty="1"
             className="inline-flex !h-8 items-center justify-center gap-2 rounded-lg bg-blue-600 !px-3 text-xs font-medium leading-tight text-white hover:bg-blue-700 whitespace-nowrap"
             aria-label="Add to cart"
           >
