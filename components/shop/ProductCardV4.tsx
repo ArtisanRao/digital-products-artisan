@@ -27,12 +27,10 @@ export default function ProductCardV4({
     [images]
   );
 
-  // 1 main + 3 thumbs (<=4 total)
   const cover = pics[0] ?? "/images/placeholder.jpg";
   const extras = useMemo(() => pics.slice(1).filter((s) => s !== cover), [pics, cover]);
   const displayPics = useMemo(() => [cover, ...extras.slice(0, 3)], [cover, extras]);
 
-  // Thumbs row (pad to 4)
   const thumbsRow = useMemo(() => {
     const row = [cover, ...extras.slice(0, 3)];
     while (row.length < 4) row.push(cover);
@@ -40,9 +38,7 @@ export default function ProductCardV4({
   }, [cover, extras]);
 
   const [idx, setIdx] = useState(0);
-  useEffect(() => {
-    if (idx >= displayPics.length) setIdx(0);
-  }, [displayPics.length, idx]);
+  useEffect(() => { if (idx >= displayPics.length) setIdx(0); }, [displayPics.length, idx]);
 
   const prev = () => setIdx((i) => (i === 0 ? displayPics.length - 1 : i - 1));
   const next = () => setIdx((i) => (i + 1) % displayPics.length);
@@ -80,17 +76,15 @@ export default function ProductCardV4({
 
   const buyNow = () => {
     const key = String(slug ?? id ?? "");
-    if (!key) return;
     const w = (window as any);
+    if (!key) return;
     if (w?.startCheckout) { w.startCheckout({ slug: key }); return; }
     window.location.href = `/checkout?product=${encodeURIComponent(key)}`;
   };
 
   return (
-    <article
-      className="group rounded-2xl border bg-white/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-      data-version="ProductCardV4@centered-cta-icons-w-4"
-    >
+    <article className="group rounded-2xl border bg-white/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+             data-version="ProductCardV4@wider-middle-cta">
       {/* Main image */}
       <Link href={productUrl} prefetch={false} aria-label={`Open ${title}`}>
         <div className="relative overflow-hidden rounded-t-2xl bg-gray-50">
@@ -120,7 +114,7 @@ export default function ProductCardV4({
       </Link>
 
       <div className="p-4">
-        {/* Title + subtitle (hover underline) */}
+        {/* Title + subtitle */}
         <Link href={productUrl} prefetch={false} className="block">
           <h3 className="line-clamp-2 text-lg font-semibold hover:underline">{title}</h3>
         </Link>
@@ -168,35 +162,38 @@ export default function ProductCardV4({
         {/* Price */}
         {priceLabel && <div className="mt-3 text-xl font-semibold">{priceLabel}</div>}
 
-        {/* CTAs — icons in fixed 16px slots so labels are perfectly centered */}
-        <div className="mt-3 grid grid-cols-3 gap-2">
+        {/* CTAs — shrink left/right, widen middle */}
+        <div className="mt-3 grid gap-2 [grid-template-columns:.9fr_1.2fr_.9fr]">
+          {/* View (smaller icon) */}
           <Link
             href={productUrl}
             prefetch={false}
             className="inline-flex !h-8 items-center justify-center gap-2 rounded-lg bg-blue-600 !px-2 text-xs font-medium leading-tight text-white hover:bg-blue-700 whitespace-nowrap"
             aria-label={`View ${title}`}
           >
-            <span aria-hidden className="inline-block w-4 text-center">👁️</span>
+            <span aria-hidden className="inline-block w-3 text-center">👁️</span>
             <span>View</span>
           </Link>
 
+          {/* Add to cart (wider button + slightly larger icon slot) */}
           <button
             type="button"
             onClick={addToCart}
-            className="inline-flex !h-8 items-center justify-center gap-2 rounded-lg bg-blue-600 !px-2 text-xs font-medium leading-tight text-white hover:bg-blue-700 whitespace-nowrap"
+            className="inline-flex !h-8 items-center justify-center gap-2 rounded-lg bg-blue-600 !px-3 text-xs font-medium leading-tight text-white hover:bg-blue-700 whitespace-nowrap"
             aria-label="Add to cart"
           >
-            <span aria-hidden className="inline-block w-4 text-center">🛒</span>
+            <span aria-hidden className="inline-block w-5 text-center">🛒</span>
             <span>Add to cart</span>
           </button>
 
+          {/* Buy (smaller icon) */}
           <button
             type="button"
             onClick={buyNow}
             className="inline-flex !h-8 items-center justify-center gap-2 rounded-lg bg-blue-600 !px-2 text-xs font-medium leading-tight text-white hover:bg-blue-700 whitespace-nowrap"
             aria-label="Buy now"
           >
-            <span aria-hidden className="inline-block w-4 text-center">⚡</span>
+            <span aria-hidden className="inline-block w-3 text-center">⚡</span>
             <span>Buy</span>
           </button>
         </div>
