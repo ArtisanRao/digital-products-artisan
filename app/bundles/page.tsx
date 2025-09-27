@@ -1,3 +1,4 @@
+// app/bundles/page.tsx
 "use client";
 
 import React from "react";
@@ -137,10 +138,9 @@ export default function BundlesPage() {
           const bundleSlug = slugify(bundle.title);
           const currency = String(getPreferredCurrency?.() ?? "EUR").toUpperCase();
 
-          // ✅ Use `slug` param (what /api/checkout expects), namespaced as a bundle
-          const checkoutHref = `/api/checkout?slug=${encodeURIComponent(
-            `bundle:${bundleSlug}`,
-          )}&qty=1&currency=${currency}`;
+          // Use the same checkout endpoint style as products
+          const checkoutHref =
+            `/api/checkout?slug=${encodeURIComponent(`bundle:${bundleSlug}`)}&qty=1&currency=${currency}`;
 
           return (
             <Card key={bundle.id} className="group hover:shadow-xl transition-all duration-300">
@@ -236,7 +236,7 @@ export default function BundlesPage() {
                     </Link>
                   </Button>
 
-                  {/* ✅ Direct to /api/checkout with `slug` */}
+                  {/* Direct to /api/checkout with slug=bundle:<slug> */}
                   <Button
                     asChild
                     className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
