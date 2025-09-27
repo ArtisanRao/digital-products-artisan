@@ -109,11 +109,11 @@ function inferCategory(slug: string): string {
 }
 
 /**
- * Deterministic overrides for titles/categories where needed.
+ * Deterministic overrides for titles/categories and per-product content.
  * Add more entries here anytime you want exact control.
  */
 const MANUAL_OVERRIDES: Record<string, Partial<Product>> = {
-  // Nice casing/ampersands
+  // Category landing niceties (if you have folders named like these)
   "ai-and-chatgpt-guides": { title: "AI & ChatGPT Guides", category: CATEGORY_LABELS.AI },
   "plr-and-mrr-bundles":  { title: "PLR & MRR Bundles",   category: CATEGORY_LABELS.PLR },
   "keto-and-diet-guides": { title: "Keto & Diet Guides",  category: CATEGORY_LABELS.KETO },
@@ -121,6 +121,59 @@ const MANUAL_OVERRIDES: Record<string, Partial<Product>> = {
   // Put “wealth” / “as-you-sleep” in Passive Income (not Essentials)
   "digital-wealth-ultimate-guide": { category: CATEGORY_LABELS.PASSIVE },
   "make-money-as-you-sleep":      { category: CATEGORY_LABELS.PASSIVE },
+
+  // ✸ COMPLETE SHOP WITH PLR / MRR RIGHTS — update this key to your actual product folder slug if different
+  "complete-shop-with-plr-mrr-rights": {
+    title: "✸ Buy my complete Shop with PLR / MRR Rights ✸",
+    category: CATEGORY_LABELS.SHOP,
+    bestseller: true,
+    description:
+      "Own my complete digital shop with PLR + MRR rights. Edit, rebrand, and resell 30+ products. Instant download via Google Drive links.",
+    longDescription: `You have here the opportunity to buy my complete shop with a big discount!! This Bundle is way more worth than 100 USD!
+
+Profit of my PLR+MRR Bundle for your business and clients.
+
+The PLR license allows you to edit, rebrand and sell the products as your own product, making it an excellent addition to your product line or as a lead magnet to attract potential customers. With the MRR License you can resell the product as your own. The options are endless!!
+
+In this bundle you will receive all products of my shop:
+
+🚀 ChatGPT Expertise BASIC PACK Video Course
+🚀 ChatGPT Expertise UPGRADE PACK Video Course
+🚀 Make Money with AI Art Ebook
+🚀 Make Money with AI Art Video
+🚀 Create AI Human Reel Videos Video Course
+🚀 PLR Chat GPT Video Coures
+🚀 10 Business & Marketing Video Courses PLR
+🚀 100 Midjourney Prompts Abstract Art
+🚀 Cryprocurrency secrets Video Course and Ebook
+🚀 700 Product Ideas to sell on Etsy
+🚀 Keto Diet Secrets Ebook
+🚀 Eating Healthy Premium PLR EBook Complete Video Course
+🚀 Carb Cycling For Weight Loss Premium PLR EBook Complete Video Course
+🚀 Healthy Primal Living PLR EBook Video Course
+🚀 Lose Your Belly Diet PLR EBook Video Course
+🚀 Boost Your Immune System PLR EBook Video Course
+🚀 Coloring Book 911
+🚀 450 Coloring Book Pages
+🚀 Intermittent Fasting Quick Start
+🚀 ChatGPT for Internet Marketers
+🚀 Juicing Recipes
+🚀 Make Money with PLR Ebook
+🚀 Make Money with PLR Video Course
+🚀 Google Gemini 7K Prompts
+🚀 Side Hustle Secrets Ebook
+🚀 Side Hustle Secrets Video Upgrade
+🚀 Easy Keto
+🚀 1940 Graphic Recipes
+🚀 Effective Instagram Marketing
+🚀 Blockchain Explained Ebook
+
+After your order is processed, you will receive a PDF document with the links to download the files from Google Drive. This item is provided electronically.
+
+This listing is for a digital download. No physical product will be shipped.
+
+If you have any questions, please contact me and I will be more than happy to help!`,
+  },
 }
 
 /** Build products from the image manifest (one per folder). */
