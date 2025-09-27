@@ -64,7 +64,7 @@ export default function ProductCardV4({
     try {
       const key = String(slug ?? id ?? "");
       if (!key) return;
-      const w = window as any;
+      const w = (window as any);
       if (w?.dpaCart?.add) { w.dpaCart.add({ slug: key, qty: 1 }); return; }
       if (w?.__CART__?.add) { w.__CART__.add({ slug: key, qty: 1 }); return; }
       window.dispatchEvent(new CustomEvent("cart:add", { detail: { slug: key, qty: 1 } }));
@@ -82,7 +82,7 @@ export default function ProductCardV4({
   const buyNow = () => {
     const key = String(slug ?? id ?? "");
     if (!key) return;
-    const w = window as any;
+    const w = (window as any);
     if (w?.startCheckout) { w.startCheckout({ slug: key }); return; }
     window.location.href = `/checkout?product=${encodeURIComponent(key)}`;
   };
@@ -90,7 +90,7 @@ export default function ProductCardV4({
   return (
     <article
       className="group rounded-2xl border bg-white/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-      data-version="ProductCardV4@compact-ctas-h9"
+      data-version="ProductCardV4@force-compact-ctas-!h-8"
     >
       {/* Main image (click → product page) */}
       <Link href={productUrl} prefetch={false} aria-label={`Open ${title}`}>
@@ -108,7 +108,7 @@ export default function ProductCardV4({
                 type="button"
                 onClick={(e) => { e.preventDefault(); prev(); }}
                 aria-label="Previous"
-                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-2 py-1 text-xs shadow hover:bg-white"
+                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-2 py-1 text-[11px] shadow hover:bg-white"
               >
                 ‹
               </button>
@@ -116,7 +116,7 @@ export default function ProductCardV4({
                 type="button"
                 onClick={(e) => { e.preventDefault(); next(); }}
                 aria-label="Next"
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-2 py-1 text-xs shadow hover:bg-white"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-2 py-1 text-[11px] shadow hover:bg-white"
               >
                 ›
               </button>
@@ -178,12 +178,12 @@ export default function ProductCardV4({
         {/* Price */}
         {priceLabel && <div className="mt-3 text-xl font-semibold">{priceLabel}</div>}
 
-        {/* CTAs — compact like screenshot 2 */}
+        {/* CTAs — forced compact sizing */}
         <div className="mt-3 grid grid-cols-3 gap-2">
           <Link
             href={productUrl}
             prefetch={false}
-            className="inline-flex h-9 items-center justify-center rounded-lg bg-blue-600 px-2 text-[12px] font-medium leading-tight text-white hover:bg-blue-700"
+            className="inline-flex !h-8 items-center justify-center rounded-lg bg-blue-600 !px-2 text-xs font-medium leading-tight text-white hover:bg-blue-700 whitespace-nowrap"
             aria-label={`View ${title}`}
           >
             <span aria-hidden className="mr-1">👁️</span> View
@@ -192,7 +192,7 @@ export default function ProductCardV4({
           <button
             type="button"
             onClick={addToCart}
-            className="inline-flex h-9 items-center justify-center rounded-lg bg-blue-600 px-2 text-[12px] font-medium leading-tight text-white hover:bg-blue-700"
+            className="inline-flex !h-8 items-center justify-center rounded-lg bg-blue-600 !px-2 text-xs font-medium leading-tight text-white hover:bg-blue-700 whitespace-nowrap"
             aria-label="Add to cart"
           >
             <span aria-hidden className="mr-1">🛒</span> Add to cart
@@ -201,7 +201,7 @@ export default function ProductCardV4({
           <button
             type="button"
             onClick={buyNow}
-            className="inline-flex h-9 items-center justify-center rounded-lg bg-blue-600 px-2 text-[12px] font-medium leading-tight text-white hover:bg-blue-700"
+            className="inline-flex !h-8 items-center justify-center rounded-lg bg-blue-600 !px-2 text-xs font-medium leading-tight text-white hover:bg-blue-700 whitespace-nowrap"
             aria-label="Buy now"
           >
             <span aria-hidden className="mr-1">⚡</span> Buy
