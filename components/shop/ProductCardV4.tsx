@@ -22,21 +22,17 @@ export default function ProductCardV4({
   href,
   description,
 }: ProductCardData) {
-  // Dedup + drop empties
   const pics = useMemo(
     () => Array.from(new Set((images || []).filter(Boolean))),
     [images]
   );
 
-  // Cover + up to 3 unique extras (for 4 total: 1 main + 3 thumbs)
+  // 1 main + 3 thumbs (<=4 total)
   const cover = pics[0] ?? "/images/placeholder.jpg";
-  const extras = useMemo(
-    () => pics.slice(1).filter((src) => src !== cover),
-    [pics, cover]
-  );
-  const displayPics = useMemo(() => [cover, ...extras.slice(0, 3)], [cover, extras]); // <= 4
+  const extras = useMemo(() => pics.slice(1).filter((s) => s !== cover), [pics, cover]);
+  const displayPics = useMemo(() => [cover, ...extras.slice(0, 3)], [cover, extras]);
 
-  // Thumbs row: exactly 4 items; pad with cover
+  // Thumbs row (pad to 4)
   const thumbsRow = useMemo(() => {
     const row = [cover, ...extras.slice(0, 3)];
     while (row.length < 4) row.push(cover);
@@ -51,12 +47,11 @@ export default function ProductCardV4({
   const prev = () => setIdx((i) => (i === 0 ? displayPics.length - 1 : i - 1));
   const next = () => setIdx((i) => (i + 1) % displayPics.length);
 
-  // Canonical URL (href → slug → id → /products)
+  // Canonical URL
   const productUrl = useMemo(() => {
     if (href && href.startsWith("/")) return href;
     if (slug) return `/products/${encodeURIComponent(slug)}`;
-    if (id !== undefined && id !== null)
-      return `/products/${encodeURIComponent(String(id))}`;
+    if (id !== undefined && id !== null) return `/products/${encodeURIComponent(String(id))}`;
     return "/products";
   }, [href, slug, id]);
 
@@ -95,7 +90,7 @@ export default function ProductCardV4({
   return (
     <article
       className="group rounded-2xl border bg-white/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-      data-version="ProductCardV4@1main+3thumbs+hoverUnderlines+MorePill"
+      data-version="ProductCardV4@compact-ctas-h9"
     >
       {/* Main image (click → product page) */}
       <Link href={productUrl} prefetch={false} aria-label={`Open ${title}`}>
@@ -113,7 +108,7 @@ export default function ProductCardV4({
                 type="button"
                 onClick={(e) => { e.preventDefault(); prev(); }}
                 aria-label="Previous"
-                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-2.5 py-1.5 text-sm shadow hover:bg-white"
+                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-2 py-1 text-xs shadow hover:bg-white"
               >
                 ‹
               </button>
@@ -121,7 +116,7 @@ export default function ProductCardV4({
                 type="button"
                 onClick={(e) => { e.preventDefault(); next(); }}
                 aria-label="Next"
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-2.5 py-1.5 text-sm shadow hover:bg-white"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-2 py-1 text-xs shadow hover:bg-white"
               >
                 ›
               </button>
@@ -136,7 +131,7 @@ export default function ProductCardV4({
           <h3 className="line-clamp-2 text-lg font-semibold hover:underline">{title}</h3>
         </Link>
 
-        {/* Subtitle with hover underline + “More” pill linking to #description */}
+        {/* Subtitle + “More” pill to #description */}
         {description && (
           <>
             <Link href={productUrl} prefetch={false} className="block mt-1">
@@ -155,7 +150,7 @@ export default function ProductCardV4({
           </>
         )}
 
-        {/* Exactly 4 thumbs (first = cover, then up to 3 extras; padded with cover). Click to select. */}
+        {/* Thumbs (exactly 4 UI slots) */}
         <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
           {thumbsRow.map((src, i) => {
             const isReal = i < displayPics.length;
@@ -165,12 +160,8 @@ export default function ProductCardV4({
               <button
                 type="button"
                 key={`${src}-${i}`}
+                onClick={(e) => { e.preventDefault(); setIdx(targetIndex); }}
                 aria-label={`Preview ${title} (image ${targetIndex + 1})`}
-                title={`Preview ${title}`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  setIdx(targetIndex);
-                }}
                 aria-pressed={active}
                 className={[
                   "block h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-white transition cursor-pointer",
@@ -187,33 +178,33 @@ export default function ProductCardV4({
         {/* Price */}
         {priceLabel && <div className="mt-3 text-xl font-semibold">{priceLabel}</div>}
 
-        {/* CTAs: equal size & alignment */}
+        {/* CTAs — compact like screenshot 2 */}
         <div className="mt-3 grid grid-cols-3 gap-2">
           <Link
             href={productUrl}
             prefetch={false}
-            className="inline-flex h-10 items-center justify-center rounded-xl bg-blue-600 px-3 text-sm font-medium text-white hover:bg-blue-700"
+            className="inline-flex h-9 items-center justify-center rounded-lg bg-blue-600 px-2 text-[12px] font-medium leading-tight text-white hover:bg-blue-700"
             aria-label={`View ${title}`}
           >
-            👁️ View
+            <span aria-hidden className="mr-1">👁️</span> View
           </Link>
 
           <button
             type="button"
             onClick={addToCart}
-            className="inline-flex h-10 items-center justify-center rounded-xl bg-blue-600 px-3 text-sm font-medium text-white hover:bg-blue-700"
+            className="inline-flex h-9 items-center justify-center rounded-lg bg-blue-600 px-2 text-[12px] font-medium leading-tight text-white hover:bg-blue-700"
             aria-label="Add to cart"
           >
-            🛒 Add to cart
+            <span aria-hidden className="mr-1">🛒</span> Add to cart
           </button>
 
           <button
             type="button"
             onClick={buyNow}
-            className="inline-flex h-10 items-center justify-center rounded-xl bg-blue-600 px-3 text-sm font-medium text-white hover:bg-blue-700"
+            className="inline-flex h-9 items-center justify-center rounded-lg bg-blue-600 px-2 text-[12px] font-medium leading-tight text-white hover:bg-blue-700"
             aria-label="Buy now"
           >
-            ⚡ Buy
+            <span aria-hidden className="mr-1">⚡</span> Buy
           </button>
         </div>
       </div>
