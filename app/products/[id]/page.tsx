@@ -12,8 +12,9 @@ import path from "node:path";
 import fs from "node:fs";
 import { products, productsById } from "@/data/products";
 import AddToCartButton from "@/components/shop/AddToCartButton";
-import BuyNowButton from "@/components/buy-now-button";
+// import BuyNowButton from "@/components/buy-now-button"; // ⟵ removed
 import ProductGallery from "@/components/ProductGallery";
+import { Button } from "@/components/ui/button";
 
 /* ------------------------ helpers ------------------------ */
 const pub = (...p: string[]) => path.join(process.cwd(), "public", ...p);
@@ -232,13 +233,17 @@ export default async function ProductPage(props: any) {
               productId={Number(product.id)}
               className="bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
             />
-            <BuyNowButton
-              productId={product.id}
-              qty={1}
-              className="bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
+            <Button
+              asChild
+              className="gap-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
             >
-              Buy
-            </BuyNowButton>
+              <Link
+                href={`/api/checkout?productId=${encodeURIComponent(String(product.id))}&qty=1`}
+                prefetch={false}
+              >
+                Buy
+              </Link>
+            </Button>
           </div>
         </section>
       </div>
