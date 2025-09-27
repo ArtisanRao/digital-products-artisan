@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, Download, Package, Percent } from "lucide-react";
-import Link from "next/link";
 import Image from "next/image";
 import InlineMore from "@/components/ui/inline-more";
 import { getPreferredCurrency } from "@/lib/currency";
+import Link from "next/link";
 
 type Bundle = {
   id: number;
@@ -124,7 +124,7 @@ const bundles: Bundle[] = [
 
 export default function BundlesPage() {
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8" data-bundles-page="v-checkout-anchor">
       <div className="text-center mb-12">
         <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Product Bundles</h1>
         <p className="text-lg text-gray-600 max-w-2xl mx-auto">
@@ -136,10 +136,10 @@ export default function BundlesPage() {
         {bundles.map((bundle) => {
           const bundleSlug = slugify(bundle.title);
           const currency = String(getPreferredCurrency?.() ?? "EUR").toUpperCase();
-
-          // Use the same checkout endpoint style as products
-          const checkoutHref =
-            `/api/checkout?slug=${encodeURIComponent(`bundle:${bundleSlug}`)}&qty=1&currency=${currency}`;
+          // Force a direct GET to the API route (no client handler), which 303-redirects to Stripe
+          const checkoutHref = `/api/checkout?slug=${encodeURIComponent(
+            `bundle:${bundleSlug}`
+          )}&qty=1&currency=${currency}`;
 
           return (
             <Card key={bundle.id} className="group hover:shadow-xl transition-all duration-300">
@@ -155,7 +155,6 @@ export default function BundlesPage() {
                       priority={false}
                     />
                   </div>
-
                   {bundle.popular && (
                     <Badge className="absolute top-3 left-3 bg-gradient-to-r from-purple-600 to-pink-600">
                       Most Popular
@@ -235,14 +234,19 @@ export default function BundlesPage() {
                     </Link>
                   </Button>
 
-                  {/* Direct to /api/checkout with slug=bundle:<slug> */}
+                  {/* IMPORTANT: Use a plain <a> so we definitely hit the API route */}
                   <Button
                     asChild
                     className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                   >
-                    <Link href={checkoutHref} prefetch={false}>
+                    <a
+                      href={checkoutHref}
+                      data-checkout-kind="bundle"
+                      data-checkout-href={checkoutHref}
+                      rel="nofollow"
+                    >
                       Get this bundle
-                    </Link>
+                    </a>
                   </Button>
                 </div>
               </CardFooter>
