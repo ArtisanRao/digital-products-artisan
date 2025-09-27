@@ -42,9 +42,10 @@ function findProductByKey(key: string | number | null | undefined) {
   );
 }
 function imageForProduct(origin: string, product: any) {
-  const rel = Array.isArray(product.images) && product.images.length
-    ? product.images[0]
-    : product.image;
+  const rel =
+    Array.isArray(product.images) && product.images.length
+      ? product.images[0]
+      : product.image;
   if (!rel) return undefined;
   return String(rel).startsWith("http") ? String(rel) : `${origin}${rel}`;
 }
@@ -56,13 +57,13 @@ function getStripe(): Stripe {
   return new Stripe(key);
 }
 
-/* Payment methods we allow for Checkout */
-function paymentMethodsForCurrency(c?: string): Stripe.Checkout.SessionCreateParams.PaymentMethodType[] {
+/* Payment methods we allow for Checkout (cast to any to allow "paypal" even if type defs lag) */
+function paymentMethodsForCurrency(c?: string) {
   const cur = normalizeCurrency(c);
-  // You must enable each of these in Stripe Dashboard for them to appear to customers
-  if (cur === "EUR") return ["card", "klarna", "paypal"];
-  if (cur === "USD") return ["card", "paypal"];
-  return ["card"];
+  // Ensure these are enabled in Stripe Dashboard → Settings → Payment methods
+  if (cur === "EUR") return ["card", "klarna", "paypal"] as any;
+  if (cur === "USD") return ["card", "paypal"] as any;
+  return ["card"] as any;
 }
 
 /* ------------------------ Bundle catalog ------------------------ */
