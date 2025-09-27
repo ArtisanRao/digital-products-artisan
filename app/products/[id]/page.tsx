@@ -1,7 +1,7 @@
 // app/products/[id]/page.tsx
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const dynamicParams = true; // allow ids not listed below
+export const dynamicParams = true;
 export const fetchCache = "force-no-store";
 export const revalidate = 0;
 
@@ -16,7 +16,6 @@ import BuyNowButton from "@/components/buy-now-button";
 import ProductGallery from "@/components/ProductGallery";
 
 /* ------------------------ helpers ------------------------ */
-
 const pub = (...p: string[]) => path.join(process.cwd(), "public", ...p);
 
 function firstExistingPublicHref(hrefs: string[]): string | undefined {
@@ -28,25 +27,19 @@ function firstExistingPublicHref(hrefs: string[]): string | undefined {
   return undefined;
 }
 
-/** Accepts numeric id *or* slug and returns a product */
+/** Find by numeric id or by slug (case-insensitive) */
 function findProduct(idOrSlug: string) {
   const raw = String(idOrSlug ?? "").trim();
   if (!raw) return null;
 
-  // Numeric fast-path
   if (/^\d+$/.test(raw)) {
-    const idNum = Number(raw);
-    const byMap = (productsById as any)?.[idNum];
-    if (byMap) return byMap;
-    const byLinear = products.find((p) => Number(p.id) === idNum);
-    if (byLinear) return byLinear;
+    const n = Number(raw);
+    return (productsById as any)?.[n] ?? products.find(p => Number(p.id) === n) ?? null;
   }
-
-  // Slug (case-insensitive) or string id fallback
   const handle = raw.toLowerCase();
   return (
-    products.find((p) => String(p.slug).toLowerCase() === handle) ||
-    products.find((p) => String(p.id) === raw) ||
+    products.find(p => String(p.slug).toLowerCase() === handle) ??
+    products.find(p => String(p.id) === raw) ??
     null
   );
 }
@@ -58,7 +51,7 @@ function discoverGallery(slug?: string): string[] {
   if (!fs.existsSync(dir)) return [];
   const all = fs
     .readdirSync(dir)
-    .filter((f) => /\.(png|jpe?g|webp|avif)$/i.test(f))
+    .filter(f => /\.(png|jpe?g|webp|avif)$/i.test(f))
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
 
   const cover = firstExistingPublicHref([
@@ -68,16 +61,16 @@ function discoverGallery(slug?: string): string[] {
   ]);
 
   const mocks = all
-    .filter((f) => /^(mock|thumb|preview)[-_]?\d*/i.test(f) || /-mockup/i.test(f))
-    .map((f) => `/images/products/${slug}/${f}`);
+    .filter(f => /^(mock|thumb|preview)[-_]?\d*/i.test(f) || /-mockup/i.test(f))
+    .map(f => `/images/products/${slug}/${f}`);
 
   const rest = all
     .filter(
-      (f) =>
+      f =>
         f !== path.basename(cover ?? "") &&
         !(/^(mock|thumb|preview)[-_]?\d*/i.test(f) || /-mockup/i.test(f))
     )
-    .map((f) => `/images/products/${slug}/${f}`);
+    .map(f => `/images/products/${slug}/${f}`);
 
   const list: string[] = [];
   if (cover) list.push(cover);
@@ -94,24 +87,22 @@ function rawGallery(p: any): string[] {
   return [p?.image].filter(Boolean) as string[];
 }
 
-/** Clamp to exactly cover + up to 3 unique extras */
+/** Exactly 1 cover + up to 3 unique extras */
 function coverPlusThree(imgs: string[]): string[] {
   const list = imgs.filter(Boolean);
   const cover = list[0] ?? "/images/placeholder.jpg";
-  const extras = list.slice(1).filter((s) => s !== cover);
+  const extras = list.slice(1).filter(s => s !== cover);
   return [cover, ...extras.slice(0, 3)];
 }
 
 /* ------------------- static params (optional) ------------------- */
-
 export function generateStaticParams() {
   return products
-    .filter((p) => p.id !== undefined && /^\d+$/.test(String(p.id)))
-    .map((p) => ({ id: String(p.id) }));
+    .filter(p => p.id !== undefined && /^\d+$/.test(String(p.id)))
+    .map(p => ({ id: String(p.id) }));
 }
 
 /* ------------------------- metadata ------------------------- */
-
 export async function generateMetadata({
   params,
 }: {
@@ -121,8 +112,8 @@ export async function generateMetadata({
   const product = findProduct(id);
   if (!product) return {};
 
-  const canonicalHandle = String(product.slug ?? product.id);
-  const canonical = `/products/${encodeURIComponent(canonicalHandle)}`;
+  const handle = String(product.slug ?? product.id);
+  const canonical = `/products/${encodeURIComponent(handle)}`;
 
   const gallery = coverPlusThree(rawGallery(product));
   const ogImage = gallery[0]?.startsWith("http")
@@ -152,7 +143,6 @@ export async function generateMetadata({
 }
 
 /* --------------------------- page --------------------------- */
-
 export default async function ProductPage({
   params,
 }: {
@@ -160,7 +150,7 @@ export default async function ProductPage({
 }) {
   const { id } = await params;
 
-  // Accept **either** numeric id or slug and render directly.
+  // Render directly for both ids and slugs
   const product = findProduct(id);
   if (!product) notFound();
 
@@ -173,45 +163,8 @@ export default async function ProductPage({
       ? (product as any).originalPrice
       : Number((product as any).originalPrice) || 0;
 
-  const canonicalHandle = String(product.slug ?? product.id);
-  const canonicalHref = `/products/${encodeURIComponent(canonicalHandle)}`;
-
-  const POLICY_COUNTRIES = [
-    "US","CA","GB","DE","FR","ES","IT","NL","SE","NO","FI","DK","IE","PT","PL","AT","BE","CH","AU","NZ",
-  ];
-  const today = new Date();
-  const priceValidFrom = today.toISOString().slice(0, 10);
-  const priceValidUntil = new Date(today.getFullYear() + 1, today.getMonth(), today.getDate())
-    .toISOString()
-    .slice(0, 10);
-
-  const productLd: any = {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    name: product.title,
-    url: `https://digitalproductsartisan.com${canonicalHref}`,
-    image: galleryImages.map((src) =>
-      src.startsWith("http") ? src : `https://digitalproductsartisan.com${src}`
-    ),
-    description: product.description,
-    sku: String(product.id),
-    brand: { "@type": "Brand", name: "Digital Products Artisan" },
-    offers: {
-      "@type": "Offer",
-      url: `https://digitalproductsartisan.com${canonicalHref}`,
-      priceCurrency: "EUR",
-      price: priceNum.toFixed(2),
-      availability: "https://schema.org/InStock",
-      priceValidFrom,
-      priceValidUntil,
-      hasMerchantReturnPolicy: {
-        "@type": "MerchantReturnPolicy",
-        returnPolicyCategory: "https://schema.org/MerchantReturnNotPermitted",
-        applicableCountry: POLICY_COUNTRIES,
-      },
-      shippingDetails: [{ "@type": "OfferShippingDetails", doesNotShip: true }],
-    },
-  };
+  const handle = String(product.slug ?? product.id);
+  const canonicalHref = `/products/${encodeURIComponent(handle)}`;
 
   const fullText =
     ((product as any).longDescription as string | undefined)?.trim() ||
@@ -295,7 +248,30 @@ export default async function ProductPage({
       </div>
 
       {/* JSON-LD */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productLd) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Product",
+            name: product.title,
+            url: `https://digitalproductsartisan.com${canonicalHref}`,
+            image: galleryImages.map(src =>
+              src.startsWith("http") ? src : `https://digitalproductsartisan.com${src}`
+            ),
+            description: product.description,
+            sku: String(product.id),
+            brand: { "@type": "Brand", name: "Digital Products Artisan" },
+            offers: {
+              "@type": "Offer",
+              url: `https://digitalproductsartisan.com${canonicalHref}`,
+              priceCurrency: "EUR",
+              price: priceNum.toFixed(2),
+              availability: "https://schema.org/InStock",
+            },
+          }),
+        }}
+      />
     </main>
   );
 }
