@@ -71,7 +71,9 @@ export default function ProductsPage() {
   const [showAll, setShowAll] = useState(false);
 
   // Reset pagination when filters/search/sort change
-  useEffect(() => { setShowAll(false); }, [searchQuery, selectedCategory, sortBy, priceRange.min, priceRange.max, selectedTags]);
+  useEffect(() => {
+    setShowAll(false);
+  }, [searchQuery, selectedCategory, sortBy, priceRange.min, priceRange.max, selectedTags]);
 
   const allTags = useMemo(() => Array.from(new Set(products.flatMap((p) => p.tags))), []);
   const categoryCounts = useMemo(() => categoriesWithCounts(products), []);
@@ -493,15 +495,24 @@ export default function ProductsPage() {
             </ul>
           )}
 
-          {/* See more */}
-          {!showAll && sortedProducts.length > PAGE_SIZE && (
+          {/* See more / See less */}
+          {sortedProducts.length > PAGE_SIZE && (
             <div className="mt-8 flex justify-center">
               <Button
-                onClick={() => setShowAll(true)}
+                onClick={() => {
+                  const next = !showAll;
+                  setShowAll(next);
+                  if (!next) {
+                    document
+                      .getElementById('products-list')
+                      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }}
                 className="bg-blue-600 text-white hover:bg-blue-700"
                 aria-controls="products-list"
+                aria-expanded={showAll}
               >
-                See more products
+                {showAll ? 'See less products' : 'See more products'}
               </Button>
             </div>
           )}
