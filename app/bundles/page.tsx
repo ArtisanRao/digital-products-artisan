@@ -9,7 +9,6 @@ import { Star, Download, Package, Percent } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import InlineMore from "@/components/ui/inline-more";
-import { getPreferredCurrency } from "@/lib/currency";
 
 type Bundle = {
   id: number;
@@ -34,6 +33,7 @@ const formatEUR = (n: number) =>
   new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
 
 const bundles: Bundle[] = [
+  // ... (unchanged bundle data)
   {
     id: 1,
     title: "Complete Creator Bundle",
@@ -124,13 +124,6 @@ const bundles: Bundle[] = [
 ];
 
 export default function BundlesPage() {
-  const startCheckout = (bundleSlug: string) => {
-    const currency = String(getPreferredCurrency?.() ?? "EUR").toUpperCase();
-    const url = `/api/checkout?slug=${encodeURIComponent(`bundle:${bundleSlug}`)}&qty=1&currency=${currency}`;
-    // Hard navigate to ensure we hit the API directly (no prefetch / client routing)
-    window.location.href = url;
-  };
-
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="text-center mb-12">
@@ -143,6 +136,11 @@ export default function BundlesPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
         {bundles.map((bundle) => {
           const bundleSlug = slugify(bundle.title);
+
+          // 🔒 Force EUR so Checkout shows the Card/Klarna selector like products
+          const checkoutHref = `/api/checkout?slug=${encodeURIComponent(
+            `bundle:${bundleSlug}`
+          )}&qty=1&currency=EUR`;
 
           return (
             <Card key={bundle.id} className="group hover:shadow-xl transition-all duration-300">
@@ -238,13 +236,13 @@ export default function BundlesPage() {
                     </Link>
                   </Button>
 
-                  {/* Force the same checkout flow as products */}
                   <Button
-                    type="button"
-                    onClick={() => startCheckout(bundleSlug)}
+                    asChild
                     className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                   >
-                    Get this bundle
+                    <Link href={checkoutHref} prefetch={false}>
+                      Get this bundle
+                    </Link>
                   </Button>
                 </div>
               </CardFooter>
@@ -256,6 +254,7 @@ export default function BundlesPage() {
       <div className="bg-gray-50 rounded-lg p-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Bundle FAQ</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* FAQ content unchanged */}
           <div>
             <h3 className="font-semibold text-gray-900 mb-2">How do bundles work?</h3>
             <p className="text-gray-600 text-sm">

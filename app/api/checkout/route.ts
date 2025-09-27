@@ -42,28 +42,22 @@ function findProductByKey(key: string | number | null | undefined) {
   );
 }
 function imageForProduct(origin: string, product: any) {
-  const rel =
-    Array.isArray(product.images) && product.images.length
-      ? product.images[0]
-      : product.image;
+  const rel = Array.isArray(product.images) && product.images.length
+    ? product.images[0]
+    : product.image;
   if (!rel) return undefined;
   return String(rel).startsWith("http") ? String(rel) : `${origin}${rel}`;
 }
 function getStripe(): Stripe {
   const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) {
-    throw new Error("Missing STRIPE_SECRET_KEY");
-  }
+  if (!key) throw new Error("Missing STRIPE_SECRET_KEY");
   return new Stripe(key);
 }
 
-/* Payment methods we allow for Checkout (cast to any to allow "paypal" even if type defs lag) */
-function paymentMethodsForCurrency(c?: string) {
+/* Payment methods — mirror product flow */
+function paymentMethodsForCurrency(c?: string): Stripe.Checkout.SessionCreateParams.PaymentMethodType[] {
   const cur = normalizeCurrency(c);
-  // Ensure these are enabled in Stripe Dashboard → Settings → Payment methods
-  if (cur === "EUR") return ["card", "klarna", "paypal"] as any;
-  if (cur === "USD") return ["card", "paypal"] as any;
-  return ["card"] as any;
+  return cur === "EUR" ? ["card", "klarna"] : ["card"];
 }
 
 /* ------------------------ Bundle catalog ------------------------ */
@@ -92,9 +86,9 @@ const BUNDLES: Record<string, { name: string; price: number; image: string }> = 
 
 /* -------------------- Core session builders -------------------- */
 async function createSessionFromSingle(opts: {
-  productKey: string | number; // id or slug
+  productKey: string | number;
   qty?: number;
-  currency?: string; // USD/EUR
+  currency?: string;
   origin: string;
 }) {
   const stripe = getStripe();
@@ -109,23 +103,21 @@ async function createSessionFromSingle(opts: {
 
   const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = priceId
     ? [{ price: priceId, quantity: qty }]
-    : [
-        {
-          quantity: qty,
-          price_data: {
-            currency: lcCurrency(currency),
-            unit_amount: toMinorUnits(priceNumber),
-            product_data: {
-              name: product.title,
-              description: product.description?.slice(0, 400),
-              images: (() => {
-                const img = imageForProduct(origin, product);
-                return img ? [img] : [];
-              })(),
-            },
+    : [{
+        quantity: qty,
+        price_data: {
+          currency: lcCurrency(currency),
+          unit_amount: toMinorUnits(priceNumber),
+          product_data: {
+            name: product.title,
+            description: product.description?.slice(0, 400),
+            images: (() => {
+              const img = imageForProduct(origin, product);
+              return img ? [img] : [];
+            })(),
           },
         },
-      ];
+      }];
 
   const prodPath = product.slug
     ? `/products/${encodeURIComponent(String(product.slug))}`
@@ -156,7 +148,7 @@ async function createSessionFromSingle(opts: {
 }
 
 async function createSessionFromBundle(opts: {
-  handle: string; // bundle slug (e.g. "complete-creator-bundle")
+  handle: string;
   qty?: number;
   currency?: string;
   origin: string;
@@ -170,30 +162,23 @@ async function createSessionFromBundle(opts: {
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
     payment_method_types: paymentMethodsForCurrency(currency),
-    line_items: [
-      {
-        quantity: qty,
-        price_data: {
-          currency: lcCurrency(currency),
-          unit_amount: toMinorUnits(b.price),
-          product_data: {
-            name: b.name,
-            images: [b.image.startsWith("http") ? b.image : `${origin}${b.image}`],
-          },
+    line_items: [{
+      quantity: qty,
+      price_data: {
+        currency: lcCurrency(currency),
+        unit_amount: toMinorUnits(b.price),
+        product_data: {
+          name: b.name,
+          images: [b.image.startsWith("http") ? b.image : `${origin}${b.image}`],
         },
       },
-    ],
+    }],
     allow_promotion_codes: true,
     automatic_tax: { enabled: true },
     billing_address_collection: "auto",
     submit_type: "pay",
     client_reference_id: `bundle:${handle}`,
-    metadata: {
-      kind: "bundle",
-      bundle: handle,
-      qty: String(qty),
-      currency,
-    },
+    metadata: { kind: "bundle", bundle: handle, qty: String(qty), currency },
     success_url: `${origin}/thank-you?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/bundles/${handle}`,
   });
@@ -226,18 +211,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Missing productId or slug" }, { status: 400 });
     }
 
-    const redirectUrl = await createSessionFromSingle({
-      productKey,
-      qty,
-      currency,
-      origin,
-    });
-
+    const redirectUrl = await createSessionFromSingle({ productKey, qty, currency, origin });
     return NextResponse.redirect(redirectUrl, { status: 303 });
   } catch (err: any) {
     console.error("Checkout GET error:", err);
-    const msg = err?.message || "Checkout error";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ error: err?.message || "Checkout error" }, { status: 500 });
   }
 }
 
@@ -282,7 +260,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ url: session.url });
     }
 
-    // Items resolved from our catalog
+    // Catalog-resolved items
     if (Array.isArray(body?.items) && body.items.length) {
       const currency = normalizeCurrency(body?.currency ?? "EUR");
       const resolved: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
