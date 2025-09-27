@@ -136,8 +136,11 @@ export default function BundlesPage() {
         {bundles.map((bundle) => {
           const bundleSlug = slugify(bundle.title);
           const currency = String(getPreferredCurrency?.() ?? "EUR").toUpperCase();
-          // Use slug as the stable key for checkout. Adjust param name if your API expects something different.
-          const checkoutHref = `/api/checkout?bundleId=${encodeURIComponent(bundleSlug)}&qty=1&currency=${currency}`;
+
+          // ✅ Use `slug` param (what /api/checkout expects), namespaced as a bundle
+          const checkoutHref = `/api/checkout?slug=${encodeURIComponent(
+            `bundle:${bundleSlug}`,
+          )}&qty=1&currency=${currency}`;
 
           return (
             <Card key={bundle.id} className="group hover:shadow-xl transition-all duration-300">
@@ -180,7 +183,6 @@ export default function BundlesPage() {
 
                 <CardTitle className="text-xl mb-2">{bundle.title}</CardTitle>
 
-                {/* Tiny InlineMore under subtitle */}
                 <InlineMore
                   text={bundle.description}
                   lines={2}
@@ -226,17 +228,15 @@ export default function BundlesPage() {
                 </div>
               </CardContent>
 
-              {/* SIDE-BY-SIDE CTAs */}
               <CardFooter className="p-6 pt-0">
                 <div className="w-full grid grid-cols-2 gap-3">
-                  {/* View details → bundle page */}
                   <Button asChild className="w-full bg-blue-600 text-white hover:bg-blue-700">
                     <Link href={`/bundles/${bundleSlug}`} prefetch>
                       View details
                     </Link>
                   </Button>
 
-                  {/* Get this bundle → direct checkout */}
+                  {/* ✅ Direct to /api/checkout with `slug` */}
                   <Button
                     asChild
                     className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
@@ -252,7 +252,6 @@ export default function BundlesPage() {
         })}
       </div>
 
-      {/* Bundle FAQ */}
       <div className="bg-gray-50 rounded-lg p-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Bundle FAQ</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
