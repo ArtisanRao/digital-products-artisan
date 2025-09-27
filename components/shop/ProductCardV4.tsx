@@ -63,7 +63,7 @@ export default function ProductCardV4({
       ? new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(price)
       : price ?? "";
 
-  // Fall-back add for pages without the delegated wire
+  // Add to cart (fallback when delegated wire isn't mounted)
   const addToCart = () => {
     const key = String(slug ?? id ?? "");
     if (!key) return;
@@ -74,18 +74,18 @@ export default function ProductCardV4({
     });
   };
 
-  const buyNow = () => {
-    const key = String(slug ?? id ?? "");
-    if (!key) return;
-    const w = (window as any);
-    if (w?.startCheckout) { w.startCheckout({ slug: key }); return; }
-    window.location.href = `/checkout?product=${encodeURIComponent(key)}`;
-  };
+  // Build checkout href (prefer id, fallback to slug)
+  const buyHref = useMemo(() => {
+    const idStr = id != null ? String(id) : "";
+    if (idStr) return `/api/checkout?productId=${encodeURIComponent(idStr)}&qty=1`;
+    const handle = slug ? String(slug) : "";
+    return handle ? `/api/checkout?product=${encodeURIComponent(handle)}&qty=1` : productUrl;
+  }, [id, slug, productUrl]);
 
   return (
     <article
       className="group rounded-2xl border bg-white/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-      data-version="ProductCardV4@cart-unified+delegated"
+      data-version="ProductCardV4@buy-redirect+delegated"
     >
       {/* Main image (click → product page) */}
       <Link href={productUrl} prefetch={false} aria-label={`Open ${title}`}>
@@ -195,10 +195,10 @@ export default function ProductCardV4({
               }
               addToCart();
             }}
-            // 👇 Delegated wire hooks for the All Products page
+            // Delegated wire hooks for pages that mount AddToCartWire
             data-add-to-cart
             data-product-id={String(id ?? "")}
-            data-product-slug={slug ?? ""}
+            {...(slug ? { "data-product-slug": slug } : {})}
             data-qty="1"
             className="inline-flex !h-8 items-center justify-center gap-2 rounded-lg bg-blue-600 !px-3 text-xs font-medium leading-tight text-white hover:bg-blue-700 whitespace-nowrap"
             aria-label="Add to cart"
@@ -207,15 +207,16 @@ export default function ProductCardV4({
             <span>Add to cart</span>
           </button>
 
-          <button
-            type="button"
-            onClick={buyNow}
+          {/* Buy -> direct checkout */}
+          <Link
+            href={buyHref}
+            prefetch={false}
             className="inline-flex !h-8 items-center justify-center gap-2 rounded-lg bg-blue-600 !px-2 text-xs font-medium leading-tight text-white hover:bg-blue-700 whitespace-nowrap"
             aria-label="Buy now"
           >
             <span aria-hidden className="inline-block w-3 text-center">⚡</span>
             <span>Buy</span>
-          </button>
+          </Link>
         </div>
       </div>
     </article>
