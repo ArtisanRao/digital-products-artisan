@@ -34,12 +34,12 @@ function findProduct(idOrSlug: string) {
 
   if (/^\d+$/.test(raw)) {
     const n = Number(raw);
-    return (productsById as any)?.[n] ?? products.find(p => Number(p.id) === n) ?? null;
+    return (productsById as any)?.[n] ?? products.find((p) => Number(p.id) === n) ?? null;
   }
   const handle = raw.toLowerCase();
   return (
-    products.find(p => String(p.slug).toLowerCase() === handle) ??
-    products.find(p => String(p.id) === raw) ??
+    products.find((p) => String(p.slug).toLowerCase() === handle) ??
+    products.find((p) => String(p.id) === raw) ??
     null
   );
 }
@@ -51,7 +51,7 @@ function discoverGallery(slug?: string): string[] {
   if (!fs.existsSync(dir)) return [];
   const all = fs
     .readdirSync(dir)
-    .filter(f => /\.(png|jpe?g|webp|avif)$/i.test(f))
+    .filter((f) => /\.(png|jpe?g|webp|avif)$/i.test(f))
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
 
   const cover = firstExistingPublicHref([
@@ -61,16 +61,16 @@ function discoverGallery(slug?: string): string[] {
   ]);
 
   const mocks = all
-    .filter(f => /^(mock|thumb|preview)[-_]?\d*/i.test(f) || /-mockup/i.test(f))
-    .map(f => `/images/products/${slug}/${f}`);
+    .filter((f) => /^(mock|thumb|preview)[-_]?\d*/i.test(f) || /-mockup/i.test(f))
+    .map((f) => `/images/products/${slug}/${f}`);
 
   const rest = all
     .filter(
-      f =>
+      (f) =>
         f !== path.basename(cover ?? "") &&
         !(/^(mock|thumb|preview)[-_]?\d*/i.test(f) || /-mockup/i.test(f))
     )
-    .map(f => `/images/products/${slug}/${f}`);
+    .map((f) => `/images/products/${slug}/${f}`);
 
   const list: string[] = [];
   if (cover) list.push(cover);
@@ -87,19 +87,19 @@ function rawGallery(p: any): string[] {
   return [p?.image].filter(Boolean) as string[];
 }
 
-/** Exactly 1 cover + up to 3 unique extras */
+/** Exactly 1 cover + up to 3 unique extras (for meta/OG only) */
 function coverPlusThree(imgs: string[]): string[] {
   const list = imgs.filter(Boolean);
   const cover = list[0] ?? "/images/placeholder.jpg";
-  const extras = list.slice(1).filter(s => s !== cover);
+  const extras = list.slice(1).filter((s) => s !== cover);
   return [cover, ...extras.slice(0, 3)];
 }
 
 /* ------------------- static params (optional) ------------------- */
 export function generateStaticParams() {
   return products
-    .filter(p => p.id !== undefined && /^\d+$/.test(String(p.id)))
-    .map(p => ({ id: String(p.id) }));
+    .filter((p) => p.id !== undefined && /^\d+$/.test(String(p.id)))
+    .map((p) => ({ id: String(p.id) }));
 }
 
 /* ------------------------- metadata ------------------------- */
@@ -115,10 +115,11 @@ export async function generateMetadata({
   const handle = String(product.slug ?? product.id);
   const canonical = `/products/${encodeURIComponent(handle)}`;
 
-  const gallery = coverPlusThree(rawGallery(product));
-  const ogImage = gallery[0]?.startsWith("http")
-    ? gallery[0]
-    : `https://digitalproductsartisan.com${gallery[0]}`;
+  // Use a compact set for OG/Twitter images, but the page will show full gallery
+  const galleryForMeta = coverPlusThree(rawGallery(product));
+  const ogImage = galleryForMeta[0]?.startsWith("http")
+    ? galleryForMeta[0]
+    : `https://digitalproductsartisan.com${galleryForMeta[0]}`;
 
   return {
     metadataBase: new URL("https://digitalproductsartisan.com"),
@@ -154,7 +155,8 @@ export default async function ProductPage({
   const product = findProduct(id);
   if (!product) notFound();
 
-  const galleryImages = coverPlusThree(rawGallery(product));
+  // ✅ Show the FULL gallery on the page
+  const galleryImages = rawGallery(product);
 
   const priceNum =
     typeof product.price === "number" ? product.price : Number(product.price) || 0;
@@ -186,7 +188,7 @@ export default async function ProductPage({
       </nav>
 
       <div className="grid gap-8 lg:grid-cols-2">
-        {/* Gallery (cover + up to 3 extras) */}
+        {/* Gallery (FULL set) */}
         <div className="w-full rounded-2xl border bg-white p-3 hover-zoom">
           <ProductGallery images={galleryImages} alt={product.title} />
         </div>
@@ -256,7 +258,7 @@ export default async function ProductPage({
             "@type": "Product",
             name: product.title,
             url: `https://digitalproductsartisan.com${canonicalHref}`,
-            image: galleryImages.map(src =>
+            image: galleryImages.map((src) =>
               src.startsWith("http") ? src : `https://digitalproductsartisan.com${src}`
             ),
             description: product.description,

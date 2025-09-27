@@ -96,7 +96,7 @@ export default function ProductCardV4({
   return (
     <article
       className="group rounded-2xl border bg-white/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-      data-version="ProductCardV4@1cover+3extras+4thumbs-compact-ctas"
+      data-version="ProductCardV4@click-thumb-preview+compact-ctas"
     >
       {/* Main image (click → product page) */}
       <Link href={productUrl} prefetch={false} aria-label={`Open ${title}`}>
@@ -144,24 +144,27 @@ export default function ProductCardV4({
         {/* Exactly 4 thumbs (first = cover, then up to 3 extras; padded with cover) */}
         <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
           {thumbsRow.map((src, i) => {
-            const active = i < displayPics.length ? idx === i : idx === 0; // padded → cover
+            const isReal = i < displayPics.length;
+            const targetIndex = isReal ? i : 0; // padded items map to cover
+            const active = idx === targetIndex;
             return (
-              <Link
+              <button
+                type="button"
                 key={`${src}-${i}`}
-                href={productUrl}
-                prefetch={false}
-                aria-label={`Open ${title} (preview ${i + 1})`}
-                title={`Open ${title}`}
-                onMouseEnter={() => setIdx(i < displayPics.length ? i : 0)}
-                onFocus={() => setIdx(i < displayPics.length ? i : 0)}
+                aria-label={`Preview ${title} (image ${targetIndex + 1})`}
+                title={`Preview ${title}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIdx(targetIndex);
+                }}
                 className={[
-                  "block h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-white transition",
+                  "block h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-white transition cursor-pointer",
                   active ? "ring-2 ring-blue-500" : "opacity-80 hover:opacity-100",
                 ].join(" ")}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={src} alt="" className="h-full w-full object-cover" />
-              </Link>
+              </button>
             );
           })}
         </div>
@@ -169,12 +172,12 @@ export default function ProductCardV4({
         {/* Price */}
         {priceLabel && <div className="mt-3 text-xl font-semibold">{priceLabel}</div>}
 
-        {/* Compact CTAs (smaller so “Add / cart” fits) */}
+        {/* Compact CTAs (slightly smaller so all fit cleanly) */}
         <div className="mt-3 grid grid-cols-3 gap-2">
           <Link
             href={productUrl}
             prefetch={false}
-            className="flex h-10 items-center justify-center rounded-xl bg-blue-600 px-2.5 text-[12px] leading-tight text-white hover:bg-blue-700 text-center"
+            className="flex h-9 items-center justify-center rounded-lg bg-blue-600 px-2 text-[12px] leading-tight text-white hover:bg-blue-700 text-center"
             aria-label={`View ${title}`}
           >
             👁️ View
@@ -183,7 +186,7 @@ export default function ProductCardV4({
           <button
             type="button"
             onClick={addToCart}
-            className="flex h-10 items-center justify-center rounded-xl bg-blue-600 px-2 text-[12px] leading-tight text-white hover:bg-blue-700 text-center"
+            className="flex h-9 items-center justify-center rounded-lg bg-blue-600 px-2 text-[12px] leading-tight text-white hover:bg-blue-700 text-center"
             aria-label="Add to cart"
             title="Add to cart"
           >
@@ -196,7 +199,7 @@ export default function ProductCardV4({
           <button
             type="button"
             onClick={buyNow}
-            className="flex h-10 items-center justify-center rounded-xl bg-blue-600 px-2.5 text-[12px] leading-tight text-white hover:bg-blue-700 text-center"
+            className="flex h-9 items-center justify-center rounded-lg bg-blue-600 px-2 text-[12px] leading-tight text-white hover:bg-blue-700 text-center"
             aria-label="Buy now"
           >
             ⚡ Buy
