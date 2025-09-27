@@ -141,7 +141,7 @@ export default function ProductCardV4({
           <p className="mt-1 line-clamp-2 text-sm text-gray-600">{description}</p>
         )}
 
-        {/* Exactly 4 thumbs (first = cover, then up to 3 extras; padded with cover) */}
+        {/* Exactly 4 thumbs (first = cover, then up to 3 extras; padded with cover). Click to select. */}
         <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
           {thumbsRow.map((src, i) => {
             const isReal = i < displayPics.length;
@@ -157,6 +157,7 @@ export default function ProductCardV4({
                   e.preventDefault();
                   setIdx(targetIndex);
                 }}
+                aria-pressed={active}
                 className={[
                   "block h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-white transition cursor-pointer",
                   active ? "ring-2 ring-blue-500" : "opacity-80 hover:opacity-100",

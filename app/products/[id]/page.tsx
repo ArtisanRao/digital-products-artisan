@@ -87,12 +87,20 @@ function rawGallery(p: any): string[] {
   return [p?.image].filter(Boolean) as string[];
 }
 
-/** Exactly 1 cover + up to 3 unique extras (for meta/OG only) */
+/** For OG/Twitter only: 1 cover + up to 3 extras */
 function coverPlusThree(imgs: string[]): string[] {
   const list = imgs.filter(Boolean);
   const cover = list[0] ?? "/images/placeholder.jpg";
   const extras = list.slice(1).filter((s) => s !== cover);
   return [cover, ...extras.slice(0, 3)];
+}
+
+/** For page’s compact view: 1 cover + up to N extras */
+function coverPlusN(imgs: string[], n: number): string[] {
+  const list = imgs.filter(Boolean);
+  const cover = list[0] ?? "/images/placeholder.jpg";
+  const extras = list.slice(1).filter((s) => s !== cover);
+  return [cover, ...extras.slice(0, n)];
 }
 
 /* ------------------- static params (optional) ------------------- */
@@ -115,7 +123,6 @@ export async function generateMetadata({
   const handle = String(product.slug ?? product.id);
   const canonical = `/products/${encodeURIComponent(handle)}`;
 
-  // Use a compact set for OG/Twitter images, but the page will show full gallery
   const galleryForMeta = coverPlusThree(rawGallery(product));
   const ogImage = galleryForMeta[0]?.startsWith("http")
     ? galleryForMeta[0]
@@ -146,8 +153,10 @@ export async function generateMetadata({
 /* --------------------------- page --------------------------- */
 export default async function ProductPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams?: Record<string, string | string[] | undefined>;
 }) {
   const { id } = await params;
 
@@ -155,8 +164,11 @@ export default async function ProductPage({
   const product = findProduct(id);
   if (!product) notFound();
 
-  // ✅ Show the FULL gallery on the page
-  const galleryImages = rawGallery(product);
+  const allImages = rawGallery(product);
+
+  // 👇 Only show cover + 4 extras by default; “More” switches to full gallery via query
+  const showAll = String(searchParams?.view ?? "") === "all";
+  const galleryImages = showAll ? allImages : coverPlusN(allImages, 4);
 
   const priceNum =
     typeof product.price === "number" ? product.price : Number(product.price) || 0;
@@ -177,6 +189,9 @@ export default async function ProductPage({
   const teaser = needsToggle ? fullText.slice(0, MAX_CHARS).trimEnd() : fullText;
   const remainder = needsToggle ? fullText.slice(MAX_CHARS) : "";
 
+  const moreHref = `${canonicalHref}?view=all#gallery`;
+  const lessHref = `${canonicalHref}#gallery`;
+
   return (
     <main className="container mx-auto px-4 py-8 product-page" data-page="product">
       <nav className="mb-4 text-sm text-gray-600">
@@ -188,9 +203,33 @@ export default async function ProductPage({
       </nav>
 
       <div className="grid gap-8 lg:grid-cols-2">
-        {/* Gallery (FULL set) */}
-        <div className="w-full rounded-2xl border bg-white p-3 hover-zoom">
+        {/* Gallery (compact or full based on ?view=) */}
+        <div id="gallery" className="w-full rounded-2xl border bg-white p-3 hover-zoom">
           <ProductGallery images={galleryImages} alt={product.title} />
+
+          {/* “More / Less” toggle */}
+          {allImages.length > galleryImages.length && !showAll && (
+            <div className="mt-2 text-right">
+              <Link
+                href={moreHref}
+                prefetch={false}
+                className="text-sm text-blue-700 hover:underline"
+              >
+                More
+              </Link>
+            </div>
+          )}
+          {showAll && allImages.length > 5 && (
+            <div className="mt-2 text-right">
+              <Link
+                href={lessHref}
+                prefetch={false}
+                className="text-sm text-blue-700 hover:underline"
+              >
+                Less
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* Details */}
@@ -249,7 +288,7 @@ export default async function ProductPage({
         </section>
       </div>
 
-      {/* JSON-LD */}
+      {/* JSON-LD (full image set for rich results) */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -258,7 +297,7 @@ export default async function ProductPage({
             "@type": "Product",
             name: product.title,
             url: `https://digitalproductsartisan.com${canonicalHref}`,
-            image: galleryImages.map((src) =>
+            image: allImages.map((src) =>
               src.startsWith("http") ? src : `https://digitalproductsartisan.com${src}`
             ),
             description: product.description,
