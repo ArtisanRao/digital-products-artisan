@@ -12,6 +12,9 @@ const LEGACY_ARRAY_KEY = "cart";      // could be array OR map
 const LEGACY_MAP_KEY   = "dpa:cart";  // could be map OR array in older builds
 const COUNT_KEY = "cartCount";
 
+// Useful for badge/cross-tab listeners elsewhere
+export const LS_KEYS = [KEY, LEGACY_ARRAY_KEY, LEGACY_MAP_KEY, COUNT_KEY] as const;
+
 const EVT = "cart-update"; // primary modern event name (typed payload)
 export { EVT as CART_EVENT_NAME };
 
@@ -121,7 +124,6 @@ function readRaw(): CartItem[] {
       ls.setItem(KEY, JSON.stringify(legacy));
       // mirror to map for maximum compatibility
       mirrorToMap(legacy);
-      // keep old keys (some pages still read them); but clear obviously broken shapes
       return legacy;
     }
   } catch {
@@ -153,8 +155,12 @@ function mirrorToMap(items: CartItem[]) {
 
 /** Update visible badges that don't use React */
 function updateDomBadge(count: number) {
-  const badge = document.querySelector<HTMLElement>("[data-cart-badge]");
-  if (badge) badge.textContent = String(count);
+  try {
+    const badge = document.querySelector<HTMLElement>("[data-cart-badge]");
+    if (badge) badge.textContent = String(count);
+  } catch {
+    /* ignore */
+  }
 }
 
 function emit(items: CartItem[], added?: CartItem) {
@@ -173,8 +179,10 @@ function emit(items: CartItem[], added?: CartItem) {
 
   const detail: CartEventDetail = { items, count, total };
 
-  // Modern typed event
-  try { window.dispatchEvent(new CustomEvent<CartEventDetail>(EVT, { detail })); } catch {}
+  // Modern typed event (cast detail for TS)
+  try {
+    window.dispatchEvent(new CustomEvent(EVT, { detail } as CustomEventInit<CartEventDetail>));
+  } catch {}
 
   // Back-compat events many components already listen to
   try { window.dispatchEvent(new Event("cart:change")); } catch {}
@@ -323,7 +331,7 @@ export function onChange(
     handler(detail.count, detail);
   };
 
-  window.addEventListener(EVT, listener);
+  window.addEventListener(EVT, listener as EventListener);
 
   // Back-compat legacy events as well
   const legacyNames = ["cart:updated", "cart:change", "cart-update", "cart:count"];
@@ -348,7 +356,7 @@ export function onChange(
   handler(snap.count, snap);
 
   return () => {
-    window.removeEventListener(EVT, listener);
+    window.removeEventListener(EVT, listener as EventListener);
     legacyNames.forEach((n) => window.removeEventListener(n as any, legacyListener as EventListener));
     window.removeEventListener("storage", onStorage);
   };
