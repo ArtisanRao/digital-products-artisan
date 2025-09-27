@@ -27,6 +27,20 @@ function firstExistingPublicHref(hrefs: string[]): string | undefined {
   return undefined;
 }
 
+/** Unwrap props.params or props.searchParams whether Promises or plain objects */
+async function resolveParams(props: any): Promise<{ id?: string }> {
+  const maybe = props?.params;
+  if (maybe && typeof maybe.then === "function") return (await maybe) ?? {};
+  return maybe ?? {};
+}
+async function resolveSearchParams(
+  props: any,
+): Promise<Record<string, string | string[] | undefined>> {
+  const maybe = props?.searchParams;
+  if (maybe && typeof maybe.then === "function") return (await maybe) ?? {};
+  return maybe ?? {};
+}
+
 /** Find by numeric id or by slug (case-insensitive) */
 function findProduct(idOrSlug: string) {
   const raw = String(idOrSlug ?? "").trim();
@@ -68,7 +82,7 @@ function discoverGallery(slug?: string): string[] {
     .filter(
       (f) =>
         f !== path.basename(cover ?? "") &&
-        !(/^(mock|thumb|preview)[-_]?\d*/i.test(f) || /-mockup/i.test(f))
+        !(/^(mock|thumb|preview)[-_]?\d*/i.test(f) || /-mockup/i.test(f)),
     )
     .map((f) => `/images/products/${slug}/${f}`);
 
@@ -111,12 +125,8 @@ export function generateStaticParams() {
 }
 
 /* ------------------------- metadata ------------------------- */
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}): Promise<Metadata> {
-  const { id } = await params;
+export async function generateMetadata(props: any): Promise<Metadata> {
+  const { id = "" } = await resolveParams(props);
   const product = findProduct(id);
   if (!product) return {};
 
@@ -151,14 +161,9 @@ export async function generateMetadata({
 }
 
 /* --------------------------- page --------------------------- */
-export default async function ProductPage({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ id: string }>;
-  searchParams?: Record<string, string | string[] | undefined>;
-}) {
-  const { id } = await params;
+export default async function ProductPage(props: any) {
+  const { id = "" } = await resolveParams(props);
+  const s = await resolveSearchParams(props);
 
   // Render directly for both ids and slugs
   const product = findProduct(id);
@@ -166,8 +171,8 @@ export default async function ProductPage({
 
   const allImages = rawGallery(product);
 
-  // 👇 Only show cover + 4 extras by default; “More” switches to full gallery via query
-  const showAll = String(searchParams?.view ?? "") === "all";
+  // Only show cover + 4 extras by default; “More” (?view=all) shows the full gallery
+  const showAll = String(s?.view ?? "") === "all";
   const galleryImages = showAll ? allImages : coverPlusN(allImages, 4);
 
   const priceNum =
@@ -298,7 +303,7 @@ export default async function ProductPage({
             name: product.title,
             url: `https://digitalproductsartisan.com${canonicalHref}`,
             image: allImages.map((src) =>
-              src.startsWith("http") ? src : `https://digitalproductsartisan.com${src}`
+              src.startsWith("http") ? src : `https://digitalproductsartisan.com${src}`,
             ),
             description: product.description,
             sku: String(product.id),
