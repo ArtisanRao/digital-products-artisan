@@ -1,10 +1,28 @@
+// components/ui/CatLink.tsx
 "use client";
-import Link from "next/link";
+
+import Link, { LinkProps } from "next/link";
 import * as React from "react";
 
-type Props = React.ComponentProps<typeof Link>;
+type Props = Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, keyof LinkProps> &
+  LinkProps & { className?: string };
 
-/** Link that never prefetches (use for /categories/* to avoid stale HTML) */
-export default function CatLink({ prefetch, ...rest }: Props) {
-  return <Link prefetch={false} {...rest} />;
+/**
+ * Simple Link wrapper:
+ * - no legacyBehavior
+ * - forwards className/props
+ * - prefetch disabled by default
+ */
+export default function CatLink({
+  href,
+  prefetch = false,
+  className,
+  children,
+  ...rest
+}: Props) {
+  return (
+    <Link href={href} prefetch={prefetch} className={className} {...rest}>
+      {children}
+    </Link>
+  );
 }
