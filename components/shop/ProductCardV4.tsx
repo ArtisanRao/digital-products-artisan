@@ -27,10 +27,12 @@ export default function ProductCardV4({
     [images]
   );
 
+  // 1 main + 3 thumbs (<=4 total)
   const cover = pics[0] ?? "/images/placeholder.jpg";
   const extras = useMemo(() => pics.slice(1).filter((s) => s !== cover), [pics, cover]);
   const displayPics = useMemo(() => [cover, ...extras.slice(0, 3)], [cover, extras]);
 
+  // Thumbs row (pad to 4)
   const thumbsRow = useMemo(() => {
     const row = [cover, ...extras.slice(0, 3)];
     while (row.length < 4) row.push(cover);
@@ -43,6 +45,7 @@ export default function ProductCardV4({
   const prev = () => setIdx((i) => (i === 0 ? displayPics.length - 1 : i - 1));
   const next = () => setIdx((i) => (i + 1) % displayPics.length);
 
+  // Canonical URL
   const productUrl = useMemo(() => {
     if (href && href.startsWith("/")) return href;
     if (slug) return `/products/${encodeURIComponent(slug)}`;
@@ -55,36 +58,62 @@ export default function ProductCardV4({
       ? new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(price)
       : price ?? "";
 
+  /* ---------------- Cart + Badge helpers ---------------- */
+  function announceCartCount(count: number) {
+    // Notify listeners
+    window.dispatchEvent(new CustomEvent("cart:count", { detail: count }));
+    window.dispatchEvent(new CustomEvent("cart:updated", { detail: { count } }));
+
+    // Progressive enhancement: write to any badge element
+    const badge = document.querySelector<HTMLElement>("[data-cart-badge]");
+    if (badge) badge.textContent = String(count);
+
+    // Shadow copy for apps/widgets
+    (window as any).__CART_COUNT__ = count;
+    if ((window as any).dpaCart) (window as any).dpaCart.count = count;
+  }
+
+  function addToLocalCart(key: string, qty = 1) {
+    const raw = localStorage.getItem("cart");
+    const cart: Record<string, number> = raw ? JSON.parse(raw) : {};
+    cart[key] = (cart[key] ?? 0) + qty;
+    localStorage.setItem("cart", JSON.stringify(cart));
+    const count = Object.values(cart).reduce((a, b) => a + Number(b), 0);
+    announceCartCount(count);
+  }
+
   const addToCart = () => {
     try {
       const key = String(slug ?? id ?? "");
       if (!key) return;
+
       const w = (window as any);
-      if (w?.dpaCart?.add) { w.dpaCart.add({ slug: key, qty: 1 }); return; }
-      if (w?.__CART__?.add) { w.__CART__.add({ slug: key, qty: 1 }); return; }
-      window.dispatchEvent(new CustomEvent("cart:add", { detail: { slug: key, qty: 1 } }));
-      const raw = localStorage.getItem("cart");
-      const cart: Record<string, number> = raw ? JSON.parse(raw) : {};
-      cart[key] = (cart[key] ?? 0) + 1;
-      localStorage.setItem("cart", JSON.stringify(cart));
-      const count = Object.values(cart).reduce((a, b) => a + Number(b), 0);
-      window.dispatchEvent(new CustomEvent("cart:count", { detail: count }));
+
+      // Prefer site cart if present
+      if (w?.dpaCart?.add) {
+        try { w.dpaCart.add({ slug: key, qty: 1 }); } catch {}
+      } else if (w?.__CART__?.add) {
+        try { w.__CART__.add({ slug: key, qty: 1 }); } catch {}
+      }
+
+      // Always ensure fallback store + badge update
+      addToLocalCart(key, 1);
     } catch (e) {
-      console.error("addToCart fallback error", e);
+      console.error("addToCart error", e);
     }
   };
 
   const buyNow = () => {
     const key = String(slug ?? id ?? "");
-    const w = (window as any);
     if (!key) return;
+    const w = (window as any);
     if (w?.startCheckout) { w.startCheckout({ slug: key }); return; }
     window.location.href = `/checkout?product=${encodeURIComponent(key)}`;
   };
 
   return (
     <article className="group rounded-2xl border bg-white/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-             data-version="ProductCardV4@wider-middle-cta">
+             data-version="ProductCardV4@wider-middle-cta+badge">
       {/* Main image */}
       <Link href={productUrl} prefetch={false} aria-label={`Open ${title}`}>
         <div className="relative overflow-hidden rounded-t-2xl bg-gray-50">
@@ -164,7 +193,6 @@ export default function ProductCardV4({
 
         {/* CTAs — shrink left/right, widen middle */}
         <div className="mt-3 grid gap-2 [grid-template-columns:.9fr_1.2fr_.9fr]">
-          {/* View (smaller icon) */}
           <Link
             href={productUrl}
             prefetch={false}
@@ -175,7 +203,6 @@ export default function ProductCardV4({
             <span>View</span>
           </Link>
 
-          {/* Add to cart (wider button + slightly larger icon slot) */}
           <button
             type="button"
             onClick={addToCart}
@@ -186,7 +213,6 @@ export default function ProductCardV4({
             <span>Add to cart</span>
           </button>
 
-          {/* Buy (smaller icon) */}
           <button
             type="button"
             onClick={buyNow}
