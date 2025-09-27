@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import * as cart from "@/lib/cart";
 
 export type ProductCardData = {
   title: string;
@@ -40,7 +41,9 @@ export default function ProductCardV4({
   }, [cover, extras]);
 
   const [idx, setIdx] = useState(0);
-  useEffect(() => { if (idx >= displayPics.length) setIdx(0); }, [displayPics.length, idx]);
+  useEffect(() => {
+    if (idx >= displayPics.length) setIdx(0);
+  }, [displayPics.length, idx]);
 
   const prev = () => setIdx((i) => (i === 0 ? displayPics.length - 1 : i - 1));
   const next = () => setIdx((i) => (i + 1) % displayPics.length);
@@ -53,54 +56,23 @@ export default function ProductCardV4({
     return "/products";
   }, [href, slug, id]);
 
+  const priceNumber =
+    typeof price === "number" ? price : Number(price) || 0;
+
   const priceLabel =
     typeof price === "number"
       ? new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(price)
       : price ?? "";
 
-  /* ---------------- Cart + Badge helpers ---------------- */
-  function announceCartCount(count: number) {
-    // Notify listeners
-    window.dispatchEvent(new CustomEvent("cart:count", { detail: count }));
-    window.dispatchEvent(new CustomEvent("cart:updated", { detail: { count } }));
-
-    // Progressive enhancement: write to any badge element
-    const badge = document.querySelector<HTMLElement>("[data-cart-badge]");
-    if (badge) badge.textContent = String(count);
-
-    // Shadow copy for apps/widgets
-    (window as any).__CART_COUNT__ = count;
-    if ((window as any).dpaCart) (window as any).dpaCart.count = count;
-  }
-
-  function addToLocalCart(key: string, qty = 1) {
-    const raw = localStorage.getItem("cart");
-    const cart: Record<string, number> = raw ? JSON.parse(raw) : {};
-    cart[key] = (cart[key] ?? 0) + qty;
-    localStorage.setItem("cart", JSON.stringify(cart));
-    const count = Object.values(cart).reduce((a, b) => a + Number(b), 0);
-    announceCartCount(count);
-  }
-
+  // 🔗 Use the unified cart so badge & all listeners update
   const addToCart = () => {
-    try {
-      const key = String(slug ?? id ?? "");
-      if (!key) return;
-
-      const w = (window as any);
-
-      // Prefer site cart if present
-      if (w?.dpaCart?.add) {
-        try { w.dpaCart.add({ slug: key, qty: 1 }); } catch {}
-      } else if (w?.__CART__?.add) {
-        try { w.__CART__.add({ slug: key, qty: 1 }); } catch {}
-      }
-
-      // Always ensure fallback store + badge update
-      addToLocalCart(key, 1);
-    } catch (e) {
-      console.error("addToCart error", e);
-    }
+    const key = String(slug ?? id ?? "");
+    if (!key) return;
+    cart.add(key, 1, {
+      title,
+      price: priceNumber,
+      image: cover,
+    });
   };
 
   const buyNow = () => {
@@ -112,11 +84,14 @@ export default function ProductCardV4({
   };
 
   return (
-    <article className="group rounded-2xl border bg-white/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-             data-version="ProductCardV4@wider-middle-cta+badge">
-      {/* Main image */}
+    <article
+      className="group rounded-2xl border bg-white/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+      data-version="ProductCardV4@cart-unified"
+    >
+      {/* Main image (click → product page) */}
       <Link href={productUrl} prefetch={false} aria-label={`Open ${title}`}>
         <div className="relative overflow-hidden rounded-t-2xl bg-gray-50">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={displayPics[idx] ?? "/images/placeholder.jpg"}
             alt={title}
@@ -130,28 +105,35 @@ export default function ProductCardV4({
                 onClick={(e) => { e.preventDefault(); prev(); }}
                 aria-label="Previous"
                 className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-2 py-1 text-[11px] shadow hover:bg-white"
-              >‹</button>
+              >
+                ‹
+              </button>
               <button
                 type="button"
                 onClick={(e) => { e.preventDefault(); next(); }}
                 aria-label="Next"
                 className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-2 py-1 text-[11px] shadow hover:bg-white"
-              >›</button>
+              >
+                ›
+              </button>
             </>
           )}
         </div>
       </Link>
 
       <div className="p-4">
-        {/* Title + subtitle */}
+        {/* Title (hover underline) */}
         <Link href={productUrl} prefetch={false} className="block">
           <h3 className="line-clamp-2 text-lg font-semibold hover:underline">{title}</h3>
         </Link>
 
+        {/* Subtitle + “More” pill to #description */}
         {description && (
           <>
             <Link href={productUrl} prefetch={false} className="block mt-1">
-              <p className="line-clamp-2 text-sm text-gray-600 hover:underline">{description}</p>
+              <p className="line-clamp-2 text-sm text-gray-600 hover:underline">
+                {description}
+              </p>
             </Link>
             <Link
               href={`${productUrl}#description`}
@@ -164,7 +146,7 @@ export default function ProductCardV4({
           </>
         )}
 
-        {/* Thumbs */}
+        {/* Thumbs (exactly 4 UI slots) */}
         <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
           {thumbsRow.map((src, i) => {
             const isReal = i < displayPics.length;
@@ -182,6 +164,7 @@ export default function ProductCardV4({
                   active ? "ring-2 ring-blue-500" : "opacity-80 hover:opacity-100",
                 ].join(" ")}
               >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={src} alt="" className="h-full w-full object-cover" />
               </button>
             );
@@ -191,7 +174,7 @@ export default function ProductCardV4({
         {/* Price */}
         {priceLabel && <div className="mt-3 text-xl font-semibold">{priceLabel}</div>}
 
-        {/* CTAs — shrink left/right, widen middle */}
+        {/* CTAs — icons in fixed 16px slots so labels are perfectly centered */}
         <div className="mt-3 grid gap-2 [grid-template-columns:.9fr_1.2fr_.9fr]">
           <Link
             href={productUrl}

@@ -1,15 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import * as cart from "@/lib/cart";
 
 export type ProductCardData = {
   title: string;
   slug?: string;
-  id?: string | number;     // fallback if slug is missing
+  id?: string | number;
   price?: number | string;
-  images?: string[];        // cover first, then mockups
-  href?: string;            // explicit href overrides slug/id
+  images?: string[];
+  href?: string;
   description?: string;
 };
 
@@ -22,27 +23,16 @@ export default function ProductCard({
   href,
   description,
 }: ProductCardData) {
-  // Dedupe images & ensure at least one placeholder
   const pics = useMemo(() => {
     const unique = Array.from(new Set(images.filter(Boolean)));
     return unique.length ? unique : ["/images/placeholder.jpg"];
   }, [images]);
 
-  // Build capped display set: cover + up to 3 extras (max 4 total)
-  const cover = pics[0] ?? "/images/placeholder.jpg";
-  const extras = useMemo(() => pics.slice(1).filter((src) => src !== cover), [pics, cover]);
-  const displayPics = useMemo(() => [cover, ...extras.slice(0, 3)], [cover, extras]); // <= 4
-
   const [idx, setIdx] = useState(0);
-  useEffect(() => {
-    if (idx >= displayPics.length) setIdx(0);
-  }, [displayPics.length, idx]);
-
-  const prev = () => setIdx((i) => (i === 0 ? displayPics.length - 1 : i - 1));
-  const next = () => setIdx((i) => (i + 1) % displayPics.length);
+  const prev = () => setIdx((i) => (i === 0 ? pics.length - 1 : i - 1));
+  const next = () => setIdx((i) => (i + 1) % pics.length);
   const go = (i: number) => setIdx(i);
 
-  // Robust URL: href → /products/<slug> → /products/<id> → /products
   const productUrl = useMemo(() => {
     if (href) return href;
     if (slug) return `/products/${encodeURIComponent(slug)}`;
@@ -50,32 +40,18 @@ export default function ProductCard({
     return "/products";
   }, [href, slug, id]);
 
+  const priceNumber = typeof price === "number" ? price : Number(price) || 0;
+
   const priceLabel =
     typeof price === "number"
       ? new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(price)
       : (price ?? "");
 
-  // Cart + checkout wiring
+  // 🔗 Use unified cart
   const addToCart = () => {
-    try {
-      const key = String(slug ?? id);
-      const w = window as any;
-
-      // Prefer site cart if exposed
-      if (w?.dpaCart?.add) { w.dpaCart.add({ slug: key, qty: 1 }); return; }
-      if (w?.__CART__?.add) { w.__CART__.add({ slug: key, qty: 1 }); return; }
-
-      // Fallback: localStorage + events for badge
-      window.dispatchEvent(new CustomEvent("cart:add", { detail: { slug: key, qty: 1 } }));
-      const raw = localStorage.getItem("cart");
-      const cart: Record<string, number> = raw ? JSON.parse(raw) : {};
-      cart[key] = (cart[key] ?? 0) + 1;
-      localStorage.setItem("cart", JSON.stringify(cart));
-      const count = Object.values(cart).reduce((a, b) => a + Number(b), 0);
-      window.dispatchEvent(new CustomEvent("cart:count", { detail: count }));
-    } catch (e) {
-      console.error("addToCart fallback error", e);
-    }
+    const key = String(slug ?? id ?? "");
+    if (!key) return;
+    cart.add(key, 1, { title, price: priceNumber, image: pics[0] });
   };
 
   const buyNow = () => {
@@ -85,24 +61,19 @@ export default function ProductCard({
     window.location.href = `/checkout?product=${encodeURIComponent(key)}`;
   };
 
-  // Thumbs = exactly the capped set (cover + up to 3 extras)
-  const thumbs = displayPics;
+  const thumbs = pics.slice(0, 4);
 
   return (
-    <article
-      className="group rounded-2xl border bg-white/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-      data-version="ProductCard@v6+always-more+1main+3thumbs"
-    >
-      {/* Main image (clickable) */}
+    <article className="group rounded-2xl border bg-white/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
       <Link href={productUrl} aria-label={`Open ${title}`} prefetch={false}>
         <div className="relative overflow-hidden rounded-t-2xl bg-gray-50">
           <img
-            src={displayPics[idx] ?? "/images/placeholder.jpg"}
+            src={pics[idx]}
             alt={title}
             className="aspect-[3/2] w-full object-contain p-2 transition-transform duration-300 group-hover:scale-[1.01]"
             loading="lazy"
           />
-          {displayPics.length > 1 && (
+          {pics.length > 1 && (
             <>
               <button
                 type="button"
@@ -126,15 +97,13 @@ export default function ProductCard({
       </Link>
 
       <div className="p-4">
-        {/* Title (clickable) */}
         <Link href={productUrl} className="block" prefetch={false}>
-          <h3 className="line-clamp-2 text-lg font-semibold">{title}</h3>
+          <h3 className="line-clamp-2 text-lg font-semibold hover:underline">{title}</h3>
         </Link>
 
-        {/* Subtitle/description (clamped), with an always-visible 'More' link below it */}
         {description && (
           <>
-            <p className="mt-1 line-clamp-2 text-sm text-gray-600">{description}</p>
+            <p className="mt-1 line-clamp-2 text-sm text-gray-600 hover:underline">{description}</p>
             <Link
               href={productUrl}
               prefetch={false}
@@ -156,7 +125,6 @@ export default function ProductCard({
           </Link>
         )}
 
-        {/* Thumbs (cover + up to 3 extras) */}
         {thumbs.length > 1 && (
           <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
             {thumbs.map((src, i) => (
@@ -176,10 +144,8 @@ export default function ProductCard({
           </div>
         )}
 
-        {/* Price */}
         {priceLabel && <div className="mt-3 text-xl font-semibold">{priceLabel}</div>}
 
-        {/* Actions (uniform blue) */}
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <Link
             href={productUrl}
