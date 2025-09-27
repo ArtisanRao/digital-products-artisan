@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { Star, Download, Package, Percent } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import InlineMore from "@/components/ui/inline-more";
+import { getPreferredCurrency } from "@/lib/currency";
 
 type Bundle = {
   id: number;
@@ -122,43 +123,6 @@ const bundles: Bundle[] = [
 ];
 
 export default function BundlesPage() {
-  const [loadingSlug, setLoadingSlug] = useState<string | null>(null);
-
-  const handleCheckout = async (bundle: Bundle) => {
-    const slug = `bundle:${slugify(bundle.title)}`;
-    try {
-      setLoadingSlug(slug);
-      const res = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          lines: [
-            {
-              id: slug,
-              name: bundle.title,
-              price: bundle.price,
-              image: bundle.image,
-              quantity: 1,
-            },
-          ],
-          currency: "eur",
-        }),
-      });
-      const data = await res.json();
-      if (res.ok && data.url) {
-        window.location.href = data.url;
-      } else {
-        console.error("Checkout failed:", data?.error || data);
-        alert("Sorry—couldn't start checkout. Please try again.");
-      }
-    } catch (e) {
-      console.error(e);
-      alert("Network error starting checkout.");
-    } finally {
-      setLoadingSlug(null);
-    }
-  };
-
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="text-center mb-12">
@@ -171,7 +135,9 @@ export default function BundlesPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
         {bundles.map((bundle) => {
           const bundleSlug = slugify(bundle.title);
-          const loading = loadingSlug === `bundle:${bundleSlug}`;
+          const currency = String(getPreferredCurrency?.() ?? "EUR").toUpperCase();
+          // Use slug as the stable key for checkout. Adjust param name if your API expects something different.
+          const checkoutHref = `/api/checkout?bundleId=${encodeURIComponent(bundleSlug)}&qty=1&currency=${currency}`;
 
           return (
             <Card key={bundle.id} className="group hover:shadow-xl transition-all duration-300">
@@ -263,21 +229,21 @@ export default function BundlesPage() {
               {/* SIDE-BY-SIDE CTAs */}
               <CardFooter className="p-6 pt-0">
                 <div className="w-full grid grid-cols-2 gap-3">
-                  {/* View details → full product page */}
+                  {/* View details → bundle page */}
                   <Button asChild className="w-full bg-blue-600 text-white hover:bg-blue-700">
                     <Link href={`/bundles/${bundleSlug}`} prefetch>
                       View details
                     </Link>
                   </Button>
 
-                  {/* Get this bundle → POST /api/checkout (no login redirect) */}
+                  {/* Get this bundle → direct checkout */}
                   <Button
-                    type="button"
-                    disabled={loading}
-                    onClick={() => handleCheckout(bundle)}
+                    asChild
                     className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                   >
-                    {loading ? "Starting checkout…" : "Get this bundle"}
+                    <Link href={checkoutHref} prefetch={false}>
+                      Get this bundle
+                    </Link>
                   </Button>
                 </div>
               </CardFooter>
