@@ -1,39 +1,39 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
-import { CreditCard, Lock, CheckCircle } from "lucide-react"
-import { useCart } from "@/contexts/cart-context"
-import { useAuth } from "@/contexts/auth-context"
-import { useToast } from "@/hooks/use-toast"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { CreditCard, Lock, CheckCircle } from "lucide-react";
+import { useCart } from "@/contexts/cart-context";
+import { useAuth } from "@/contexts/auth-context";
+import { useToast } from "@/hooks/use-toast";
 
 interface PaymentFormProps {
-  onSuccess: (orderId: string) => void
+  onSuccess: (orderId: string) => void;
 }
 
 export default function PaymentForm({ onSuccess }: PaymentFormProps) {
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "paypal">("card")
-  const { items, total, clearCart } = useCart()
-  const { user } = useAuth()
-  const { toast } = useToast()
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "paypal">("card");
+  const { items, total, clearCart } = useCart();
+  const { user } = useAuth(); // { name?: string; email?: string } | null
+  const { toast } = useToast();
 
   const [cardDetails, setCardDetails] = useState({
     number: "",
     expiry: "",
     cvc: "",
     name: "",
-  })
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsProcessing(true)
+    e.preventDefault();
+    setIsProcessing(true);
 
     try {
       // Create payment intent
@@ -43,16 +43,21 @@ export default function PaymentForm({ onSuccess }: PaymentFormProps) {
         body: JSON.stringify({
           amount: total,
           metadata: {
-            userId: user?.id,
+            // ✅ keep metadata as strings; no user.id in our AuthContext
+            userEmail: user?.email ?? "",
+            userName: user?.name ?? "",
             items: JSON.stringify(items),
           },
         }),
-      })
+      });
 
-      const { clientSecret, paymentIntentId } = await paymentResponse.json()
+      const { clientSecret, paymentIntentId, error: piError } = await paymentResponse.json();
+      if (!paymentResponse.ok) {
+        throw new Error(piError || "Failed to create payment intent");
+      }
 
-      // Simulate payment processing
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      // (Simulate) payment processing – replace with real SDK confirmation as needed
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Confirm payment
       const confirmResponse = await fetch("/api/confirm-payment", {
@@ -61,45 +66,49 @@ export default function PaymentForm({ onSuccess }: PaymentFormProps) {
         body: JSON.stringify({
           paymentIntentId,
           items,
-          userEmail: user?.email,
+          userEmail: user?.email ?? "",
+          userName: user?.name ?? "",
         }),
-      })
+      });
 
-      const { order } = await confirmResponse.json()
+      const { order, error: confirmError } = await confirmResponse.json();
+      if (!confirmResponse.ok) {
+        throw new Error(confirmError || "Payment confirmation failed");
+      }
 
       // Send confirmation email
       await fetch("/api/send-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          to: user?.email,
+          to: user?.email ?? "",
           subject: "Your Digital Products Are Ready!",
           template: "purchase-confirmation",
           data: {
-            customerName: user?.name,
+            customerName: user?.name ?? "",
             items: order.downloadLinks,
             orderId: order.id,
           },
         }),
-      })
+      });
 
-      clearCart()
+      clearCart();
       toast({
         title: "Payment Successful!",
         description: "Check your email for download links.",
-      })
+      });
 
-      onSuccess(order.id)
+      onSuccess(order.id);
     } catch (error) {
       toast({
         title: "Payment Failed",
         description: "Please try again or contact support.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsProcessing(false)
+      setIsProcessing(false);
     }
-  }
+  };
 
   return (
     <Card className="w-full max-w-md">
@@ -219,5 +228,5 @@ export default function PaymentForm({ onSuccess }: PaymentFormProps) {
         </form>
       </CardContent>
     </Card>
-  )
+  );
 }
