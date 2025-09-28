@@ -1,4 +1,6 @@
-﻿import withPWA from "next-pwa";
+﻿// next.config.mjs
+import withPWA from "next-pwa";
+import path from "node:path";
 
 /** Configure next-pwa */
 const withPWACfg = withPWA({
@@ -7,16 +9,14 @@ const withPWACfg = withPWA({
   skipWaiting: true,
   disable: process.env.NODE_ENV === "development",
 
-  /** 👇 NEW: runtime caching — never cache HTML documents */
+  /** 👇 runtime caching — never cache HTML documents */
   runtimeCaching: [
     {
       // Treat navigations / HTML as network-only so stale pages aren't served
-      urlPattern: ({ request, sameOrigin }) =>
+      urlPattern: ({ request }) =>
         request.destination === "document" || request.mode === "navigate",
       handler: "NetworkOnly",
-      options: {
-        cacheName: "html-no-cache",
-      },
+      options: { cacheName: "html-no-cache" },
     },
     // (Keep default asset caching behavior; add more rules here if desired)
   ],
@@ -29,13 +29,17 @@ const csp = [
   "object-src 'none'",
   "worker-src 'self' blob:",
   "font-src 'self' data: https: https://cdn.snipcart.com",
-  "img-src 'self' data: blob: https: https://cdn.snipcart.com https://app.snipcart.com",
+  // add PayPal images + keep Stripe/Snipcart
+  "img-src 'self' data: blob: https: https://cdn.snipcart.com https://app.snipcart.com https://www.paypalobjects.com https://www.paypal.com",
   "media-src 'self' blob:",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://js.stripe.com https://cdn.snipcart.com https://app.snipcart.com",
+  // add PayPal scripts + keep GA/Stripe/Snipcart (note: remove 'unsafe-eval' if you can)
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://js.stripe.com https://cdn.snipcart.com https://app.snipcart.com https://www.paypal.com https://www.paypalobjects.com",
   "style-src 'self' 'unsafe-inline' https://cdn.snipcart.com",
-  "connect-src 'self' https://www.google-analytics.com https://vitals.vercel-insights.com https://api.stripe.com https://checkout.stripe.com https://cdn.snipcart.com https://app.snipcart.com",
-  "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com https://app.snipcart.com",
-  "form-action 'self' https://app.snipcart.com https://checkout.stripe.com",
+  // add PayPal connect
+  "connect-src 'self' https://www.google-analytics.com https://vitals.vercel-insights.com https://api.stripe.com https://checkout.stripe.com https://cdn.snipcart.com https://app.snipcart.com https://www.paypal.com https://www.paypalobjects.com",
+  // add PayPal frames (Stripe Checkout already here)
+  "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com https://app.snipcart.com https://www.paypal.com",
+  "form-action 'self' https://app.snipcart.com https://checkout.stripe.com https://www.paypal.com",
   "frame-ancestors 'self'",
 ].join("; ");
 
@@ -123,19 +127,23 @@ const baseConfig = {
     ],
   },
 
+  /** 👇 Alias any accidental Clerk imports to a harmless stub */
+  webpack: (cfg) => {
+    const stub = path.resolve(process.cwd(), "lib/clerk-stub.tsx");
+    cfg.resolve = cfg.resolve || {};
+    cfg.resolve.alias = cfg.resolve.alias || {};
+    cfg.resolve.alias["@clerk/nextjs"] = stub;
+    cfg.resolve.alias["@clerk/clerk-react"] = stub;
+    return cfg;
+  },
+
   async headers() {
     return [
       ...assetNoIndexHeaders,
 
-      /** 👇 NEW: never cache category pages at the edge */
-      {
-        source: "/categories",
-        headers: [{ key: "Cache-Control", value: "no-store" }],
-      },
-      {
-        source: "/categories/:slug*",
-        headers: [{ key: "Cache-Control", value: "no-store" }],
-      },
+      /** never cache category pages at the edge */
+      { source: "/categories", headers: [{ key: "Cache-Control", value: "no-store" }] },
+      { source: "/categories/:slug*", headers: [{ key: "Cache-Control", value: "no-store" }] },
 
       // Global security headers
       { source: "/(.*)", headers: securityHeaders },
@@ -184,8 +192,8 @@ const baseConfig = {
       { source: "/categories/ebooks",             destination: "/categories/health-and-fitness-ebooks",   permanent: true },
 
       // Restore top-level Fonts & Icons (forward from old subpaths)
-      { source: "/categories/web-templates/fonts", destination: "/categories/fonts", permanent: true },
-      { source: "/categories/web-templates/icons", destination: "/categories/icons", permanent: true },
+      { source: "/categories/web-templates/fonts", destination: "/categories/fonts",  permanent: true },
+      { source: "/categories/web-templates/icons", destination: "/categories/icons",  permanent: true },
     ];
   },
 };
