@@ -4,7 +4,11 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 
 type User = { name: string; email: string };
 type AuthContextType = {
+  /** New canonical field */
   currentUser: User | null;
+  /** Back-compat alias for older code that uses `user` */
+  user: User | null;
+
   signup: (name: string, email: string, password: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -46,6 +50,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<AuthContextType>(
     () => ({
       currentUser,
+      user: currentUser, // ← back-compat alias
+
       async signup(name, email, password) {
         const users = readUsers();
         if (users.some((u) => u.email.toLowerCase() === email.toLowerCase())) {
@@ -56,6 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem(SESSION_KEY, email);
         setCurrentUser({ name, email });
       },
+
       async login(email, password) {
         const users = readUsers();
         const match = users.find(
@@ -65,6 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem(SESSION_KEY, match.email);
         setCurrentUser({ name: match.name, email: match.email });
       },
+
       async logout() {
         localStorage.removeItem(SESSION_KEY);
         setCurrentUser(null);
