@@ -11,7 +11,6 @@ import LiveChat from "@/components/live-chat";
 import AutoCurrency from "@/components/auto-currency";
 import Script from "next/script";
 import React from "react";
-import { ClerkProvider } from "@clerk/nextjs";
 
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 
@@ -62,110 +61,100 @@ export const viewport: Viewport = {
 };
 
 /** Bump this on each deploy to force clients to unregister old SW and clear caches */
-const BUILD_TAG = "sw-flush-2025-09-26-i";
+const BUILD_TAG = "sw-flush-2025-09-26-k";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const snipcartKey = process.env.NEXT_PUBLIC_SNIPCART_KEY;
   const hasSnipcart = !!snipcartKey;
 
   return (
-    <ClerkProvider>
-      <html lang="en" suppressHydrationWarning>
-        <head>
-          {/* Build/debug marker so you can confirm the new layout is live */}
-          <meta name="x-build-tag" content={BUILD_TAG} />
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Build/debug marker so you can confirm the new layout is live */}
+        <meta name="x-build-tag" content={BUILD_TAG} />
 
-          {/* JSON-LD (Organization) */}
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{
-              __html: JSON.stringify({
-                "@context": "https://schema.org",
-                "@type": "Organization",
-                name: "Digital Products Artisan",
-                url: "https://digitalproductsartisan.com",
-                logo: "https://digitalproductsartisan.com/images/logo-new.png",
-              }),
-            }}
-          />
+        {/* JSON-LD (Organization) */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "Digital Products Artisan",
+              url: "https://digitalproductsartisan.com",
+              logo: "https://digitalproductsartisan.com/images/logo-new.png",
+            }),
+          }}
+        />
 
-          {/* Snipcart v3 CSS + preconnect (only if key present) */}
-          {hasSnipcart && (
-            <>
-              <link
-                rel="preconnect"
-                href="https://app.snipcart.com"
-                crossOrigin="anonymous"
-              />
-              <link
-                rel="preconnect"
-                href="https://cdn.snipcart.com"
-                crossOrigin="anonymous"
-              />
-              <link
-                rel="stylesheet"
-                href="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.css"
-              />
-            </>
-          )}
-        </head>
+        {/* Snipcart v3 CSS + preconnect (only if key present) */}
+        {hasSnipcart && (
+          <>
+            <link rel="preconnect" href="https://app.snipcart.com" crossOrigin="anonymous" />
+            <link rel="preconnect" href="https://cdn.snipcart.com" crossOrigin="anonymous" />
+            <link
+              rel="stylesheet"
+              href="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.css"
+            />
+          </>
+        )}
+      </head>
 
-        <body className={inter.className} data-ui-build={BUILD_TAG}>
-          {/* One-time SW + caches flush when BUILD_TAG changes */}
-          <Script id="sw-flush" strategy="afterInteractive">
-            {`(async()=>{try{
-              const tag='${BUILD_TAG}';
-              const prev=localStorage.getItem('BUILD_TAG');
-              if(prev!==tag){
-                if('serviceWorker' in navigator){
-                  const regs=await navigator.serviceWorker.getRegistrations();
-                  for(const r of regs){ try{await r.unregister();}catch{} }
-                }
-                if('caches' in window){
-                  const keys=await caches.keys();
-                  for(const k of keys){ try{await caches.delete(k);}catch{} }
-                }
-                localStorage.setItem('BUILD_TAG', tag);
+      <body className={inter.className} data-ui-build={BUILD_TAG}>
+        {/* One-time SW + caches flush when BUILD_TAG changes */}
+        <Script id="sw-flush" strategy="afterInteractive">
+          {`(async()=>{try{
+            const tag='${BUILD_TAG}';
+            const prev=localStorage.getItem('BUILD_TAG');
+            if(prev!==tag){
+              if('serviceWorker' in navigator){
+                const regs=await navigator.serviceWorker.getRegistrations();
+                for(const r of regs){ try{await r.unregister();}catch{} }
               }
-            }catch(e){console.warn('SW flush failed', e);}})();`}
-          </Script>
+              if('caches' in window){
+                const keys=await caches.keys();
+                for(const k of keys){ try{await caches.delete(k);}catch{} }
+              }
+              localStorage.setItem('BUILD_TAG', tag);
+            }
+          }catch(e){console.warn('SW flush failed', e);}})();`}
+        </Script>
 
-          <AuthProvider>
-            <CartProvider>
-              <AutoCurrency />
+        <AuthProvider>
+          <CartProvider>
+            <AutoCurrency />
 
-              <Header />
-              {children}
-              <Footer />
-              <LiveChat />
-              <Toaster />
+            <Header />
+            {children}
+            <Footer />
+            <LiveChat />
+            <Toaster />
 
-              <noscript>
-                <div style={{ padding: 8, textAlign: "center", fontSize: 12 }}>
-                  JavaScript is required for the best experience on this site.
-                </div>
-              </noscript>
+            <noscript>
+              <div style={{ padding: 8, textAlign: "center", fontSize: 12 }}>
+                JavaScript is required for the best experience on this site.
+              </div>
+            </noscript>
 
-              {/* Snipcart JS + container (only if key present) */}
-              {hasSnipcart && (
-                <>
-                  <Script
-                    src="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.js"
-                    strategy="afterInteractive"
-                  />
-                  <div
-                    hidden
-                    id="snipcart"
-                    data-api-key={snipcartKey}
-                    data-config-modal-style="side"
-                    data-currency="EUR"
-                  />
-                </>
-              )}
-            </CartProvider>
-          </AuthProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+            {/* Snipcart JS + container (only if key present) */}
+            {hasSnipcart && (
+              <>
+                <Script
+                  src="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.js"
+                  strategy="afterInteractive"
+                />
+                <div
+                  hidden
+                  id="snipcart"
+                  data-api-key={snipcartKey}
+                  data-config-modal-style="side"
+                  data-currency="EUR"
+                />
+              </>
+            )}
+          </CartProvider>
+        </AuthProvider>
+      </body>
+    </html>
   );
 }
