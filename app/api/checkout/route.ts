@@ -7,6 +7,7 @@ import Stripe from "stripe";
 import { products } from "@/data/products";
 
 const SUPPORTED = new Set(["USD", "EUR"]);
+type AllowedMethod = "card" | "paypal" | "klarna";
 
 /* ------------------------ Utilities ------------------------ */
 function normalizeCurrency(c?: string) {
@@ -42,22 +43,31 @@ function findProductByKey(key: string | number | null | undefined) {
   );
 }
 function imageForProduct(origin: string, product: any) {
-  const rel = Array.isArray(product.images) && product.images.length
-    ? product.images[0]
-    : product.image;
+  const rel =
+    Array.isArray(product.images) && product.images.length
+      ? product.images[0]
+      : product.image;
   if (!rel) return undefined;
   return String(rel).startsWith("http") ? String(rel) : `${origin}${rel}`;
 }
 function getStripe(): Stripe {
   const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) throw new Error("Missing STRIPE_SECRET_KEY");
+  if (!key) {
+    throw new Error("Missing STRIPE_SECRET_KEY");
+  }
   return new Stripe(key);
 }
 
-/* Payment methods — mirror product flow */
-function paymentMethodsForCurrency(c?: string): Stripe.Checkout.SessionCreateParams.PaymentMethodType[] {
+/** Build allowed methods per currency; if `only` is provided and valid, restrict to that single method */
+function paymentMethodsForCurrency(
+  c?: string,
+  only?: AllowedMethod | null
+): Stripe.Checkout.SessionCreateParams.PaymentMethodType[] {
   const cur = normalizeCurrency(c);
-  return cur === "EUR" ? ["card", "klarna"] : ["card"];
+  const base: AllowedMethod[] =
+    cur === "EUR" ? ["card", "klarna", "paypal"] : ["card", "paypal"];
+  if (only && base.includes(only)) return [only];
+  return base;
 }
 
 /* ------------------------ Bundle catalog ------------------------ */
@@ -86,13 +96,14 @@ const BUNDLES: Record<string, { name: string; price: number; image: string }> = 
 
 /* -------------------- Core session builders -------------------- */
 async function createSessionFromSingle(opts: {
-  productKey: string | number;
+  productKey: string | number; // id or slug
   qty?: number;
-  currency?: string;
+  currency?: string; // USD/EUR
   origin: string;
+  onlyMethod?: AllowedMethod | null;
 }) {
   const stripe = getStripe();
-  const { productKey, qty = 1, currency = "EUR", origin } = opts;
+  const { productKey, qty = 1, currency = "EUR", origin, onlyMethod } = opts;
 
   const product = findProductByKey(productKey);
   if (!product) throw new Error(`Unknown product ${productKey}`);
@@ -103,21 +114,23 @@ async function createSessionFromSingle(opts: {
 
   const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = priceId
     ? [{ price: priceId, quantity: qty }]
-    : [{
-        quantity: qty,
-        price_data: {
-          currency: lcCurrency(currency),
-          unit_amount: toMinorUnits(priceNumber),
-          product_data: {
-            name: product.title,
-            description: product.description?.slice(0, 400),
-            images: (() => {
-              const img = imageForProduct(origin, product);
-              return img ? [img] : [];
-            })(),
+    : [
+        {
+          quantity: qty,
+          price_data: {
+            currency: lcCurrency(currency),
+            unit_amount: toMinorUnits(priceNumber),
+            product_data: {
+              name: product.title,
+              description: product.description?.slice(0, 400),
+              images: (() => {
+                const img = imageForProduct(origin, product);
+                return img ? [img] : [];
+              })(),
+            },
           },
         },
-      }];
+      ];
 
   const prodPath = product.slug
     ? `/products/${encodeURIComponent(String(product.slug))}`
@@ -125,7 +138,7 @@ async function createSessionFromSingle(opts: {
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
-    payment_method_types: paymentMethodsForCurrency(currency),
+    payment_method_types: paymentMethodsForCurrency(currency, onlyMethod),
     line_items,
     allow_promotion_codes: true,
     automatic_tax: { enabled: true },
@@ -148,37 +161,45 @@ async function createSessionFromSingle(opts: {
 }
 
 async function createSessionFromBundle(opts: {
-  handle: string;
+  handle: string; // bundle slug (e.g. "complete-creator-bundle")
   qty?: number;
   currency?: string;
   origin: string;
+  onlyMethod?: AllowedMethod | null;
 }) {
   const stripe = getStripe();
-  const { handle, qty = 1, currency = "EUR", origin } = opts;
+  const { handle, qty = 1, currency = "EUR", origin, onlyMethod } = opts;
 
   const b = BUNDLES[handle];
   if (!b) throw new Error(`Unknown bundle: ${handle}`);
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
-    payment_method_types: paymentMethodsForCurrency(currency),
-    line_items: [{
-      quantity: qty,
-      price_data: {
-        currency: lcCurrency(currency),
-        unit_amount: toMinorUnits(b.price),
-        product_data: {
-          name: b.name,
-          images: [b.image.startsWith("http") ? b.image : `${origin}${b.image}`],
+    payment_method_types: paymentMethodsForCurrency(currency, onlyMethod),
+    line_items: [
+      {
+        quantity: qty,
+        price_data: {
+          currency: lcCurrency(currency),
+          unit_amount: toMinorUnits(b.price),
+          product_data: {
+            name: b.name,
+            images: [b.image.startsWith("http") ? b.image : `${origin}${b.image}`],
+          },
         },
       },
-    }],
+    ],
     allow_promotion_codes: true,
     automatic_tax: { enabled: true },
     billing_address_collection: "auto",
     submit_type: "pay",
     client_reference_id: `bundle:${handle}`,
-    metadata: { kind: "bundle", bundle: handle, qty: String(qty), currency },
+    metadata: {
+      kind: "bundle",
+      bundle: handle,
+      qty: String(qty),
+      currency,
+    },
     success_url: `${origin}/thank-you?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/bundles/${handle}`,
   });
@@ -196,13 +217,25 @@ export async function GET(req: NextRequest) {
     const productId = url.searchParams.get("productId");
     const qty = Math.max(1, Number(url.searchParams.get("qty") ?? 1));
     const currency = normalizeCurrency(url.searchParams.get("currency") ?? "EUR");
+    const onlyParam = url.searchParams.get("only")?.toLowerCase() as
+      | AllowedMethod
+      | undefined;
+    const onlyMethod: AllowedMethod | null =
+      onlyParam && ["card", "paypal", "klarna"].includes(onlyParam) ? onlyParam : null;
+
     const origin = siteBase(req);
 
     if (!slug && bundleId) slug = `bundle:${bundleId}`;
 
     if (slug && slug.startsWith("bundle:")) {
       const handle = slug.replace(/^bundle:/, "");
-      const redirectUrl = await createSessionFromBundle({ handle, qty, currency, origin });
+      const redirectUrl = await createSessionFromBundle({
+        handle,
+        qty,
+        currency,
+        origin,
+        onlyMethod,
+      });
       return NextResponse.redirect(redirectUrl, { status: 303 });
     }
 
@@ -211,11 +244,19 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Missing productId or slug" }, { status: 400 });
     }
 
-    const redirectUrl = await createSessionFromSingle({ productKey, qty, currency, origin });
+    const redirectUrl = await createSessionFromSingle({
+      productKey,
+      qty,
+      currency,
+      origin,
+      onlyMethod,
+    });
+
     return NextResponse.redirect(redirectUrl, { status: 303 });
   } catch (err: any) {
     console.error("Checkout GET error:", err);
-    return NextResponse.json({ error: err?.message || "Checkout error" }, { status: 500 });
+    const msg = err?.message || "Checkout error";
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
 
@@ -226,12 +267,26 @@ export async function POST(req: NextRequest) {
     const origin = siteBase(req);
     const body = await req.json().catch(() => ({} as any));
 
+    const methodParam = (body?.method || body?.only)?.toString()?.toLowerCase() as
+      | AllowedMethod
+      | undefined;
+    const onlyMethod: AllowedMethod | null =
+      methodParam && ["card", "paypal", "klarna"].includes(methodParam)
+        ? methodParam
+        : null;
+
     // Bundle
     if (body?.bundleId || (typeof body?.slug === "string" && body.slug.startsWith("bundle:"))) {
       const handle = body.bundleId ?? String(body.slug).replace(/^bundle:/, "");
       const qty = Math.max(1, Number(body?.qty ?? 1));
       const currency = normalizeCurrency(body?.currency ?? "EUR");
-      const url = await createSessionFromBundle({ handle, qty, currency, origin });
+      const url = await createSessionFromBundle({
+        handle,
+        qty,
+        currency,
+        origin,
+        onlyMethod,
+      });
       return NextResponse.json({ url });
     }
 
@@ -240,15 +295,22 @@ export async function POST(req: NextRequest) {
       const qty = Math.max(1, Number(body?.qty ?? 1));
       const currency = normalizeCurrency(body?.currency ?? "EUR");
       const productKey = String(body.productId ?? body.slug);
-      const url = await createSessionFromSingle({ productKey, qty, currency, origin });
+      const url = await createSessionFromSingle({
+        productKey,
+        qty,
+        currency,
+        origin,
+        onlyMethod,
+      });
       return NextResponse.json({ url });
     }
 
     // Raw price IDs
     if (Array.isArray(body?.line_items) && body.line_items.length) {
+      const currency = normalizeCurrency(body?.currency ?? "EUR");
       const session = await stripe.checkout.sessions.create({
         mode: (body.mode as "payment" | undefined) ?? "payment",
-        payment_method_types: paymentMethodsForCurrency(body?.currency),
+        payment_method_types: paymentMethodsForCurrency(currency, onlyMethod),
         line_items: body.line_items,
         allow_promotion_codes: true,
         automatic_tax: { enabled: true },
@@ -260,7 +322,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ url: session.url });
     }
 
-    // Catalog-resolved items
+    // Items resolved from our catalog
     if (Array.isArray(body?.items) && body.items.length) {
       const currency = normalizeCurrency(body?.currency ?? "EUR");
       const resolved: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
@@ -302,7 +364,7 @@ export async function POST(req: NextRequest) {
 
       const session = await stripe.checkout.sessions.create({
         mode: (body.mode as "payment" | undefined) ?? "payment",
-        payment_method_types: paymentMethodsForCurrency(currency),
+        payment_method_types: paymentMethodsForCurrency(currency, onlyMethod),
         line_items: resolved,
         allow_promotion_codes: true,
         automatic_tax: { enabled: true },

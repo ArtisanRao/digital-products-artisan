@@ -12,6 +12,7 @@ import { CreditCard, Lock, CheckCircle } from "lucide-react";
 import { useCart } from "@/contexts/cart-context";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
+import { getPreferredCurrency } from "@/lib/currency";
 
 interface PaymentFormProps {
   onSuccess: (orderId: string) => void;
@@ -21,7 +22,7 @@ export default function PaymentForm({ onSuccess }: PaymentFormProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"card" | "paypal">("card");
   const { items, total, clearCart } = useCart();
-  const { user } = useAuth(); // { name?: string; email?: string } | null
+  const { user } = useAuth(); // optional user info
   const { toast } = useToast();
 
   const [cardDetails, setCardDetails] = useState({
@@ -36,14 +37,45 @@ export default function PaymentForm({ onSuccess }: PaymentFormProps) {
     setIsProcessing(true);
 
     try {
-      // Create payment intent
+      // If PayPal is chosen, start a Stripe Checkout session (PayPal only) and redirect.
+      if (paymentMethod === "paypal") {
+        if (!items?.length) throw new Error("Your cart is empty.");
+
+        // Build a minimal payload that our /api/checkout understands
+        const payloadItems = items.map((it: any) => ({
+          id: it?.id ?? undefined,
+          slug: it?.slug ?? undefined,
+          qty: it?.qty ?? it?.quantity ?? 1,
+        }));
+
+        const currency = String(getPreferredCurrency?.() ?? "EUR").toUpperCase();
+
+        const res = await fetch("/api/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            items: payloadItems,
+            currency,
+            method: "paypal", // 👈 ask API to allow PayPal only
+          }),
+        });
+
+        const data = await res.json();
+        if (!res.ok || !data?.url) {
+          throw new Error(data?.error || "Could not start PayPal checkout");
+        }
+
+        window.location.href = data.url;
+        return; // stop here; we leave the page
+      }
+
+      // ----- Card flow (your existing mocked/intent flow) -----
       const paymentResponse = await fetch("/api/create-payment-intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           amount: total,
           metadata: {
-            // ✅ keep metadata as strings; no user.id in our AuthContext
             userEmail: user?.email ?? "",
             userName: user?.name ?? "",
             items: JSON.stringify(items),
@@ -51,15 +83,13 @@ export default function PaymentForm({ onSuccess }: PaymentFormProps) {
         }),
       });
 
-      const { clientSecret, paymentIntentId, error: piError } = await paymentResponse.json();
-      if (!paymentResponse.ok) {
-        throw new Error(piError || "Failed to create payment intent");
-      }
+      const { clientSecret, paymentIntentId, error: piError } =
+        await paymentResponse.json();
+      if (!paymentResponse.ok) throw new Error(piError || "Failed to create payment intent");
 
-      // (Simulate) payment processing – replace with real SDK confirmation as needed
+      // Simulate payment processing (replace with real SDK confirm)
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      // Confirm payment
       const confirmResponse = await fetch("/api/confirm-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -72,11 +102,9 @@ export default function PaymentForm({ onSuccess }: PaymentFormProps) {
       });
 
       const { order, error: confirmError } = await confirmResponse.json();
-      if (!confirmResponse.ok) {
-        throw new Error(confirmError || "Payment confirmation failed");
-      }
+      if (!confirmResponse.ok) throw new Error(confirmError || "Payment confirmation failed");
 
-      // Send confirmation email
+      // Fire & forget confirmation email
       await fetch("/api/send-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -99,10 +127,11 @@ export default function PaymentForm({ onSuccess }: PaymentFormProps) {
       });
 
       onSuccess(order.id);
-    } catch (error) {
+    } catch (error: any) {
+      console.error(error);
       toast({
         title: "Payment Failed",
-        description: "Please try again or contact support.",
+        description: error?.message || "Please try again or contact support.",
         variant: "destructive",
       });
     } finally {
@@ -151,7 +180,9 @@ export default function PaymentForm({ onSuccess }: PaymentFormProps) {
                 <Input
                   id="cardName"
                   value={cardDetails.name}
-                  onChange={(e) => setCardDetails((prev) => ({ ...prev, name: e.target.value }))}
+                  onChange={(e) =>
+                    setCardDetails((prev) => ({ ...prev, name: e.target.value }))
+                  }
                   placeholder="John Doe"
                   required
                 />
@@ -162,7 +193,9 @@ export default function PaymentForm({ onSuccess }: PaymentFormProps) {
                 <Input
                   id="cardNumber"
                   value={cardDetails.number}
-                  onChange={(e) => setCardDetails((prev) => ({ ...prev, number: e.target.value }))}
+                  onChange={(e) =>
+                    setCardDetails((prev) => ({ ...prev, number: e.target.value }))
+                  }
                   placeholder="1234 5678 9012 3456"
                   required
                 />
@@ -174,7 +207,9 @@ export default function PaymentForm({ onSuccess }: PaymentFormProps) {
                   <Input
                     id="expiry"
                     value={cardDetails.expiry}
-                    onChange={(e) => setCardDetails((prev) => ({ ...prev, expiry: e.target.value }))}
+                    onChange={(e) =>
+                      setCardDetails((prev) => ({ ...prev, expiry: e.target.value }))
+                    }
                     placeholder="MM/YY"
                     required
                   />
@@ -184,7 +219,9 @@ export default function PaymentForm({ onSuccess }: PaymentFormProps) {
                   <Input
                     id="cvc"
                     value={cardDetails.cvc}
-                    onChange={(e) => setCardDetails((prev) => ({ ...prev, cvc: e.target.value }))}
+                    onChange={(e) =>
+                      setCardDetails((prev) => ({ ...prev, cvc: e.target.value }))
+                    }
                     placeholder="123"
                     required
                   />
@@ -216,7 +253,7 @@ export default function PaymentForm({ onSuccess }: PaymentFormProps) {
             ) : (
               <>
                 <CheckCircle className="w-4 h-4 mr-2" />
-                Complete Purchase ${total.toFixed(2)}
+                {paymentMethod === "paypal" ? "Continue with PayPal" : `Complete Purchase $${total.toFixed(2)}`}
               </>
             )}
           </Button>
