@@ -60,7 +60,6 @@ async function handleDownload(req: NextRequest) {
       pid?: number | string;
       path?: string;
       downloadPath?: string;
-      // you may have other fields like user/email — add as needed
     };
 
     const pid = payload?.pid != null ? Number(payload.pid) : NaN;
@@ -88,8 +87,6 @@ async function handleDownload(req: NextRequest) {
     if (!stat || !stat.isFile()) return json({ error: "file_not_found" }, 404);
 
     const buf = await fs.readFile(resolved);
-    const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength); // zero-copy view
-
     const mime = guessMime(resolved);
     const filename = path.basename(resolved);
 
@@ -101,7 +98,9 @@ async function handleDownload(req: NextRequest) {
       "X-Content-Type-Options": "nosniff",
     });
 
-    return new Response(ab, { headers, status: 200 });
+    // ✅ Use Blob to avoid SharedArrayBuffer typing issues
+    const blob = new Blob([buf], { type: mime });
+    return new Response(blob, { headers, status: 200 });
   } catch (err) {
     console.error("[download] error:", err);
     return json({ error: "download_error" }, 500);
