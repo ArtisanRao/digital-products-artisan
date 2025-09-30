@@ -32,14 +32,12 @@ function guessMime(p: string): string {
 }
 
 function contentDisposition(filename: string) {
-  // RFC 5987 for non-ASCII filenames
   const ascii = filename.replace(/[/\\]/g, "_");
   const encoded = encodeURIComponent(filename).replace(/'/g, "%27");
   return `attachment; filename="${ascii}"; filename*=UTF-8''${encoded}`;
 }
 
 async function resolveProductDownloadPath(pid: number): Promise<string | null> {
-  // Build a quick lookup in case productsById isn't exported
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const byId = new Map<number, any>();
   for (const p of products as any[]) {
@@ -55,7 +53,6 @@ async function handleDownload(req: NextRequest) {
     const token = url.searchParams.get("token");
     if (!token) return json({ error: "missing_token" }, 400);
 
-    // Throws if invalid/expired
     const payload = verifyDownloadToken(token) as unknown as {
       pid?: number | string;
       path?: string;
@@ -65,7 +62,6 @@ async function handleDownload(req: NextRequest) {
     const pid = payload?.pid != null ? Number(payload.pid) : NaN;
     const explicit = payload?.path || payload?.downloadPath || null;
 
-    // Resolve relative path from token or by product id
     let rel: string | null = explicit ?? null;
     if (!rel) {
       if (!Number.isFinite(pid)) return json({ error: "invalid_product" }, 400);
@@ -73,20 +69,22 @@ async function handleDownload(req: NextRequest) {
       if (!rel) return json({ error: "no_download_for_product" }, 404);
     }
 
-    // All files live under /private (NOT /public)
     const FILE_ROOT = path.join(process.cwd(), "private");
 
-    // Normalize and prevent traversal
     const safeRel = rel.replace(/^[/\\]+/, "");
     const absPath = path.join(FILE_ROOT, safeRel);
     const resolved = path.resolve(absPath);
     if (!resolved.startsWith(FILE_ROOT)) return json({ error: "invalid_path" }, 400);
 
-    // Ensure file exists
     const stat = await fs.stat(resolved).catch(() => null);
     if (!stat || !stat.isFile()) return json({ error: "file_not_found" }, 404);
 
     const buf = await fs.readFile(resolved);
+
+    // ✅ Deep-copy to guaranteed ArrayBuffer (never SharedArrayBuffer)
+    const ab = new ArrayBuffer(buf.byteLength);
+    new Uint8Array(ab).set(buf);
+
     const mime = guessMime(resolved);
     const filename = path.basename(resolved);
 
@@ -98,9 +96,7 @@ async function handleDownload(req: NextRequest) {
       "X-Content-Type-Options": "nosniff",
     });
 
-    // ✅ Use Blob to avoid SharedArrayBuffer typing issues
-    const blob = new Blob([buf], { type: mime });
-    return new Response(blob, { headers, status: 200 });
+    return new Response(ab, { headers, status: 200 });
   } catch (err) {
     console.error("[download] error:", err);
     return json({ error: "download_error" }, 500);
@@ -112,7 +108,6 @@ export async function GET(req: NextRequest) {
 }
 
 export async function HEAD(req: NextRequest) {
-  // Some clients probe with HEAD; reuse logic but omit body.
   const res = await handleDownload(req);
   if (!res.body) return res;
   return new Response(null, { status: res.status, headers: res.headers });
