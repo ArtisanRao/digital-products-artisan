@@ -55,6 +55,7 @@ const FIX_BY_TITLE: Record<string, { forceSlug?: string; hide?: boolean }> = {
   [tnorm("The Art Of Giving No Fucks")]: { forceSlug: "self-help-and-how-to" },
 };
 
+// NOTE: We keep slugs normalized, but links use encodeURIComponent to support & $ ) safely.
 function toSlug(s: string) {
   return s
     .toLowerCase()
@@ -160,10 +161,12 @@ export async function generateMetadata(props: any) {
   const m = META[slug];
   const title = m ? `${m.title} | Digital Products Artisan` : "Digital Products | Digital Products Artisan";
   const description = m?.description ?? "Browse our curated digital products.";
+  const canonical = `https://digitalproductsartisan.com/categories/${encodeURIComponent(slug)}`;
   return {
     title,
     description,
-    openGraph: { title, description, type: "website" },
+    alternates: { canonical },
+    openGraph: { title, description, type: "website", url: canonical },
     twitter: { card: "summary_large_image", title, description },
   };
 }
@@ -227,7 +230,11 @@ export default async function CategoryPage(props: any) {
     const images = deduped.map((src) =>
       src.includes("?") ? `${src}&v=${UI_VERSION}` : `${src}?v=${UI_VERSION}`
     );
-    const href = `/products/${p.slug ?? encodeURIComponent(String(p.id))}`;
+
+    // 🔐 IMPORTANT: URL-encode slug (supports &, $, ), spaces, unicode, etc.)
+    const seg = encodeURIComponent(String(p.slug ?? p.id));
+    const href = `/products/${seg}`;
+
     return {
       id: p.id,
       title: p.title,
@@ -235,7 +242,7 @@ export default async function CategoryPage(props: any) {
       price: p.price,
       images,        // cover first, then up to 3 extras
       description: p.description,
-      href,          // reliable link
+      href,          // reliable link (encoded)
     };
   };
 
@@ -251,77 +258,4 @@ export default async function CategoryPage(props: any) {
             for(const r of regs){ try{await r.unregister();}catch(_){} }
           }
           if('caches' in window){
-            const keys = await caches.keys();
-            for(const k of keys){ if(/^(workbox|next-pwa|static-|pages-cache-)/.test(k)) { try{await caches.delete(k);}catch(_){} } }
-          }
-        }catch(e){console.warn('SW reset failed', e);} })();`}
-      </Script>
-
-      <h1 className="text-3xl md:text-4xl font-bold">{meta.title}{activeSub ? `: ${ (groups.get(activeSub)?.label ?? activeSub).replace(/\b\w/g,(m)=>m.toUpperCase()) }` : ""}</h1>
-      <InlineMore text={meta.description} lines={1} minChars={40} className="mt-1 text-gray-700" />
-
-      {/* Subcategory pills (only when multiple groups and not in a narrowed view) */}
-      {!activeSub && groups.size > 1 && (
-        <div className="mt-4 flex flex-wrap gap-2">
-          {Array.from(groups.entries())
-            .filter(([k]) => k !== "__none__")
-            .map(([k, g]) => (
-              <Link
-                key={k}
-                href={{ pathname: `/categories/${slug}`, query: { sub: k } }}
-                prefetch={false}
-                className="rounded-full border px-3 py-1.5 text-sm hover:bg-muted/30"
-                aria-label={`View subcategory ${g.label}`}
-              >
-                {g.label}
-              </Link>
-            ))}
-        </div>
-      )}
-
-      {totalVisible ? (
-        activeSub ? (
-          // Focused subcategory view
-          <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" data-ui={`category-grid@${UI_VERSION}:sub`}>
-            {visibleGroups.get(activeSub)!.items.map((p) => (
-              <ProductCardV4 key={`${UI_VERSION}:${String(p.slug ?? p.id)}`} {...toCard(p)} />
-            ))}
-          </div>
-        ) : (
-          // Category overview with grouped sections
-          <div className="mt-6 space-y-10">
-            {Array.from(groups.entries()).map(([k, g]) => (
-              <section key={k} data-sub={k}>
-                <div className="mb-3 flex items-center justify-between">
-                  <h2 className="text-xl font-semibold">{g.label}</h2>
-                  {k !== "__none__" && (
-                    <Link
-                      href={{ pathname: `/categories/${slug}`, query: { sub: k } }}
-                      prefetch={false}
-                      className="text-sm underline"
-                      aria-label={`View all in ${g.label}`}
-                    >
-                      View all →
-                    </Link>
-                  )}
-                </div>
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  {g.items.map((p) => (
-                    <ProductCardV4 key={`${UI_VERSION}:${String(p.slug ?? p.id)}`} {...toCard(p)} />
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
-        )
-      ) : (
-        <div className="mt-8">
-          <p className="text-gray-600">No products in {activeSub ? "this subcategory" : "this category"} yet.</p>
-          <Link href="/products" prefetch={false} className="mt-3 inline-block underline">
-            Browse all products →
-          </Link>
-        </div>
-      )}
-    </main>
-  );
-}
+            const
