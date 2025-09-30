@@ -2,12 +2,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import Link from "next/link";
-import Script from "next/script";
 import InlineMore from "@/components/ui/inline-more";
 import { products } from "@/data/products";
 import ProductCardV4 from "../../../components/shop/ProductCardV4";
 
-// ── Force fresh SSR + Node runtime (we use fs) ───────────────────────────────
 export const runtime = "nodejs";
 export const revalidate = 0;
 export const dynamic = "force-dynamic";
@@ -15,7 +13,6 @@ export const fetchCache = "force-no-store";
 
 const UI_VERSION = "cat-v16-subviews-1main+3thumbs";
 
-// ---- Category metadata (normalized slugs) ----
 const META: Record<string, { title: string; description: string }> = {
   "ai-and-chatgpt-guides":       { title: "AI & ChatGPT Guides",     description: "Guides, prompts and AI learning resources." },
   "planners-and-productivity":   { title: "Planners & Productivity", description: "Digital planners, journals and productivity tools." },
@@ -33,7 +30,6 @@ const META: Record<string, { title: string; description: string }> = {
   "social-media-kits":           { title: "Social Media Kits",       description: "Post templates and brandable assets for socials." },
 };
 
-// Backward-compat slug aliases (old → new)
 const LEGACY_TO_NEW: Record<string, string> = {
   "planners-productivity": "planners-and-productivity",
   "plr-mrr-bundles": "plr-and-mrr-bundles",
@@ -44,7 +40,6 @@ const LEGACY_TO_NEW: Record<string, string> = {
 
 const pub = (...p: string[]) => path.join(process.cwd(), "public", ...p);
 
-// ----------------------- exact fixes -----------------------
 const tnorm = (s: string) => s.toLowerCase().trim();
 
 const FIX_BY_TITLE: Record<string, { forceSlug?: string; hide?: boolean }> = {
@@ -55,7 +50,6 @@ const FIX_BY_TITLE: Record<string, { forceSlug?: string; hide?: boolean }> = {
   [tnorm("The Art Of Giving No Fucks")]: { forceSlug: "self-help-and-how-to" },
 };
 
-// NOTE: We keep slugs normalized, but links use encodeURIComponent to support & $ ) safely.
 function toSlug(s: string) {
   return s
     .toLowerCase()
@@ -91,7 +85,6 @@ function effectiveProductCategorySlug(p: any): string | null {
   return null;
 }
 
-/* ------------ subcategory helpers (label/slug discovery) ------------ */
 const SUB_LABEL_KEYS = ["subcategory", "subCategory", "subcat", "subCat", "sub", "collection"];
 const SUB_SLUG_KEYS  = ["subcategorySlug", "subCategorySlug", "subSlug"];
 
@@ -111,8 +104,6 @@ function effectiveSubSlug(p: any): string | null {
   return null;
 }
 
-/* ------------ thumbs & card images: 1 main + 3 thumbs ------------ */
-// Read up to N thumbs from /public/images/products/<slug>/thumb-*.ext (numeric sort)
 function readProductThumbs(slug?: string, max = 3): string[] {
   if (!slug) return [];
   const dir = pub("images", "products", slug);
@@ -129,8 +120,6 @@ function readProductThumbs(slug?: string, max = 3): string[] {
   return names.map((n) => `/images/products/${slug}/${n}`);
 }
 
-// Build images for the card: cover + up to 3 extras.
-// Prefer product.images (so cards match product page), then fallback to filesystem thumbs.
 function buildCardImages(p: any): string[] {
   const productImages = Array.isArray(p.images) ? (p.images as string[]) : [];
   const cover = (productImages[0] ?? p.image ?? "/images/placeholder.jpg") as string;
@@ -142,10 +131,9 @@ function buildCardImages(p: any): string[] {
     .filter((src) => src && src !== cover)
     .slice(0, 3);
 
-  return [cover, ...extras]; // <= 4 total (1 main + 3 thumbs)
+  return [cover, ...extras];
 }
 
-// Static params for new and legacy slugs (harmless even with force-dynamic)
 export function generateStaticParams() {
   const newSlugs = Object.keys(META);
   const legacySlugs = Object.keys(LEGACY_TO_NEW);
@@ -154,7 +142,6 @@ export function generateStaticParams() {
 
 const normalizeSlug = (s: string) => LEGACY_TO_NEW[s] ?? s;
 
-// ✅ Use `any` for props to avoid Next’s PageProps constraint (some templates expect Promise)
 export async function generateMetadata(props: any) {
   const raw = String(props?.params?.slug ?? "");
   const slug = normalizeSlug(raw);
@@ -171,13 +158,11 @@ export async function generateMetadata(props: any) {
   };
 }
 
-// ✅ Same trick here: props as `any`, then safely read params.slug & searchParams.sub
 export default async function CategoryPage(props: any) {
   const raw = String(props?.params?.slug ?? "");
   const slug = normalizeSlug(raw);
   const meta = META[slug];
 
-  // optional subcategory via search params (?sub=<slug>)
   const subParam = String(props?.searchParams?.sub ?? "").trim();
   const activeSub = subParam ? toSlug(subParam) : null;
 
@@ -199,13 +184,11 @@ export default async function CategoryPage(props: any) {
     );
   }
 
-  // Filter by effective slug and exclude “hidden” products
   const catProducts = products.filter((p) => {
     const eff = effectiveProductCategorySlug(p);
     return eff !== "__HIDE__" && eff === slug;
   });
 
-  // Group by subcategory (slug) → { label, items[] }
   const groups = new Map<string, { label: string; items: any[] }>();
   for (const p of catProducts) {
     const sslug = effectiveSubSlug(p) ?? "__none__";
@@ -215,7 +198,6 @@ export default async function CategoryPage(props: any) {
     groups.get(key)!.items.push(p);
   }
 
-  // If a specific subcategory is requested, narrow to it
   let visibleGroups = groups;
   if (activeSub) {
     visibleGroups = new Map();
@@ -223,7 +205,6 @@ export default async function CategoryPage(props: any) {
     if (pick) visibleGroups.set(activeSub, pick);
   }
 
-  // Helper to map products → ProductCardV4 props (1 main + 3 thumbs)
   const toCard = (p: any) => {
     const imagesRaw = buildCardImages(p);
     const deduped = Array.from(new Set(imagesRaw)) as string[];
@@ -231,7 +212,6 @@ export default async function CategoryPage(props: any) {
       src.includes("?") ? `${src}&v=${UI_VERSION}` : `${src}?v=${UI_VERSION}`
     );
 
-    // 🔐 IMPORTANT: URL-encode slug (supports &, $, ), spaces, unicode, etc.)
     const seg = encodeURIComponent(String(p.slug ?? p.id));
     const href = `/products/${seg}`;
 
@@ -240,9 +220,9 @@ export default async function CategoryPage(props: any) {
       title: p.title,
       slug: p.slug,
       price: p.price,
-      images,        // cover first, then up to 3 extras
+      images,
       description: p.description,
-      href,          // reliable link (encoded)
+      href,
     };
   };
 
@@ -250,12 +230,71 @@ export default async function CategoryPage(props: any) {
 
   return (
     <main className="container mx-auto px-4 py-12" data-ui={`CategoryPage@${UI_VERSION}`}>
-      {/* One-time kill of any old SW/cache that may be serving stale bundles */}
-      <Script id="sw-reset-cat" strategy="afterInteractive">
-        {`(async()=>{try{
-          if('serviceWorker' in navigator){
-            const regs = await navigator.serviceWorker.getRegistrations();
-            for(const r of regs){ try{await r.unregister();}catch(_){} }
-          }
-          if('caches' in window){
-            const
+      <h1 className="text-3xl md:text-4xl font-bold">
+        {meta.title}
+        {activeSub ? `: ${(groups.get(activeSub)?.label ?? activeSub).replace(/\b\w/g,(m)=>m.toUpperCase())}` : ""}
+      </h1>
+      <InlineMore text={meta.description} lines={1} minChars={40} className="mt-1 text-gray-700" />
+
+      {!activeSub && groups.size > 1 && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {Array.from(groups.entries())
+            .filter(([k]) => k !== "__none__")
+            .map(([k, g]) => (
+              <Link
+                key={k}
+                href={{ pathname: `/categories/${encodeURIComponent(slug)}`, query: { sub: k } }}
+                prefetch={false}
+                className="rounded-full border px-3 py-1.5 text-sm hover:bg-muted/30"
+                aria-label={`View subcategory ${g.label}`}
+              >
+                {g.label}
+              </Link>
+            ))}
+        </div>
+      )}
+
+      {totalVisible ? (
+        activeSub ? (
+          <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" data-ui={`category-grid@${UI_VERSION}:sub`}>
+            {visibleGroups.get(activeSub)!.items.map((p) => (
+              <ProductCardV4 key={`${UI_VERSION}:${String(p.slug ?? p.id)}`} {...toCard(p)} />
+            ))}
+          </div>
+        ) : (
+          <div className="mt-6 space-y-10">
+            {Array.from(groups.entries()).map(([k, g]) => (
+              <section key={k} data-sub={k}>
+                <div className="mb-3 flex items-center justify-between">
+                  <h2 className="text-xl font-semibold">{g.label}</h2>
+                  {k !== "__none__" && (
+                    <Link
+                      href={{ pathname: `/categories/${encodeURIComponent(slug)}`, query: { sub: k } }}
+                      prefetch={false}
+                      className="text-sm underline"
+                      aria-label={`View all in ${g.label}`}
+                    >
+                      View all →
+                    </Link>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {g.items.map((p) => (
+                    <ProductCardV4 key={`${UI_VERSION}:${String(p.slug ?? p.id)}`} {...toCard(p)} />
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        )
+      ) : (
+        <div className="mt-8">
+          <p className="text-gray-600">No products in {activeSub ? "this subcategory" : "this category"} yet.</p>
+          <Link href="/products" prefetch={false} className="mt-3 inline-block underline">
+            Browse all products →
+          </Link>
+        </div>
+      )}
+    </main>
+  );
+}
