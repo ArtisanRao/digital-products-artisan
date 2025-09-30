@@ -1,10 +1,9 @@
 // data/categories.ts
 export type Category = {
   label: string;
-  slug: string;
-  image: string; // /images/categories/<slug>/card.jpg
+  slug: string;           // may include &, $, ), spaces, unicode, etc.
+  image: string;          // /images/categories/<slug>/card.jpg
   description: string;
-
   /**
    * Optional curated products to preview under the category title
    * on the “All Categories” page. Use product slugs (preferred) or ids.
@@ -36,9 +35,7 @@ const BASE: Array<Omit<Category, "image">> = [
     label: "AI & ChatGPT Guides",
     slug: "ai-and-chatgpt-guides",
     description: "Guides, prompts and AI learning resources.",
-    topProducts: [
-      { slug: "ai-mastery-video-course" }, // example — adjust to your real slugs
-    ],
+    topProducts: [{ slug: "ai-mastery-video-course" }],
   },
   {
     label: "Planners & Productivity",
@@ -55,10 +52,7 @@ const BASE: Array<Omit<Category, "image">> = [
     label: "PLR & MRR Bundles",
     slug: "plr-and-mrr-bundles",
     description: "Done-for-you PLR/MRR products and kits.",
-    topProducts: [
-      { slug: "plr-and-mrr-bundles" },
-      { slug: "plr-toolkit" }, // optional extra preview
-    ],
+    topProducts: [{ slug: "plr-and-mrr-bundles" }, { slug: "plr-toolkit" }],
   },
   {
     label: "Video Courses & Training",
@@ -118,7 +112,7 @@ const BASE: Array<Omit<Category, "image">> = [
 /** Ensure every category points to its curated cover */
 export const CATEGORIES: Category[] = BASE.map((c) => ({
   ...c,
-  image: `/images/categories/${c.slug}/card.jpg`,
+  image: `/images/categories/${resolveCategorySlug(c.slug)}/card.jpg`,
 }));
 
 /** Maps */
@@ -127,7 +121,7 @@ export const CATEGORY_BY_SLUG: Record<string, Category> = Object.fromEntries(
 );
 export const CATEGORY_LABELS: string[] = CATEGORIES.map((c) => c.label);
 
-/* ---- NEW/Existing: label/text → slug helpers (authoritative) ---- */
+/* ---- Label/text → slug helpers (authoritative) ---- */
 function norm(txt: string) {
   return txt
     .toLowerCase()
@@ -174,3 +168,33 @@ export function categoryImage(slug: string): string {
   const normalized = resolveCategorySlug(slug);
   return `/images/categories/${normalized}/card.jpg`;
 }
+
+/* ---------- NEW: URL-safe helpers for linking & nav ---------- */
+
+export const encodeSeg = (s: string) => encodeURIComponent(String(s));
+
+/**
+ * Build a URL-safe path to a category page.
+ * Example: categoryPath("self-help-&-how-to") → "/categories/self-help-%26-how-to"
+ * Optionally add `?sub=<encoded>` for subcategory pills.
+ */
+export function categoryPath(
+  c: Pick<Category, "slug"> | string,
+  opts?: { sub?: string }
+): string {
+  const raw = typeof c === "string" ? c : c.slug;
+  const slug = resolveCategorySlug(raw);
+  const base = `/categories/${encodeSeg(slug)}`;
+  if (opts?.sub) {
+    return `${base}?sub=${encodeSeg(opts.sub)}`;
+  }
+  return base;
+}
+
+/** Attach a computed `path` (encoded) to each category — non-breaking additive field. */
+export function withCategoryPath<T extends Category>(c: T): T & { path: string } {
+  return Object.assign({}, c, { path: categoryPath(c.slug) });
+}
+
+/** Convenience export for nav/menus: already includes a safe `path` field. */
+export const NAV_CATEGORIES = CATEGORIES.map(withCategoryPath);
