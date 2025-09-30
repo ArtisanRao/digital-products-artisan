@@ -2,11 +2,20 @@
 
 import Link from "next/link";
 import CoverImage from "@/components/ui/cover-image";
+import { categoryPath } from "@/data/categories";
 
 type Item = {
   src: string;
   title?: string;
+
+  /** If you already have a full href, we’ll use it as-is */
   href?: string;
+
+  /** Optional: category slug; if provided, we’ll build a URL-safe href */
+  slug?: string;
+
+  /** Optional: subcategory slug to append as ?sub=<encoded> */
+  sub?: string;
 };
 
 export default function CategoryGallery({ items }: { items: Item[] }) {
@@ -15,6 +24,11 @@ export default function CategoryGallery({ items }: { items: Item[] }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
       {items.map((it, i) => {
+        // Build a safe link only if needed
+        const safeHref =
+          it.href ??
+          (it.slug ? categoryPath(it.slug, it.sub ? { sub: it.sub } : undefined) : undefined);
+
         const frame = (
           <>
             <CoverImage
@@ -35,11 +49,12 @@ export default function CategoryGallery({ items }: { items: Item[] }) {
           </>
         );
 
-        return it.href ? (
+        return safeHref ? (
           <Link
             key={it.src + i}
-            href={it.href}
+            href={safeHref}
             className="block rounded-xl border bg-white hover:shadow-lg transition"
+            prefetch={false}
           >
             {frame}
           </Link>
