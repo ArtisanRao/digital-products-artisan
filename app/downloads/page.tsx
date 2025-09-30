@@ -1,14 +1,23 @@
-﻿import Link from "next/link";
+﻿// app/downloads/page.tsx
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
-type SearchParams = { [key: string]: string | string[] | undefined };
-const get = (sp: SearchParams | undefined, k: string) => Array.isArray(sp?.[k]) ? (sp?.[k] as string[])[0] : (sp?.[k] as string) || "";
+// Accept any to avoid PageProps constraint differences across Next versions.
+export default async function DownloadsPage(props: any) {
+  // In Next 15, `searchParams` may be an object or a Promise.
+  const raw = props?.searchParams;
+  const searchParams: Record<string, string | string[] | undefined> =
+    typeof raw?.then === "function" ? await raw : raw ?? {};
 
-export default function DownloadsPage({ searchParams }: { searchParams?: SearchParams }) {
-  const order = get(searchParams, "order");
-  const email = get(searchParams, "email");
-  const name = get(searchParams, "name");
+  const get = (k: string) => {
+    const v = searchParams[k];
+    return Array.isArray(v) ? v[0] : v || "";
+  };
+
+  const order = get("order");
+  const email = get("email");
+  const name = get("name");
 
   return (
     <main className="container mx-auto px-4 py-12">
@@ -24,13 +33,26 @@ export default function DownloadsPage({ searchParams }: { searchParams?: SearchP
         <div className="rounded-lg border p-4">
           <h2 className="font-semibold">Your product files</h2>
           <ul className="list-disc pl-5 mt-2 space-y-2">
-            <li><Link className="underline" href="/files/sample-product.zip">Download: sample-product.zip</Link></li>
-            <li><Link className="underline" href="/files/bonus-checklist.pdf">Bonus: checklist.pdf</Link></li>
+            {/* Replace with your real files or a signed /api/download route */}
+            <li>
+              <Link className="underline" href="/files/sample-product.zip">
+                Download: sample-product.zip
+              </Link>
+            </li>
+            <li>
+              <Link className="underline" href="/files/bonus-checklist.pdf">
+                Bonus: checklist.pdf
+              </Link>
+            </li>
           </ul>
         </div>
 
         <p className="text-sm text-gray-600">
-          Trouble downloading? Contact <Link className="underline" href="/support">support</Link>.
+          Trouble downloading? Contact{" "}
+          <Link className="underline" href="/support">
+            support
+          </Link>
+          .
         </p>
       </div>
     </main>
