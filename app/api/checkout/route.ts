@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { products } from "@/data/products";
+import { productPath } from "@/data/products";
 
 const SUPPORTED = new Set(["USD", "EUR"]);
 type AllowedMethod = "card" | "paypal" | "klarna";
@@ -55,6 +56,8 @@ function getStripe(): Stripe {
   if (!key) {
     throw new Error("Missing STRIPE_SECRET_KEY");
   }
+  // apiVersion optional; omit for default. Add if you want strict typing:
+  // return new Stripe(key, { apiVersion: "2024-06-20" as any });
   return new Stripe(key);
 }
 
@@ -132,9 +135,10 @@ async function createSessionFromSingle(opts: {
         },
       ];
 
-  const prodPath = product.slug
-    ? `/products/${encodeURIComponent(String(product.slug))}`
-    : `/products/${encodeURIComponent(String(product.id))}`;
+  // URL-safe cancel path back to product page
+  const cancelPath = productPath(product);
+  // Success URL goes to /downloads with useful params for UX
+  const success = `${origin}/downloads?order={CHECKOUT_SESSION_ID}&email={CUSTOMER_EMAIL}&name={CUSTOMER_NAME}`;
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
@@ -152,8 +156,8 @@ async function createSessionFromSingle(opts: {
       qty: String(qty),
       currency,
     },
-    success_url: `${origin}/thank-you?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${origin}${prodPath}`,
+    success_url: success,
+    cancel_url: `${origin}${cancelPath}`,
   });
 
   if (!session.url) throw new Error("Stripe session did not return a URL");
@@ -172,6 +176,8 @@ async function createSessionFromBundle(opts: {
 
   const b = BUNDLES[handle];
   if (!b) throw new Error(`Unknown bundle: ${handle}`);
+
+  const success = `${origin}/downloads?order={CHECKOUT_SESSION_ID}&email={CUSTOMER_EMAIL}&name={CUSTOMER_NAME}`;
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
@@ -200,7 +206,7 @@ async function createSessionFromBundle(opts: {
       qty: String(qty),
       currency,
     },
-    success_url: `${origin}/thank-you?session_id={CHECKOUT_SESSION_ID}`,
+    success_url: success,
     cancel_url: `${origin}/bundles/${handle}`,
   });
 
@@ -316,7 +322,7 @@ export async function POST(req: NextRequest) {
         automatic_tax: { enabled: true },
         billing_address_collection: "auto",
         submit_type: "pay",
-        success_url: `${origin}/thank-you?session_id={CHECKOUT_SESSION_ID}`,
+        success_url: `${origin}/downloads?order={CHECKOUT_SESSION_ID}&email={CUSTOMER_EMAIL}&name={CUSTOMER_NAME}`,
         cancel_url: `${origin}/cart`,
       });
       return NextResponse.json({ url: session.url });
@@ -370,7 +376,7 @@ export async function POST(req: NextRequest) {
         automatic_tax: { enabled: true },
         billing_address_collection: "auto",
         submit_type: "pay",
-        success_url: `${origin}/thank-you?session_id={CHECKOUT_SESSION_ID}`,
+        success_url: `${origin}/downloads?order={CHECKOUT_SESSION_ID}&email={CUSTOMER_EMAIL}&name={CUSTOMER_NAME}`,
         cancel_url: `${origin}/cart`,
       });
       return NextResponse.json({ url: session.url });
