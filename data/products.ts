@@ -17,7 +17,14 @@ export type Product = {
   bestseller?: boolean
   image: string
   images?: string[]
+  /** Relative to /private (e.g., "files/passive-income-ebook.zip") */
   downloadPath?: string
+}
+
+/** Build a URL-safe product path (supports &, $, ), spaces, unicode, etc.) */
+export function productPath(p: Pick<Product, "slug"> | string): string {
+  const slug = typeof p === "string" ? p : p.slug
+  return `/products/${encodeURIComponent(String(slug))}`
 }
 
 /** Keep "cover" first if present. */
@@ -122,7 +129,7 @@ const MANUAL_OVERRIDES: Record<string, Partial<Product>> = {
   "digital-wealth-ultimate-guide": { category: CATEGORY_LABELS.PASSIVE },
   "make-money-as-you-sleep":      { category: CATEGORY_LABELS.PASSIVE },
 
-  // ✸ COMPLETE SHOP WITH PLR / MRR RIGHTS — update this key to your actual product folder slug if different
+  // ✸ COMPLETE SHOP WITH PLR / MRR RIGHTS — edit slug/path to your actual file
   "complete-shop-with-plr-mrr-rights": {
     title: "✸ Buy my complete Shop with PLR / MRR Rights ✸",
     category: CATEGORY_LABELS.SHOP,
@@ -173,6 +180,8 @@ After your order is processed, you will receive a PDF document with the links to
 This listing is for a digital download. No physical product will be shipped.
 
 If you have any questions, please contact me and I will be more than happy to help!`,
+    // Example: point to a file under /private
+    // downloadPath: "files/complete-shop-with-plr-mrr-rights.zip",
   },
 }
 
