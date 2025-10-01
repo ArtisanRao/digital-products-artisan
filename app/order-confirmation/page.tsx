@@ -1,3 +1,4 @@
+// app/order-confirmation/page.tsx
 import Stripe from "stripe";
 import Link from "next/link";
 import { products, productsBySlug, Product } from "@/data/products";
@@ -49,7 +50,7 @@ export default async function OrderConfirmation({
   let items: {
     name: string;
     qty: number;
-    unit: number; // USD
+    unit: number; // currency units (USD/EUR)
     slug?: string;
     image?: string;
     downloadHref?: string;
@@ -92,11 +93,10 @@ export default async function OrderConfirmation({
             Number(li.amount_subtotal ?? li.amount_total ?? 0);
           const unit = qty > 0 ? subCents / qty / 100 : 0;
 
-          // Signed download link (7 days) if we know the local file
+          // Signed download link (default TTL ~7 days via helper) if we know the local file
           let downloadHref: string | undefined;
           if (local?.downloadPath) {
-            const exp = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
-            const token = signDownloadToken({ p: local.downloadPath, exp });
+            const token = signDownloadToken({ path: local.downloadPath });
             downloadHref = `/api/download?token=${encodeURIComponent(token)}`;
           }
 
