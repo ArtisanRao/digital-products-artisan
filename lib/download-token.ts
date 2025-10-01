@@ -15,13 +15,10 @@ export type DownloadTokenPayload = {
   /** Expiry (unix seconds) */
   exp: number;
 
-  // You can extend with user/email/order if needed
-  // email?: string;
-  // order?: string;
+  // Extend as needed (email/order/etc.)
 };
 
 const ALG = "sha256";
-const ENC: BufferEncoding = "base64url";
 const DEFAULT_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days
 
 function getSecret(explicit?: string) {
@@ -30,15 +27,32 @@ function getSecret(explicit?: string) {
   return s;
 }
 
-function b64urlEncode(obj: unknown) {
-  return Buffer.from(JSON.stringify(obj), "utf8").toString(ENC);
+/* ---------- base64url helpers (RFC 4648 §5) ---------- */
+function toBase64Url(b64: string) {
+  return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
-function b64urlDecode<T = unknown>(b64: string): T {
-  return JSON.parse(Buffer.from(b64, ENC).toString("utf8")) as T;
+function fromBase64Url(b64url: string) {
+  const b64 = b64url.replace(/-/g, "+").replace(/_/g, "/");
+  // pad to multiple of 4
+  const pad = b64.length % 4 ? 4 - (b64.length % 4) : 0;
+  return b64 + "=".repeat(pad);
 }
 
-function sign(bodyB64: string, secret: string) {
-  return crypto.createHmac(ALG, secret).update(bodyB64).digest(ENC);
+function b64urlEncode(obj: unknown) {
+  const json = JSON.stringify(obj);
+  const b64 = Buffer.from(json, "utf8").toString("base64");
+  return toBase64Url(b64);
+}
+function b64urlDecode<T = unknown>(b64url: string): T {
+  const b64 = fromBase64Url(b64url);
+  const json = Buffer.from(b64, "base64").toString("utf8");
+  return JSON.parse(json) as T;
+}
+
+function sign(bodyB64url: string, secret: string) {
+  // sign the *base64url* string, but digest in base64 then convert to base64url
+  const mac = crypto.createHmac(ALG, secret).update(bodyB64url).digest("base64");
+  return toBase64Url(mac);
 }
 
 export function signDownloadToken(
@@ -58,31 +72,30 @@ export function signDownloadToken(
     path: payload.path ?? payload.downloadPath,
     downloadPath: payload.downloadPath, // keep for backward compat
     iat: now,
-    exp: (payload.exp as number) || now + ttlSec,
+    exp: (payload as any).exp ?? now + ttlSec,
   };
 
   if (!body.pid && !body.path && !body.downloadPath) {
     throw new Error("download_token_missing_target");
   }
 
-  const bodyB64 = b64urlEncode(body);
-  const sig = sign(bodyB64, key);
-  return `${bodyB64}.${sig}`;
+  const bodyB64url = b64urlEncode(body);
+  const sigB64url = sign(bodyB64url, key);
+  return `${bodyB64url}.${sigB64url}`;
 }
 
 /** Verify token. Returns a valid payload or throws on error. */
 export function verifyDownloadToken(token: string, secret?: string): DownloadTokenPayload {
   const key = getSecret(secret);
-  const [bodyB64, sig] = (token || "").split(".");
-  if (!bodyB64 || !sig) throw new Error("bad_token");
+  const [bodyB64url, sigB64url] = (token || "").split(".");
+  if (!bodyB64url || !sigB64url) throw new Error("bad_token");
 
-  const expected = sign(bodyB64, key);
-  // timing-safe compare
-  const a = Buffer.from(sig);
-  const b = Buffer.from(expected);
+  const expected = sign(bodyB64url, key);
+  const a = Buffer.from(sigB64url, "utf8");
+  const b = Buffer.from(expected, "utf8");
   if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) throw new Error("bad_sig");
 
-  const payload = b64urlDecode<DownloadTokenPayload>(bodyB64);
+  const payload = b64urlDecode<DownloadTokenPayload>(bodyB64url);
   const now = Math.floor(Date.now() / 1000);
   if (typeof payload.exp !== "number" || now > payload.exp) throw new Error("expired");
 
