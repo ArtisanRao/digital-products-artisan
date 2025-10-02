@@ -50,19 +50,34 @@ const PRIVATE_PROTECT: RegExp[] = [
 function hasSessionCookie(req: NextRequest): boolean {
   const ck = req.cookies;
   const names = [
-    "__Secure-next-auth.session-token", // NextAuth (secure)
-    "next-auth.session-token",          // NextAuth (dev)
-    "__Secure-authjs.session-token",    // Auth.js v5+
+    "__Secure-next-auth.session-token",
+    "next-auth.session-token",
+    "__Secure-authjs.session-token",
     "authjs.session-token",
-    "session",                          // generic
+    "session",
     "auth",
     "token",
   ];
   return names.some((n) => !!ck.get(n)?.value);
 }
 
+/** Strip any leading ",", spaces, or their URL-encoded forms after "/" */
+function stripLeadingCommaSpace(pathname: string): string {
+  // Examples matched: "/, /privacy-policy", "/%2C%20/privacy-policy", "/,/%20privacy-policy"
+  return pathname.replace(/^\/(?:(?:,|%2c)+(?:\s|%20)*)+/i, "/").replace(/^\/\s+/, "/");
+}
+
 export function middleware(req: NextRequest) {
-  const { pathname, search } = req.nextUrl;
+  const { search } = req.nextUrl;
+  let pathname = req.nextUrl.pathname;
+
+  // A) Sanitize leading commas/spaces that cause GSC to request "/, /privacy-policy"
+  const trimmedOnce = stripLeadingCommaSpace(pathname);
+  if (trimmedOnce !== pathname) {
+    pathname = trimmedOnce;
+    return permRedirect(req, pathname + search);
+  }
+
   const lower = pathname.toLowerCase();
 
   /** ---------- URL normalization / SEO fixes ---------- */
@@ -72,8 +87,8 @@ export function middleware(req: NextRequest) {
     return permRedirect(req, "/");
   }
 
-  // 2) Legacy privacy page -> terms-of-service
-  if (lower === "/privacy-policy") {
+  // 2) Legacy privacy page -> terms-of-service (handle with/without trailing slash)
+  if (lower === "/privacy-policy" || lower === "/privacy-policy/") {
     return permRedirect(req, "/terms-of-service");
   }
 
@@ -83,8 +98,7 @@ export function middleware(req: NextRequest) {
     const id = Number(m[1]);
     const p = productsById[id];
     if (p?.slug) {
-      const to = `/products/${encodeURIComponent(p.slug)}${search}`;
-      return permRedirect(req, to);
+      return permRedirect(req, `/products/${encodeURIComponent(p.slug)}${search}`);
     }
   }
 
