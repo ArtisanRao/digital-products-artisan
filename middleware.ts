@@ -63,7 +63,7 @@ function hasSessionCookie(req: NextRequest): boolean {
 
 /** Strip any leading ",", spaces, or their URL-encoded forms after "/" */
 function stripLeadingCommaSpace(pathname: string): string {
-  // Examples matched: "/, /privacy-policy", "/%2C%20/privacy-policy", "/,/%20privacy-policy"
+  // Examples: "/, /privacy-policy", "/%2C%20/privacy-policy"
   return pathname.replace(/^\/(?:(?:,|%2c)+(?:\s|%20)*)+/i, "/").replace(/^\/\s+/, "/");
 }
 
@@ -71,7 +71,7 @@ export function middleware(req: NextRequest) {
   const { search } = req.nextUrl;
   let pathname = req.nextUrl.pathname;
 
-  // A) Sanitize leading commas/spaces that cause GSC to request "/, /privacy-policy"
+  // A) Sanitize leading commas/spaces that cause "/, /privacy-policy"
   const trimmedOnce = stripLeadingCommaSpace(pathname);
   if (trimmedOnce !== pathname) {
     pathname = trimmedOnce;
@@ -87,19 +87,20 @@ export function middleware(req: NextRequest) {
     return permRedirect(req, "/");
   }
 
-  // 2) Legacy privacy page -> terms-of-service (handle with/without trailing slash)
+  // 2) Legacy privacy page -> terms-of-service (with/without trailing slash)
   if (lower === "/privacy-policy" || lower === "/privacy-policy/") {
     return permRedirect(req, "/terms-of-service");
   }
 
-  // 3) Numeric product URLs (/products/123) -> canonical slug
+  // 3) Numeric product URLs (/products/123) -> canonical slug, else /products
   const m = lower.match(/^\/products\/(\d+)(?:\/)?$/);
   if (m) {
     const id = Number(m[1]);
     const p = productsById[id];
-    if (p?.slug) {
-      return permRedirect(req, `/products/${encodeURIComponent(p.slug)}${search}`);
-    }
+    const to = p?.slug
+      ? `/products/${encodeURIComponent(p.slug)}${search}`
+      : `/products`;
+    return permRedirect(req, to);
   }
 
   /** ---------- Access control (lightweight) ---------- */
