@@ -1,24 +1,30 @@
 // middleware.ts (project root)
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { productsById } from "@/data/products";
 
-/**
- * Public routes: always accessible (guest checkout included).
- */
+/** ---------- helpers ---------- */
+function permRedirect(req: NextRequest, to: string) {
+  const url = new URL(to, req.url);
+  return NextResponse.redirect(url, 308);
+}
+
+/** Public routes: always accessible (guest checkout included). */
 const PUBLIC_ALLOW: RegExp[] = [
   /^\/$/,                          // home
   /^\/products(\/.*)?$/,           // products + PDPs
   /^\/categories(\/.*)?$/,         // categories
   /^\/cart$/,                      // cart
-  /^\/checkout$/,                  // ✅ guest checkout page
+  /^\/checkout$/,                  // guest checkout page
   /^\/order-confirmation(\/.*)?$/, // confirmation page(s)
 
-  // ✅ guest access to checkout/payment APIs
+  // guest access to checkout/payment APIs
   /^\/api\/checkout(\/.*)?$/,
   /^\/api\/create-payment-intent(\/.*)?$/,
   /^\/api\/stripe\/create(\/.*)?$/,
   /^\/api\/confirm-payment(\/.*)?$/,
   /^\/api\/stripe\/webhook$/,      // webhooks never require auth
+  /^\/api\/download$/,             // signed download links must be public
 
   // auth pages should remain public
   /^\/login(\/.*)?$/,
@@ -33,16 +39,14 @@ const PUBLIC_ALLOW: RegExp[] = [
   /^\/robots\.txt$/,
 ];
 
-/**
- * Private sections that require auth.
- */
+/** Private sections that require auth. */
 const PRIVATE_PROTECT: RegExp[] = [
   /^\/dashboard(\/.*)?$/,
   /^\/account(\/.*)?$/,
   /^\/admin(\/.*)?$/,
 ];
 
-/** Dependency-free “am I logged in?” check via common session cookie names. */
+/** Dependency-free session check via common cookie names. */
 function hasSessionCookie(req: NextRequest): boolean {
   const ck = req.cookies;
   const names = [
@@ -59,13 +63,39 @@ function hasSessionCookie(req: NextRequest): boolean {
 
 export function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
+  const lower = pathname.toLowerCase();
 
-  // 1) Always allow public routes (incl. checkout + APIs)
+  /** ---------- URL normalization / SEO fixes ---------- */
+
+  // 1) Junk root variants like /$, /&, /$& → /
+  if (/^\/(?:[$&])+$/i.test(lower)) {
+    return permRedirect(req, "/");
+  }
+
+  // 2) Legacy privacy page -> terms-of-service
+  if (lower === "/privacy-policy") {
+    return permRedirect(req, "/terms-of-service");
+  }
+
+  // 3) Numeric product URLs (/products/123) -> canonical slug
+  const m = lower.match(/^\/products\/(\d+)(?:\/)?$/);
+  if (m) {
+    const id = Number(m[1]);
+    const p = productsById[id];
+    if (p?.slug) {
+      const to = `/products/${encodeURIComponent(p.slug)}${search}`;
+      return permRedirect(req, to);
+    }
+  }
+
+  /** ---------- Access control (lightweight) ---------- */
+
+  // Always allow public routes (incl. checkout & APIs)
   if (PUBLIC_ALLOW.some((re) => re.test(pathname))) {
     return NextResponse.next();
   }
 
-  // 2) Protect private areas only
+  // Protect private areas only
   if (PRIVATE_PROTECT.some((re) => re.test(pathname))) {
     if (!hasSessionCookie(req)) {
       const url = new URL("/login", req.url);
@@ -74,7 +104,7 @@ export function middleware(req: NextRequest) {
     }
   }
 
-  // 3) Everything else passes through
+  // Everything else passes through
   return NextResponse.next();
 }
 
