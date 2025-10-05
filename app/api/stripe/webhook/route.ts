@@ -7,14 +7,13 @@ import { productsById } from "@/data/products";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const STRIPE_API_VERSION: Stripe.LatestApiVersion = "2024-06-20";
-
 let _stripe: Stripe | null = null;
 function getStripe(): Stripe {
   if (_stripe) return _stripe;
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) throw new Error("STRIPE_SECRET_KEY is not set");
-  _stripe = new Stripe(key, { apiVersion: STRIPE_API_VERSION });
+  // Use SDK default (no apiVersion literal to avoid type mismatch)
+  _stripe = new Stripe(key);
   return _stripe;
 }
 
@@ -29,7 +28,7 @@ export async function POST(req: Request) {
     );
   }
 
-  // Stripe needs the raw body (App Router gives it via arrayBuffer)
+  // Stripe requires the raw body
   const rawBody = Buffer.from(await req.arrayBuffer());
 
   let event: Stripe.Event;
@@ -43,13 +42,12 @@ export async function POST(req: Request) {
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
-
     const email =
       session.customer_details?.email || session.customer_email || undefined;
 
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
 
-    // Multi-item metadata (optional)
+    // Optional multi-item metadata
     let items: Array<{ id: number; qty: number }> | null = null;
     try {
       if (session.metadata?.items) items = JSON.parse(session.metadata.items);
@@ -70,7 +68,7 @@ export async function POST(req: Request) {
         });
       }
     } else {
-      // Fallback: single productId
+      // Fallback to single productId metadata
       const pid = Number(session.metadata?.productId);
       const p = Number.isFinite(pid) ? productsById[pid]?.downloadPath : undefined;
       if (p) {
@@ -82,7 +80,6 @@ export async function POST(req: Request) {
       }
     }
 
-    // Optional: email the links
     if (email && links.length) {
       const list = links
         .map((l) => `<li><a href="${l.url}">Download product #${l.id}</a></li>`)
