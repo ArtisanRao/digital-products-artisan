@@ -56,8 +56,7 @@ function getStripe(): Stripe {
   if (!key) {
     throw new Error("Missing STRIPE_SECRET_KEY");
   }
-  // apiVersion optional; omit for default. Add if you want strict typing:
-  // return new Stripe(key, { apiVersion: "2024-06-20" as any });
+  // Let the SDK use its bundled apiVersion to avoid type pin mismatch
   return new Stripe(key);
 }
 
@@ -113,7 +112,7 @@ async function createSessionFromSingle(opts: {
 
   const priceNumber =
     typeof product.price === "number" ? product.price : Number(product.price) || 0;
-  const priceId: string | undefined = (product as any).priceId;
+  const priceId: string | undefined = (product as any).priceId || (product as any).stripePriceId;
 
   const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = priceId
     ? [{ price: priceId, quantity: qty }]
@@ -145,10 +144,11 @@ async function createSessionFromSingle(opts: {
     payment_method_types: paymentMethodsForCurrency(currency, onlyMethod),
     line_items,
     allow_promotion_codes: true,
-    automatic_tax: { enabled: true },
+    automatic_tax: { enabled: true }, // set to false if Stripe Tax not enabled in LIVE
     billing_address_collection: "auto",
     submit_type: "pay",
     client_reference_id: String(product.id),
+    customer_creation: "if_required",
     metadata: {
       kind: "product",
       productId: String(product.id),
@@ -339,7 +339,7 @@ export async function POST(req: NextRequest) {
         if (!product) continue;
 
         const qty = Math.max(1, Number(it?.qty ?? it?.quantity ?? 1));
-        const priceId: string | undefined = (product as any).priceId;
+        const priceId: string | undefined = (product as any).priceId || (product as any).stripePriceId;
 
         if (priceId) {
           resolved.push({ price: priceId, quantity: qty });
