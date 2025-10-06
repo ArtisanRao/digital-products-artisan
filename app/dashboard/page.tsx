@@ -12,6 +12,7 @@ import Image from "next/image"
 
 // ✅ single source of truth for product data
 import { productsBySlug, type Product } from "@/data/products"
+import { formatCurrency } from "@/lib/money" // ← centralized currency formatter
 
 interface Order {
   id: string
@@ -34,9 +35,6 @@ interface Subscription {
   nextBilling: string
   amount: number
 }
-
-const formatMoney = (n: number, currency = "EUR", locale = "de-DE") =>
-  new Intl.NumberFormat(locale, { style: "currency", currency }).format(n)
 
 export default function DashboardPage() {
   const { user } = useAuth()
@@ -135,7 +133,7 @@ export default function DashboardPage() {
             <div className="flex items-center">
               <CreditCard className="w-8 h-8 text-green-600 mr-4" />
               <div>
-                <p className="text-2xl font-bold text-gray-900">{formatMoney(stats.totalSpent)}</p>
+                <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats.totalSpent)}</p>
                 <p className="text-gray-600 text-sm">Total Spent</p>
               </div>
             </div>
@@ -191,7 +189,7 @@ export default function DashboardPage() {
                         <p className="text-sm text-gray-600">{new Date(order.date).toLocaleDateString()}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold">{formatMoney(order.total)}</p>
+                        <p className="font-semibold">{formatCurrency(order.total)}</p>
                         <Badge variant={order.status === "completed" ? "default" : "secondary"}>{order.status}</Badge>
                       </div>
                     </div>
@@ -210,7 +208,7 @@ export default function DashboardPage() {
                             <span className="text-sm">{item.title}</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-sm text-gray-700">{formatMoney(item.price)}</span>
+                            <span className="text-sm text-gray-700">{formatCurrency(item.price)}</span>
                             <Button size="sm" variant="outline" asChild>
                               <a href={item.downloadUrl} download>
                                 <Download className="w-4 h-4 mr-2" />
@@ -279,7 +277,7 @@ export default function DashboardPage() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold">{formatMoney(subscription.amount)}/month</p>
+                        <p className="font-semibold">{formatCurrency(subscription.amount)}/month</p>
                         <Badge variant={subscription.status === "active" ? "default" : "secondary"}>
                           {subscription.status}
                         </Badge>
