@@ -12,18 +12,23 @@ function getStripe(): Stripe {
   if (_stripe) return _stripe;
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) throw new Error("STRIPE_SECRET_KEY is not set");
-  _stripe = new Stripe(key); // use SDK default apiVersion
+  // Use SDK default (no apiVersion literal to avoid type mismatch)
+  _stripe = new Stripe(key);
   return _stripe;
 }
 
 export async function POST(req: Request) {
   const signature = req.headers.get("stripe-signature");
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
   if (!signature || !webhookSecret) {
-    return new NextResponse("Missing stripe-signature or STRIPE_WEBHOOK_SECRET", { status: 400 });
+    return new NextResponse(
+      "Missing stripe-signature or STRIPE_WEBHOOK_SECRET",
+      { status: 400 }
+    );
   }
 
-  // ⚠️ Stripe needs the raw body, not JSON-parsed
+  // Stripe requires the raw body
   const rawBody = Buffer.from(await req.arrayBuffer());
 
   let event: Stripe.Event;
@@ -39,9 +44,10 @@ export async function POST(req: Request) {
     const session = event.data.object as Stripe.Checkout.Session;
     const email =
       session.customer_details?.email || session.customer_email || undefined;
+
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
 
-    // Prefer multi-item metadata if you set it
+    // Optional multi-item metadata
     let items: Array<{ id: number; qty: number }> | null = null;
     try {
       if (session.metadata?.items) items = JSON.parse(session.metadata.items);
@@ -55,15 +61,14 @@ export async function POST(req: Request) {
       for (const { id } of items) {
         const p = productsById[id]?.downloadPath;
         if (!p) continue;
-        // NEW: token expects { path } (ttl default 7d)
-        const token = signDownloadToken({ path: p });
+        const token = signDownloadToken({ path: p }); // ttl default 7d
         links.push({
           id,
           url: `${baseUrl}/api/download?token=${encodeURIComponent(token)}`,
         });
       }
     } else {
-      // Fallback: single productId metadata
+      // Fallback to single productId metadata
       const pid = Number(session.metadata?.productId);
       const p = Number.isFinite(pid) ? productsById[pid]?.downloadPath : undefined;
       if (p) {
@@ -75,7 +80,6 @@ export async function POST(req: Request) {
       }
     }
 
-    // Optional: email the download links
     if (email && links.length) {
       const list = links
         .map((l) => `<li><a href="${l.url}">Download product #${l.id}</a></li>`)
@@ -95,7 +99,7 @@ export async function POST(req: Request) {
       }
     }
 
-    console.log("✅ Checkout completed; links:", links);
+    console.log("✅ checkout.session.completed → links:", links);
   }
 
   return NextResponse.json({ received: true });
