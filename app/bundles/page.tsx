@@ -10,7 +10,7 @@ import Link from "next/link";
 import Image from "next/image";
 import InlineMore from "@/components/ui/inline-more";
 
-// ⬇️ Single source of truth for bundles (prices, slugs, etc.)
+// Single source of truth for bundles (prices, slugs, etc.)
 import { bundles } from "./data";
 
 const formatEUR = (n: number) =>
@@ -106,7 +106,7 @@ export default function BundlesPage() {
                 />
 
                 <div className="mb-4">
-                  <h4 className="font-semibold text-gray-900 mb-2">What's included:</h4>
+                  <h4 className="font-semibold text-gray-900 mb-2">What’s included:</h4>
                   <ul className="space-y-1">
                     {(b.items ?? []).slice(0, 4).map((item, index) => (
                       <li key={index} className="text-sm text-gray-600 flex items-center">
@@ -138,7 +138,9 @@ export default function BundlesPage() {
                       <Download className="w-4 h-4 mr-1" />
                       {downloads}
                     </div>
-                  ) : <span />}
+                  ) : (
+                    <span />
+                  )}
                 </div>
               </CardContent>
 
