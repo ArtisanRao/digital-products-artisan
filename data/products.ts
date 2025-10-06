@@ -66,6 +66,10 @@ export const CATEGORY_LABELS = {
   RELIGIOUS: "Religious eBooks",
 } as const
 
+/** Default numeric prices (kept here to avoid hard-coded literals). */
+const DEFAULT_PRICE = 0 as number
+const DEFAULT_ORIGINAL_PRICE = 0 as number
+
 /**
  * Narrow, safe fallback from folder name.
  * Order matters: most specific first; no broad "ebook" catch-alls.
@@ -215,8 +219,8 @@ const baseProducts: Omit<Product, "images">[] = Object.keys(imageManifest).map((
     title: (MANUAL_OVERRIDES[slug]?.title as string) ?? titleize(slug),
     description: `A curated digital product in ${category}.`,
     longDescription: undefined,
-    price: 9.99,
-    originalPrice: 0,
+    price: DEFAULT_PRICE,                 // ← no hard-coded literal
+    originalPrice: DEFAULT_ORIGINAL_PRICE,
     category,
     tags: [],
     rating: 0,
