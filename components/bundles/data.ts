@@ -1,8 +1,4 @@
-// components/bundles/data.ts
-// Compatibility shim that adapts the central catalog (app/bundles/data.ts)
-// to the UI-friendly shape used by components. No hard-coded prices here.
-
-import type { Bundle as CatalogBundle } from "@/app/bundles/data";
+﻿import type { Bundle as CatalogBundle } from "@/app/bundles/data";
 import { bundles as catalogBundles } from "@/app/bundles/data";
 
 export type Bundle = {
@@ -15,7 +11,7 @@ export type Bundle = {
   rating: number;
   reviews: number;
   downloads: number;
-  itemCount: number;            // number of items (derived)
+  itemCount: number;            // derived
   items: string[];
   image: string;
   popular?: boolean;
@@ -36,17 +32,16 @@ export const bundles: Bundle[] = (catalogBundles as CatalogBundle[]).map((b) => 
     price,
     originalPrice: original,
     savings: pctSavings(original, price),
-    rating: b.rating ?? 0,
-    reviews: b.reviews ?? 0,
-    downloads: b.downloads ?? 0,
+    rating: (b as any).rating ?? 0,
+    reviews: (b as any).reviews ?? 0,
+    downloads: (b as any).downloads ?? 0,
     itemCount: Array.isArray(b.items) ? b.items.length : 0,
     items: b.items ?? [],
     image: b.image,
-    popular: b.popular ?? false,
+    popular: (b as any).popular ?? false,
   };
 });
 
-// Handy index if any components prefer lookup by slug.
 export const bundlesBySlug = Object.fromEntries(
   bundles.map((b) => [b.slug, b] as const)
 ) as Record<string, Bundle>;
