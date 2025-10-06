@@ -48,7 +48,8 @@ function enrichFromCatalog<T extends Partial<CartItem>>(idLike: string, base: T)
     ...base,
     title: base.title ?? p.title,
     price: typeof base.price === "number" && base.price > 0 ? base.price : p.price,
-    image: base.image ?? p.image ?? (Array.isArray(p.images) && p.images[0]) || base.image,
+    // parenthesized to avoid mixing ?? with ||
+    image: base.image ?? p.image ?? ((Array.isArray(p.images) && p.images[0]) || base.image),
   };
 }
 
