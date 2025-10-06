@@ -13,20 +13,14 @@ export function generateStaticParams() {
 const formatEUR = (n: number) =>
   new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
 
-// Keep params as a Promise to match your project's PageProps
-export default async function BundleDetailsPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  const { slug } = await params;
+export default function BundleDetailsPage({ params }: { params: { slug: string } }) {
+  const { slug } = params;
   const bundle = bundlesBySlug[slug];
   if (!bundle) return notFound();
 
-  // ✅ Robust: supports bundles with or without an `images` array
-  const imagesArr = (bundle as any).images as string[] | undefined;
-  const gallery = imagesArr?.length ? imagesArr : [bundle.image];
+  const gallery = bundle.images?.length ? bundle.images : [bundle.image];
 
+  // Same GET checkout endpoint used by products (pricing resolved server-side)
   const checkoutHref = `/api/checkout?slug=${encodeURIComponent(
     `bundle:${bundle.slug}`
   )}&qty=1&currency=EUR`;
@@ -44,8 +38,7 @@ export default async function BundleDetailsPage({
 
         <div>
           <h1 className="text-3xl md:text-4xl font-bold mb-2">{bundle.title}</h1>
-
-          {typeof (bundle as any).rating === "number" && typeof (bundle as any).reviews === "number" ? (
+          {(bundle as any).rating && (bundle as any).reviews ? (
             <div className="text-sm text-gray-600 mb-2">
               ⭐ {(bundle as any).rating} ({(bundle as any).reviews} reviews)
             </div>
@@ -67,11 +60,11 @@ export default async function BundleDetailsPage({
             ) : null}
           </div>
 
-          {Array.isArray((bundle as any).items) && (bundle as any).items.length ? (
+          {Array.isArray(bundle.items) && bundle.items.length ? (
             <div className="mb-6">
               <h2 className="font-semibold mb-2">What’s included</h2>
               <ul className="list-disc pl-5 space-y-1 text-gray-700">
-                {(bundle as any).items.map((item: string) => (
+                {bundle.items.map((item) => (
                   <li key={item}>{item}</li>
                 ))}
               </ul>
@@ -79,12 +72,14 @@ export default async function BundleDetailsPage({
           ) : null}
 
           <div className="flex gap-3">
+            {/* Checkout */}
             <Button asChild className="flex-1 bg-blue-600 text-white hover:bg-blue-700">
               <Link href={checkoutHref} prefetch={false}>
                 Get This Bundle
               </Link>
             </Button>
 
+            {/* Back button */}
             <Button
               asChild
               className="flex-1 !bg-violet-600 !text-white hover:!bg-violet-700 !border-0"
