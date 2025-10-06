@@ -121,13 +121,13 @@ function inferCategory(slug: string): string {
  */
 const MANUAL_OVERRIDES: Record<string, Partial<Product>> = {
   // Category landing niceties (if you have folders named like these)
-  "ai-and-chatgpt-guides": { title: "AI & ChatGPT Guides", category: CATEGORY_LABELS.AI },
+  "ai-and-chatgpt-guides": { title: "AI & ChatGPT Guides", category: CATEGORY_LABELS.AI, price: 1.99 }, // (16) price requested
   "plr-and-mrr-bundles":  { title: "PLR & MRR Bundles",   category: CATEGORY_LABELS.PLR },
   "keto-and-diet-guides": { title: "Keto & Diet Guides",  category: CATEGORY_LABELS.KETO },
 
   // Put “wealth” / “as-you-sleep” in Passive Income (not Essentials)
-  "digital-wealth-ultimate-guide": { category: CATEGORY_LABELS.PASSIVE },
-  "make-money-as-you-sleep":      { category: CATEGORY_LABELS.PASSIVE },
+  "digital-wealth-ultimate-guide": { category: CATEGORY_LABELS.PASSIVE, price: 28.99 }, // (4)
+  "make-money-as-you-sleep":      { category: CATEGORY_LABELS.PASSIVE, price: 2.99 },   // (2)
 
   // ✸ COMPLETE SHOP WITH PLR / MRR RIGHTS — edit slug/path to your actual file
   "complete-shop-with-plr-mrr-rights": {
@@ -180,9 +180,28 @@ After your order is processed, you will receive a PDF document with the links to
 This listing is for a digital download. No physical product will be shipped.
 
 If you have any questions, please contact me and I will be more than happy to help!`,
-    // Example: point to a file under /private
     // downloadPath: "files/complete-shop-with-plr-mrr-rights.zip",
   },
+
+  // ---- Pricing overrides (the list you provided) ----
+  "chatgpt-side-hustles":            { price: 2.99 },  // (1)
+  "faceless-marketing":              { price: 2.99 },  // (3)
+  "cybersecurity-trinity":           { price: 12.99 }, // (5)
+  "85-million-plus":                 { price: 2.99 },  // (6)
+  "beginners-guide-to-boolean":      { price: 9.99 },  // (7)
+  "the-art-of-not-giving-a-fuck":    { price: 9.99 },  // (8)
+  "plr-mrr-digital-products":        { price: 39.99 }, // (9)
+  "the-exorcist-tradition":          { price: 4.99 },  // (10)
+  "cryptocurrency-secrets":          { price: 2.99 },  // (11)
+  "plr-keto-diet-secrets":           { price: 1.99 },  // (12)
+  "100-christmas-digital-products":  { price: 1.99 },  // (13)
+  "passive-income-ebook":            { price: 2.99 },  // (14)
+  "eating-healthy-ebook":            { price: 6.99 },  // (15)
+  "digital-essentials-hub":          { price: 4.99 },  // (18)
+
+  // If you truly have a SECOND ChatGPT Side Hustles product (17) at 1.99,
+  // ensure its slug differs (e.g., "chatgpt-side-hustles-v2") and add it here:
+  // "chatgpt-side-hustles-v2": { price: 1.99 },
 }
 
 /** Build products from the image manifest (one per folder). */
