@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -6,7 +6,7 @@ import CategoryGrid from "@/components/categories/CategoryGrid";
 import HoverableCover from "@/components/ui/hoverable-cover";
 import ShopActions from "@/components/shop-actions";
 
-// ⬇️ single source of truth
+//  single source of truth
 import { products, productsBySlug, productsById, type Product } from "@/data/products";
 
 type Item = {
@@ -146,3 +146,4 @@ export default function BestSellersGrid({ items }: { items: Item[] }) {
     </>
   );
 }
+
