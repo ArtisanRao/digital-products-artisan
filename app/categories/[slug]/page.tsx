@@ -3,8 +3,10 @@ import fs from "node:fs";
 import path from "node:path";
 import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
-import { products } from "@/data/products";
 import ProductCardV4 from "../../../components/shop/ProductCardV4";
+
+// ⬇️ Pull canonical labels + helper from central data
+import { products, productsInCategory, CATEGORY_LABELS } from "@/data/products";
 
 export const runtime = "nodejs";
 export const revalidate = 0;
@@ -26,10 +28,11 @@ const META: Record<string, { title: string; description: string }> = {
   "web-templates":               { title: "Web Templates",           description: "Website templates, UI kits and themes." },
   "digital-essentials-hub":      { title: "Digital Essentials Hub",  description: "Prompt packs, automations, and utilities." },
   "fonts-and-icons":             { title: "Fonts & Icons",           description: "Font families and icon sets." },
-  "religious-ebooks":            { title: "Religious EBooks",        description: "Faith-centered books, devotionals and study guides." },
+  "religious-ebooks":            { title: "Religious eBooks",        description: "Faith-centered books, devotionals and study guides." },
   "social-media-kits":           { title: "Social Media Kits",       description: "Post templates and brandable assets for socials." },
 };
 
+// Legacy → new slug redirects
 const LEGACY_TO_NEW: Record<string, string> = {
   "planners-productivity": "planners-and-productivity",
   "plr-mrr-bundles": "plr-and-mrr-bundles",
@@ -39,9 +42,9 @@ const LEGACY_TO_NEW: Record<string, string> = {
 };
 
 const pub = (...p: string[]) => path.join(process.cwd(), "public", ...p);
-
 const tnorm = (s: string) => s.toLowerCase().trim();
 
+// Normalize a few tricky titles we’ve seen in the wild
 const FIX_BY_TITLE: Record<string, { forceSlug?: string; hide?: boolean }> = {
   [tnorm("Video Courses And Training")]: { forceSlug: "video-courses-and-training" },
   [tnorm("Self Help And How To")]: { hide: true },
@@ -64,6 +67,25 @@ const LABEL_TO_SLUG: Record<string, string> = Object.fromEntries(
   Object.entries(META).map(([slug, m]) => [m.title.toLowerCase(), slug])
 );
 
+// 🔗 Canonical mapping from page slug → canonical CATEGORY_LABELS (single source of truth)
+const SLUG_TO_CANON_LABEL: Record<string, string> = {
+  "ai-and-chatgpt-guides": CATEGORY_LABELS.AI,
+  "planners-and-productivity": CATEGORY_LABELS.PLANNERS,
+  "self-help-and-how-to": CATEGORY_LABELS.SELF_HELP,
+  "plr-and-mrr-bundles": CATEGORY_LABELS.PLR,
+  "video-courses-and-training": CATEGORY_LABELS.VIDEO,
+  "complete-shop-packages": CATEGORY_LABELS.SHOP,
+  "health-and-fitness-ebooks": CATEGORY_LABELS.HEALTH,
+  "keto-and-diet-guides": CATEGORY_LABELS.KETO,
+  "passive-income-and-side-hustles": CATEGORY_LABELS.PASSIVE,
+  "web-templates": CATEGORY_LABELS.WEB,
+  "digital-essentials-hub": CATEGORY_LABELS.ESSENTIALS,
+  "fonts-and-icons": CATEGORY_LABELS.FONTS_ICONS,
+  "religious-ebooks": CATEGORY_LABELS.RELIGIOUS,
+  "social-media-kits": CATEGORY_LABELS.SOCIAL,
+};
+
+// --- Helpers for subcategories/imagery (unchanged) ---
 function effectiveProductCategorySlug(p: any): string | null {
   const titleKey = tnorm(String(p.title ?? ""));
   const fix = FIX_BY_TITLE[titleKey];
@@ -184,11 +206,17 @@ export default async function CategoryPage(props: any) {
     );
   }
 
-  const catProducts = products.filter((p) => {
-    const eff = effectiveProductCategorySlug(p);
-    return eff !== "__HIDE__" && eff === slug;
-  });
+  // ✅ Single source of truth: use canonical CATEGORY_LABELS via mapping
+  const canonicalLabel = SLUG_TO_CANON_LABEL[slug];
+  let catProducts = canonicalLabel
+    ? productsInCategory(canonicalLabel)
+    // Fallback to previous behavior if mapping is missing (defensive)
+    : products.filter((p) => {
+        const eff = effectiveProductCategorySlug(p);
+        return eff !== "__HIDE__" && eff === slug;
+      });
 
+  // Group by optional subcategory fields
   const groups = new Map<string, { label: string; items: any[] }>();
   for (const p of catProducts) {
     const sslug = effectiveSubSlug(p) ?? "__none__";
@@ -219,7 +247,7 @@ export default async function CategoryPage(props: any) {
       id: p.id,
       title: p.title,
       slug: p.slug,
-      price: p.price,
+      price: p.price, // ← prices now always reflect MANUAL_OVERRIDES
       images,
       description: p.description,
       href,
