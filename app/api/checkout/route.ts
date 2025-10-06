@@ -4,8 +4,8 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { products } from "@/data/products";
-import { productPath } from "@/data/products";
+import { products, productPath } from "@/data/products";
+import { bundlesBySlug } from "@/app/bundles/data"; // ← single source for bundle prices/images
 
 const SUPPORTED = new Set(["USD", "EUR"]);
 type AllowedMethod = "card" | "paypal" | "klarna";
@@ -72,30 +72,6 @@ function paymentMethodsForCurrency(
   return base;
 }
 
-/* ------------------------ Bundle catalog ------------------------ */
-const BUNDLES: Record<string, { name: string; price: number; image: string }> = {
-  "complete-creator-bundle": {
-    name: "Complete Creator Bundle",
-    price: 79.99,
-    image: "/images/bundles/complete-creator-bundle-cover.jpg",
-  },
-  "social-media-master-pack": {
-    name: "Social Media Master Pack",
-    price: 49.99,
-    image: "/images/bundles/social-media-master-pack-cover.jpg",
-  },
-  "business-starter-bundle": {
-    name: "Business Starter Bundle",
-    price: 59.99,
-    image: "/images/bundles/business-starter-bundle-cover.jpg",
-  },
-  "ai-productivity-suite": {
-    name: "AI Productivity Suite",
-    price: 39.99,
-    image: "/images/bundles/ai-productivity-suite-cover.jpg",
-  },
-};
-
 /* -------------------- Core session builders -------------------- */
 async function createSessionFromSingle(opts: {
   productKey: string | number; // id or slug
@@ -112,7 +88,8 @@ async function createSessionFromSingle(opts: {
 
   const priceNumber =
     typeof product.price === "number" ? product.price : Number(product.price) || 0;
-  const priceId: string | undefined = (product as any).priceId || (product as any).stripePriceId;
+  const priceId: string | undefined =
+    (product as any).priceId || (product as any).stripePriceId;
 
   const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = priceId
     ? [{ price: priceId, quantity: qty }]
@@ -165,7 +142,7 @@ async function createSessionFromSingle(opts: {
 }
 
 async function createSessionFromBundle(opts: {
-  handle: string; // bundle slug (e.g. "complete-creator-bundle")
+  handle: string; // bundle slug (e.g. "pro-bundle")
   qty?: number;
   currency?: string;
   origin: string;
@@ -174,7 +151,7 @@ async function createSessionFromBundle(opts: {
   const stripe = getStripe();
   const { handle, qty = 1, currency = "EUR", origin, onlyMethod } = opts;
 
-  const b = BUNDLES[handle];
+  const b = bundlesBySlug[handle];
   if (!b) throw new Error(`Unknown bundle: ${handle}`);
 
   const success = `${origin}/downloads?order={CHECKOUT_SESSION_ID}&email={CUSTOMER_EMAIL}&name={CUSTOMER_NAME}`;
@@ -187,9 +164,9 @@ async function createSessionFromBundle(opts: {
         quantity: qty,
         price_data: {
           currency: lcCurrency(currency),
-          unit_amount: toMinorUnits(b.price),
+          unit_amount: toMinorUnits(b.price), // ← price from bundles catalog
           product_data: {
-            name: b.name,
+            name: b.title,
             images: [b.image.startsWith("http") ? b.image : `${origin}${b.image}`],
           },
         },
@@ -311,7 +288,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ url });
     }
 
-    // Raw price IDs
+    // Raw price IDs passthrough
     if (Array.isArray(body?.line_items) && body.line_items.length) {
       const currency = normalizeCurrency(body?.currency ?? "EUR");
       const session = await stripe.checkout.sessions.create({
@@ -328,18 +305,39 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ url: session.url });
     }
 
-    // Items resolved from our catalog
+    // Items resolved from our catalogs
     if (Array.isArray(body?.items) && body.items.length) {
       const currency = normalizeCurrency(body?.currency ?? "EUR");
       const resolved: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
 
       for (const it of body.items) {
+        // Support: { id } | { slug } | { productId } | { bundleId }
+        if (it?.bundleId || (typeof it?.slug === "string" && it.slug.startsWith("bundle:"))) {
+          const handle = it.bundleId ?? String(it.slug).replace(/^bundle:/, "");
+          const b = bundlesBySlug[handle];
+          if (!b) continue;
+          const qty = Math.max(1, Number(it?.qty ?? it?.quantity ?? 1));
+          resolved.push({
+            quantity: qty,
+            price_data: {
+              currency: lcCurrency(currency),
+              unit_amount: toMinorUnits(b.price),
+              product_data: {
+                name: b.title,
+                images: [b.image.startsWith("http") ? b.image : `${origin}${b.image}`],
+              },
+            },
+          });
+          continue;
+        }
+
         const key = it?.id ?? it?.slug ?? it?.productId;
         const product = findProductByKey(key);
         if (!product) continue;
 
         const qty = Math.max(1, Number(it?.qty ?? it?.quantity ?? 1));
-        const priceId: string | undefined = (product as any).priceId || (product as any).stripePriceId;
+        const priceId: string | undefined =
+          (product as any).priceId || (product as any).stripePriceId;
 
         if (priceId) {
           resolved.push({ price: priceId, quantity: qty });
