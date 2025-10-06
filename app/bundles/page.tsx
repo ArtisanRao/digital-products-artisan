@@ -10,118 +10,11 @@ import Link from "next/link";
 import Image from "next/image";
 import InlineMore from "@/components/ui/inline-more";
 
-type Bundle = {
-  id: number;
-  title: string;
-  description: string;
-  price: number;
-  originalPrice: number;
-  savings: number;
-  rating: number;
-  reviews: number;
-  downloads: number;
-  itemCount: number;
-  items: string[];
-  image: string;
-  popular: boolean;
-};
-
-const slugify = (s: string) =>
-  s.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
+// ⬇️ Single source of truth for bundles (prices, slugs, etc.)
+import { bundles } from "./data";
 
 const formatEUR = (n: number) =>
   new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
-
-const bundles: Bundle[] = [
-  // ... (unchanged bundle data)
-  {
-    id: 1,
-    title: "Complete Creator Bundle",
-    description: "Everything you need to start and grow your creative business",
-    price: 79.99,
-    originalPrice: 149.99,
-    savings: 47,
-    rating: 4.9,
-    reviews: 156,
-    downloads: 890,
-    itemCount: 8,
-    items: [
-      "Ultimate AI Prompt Pack",
-      "Canva Template Bundle",
-      "Digital Marketing Ebook",
-      "Notion Productivity System",
-      "Instagram Story Templates",
-      "Brand Identity Kit",
-      "Content Calendar Template",
-      "Email Marketing Templates",
-    ],
-    image: "/images/bundles/complete-creator-bundle-cover.jpg",
-    popular: true,
-  },
-  {
-    id: 2,
-    title: "Social Media Master Pack",
-    description: "Templates and guides for dominating social media platforms",
-    price: 49.99,
-    originalPrice: 89.99,
-    savings: 44,
-    rating: 4.8,
-    reviews: 203,
-    downloads: 567,
-    itemCount: 5,
-    items: [
-      "Instagram Story Templates",
-      "Facebook Post Templates",
-      "LinkedIn Content Kit",
-      "Social Media Strategy Guide",
-      "Hashtag Research Tool",
-    ],
-    image: "/images/bundles/social-media-master-pack-cover.jpg",
-    popular: false,
-  },
-  {
-    id: 3,
-    title: "Business Starter Bundle",
-    description: "Essential tools and resources for new entrepreneurs",
-    price: 59.99,
-    originalPrice: 119.99,
-    savings: 50,
-    rating: 4.7,
-    reviews: 134,
-    downloads: 445,
-    itemCount: 6,
-    items: [
-      "Business Plan Template",
-      "Financial Planning Spreadsheet",
-      "Legal Document Templates",
-      "Marketing Strategy Guide",
-      "Pitch Deck Template",
-      "Brand Guidelines Template",
-    ],
-    image: "/images/bundles/business-starter-bundle-cover.jpg",
-    popular: false,
-  },
-  {
-    id: 4,
-    title: "AI Productivity Suite",
-    description: "Harness the power of AI for maximum productivity",
-    price: 39.99,
-    originalPrice: 79.99,
-    savings: 50,
-    rating: 4.9,
-    reviews: 298,
-    downloads: 1100,
-    itemCount: 4,
-    items: [
-      "Ultimate AI Prompt Pack",
-      "ChatGPT Workflow Templates",
-      "AI Writing Assistant Guide",
-      "Automation Setup Templates",
-    ],
-    image: "/images/bundles/ai-productivity-suite-cover.jpg",
-    popular: true,
-  },
-];
 
 export default function BundlesPage() {
   return (
@@ -134,22 +27,36 @@ export default function BundlesPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-        {bundles.map((bundle) => {
-          const bundleSlug = slugify(bundle.title);
+        {bundles.map((b) => {
+          const price = b.price ?? 0;
+          const original = b.originalPrice ?? 0;
+          const saveAmt = original > price ? original - price : 0;
+          const savePct =
+            original > 0 ? Math.max(0, Math.min(100, Math.round((saveAmt / original) * 100))) : 0;
 
-          // 🔒 Force EUR so Checkout shows the Card/Klarna selector like products
+          // Force EUR so Checkout shows the Card/Klarna selector like products
           const checkoutHref = `/api/checkout?slug=${encodeURIComponent(
-            `bundle:${bundleSlug}`
+            `bundle:${b.slug}`
           )}&qty=1&currency=EUR`;
 
+          const itemCount = Array.isArray(b.items) ? b.items.length : 0;
+          const rating = (b as any).rating as number | undefined;
+          const reviews = (b as any).reviews as number | undefined;
+          const downloads = (b as any).downloads as number | undefined;
+          const popular = Boolean((b as any).popular);
+
+          const title = b.title;
+          const image = b.image;
+          const description = b.short ?? b.description ?? "";
+
           return (
-            <Card key={bundle.id} className="group hover:shadow-xl transition-all duration-300">
+            <Card key={b.slug} className="group hover:shadow-xl transition-all duration-300">
               <CardHeader className="p-0">
                 <div className="relative overflow-hidden rounded-t-lg">
                   <div className="relative w-full aspect-[16/9] bg-gray-100">
                     <Image
-                      src={bundle.image}
-                      alt={bundle.title}
+                      src={image}
+                      alt={title}
                       fill
                       sizes="(max-width:768px) 100vw, (max-width:1200px) 50vw, 33vw"
                       className="object-cover group-hover:scale-105 transition-transform duration-300"
@@ -157,14 +64,17 @@ export default function BundlesPage() {
                     />
                   </div>
 
-                  {bundle.popular && (
+                  {popular && (
                     <Badge className="absolute top-3 left-3 bg-gradient-to-r from-purple-600 to-pink-600">
                       Most Popular
                     </Badge>
                   )}
-                  <div className="absolute top-3 right-3 bg-red-500 text-white px-2 py-1 rounded-full text-sm font-bold">
-                    -{bundle.savings}%
-                  </div>
+
+                  {savePct > 0 && (
+                    <div className="absolute top-3 right-3 bg-red-500 text-white px-2 py-1 rounded-full text-sm font-bold">
+                      -{savePct}%
+                    </div>
+                  )}
                 </div>
               </CardHeader>
 
@@ -172,19 +82,21 @@ export default function BundlesPage() {
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-2">
                     <Package className="w-5 h-5 text-purple-600" />
-                    <span className="text-sm text-gray-600">{bundle.itemCount} Products</span>
+                    <span className="text-sm text-gray-600">{itemCount} Products</span>
                   </div>
-                  <div className="flex items-center space-x-1">
-                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    <span className="text-sm text-gray-600">{bundle.rating}</span>
-                    <span className="text-sm text-gray-400">({bundle.reviews})</span>
-                  </div>
+                  {typeof rating === "number" && typeof reviews === "number" ? (
+                    <div className="flex items-center space-x-1">
+                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                      <span className="text-sm text-gray-600">{rating.toFixed(1)}</span>
+                      <span className="text-sm text-gray-400">({reviews})</span>
+                    </div>
+                  ) : null}
                 </div>
 
-                <CardTitle className="text-xl mb-2">{bundle.title}</CardTitle>
+                <CardTitle className="text-xl mb-2">{title}</CardTitle>
 
                 <InlineMore
-                  text={bundle.description}
+                  text={description}
                   lines={2}
                   className="text-gray-600 text-sm mb-1"
                   moreLabel="More"
@@ -196,42 +108,44 @@ export default function BundlesPage() {
                 <div className="mb-4">
                   <h4 className="font-semibold text-gray-900 mb-2">What's included:</h4>
                   <ul className="space-y-1">
-                    {bundle.items.slice(0, 4).map((item, index) => (
+                    {(b.items ?? []).slice(0, 4).map((item, index) => (
                       <li key={index} className="text-sm text-gray-600 flex items-center">
                         <div className="w-1.5 h-1.5 bg-purple-600 rounded-full mr-2" />
                         {item}
                       </li>
                     ))}
-                    {bundle.items.length > 4 && (
-                      <li className="text-sm text-purple-600 font-medium">
-                        + {bundle.items.length - 4} more items
-                      </li>
+                    {itemCount > 4 && (
+                      <li className="text-sm text-purple-600 font-medium">+ {itemCount - 4} more items</li>
                     )}
                   </ul>
                 </div>
 
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-3">
-                    <span className="text-2xl font-bold text-gray-900">{formatEUR(bundle.price)}</span>
-                    <span className="text-lg text-gray-500 line-through">
-                      {formatEUR(bundle.originalPrice)}
-                    </span>
-                    <Badge variant="secondary" className="bg-green-100 text-green-700">
-                      <Percent className="w-3 h-3 mr-1" />
-                      Save {formatEUR(bundle.originalPrice - bundle.price)}
-                    </Badge>
+                    <span className="text-2xl font-bold text-gray-900">{formatEUR(price)}</span>
+                    {original > price ? (
+                      <>
+                        <span className="text-lg text-gray-500 line-through">{formatEUR(original)}</span>
+                        <Badge variant="secondary" className="bg-green-100 text-green-700">
+                          <Percent className="w-3 h-3 mr-1" />
+                          Save {formatEUR(saveAmt)}
+                        </Badge>
+                      </>
+                    ) : null}
                   </div>
-                  <div className="flex items-center text-sm text-gray-500">
-                    <Download className="w-4 h-4 mr-1" />
-                    {bundle.downloads}
-                  </div>
+                  {typeof downloads === "number" ? (
+                    <div className="flex items-center text-sm text-gray-500">
+                      <Download className="w-4 h-4 mr-1" />
+                      {downloads}
+                    </div>
+                  ) : <span />}
                 </div>
               </CardContent>
 
               <CardFooter className="p-6 pt-0">
                 <div className="w-full grid grid-cols-2 gap-3">
                   <Button asChild className="w-full bg-blue-600 text-white hover:bg-blue-700">
-                    <Link href={`/bundles/${bundleSlug}`} prefetch>
+                    <Link href={`/bundles/${b.slug}`} prefetch>
                       View details
                     </Link>
                   </Button>
@@ -254,7 +168,6 @@ export default function BundlesPage() {
       <div className="bg-gray-50 rounded-lg p-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Bundle FAQ</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* FAQ content unchanged */}
           <div>
             <h3 className="font-semibold text-gray-900 mb-2">How do bundles work?</h3>
             <p className="text-gray-600 text-sm">
