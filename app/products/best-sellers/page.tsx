@@ -1,5 +1,7 @@
+// app/products/best-sellers/page.tsx
 import type { Metadata } from "next";
 import BestSellersGrid from "./BestSellersGrid";
+import { products } from "@/data/products";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://digitalproductsartisan.com"),
@@ -28,31 +30,23 @@ export const revalidate = 3600;
 
 const CANONICAL_URL = "https://digitalproductsartisan.com/products/best-sellers";
 
-const items = [
-  {
-    id: "chatgpt-business",
-    title: "Mastering ChatGPT for Business",
-    image: "/images/mastering-chatgpt-for-business-cover.jpg",
-    price: 9.99,
-    description: "A detailed PDF guide to unlock AI productivity.",
-  },
-  {
-    id: "canva-pack",
-    title: "Canva Templates Mega Pack",
-    image: "/images/canva-templates-mega-pack-preview.jpg",
-    price: 14.99,
-    description: "100+ drag-and-drop templates for social media.",
-  },
-  {
-    id: "excel-tracker",
-    title: "Excel Tracker Pro",
-    image: "/images/excel-tracker-pro-layouts.jpg",
-    price: 7.99,
-    description: "Track expenses, projects, and habits like a pro.",
-  },
-];
+// Pick top sellers by downloads, tie-break by rating
+const items = [...products]
+  .sort((a, b) => (b.downloads - a.downloads) || (b.rating - a.rating))
+  .slice(0, 9)
+  .map((p) => ({
+    id: p.slug,                 // use slug as stable anchor
+    title: p.title,
+    image: p.image,
+    price: p.price,             // ← sourced from catalog (respects MANUAL_OVERRIDES)
+    description: p.description,
+  }));
 
 export default function BestSellersPage() {
+  // Helper to ensure absolute image URLs for JSON-LD
+  const toAbs = (src: string) =>
+    src.startsWith("http") ? src : `https://digitalproductsartisan.com${src}`;
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
@@ -60,86 +54,23 @@ export default function BestSellersPage() {
     url: CANONICAL_URL,
     mainEntity: {
       "@type": "ItemList",
-      itemListElement: [
-        {
-          "@type": "ListItem",
-          position: 1,
-          url: `${CANONICAL_URL}#chatgpt-business`,
-          item: {
-            "@type": "Product",
-            name: "Mastering ChatGPT for Business",
-            image:
-              "https://digitalproductsartisan.com/images/mastering-chatgpt-for-business-cover.jpg",
-            description: "A detailed PDF guide to unlock AI productivity.",
-            aggregateRating: { "@type": "AggregateRating", ratingValue: "4.8", reviewCount: "152" },
-            review: [
-              {
-                "@type": "Review",
-                reviewRating: { "@type": "Rating", ratingValue: "5" },
-                author: { "@type": "Person", name: "Verified buyer" },
-              },
-            ],
-            offers: {
-              "@type": "Offer",
-              price: "9.99",
-              priceCurrency: "EUR",
-              availability: "https://schema.org/InStock",
-            },
+      itemListElement: items.map((it, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        url: `${CANONICAL_URL}#${encodeURIComponent(it.id)}`,
+        item: {
+          "@type": "Product",
+          name: it.title,
+          image: toAbs(it.image),
+          description: it.description,
+          offers: {
+            "@type": "Offer",
+            price: it.price.toFixed(2),
+            priceCurrency: "EUR",
+            availability: "https://schema.org/InStock",
           },
         },
-        {
-          "@type": "ListItem",
-          position: 2,
-          url: `${CANONICAL_URL}#canva-pack`,
-          item: {
-            "@type": "Product",
-            name: "Canva Templates Mega Pack",
-            image:
-              "https://digitalproductsartisan.com/images/canva-templates-mega-pack-preview.jpg",
-            description: "100+ drag-and-drop templates for social media.",
-            aggregateRating: { "@type": "AggregateRating", ratingValue: "4.7", reviewCount: "204" },
-            review: [
-              {
-                "@type": "Review",
-                reviewRating: { "@type": "Rating", ratingValue: "5" },
-                author: { "@type": "Person", name: "Verified buyer" },
-              },
-            ],
-            offers: {
-              "@type": "Offer",
-              price: "14.99",
-              priceCurrency: "EUR",
-              availability: "https://schema.org/InStock",
-            },
-          },
-        },
-        {
-          "@type": "ListItem",
-          position: 3,
-          url: `${CANONICAL_URL}#excel-tracker`,
-          item: {
-            "@type": "Product",
-            name: "Excel Tracker Pro",
-            image:
-              "https://digitalproductsartisan.com/images/excel-tracker-pro-layouts.jpg",
-            description: "Track expenses, projects, and habits with an all-in-one spreadsheet.",
-            aggregateRating: { "@type": "AggregateRating", ratingValue: "4.6", reviewCount: "98" },
-            review: [
-              {
-                "@type": "Review",
-                reviewRating: { "@type": "Rating", ratingValue: "5" },
-                author: { "@type": "Person", name: "Verified buyer" },
-              },
-            ],
-            offers: {
-              "@type": "Offer",
-              price: "7.99",
-              priceCurrency: "EUR",
-              availability: "https://schema.org/InStock",
-            },
-          },
-        },
-      ],
+      })),
     },
   };
 
