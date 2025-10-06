@@ -13,7 +13,7 @@ export function generateStaticParams() {
 const formatEUR = (n: number) =>
   new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
 
-// NOTE: Params are a Promise in your project’s PageProps type
+// Keep params as a Promise to match your project's PageProps
 export default async function BundleDetailsPage({
   params,
 }: {
@@ -23,9 +23,10 @@ export default async function BundleDetailsPage({
   const bundle = bundlesBySlug[slug];
   if (!bundle) return notFound();
 
-  const gallery = bundle.images?.length ? bundle.images : [bundle.image];
+  // ✅ Robust: supports bundles with or without an `images` array
+  const imagesArr = (bundle as any).images as string[] | undefined;
+  const gallery = imagesArr?.length ? imagesArr : [bundle.image];
 
-  // Pricing resolved server-side by your checkout route; we pass only the slug
   const checkoutHref = `/api/checkout?slug=${encodeURIComponent(
     `bundle:${bundle.slug}`
   )}&qty=1&currency=EUR`;
@@ -66,11 +67,11 @@ export default async function BundleDetailsPage({
             ) : null}
           </div>
 
-          {Array.isArray(bundle.items) && bundle.items.length ? (
+          {Array.isArray((bundle as any).items) && (bundle as any).items.length ? (
             <div className="mb-6">
               <h2 className="font-semibold mb-2">What’s included</h2>
               <ul className="list-disc pl-5 space-y-1 text-gray-700">
-                {bundle.items.map((item) => (
+                {(bundle as any).items.map((item: string) => (
                   <li key={item}>{item}</li>
                 ))}
               </ul>
