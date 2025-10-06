@@ -42,7 +42,7 @@ export async function POST(req: Request) {
   // 2) env var STRIPE_PRICE_ID_<SLUG>
   // 3) final fallback (your pasted live price)
   const envKey = envNameForPriceId(productId);
-  const fallbackLivePriceId = "price_1S4qZbLRZXb99FYz8MhczfRW"; // ← replace/remove when you set the env or JSON
+  const fallbackLivePriceId = "price_1S4qZbLRZXb99FYz8MhczfRW"; // replace/remove once you set JSON/env
   const priceId: string | undefined =
     p.stripePriceId ||
     process.env[envKey] ||
@@ -51,8 +51,7 @@ export async function POST(req: Request) {
   if (!priceId) {
     return NextResponse.json(
       {
-        error:
-          `Missing Stripe price id. Set p.stripePriceId in products.json or env ${envKey}.`,
+        error: `Missing Stripe price id. Set p.stripePriceId in products.json or env ${envKey}.`,
       },
       { status: 400 }
     );
@@ -65,7 +64,7 @@ export async function POST(req: Request) {
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
     line_items: [{ price: priceId, quantity: 1 }],
-    // If you've configured Stripe Tax in LIVE, this is fine; otherwise set to false
+    // If Stripe Tax isn't enabled in LIVE, set this to false
     automatic_tax: { enabled: true },
 
     // Collect email on Stripe Checkout if you aren't passing a customer
@@ -78,9 +77,17 @@ export async function POST(req: Request) {
     // Metadata used by your webhook to build download links
     metadata: {
       productId,
-      fileUrl: p.fileUrl ?? "", // keep your fileUrl available to your system
+      fileUrl: p.fileUrl ?? "",
     },
   });
+
+  // ---- Diagnostics (visible in Vercel logs) ----
+  console.log(
+    "[stripe/create] secret key mode =",
+    process.env.STRIPE_SECRET_KEY?.startsWith("sk_live_") ? "LIVE" : "TEST"
+  );
+  console.log("[stripe/create] priceId =", priceId);
+  console.log("[stripe/create] session.id =", session.id); // expect cs_live_... in LIVE
 
   return NextResponse.json({ url: session.url });
 }
