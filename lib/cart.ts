@@ -1,4 +1,6 @@
 // lib/cart.ts
+import { productsBySlug, productsById, type Product } from "@/data/products"
+
 export type CartItem = {
   id: string;            // slug or id as string
   title: string;
@@ -26,6 +28,30 @@ type CartEventDetail = {
 
 const isClient = () => typeof window !== "undefined";
 
+/* -------------------- catalog helpers -------------------- */
+
+function productFromCatalog(key: string | number | null | undefined): Product | undefined {
+  if (key == null) return undefined;
+  const s = String(key);
+  // Try slug
+  if (productsBySlug[s]) return productsBySlug[s];
+  // Try numeric id
+  const n = Number(s);
+  if (Number.isFinite(n) && productsById[n]) return productsById[n];
+  return undefined;
+}
+
+function enrichFromCatalog<T extends Partial<CartItem>>(idLike: string, base: T): T & Partial<CartItem> {
+  const p = productFromCatalog(idLike);
+  if (!p) return base;
+  return {
+    ...base,
+    title: base.title ?? p.title,
+    price: typeof base.price === "number" && base.price > 0 ? base.price : p.price,
+    image: base.image ?? p.image ?? (Array.isArray(p.images) && p.images[0]) || base.image,
+  };
+}
+
 /* -------------------- parsing & legacy migration -------------------- */
 
 function coerceItem(it: any): CartItem | null {
@@ -33,16 +59,22 @@ function coerceItem(it: any): CartItem | null {
   const id = it.id ?? it.slug ?? it.productId ?? it.key;
   if (id == null) return null;
 
-  const title = String(it.title ?? it.name ?? id);
-  const image = it.image ?? (Array.isArray(it.images) && it.images.length ? it.images[0] : undefined);
+  let title = String(it.title ?? it.name ?? id);
+  let image = it.image ?? (Array.isArray(it.images) && it.images.length ? it.images[0] : undefined);
 
   // accept price, amount, unit_amount, etc.
   const priceRaw = it.price ?? it.amount ?? it.unit_amount ?? 0;
-  const price = Number(priceRaw) || 0;
+  let price = Number(priceRaw) || 0;
 
   // accept qty, quantity
   const qtyRaw = it.qty ?? it.quantity ?? 1;
   const qty = Math.max(1, Number(qtyRaw) || 1);
+
+  // If missing/zero price or missing image/title, enrich from catalog
+  const enriched = enrichFromCatalog(String(id), { title, price, image });
+  title = String(enriched.title ?? title);
+  price = Number(enriched.price ?? price) || 0;
+  image = enriched.image;
 
   return {
     id: String(id),
@@ -64,15 +96,24 @@ function safeParseArray(raw: string | null): CartItem[] {
   return parsed.map(coerceItem).filter(Boolean) as CartItem[];
 }
 
-/** Normalize a map-like object { key: qty } into CartItem[] (title = key, price=0) */
+/** Normalize a map-like object { key: qty } into CartItem[] (title = key, price resolved via catalog if possible) */
 function mapToItems(obj: any): CartItem[] {
   if (!obj || typeof obj !== "object" || Array.isArray(obj)) return [];
-  return Object.entries(obj).map(([k, v]) => ({
-    id: String(k),
-    title: String(k),
-    price: 0,
-    qty: Math.max(1, Number(v) || 1),
-  }));
+  return Object.entries(obj).map(([k, v]) => {
+    const base: CartItem = {
+      id: String(k),
+      title: String(k),
+      price: 0,
+      qty: Math.max(1, Number(v) || 1),
+    };
+    const enriched = enrichFromCatalog(String(k), base);
+    return {
+      ...base,
+      title: String(enriched.title ?? base.title),
+      price: Number(enriched.price ?? base.price) || 0,
+      image: enriched.image ?? base.image,
+    };
+  });
 }
 
 /** Support older storages: "cart" and "dpa:cart" may be map or array */
@@ -219,9 +260,13 @@ export function getCartTotal(): number {
 
 /**
  * Convenience: add by id/slug.
- * If item exists, increments qty; else creates with provided patch or sensible defaults.
+ * If item exists, increments qty; else creates with provided patch or catalog defaults.
  *
- * Example: add("my-slug", 1, { title: "Nice Product", price: 9.99, image: "/images/x.jpg" })
+ * Example (no price needed, taken from catalog):
+ *   add("chatgpt-side-hustles", 1)
+ *
+ * Example (override title/image if you want, price still defaults to catalog):
+ *   add("chatgpt-side-hustles", 1, { title: "My custom title" })
  */
 export function add(id: string, qty = 1, patch: Partial<Omit<CartItem, "id" | "qty">> = {}) {
   if (!isClient()) return;
@@ -229,19 +274,34 @@ export function add(id: string, qty = 1, patch: Partial<Omit<CartItem, "id" | "q
   const q = Math.max(1, Math.floor(qty));
   const idx = items.findIndex((i) => i.id === String(id));
 
+  // Defaults from catalog; patch can override title/image and price if explicitly set
+  const catalogDefaults = enrichFromCatalog(String(id), {});
+
   let added: CartItem;
   if (idx >= 0) {
     items[idx].qty += q;
-    if (patch.title) items[idx].title = patch.title;
-    if (patch.price != null) items[idx].price = Number(patch.price) || 0;
+    if (patch.title != null) items[idx].title = String(patch.title);
     if (patch.image != null) items[idx].image = patch.image || undefined;
+    if (patch.price != null) {
+      items[idx].price = Number(patch.price) || 0;
+    } else if (!items[idx].price && typeof catalogDefaults.price === "number") {
+      items[idx].price = Number(catalogDefaults.price) || 0;
+    }
+    // Backfill title/image from catalog if still missing
+    if (!items[idx].title && catalogDefaults.title) items[idx].title = String(catalogDefaults.title);
+    if (!items[idx].image && catalogDefaults.image) items[idx].image = String(catalogDefaults.image);
     added = { ...items[idx] };
   } else {
+    const price =
+      patch.price != null
+        ? Number(patch.price) || 0
+        : (typeof catalogDefaults.price === "number" ? Number(catalogDefaults.price) : 0);
+
     added = {
       id: String(id),
-      title: String(patch.title ?? id),
-      price: Number(patch.price ?? 0) || 0,
-      image: patch.image,
+      title: String(patch.title ?? catalogDefaults.title ?? id),
+      price,
+      image: patch.image ?? (catalogDefaults.image ? String(catalogDefaults.image) : undefined),
       qty: q,
     };
     items.push(added);
@@ -249,27 +309,44 @@ export function add(id: string, qty = 1, patch: Partial<Omit<CartItem, "id" | "q
   write(items, added);
 }
 
+/** Add a fully-specified item (will still enrich from catalog if price/image are missing) */
 export function addToCart(item: Omit<CartItem, "qty">, qty = 1) {
   if (!isClient()) return;
   const items = readRaw();
   const q = Math.max(1, Math.floor(qty));
-  const price = Number(item.price) || 0;
-
   const idx = items.findIndex((i) => i.id === String(item.id));
+
+  // If price/image/title absent or zero, enrich from catalog
+  const enriched = enrichFromCatalog(String(item.id), item);
+
   let added: CartItem | undefined;
 
   if (idx >= 0) {
     items[idx].qty += q;
-    items[idx].title = item.title;
-    items[idx].price = price;
-    items[idx].image = item.image ?? items[idx].image;
+    items[idx].title = String(enriched.title ?? items[idx].title);
+    items[idx].price = Number(enriched.price ?? items[idx].price) || 0;
+    items[idx].image = (enriched.image ?? items[idx].image) || undefined;
     added = { ...items[idx] };
   } else {
-    added = { ...item, id: String(item.id), price, qty: q };
+    added = {
+      id: String(item.id),
+      title: String(enriched.title ?? item.title ?? item.id),
+      price: Number(enriched.price ?? item.price) || 0,
+      image: enriched.image ?? item.image,
+      qty: q,
+    };
     items.push(added);
   }
   write(items, added);
 }
+
+/** Sugar: add by slug (alias of add) */
+export const addBySlug = (slug: string, qty = 1, patch?: Partial<Omit<CartItem, "id" | "qty">>) =>
+  add(slug, qty, patch);
+
+/** Sugar: add by numeric product id (just converts to string and resolves) */
+export const addById = (id: number, qty = 1, patch?: Partial<Omit<CartItem, "id" | "qty">>) =>
+  add(String(id), qty, patch);
 
 export function setQty(id: string, qty: number) {
   if (!isClient()) return;
