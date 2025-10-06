@@ -49,7 +49,7 @@ function titleize(slug: string): string {
 }
 
 /** Canonical category LABELS (match your categories.ts labels exactly). */
-const CATEGORY_LABELS = {
+export const CATEGORY_LABELS = {
   AI: "AI & ChatGPT Guides",
   PLANNERS: "Planners & Productivity",
   SELF_HELP: "Self-Help & How-To",
@@ -121,7 +121,7 @@ function inferCategory(slug: string): string {
  */
 const MANUAL_OVERRIDES: Record<string, Partial<Product>> = {
   // Category landing niceties (if you have folders named like these)
-  "ai-and-chatgpt-guides": { title: "AI & ChatGPT Guides", category: CATEGORY_LABELS.AI, price: 1.99 }, // (16) price requested
+  "ai-and-chatgpt-guides": { title: "AI & ChatGPT Guides", category: CATEGORY_LABELS.AI, price: 1.99 }, // (16)
   "plr-and-mrr-bundles":  { title: "PLR & MRR Bundles",   category: CATEGORY_LABELS.PLR },
   "keto-and-diet-guides": { title: "Keto & Diet Guides",  category: CATEGORY_LABELS.KETO },
 
@@ -183,7 +183,7 @@ If you have any questions, please contact me and I will be more than happy to he
     // downloadPath: "files/complete-shop-with-plr-mrr-rights.zip",
   },
 
-  // ---- Pricing overrides (the list you provided) ----
+  // ---- Pricing overrides (your list) ----
   "chatgpt-side-hustles":            { price: 2.99 },  // (1)
   "faceless-marketing":              { price: 2.99 },  // (3)
   "cybersecurity-trinity":           { price: 12.99 }, // (5)
@@ -235,6 +235,11 @@ export const products: Product[] = baseProducts.map((p) => {
   const images = gallery?.length ? gallery : [p.image]
   return { ...p, image: images[0], images }
 })
+
+/** Helper: select by category label (keeps Categories in sync with All Products). */
+export function productsInCategory(categoryLabel: string): Product[] {
+  return products.filter((p) => p.category === categoryLabel)
+}
 
 export const productsById   = Object.fromEntries(products.map((p) => [p.id,   p])) as Record<number, Product>
 export const productsBySlug = Object.fromEntries(products.map((p) => [p.slug, p])) as Record<string, Product>
