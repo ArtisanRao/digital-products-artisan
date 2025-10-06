@@ -13,14 +13,19 @@ export function generateStaticParams() {
 const formatEUR = (n: number) =>
   new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
 
-export default function BundleDetailsPage({ params }: { params: { slug: string } }) {
-  const { slug } = params;
+// NOTE: Params are a Promise in your project’s PageProps type
+export default async function BundleDetailsPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
   const bundle = bundlesBySlug[slug];
   if (!bundle) return notFound();
 
   const gallery = bundle.images?.length ? bundle.images : [bundle.image];
 
-  // Same GET checkout endpoint used by products (pricing resolved server-side)
+  // Pricing resolved server-side by your checkout route; we pass only the slug
   const checkoutHref = `/api/checkout?slug=${encodeURIComponent(
     `bundle:${bundle.slug}`
   )}&qty=1&currency=EUR`;
@@ -38,7 +43,8 @@ export default function BundleDetailsPage({ params }: { params: { slug: string }
 
         <div>
           <h1 className="text-3xl md:text-4xl font-bold mb-2">{bundle.title}</h1>
-          {(bundle as any).rating && (bundle as any).reviews ? (
+
+          {typeof (bundle as any).rating === "number" && typeof (bundle as any).reviews === "number" ? (
             <div className="text-sm text-gray-600 mb-2">
               ⭐ {(bundle as any).rating} ({(bundle as any).reviews} reviews)
             </div>
@@ -72,14 +78,12 @@ export default function BundleDetailsPage({ params }: { params: { slug: string }
           ) : null}
 
           <div className="flex gap-3">
-            {/* Checkout */}
             <Button asChild className="flex-1 bg-blue-600 text-white hover:bg-blue-700">
               <Link href={checkoutHref} prefetch={false}>
                 Get This Bundle
               </Link>
             </Button>
 
-            {/* Back button */}
             <Button
               asChild
               className="flex-1 !bg-violet-600 !text-white hover:!bg-violet-700 !border-0"
