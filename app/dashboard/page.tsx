@@ -10,6 +10,9 @@ import { useAuth } from "@/contexts/auth-context"
 import Link from "next/link"
 import Image from "next/image"
 
+// ✅ single source of truth for product data
+import { productsBySlug, type Product } from "@/data/products"
+
 interface Order {
   id: string
   date: string
@@ -32,6 +35,9 @@ interface Subscription {
   amount: number
 }
 
+const formatMoney = (n: number, currency = "EUR", locale = "de-DE") =>
+  new Intl.NumberFormat(locale, { style: "currency", currency }).format(n)
+
 export default function DashboardPage() {
   const { user } = useAuth()
   const [orders, setOrders] = useState<Order[]>([])
@@ -44,48 +50,52 @@ export default function DashboardPage() {
   })
 
   useEffect(() => {
-    // Mock data - replace with actual API calls
-    setOrders([
-      {
-        id: "order_123",
-        date: "2024-01-15",
-        total: 79.99,
-        status: "completed",
-        items: [
-          {
-            id: 1,
-            title: "Ultimate AI Prompt Pack",
-            price: 29.99,
-            downloadUrl: "/downloads/ai-prompts.zip",
-            image: "/placeholder.svg?height=60&width=60",
-          },
-          {
-            id: 2,
-            title: "Canva Template Bundle",
-            price: 19.99,
-            downloadUrl: "/downloads/canva-templates.zip",
-            image: "/placeholder.svg?height=60&width=60",
-          },
-        ],
-      },
-    ])
+    // ---- Example order built from the catalog (no hard-coded prices) ----
+    const pick = (slug: string): Product | undefined => productsBySlug[slug]
 
+    const p1 = pick("chatgpt-side-hustles")
+    const p2 = pick("passive-income-ebook")
+
+    const items: Order["items"] = [p1, p2]
+      .filter(Boolean)
+      .map((p) => ({
+        id: p!.id,
+        title: p!.title,
+        price: p!.price, // ← dynamic from catalog
+        downloadUrl: p!.downloadPath ? `/private/${p!.downloadPath}` : `/downloads/${p!.slug}.zip`,
+        image: p!.image,
+      }))
+
+    const total = items.reduce((sum, it) => sum + it.price, 0)
+
+    const exampleOrder: Order = {
+      id: "order_demo_001",
+      date: new Date().toISOString().slice(0, 10),
+      total,
+      status: "completed",
+      items,
+    }
+
+    setOrders([exampleOrder])
+
+    // Subscriptions can remain mocked or be fetched from your backend/Stripe
     setSubscriptions([
       {
-        id: "sub_456",
+        id: "sub_demo_001",
         plan: "Pro Monthly",
         status: "active",
-        nextBilling: "2024-02-15",
+        nextBilling: new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString().slice(0, 10),
         amount: 29.99,
       },
     ])
 
-    setStats({
-      totalOrders: 12,
-      totalSpent: 459.88,
-      totalDownloads: 34,
-      activeSubscriptions: 1,
-    })
+    // Derive stats from orders/subscriptions
+    const totalOrders = 1
+    const totalSpent = total
+    const totalDownloads = items.length
+    const activeSubscriptions = 1
+
+    setStats({ totalOrders, totalSpent, totalDownloads, activeSubscriptions })
   }, [])
 
   if (!user) {
@@ -125,7 +135,7 @@ export default function DashboardPage() {
             <div className="flex items-center">
               <CreditCard className="w-8 h-8 text-green-600 mr-4" />
               <div>
-                <p className="text-2xl font-bold text-gray-900">${stats.totalSpent}</p>
+                <p className="text-2xl font-bold text-gray-900">{formatMoney(stats.totalSpent)}</p>
                 <p className="text-gray-600 text-sm">Total Spent</p>
               </div>
             </div>
@@ -181,7 +191,7 @@ export default function DashboardPage() {
                         <p className="text-sm text-gray-600">{new Date(order.date).toLocaleDateString()}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold">${order.total}</p>
+                        <p className="font-semibold">{formatMoney(order.total)}</p>
                         <Badge variant={order.status === "completed" ? "default" : "secondary"}>{order.status}</Badge>
                       </div>
                     </div>
@@ -199,12 +209,15 @@ export default function DashboardPage() {
                             />
                             <span className="text-sm">{item.title}</span>
                           </div>
-                          <Button size="sm" variant="outline" asChild>
-                            <a href={item.downloadUrl} download>
-                              <Download className="w-4 h-4 mr-2" />
-                              Download
-                            </a>
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-700">{formatMoney(item.price)}</span>
+                            <Button size="sm" variant="outline" asChild>
+                              <a href={item.downloadUrl} download>
+                                <Download className="w-4 h-4 mr-2" />
+                                Download
+                              </a>
+                            </Button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -266,7 +279,7 @@ export default function DashboardPage() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold">${subscription.amount}/month</p>
+                        <p className="font-semibold">{formatMoney(subscription.amount)}/month</p>
                         <Badge variant={subscription.status === "active" ? "default" : "secondary"}>
                           {subscription.status}
                         </Badge>
