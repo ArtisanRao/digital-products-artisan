@@ -62,11 +62,12 @@ export default function ProductGridSeeMore({
 
         {canShowLess && (
           <Button
-            variant="outline"
+            variant="default"
             size="sm"
             onClick={() => setVisible((n) => Math.max(safeInitial, n - step))}
             aria-label="See less products"
             title="See less products"
+            className="bg-blue-600 text-white hover:bg-blue-700"
           >
             See less products
           </Button>
@@ -79,6 +80,7 @@ export default function ProductGridSeeMore({
             onClick={() => setVisible((n) => Math.min(total, n + step))}
             aria-label="See more products"
             title="See more products"
+            className="bg-blue-600 text-white hover:bg-blue-700"
           >
             See more products
           </Button>
