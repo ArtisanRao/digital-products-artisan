@@ -88,7 +88,7 @@ async function handleDownload(req: NextRequest) {
         expand: ["line_items"],
       });
 
-      // ✅ Correct status checks (fixes the TypeScript error)
+      // ✅ Correct checks: use payment_status or 'complete' status
       const paid =
         session.payment_status === "paid" ||
         session.payment_status === "no_payment_required" ||
@@ -96,7 +96,7 @@ async function handleDownload(req: NextRequest) {
 
       if (!paid) return json({ error: "unauthorized" }, 403);
 
-      // If we carried product metadata, ensure it matches the token pid (single-item assumption)
+      // Ensure product matches token (single-item assumption) if metadata present
       if (Number.isFinite(pid) && session.metadata?.productId) {
         const metaPid = Number(session.metadata.productId);
         if (Number.isFinite(metaPid) && metaPid !== Number(pid)) {
