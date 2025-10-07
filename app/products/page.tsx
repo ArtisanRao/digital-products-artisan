@@ -11,33 +11,22 @@ import { Star, Search, Filter, Grid, List } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import HoverableCover from '@/components/ui/hoverable-cover';
-import AddToCartWire from '@/components/catalog/AddToCartWire'; // delegated handler
+import AddToCartWire from '@/components/catalog/AddToCartWire';
+import DescriptionClamp from '@/components/DescriptionClamp'; // ✅ FIX: add missing import
 
-// ✅ single source of truth for product data
-import { products, type Product, productPath } from '@/data/products';
+// single source of truth for product data + canonical categories
+import { products, type Product, productPath, CATEGORY_LABELS } from '@/data/products';
 
 /* ---------------- helpers ---------------- */
 
-const baseCategories = [
-  'AI & ChatGPT Guides',
-  'Planners & Productivity',
-  'Passive Income & Side Hustles',
-  'Excel Templates & Guides',
-  'Cyber Security',
-  'Self-Help & How-To',
-  'PLR & MRR Bundles',
-  'Health & Fitness Ebooks',
-  'Video Courses & Training',
-  'Ebooks (Miscellaneous)',
-  'Complete Shop Packages',
-  'Keto & Diet Guides',
-  'Prompt Packs & AI Tools',
-];
+// Use canonical labels directly (order matches your CATEGORY_LABELS definition)
+const CANONICAL_CATEGORIES: string[] = Object.values(CATEGORY_LABELS);
 
-const categoriesWithCounts = (items: Product[]) => {
-  const counts: Record<string, number> = {};
-  baseCategories.forEach((c) => (counts[c] = 0));
-  items.forEach((p) => (counts[p.category] = (counts[p.category] ?? 0) + 1));
+const categoriesWithCounts = (items: Product[], labels: readonly string[]) => {
+  const counts: Record<string, number> = Object.fromEntries(labels.map((l) => [l, 0]));
+  for (const p of items) {
+    if (p.category in counts) counts[p.category] += 1;
+  }
   return counts;
 };
 
@@ -61,7 +50,7 @@ export default function ProductsPage() {
   const PAGE_SIZE = 8;
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedCategory, setSelectedCategory] = useState<'All' | string>('All');
   const [sortBy, setSortBy] = useState('popular');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [priceRange, setPriceRange] = useState({ min: 0, max: 100 });
@@ -74,7 +63,10 @@ export default function ProductsPage() {
   }, [searchQuery, selectedCategory, sortBy, priceRange.min, priceRange.max, selectedTags]);
 
   const allTags = useMemo(() => Array.from(new Set(products.flatMap((p) => p.tags))), []);
-  const categoryCounts = useMemo(() => categoriesWithCounts(products), []);
+  const categoryCounts = useMemo(
+    () => categoriesWithCounts(products, CANONICAL_CATEGORIES),
+    []
+  );
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
@@ -152,7 +144,7 @@ export default function ProductsPage() {
                 </div>
               </div>
 
-              {/* Categories */}
+              {/* Categories — canonical labels */}
               <fieldset>
                 <legend className="text-sm font-medium text-gray-700 mb-2 block">Category</legend>
                 <div className="space-y-2">
@@ -167,7 +159,7 @@ export default function ProductsPage() {
                     <span className="text-sm text-gray-700 cursor-pointer">All ({products.length})</span>
                   </label>
 
-                  {baseCategories.map((category) => (
+                  {CANONICAL_CATEGORIES.map((category) => (
                     <label key={category} className="flex items-center space-x-2">
                       <input
                         type="radio"
@@ -366,7 +358,7 @@ export default function ProductsPage() {
                         </div>
                       )}
 
-                      {/* CTAs — View / Add to cart / Buy */}
+                      {/* CTAs */}
                       <div className="mt-3 grid gap-2 [grid-template-columns:.9fr_1.2fr_.9fr]">
                         <Link
                           href={productHref}
@@ -390,7 +382,6 @@ export default function ProductsPage() {
                           <span>Add to cart</span>
                         </button>
 
-                        {/* Buy -> direct checkout */}
                         <Link
                           href={`/api/checkout?productId=${encodeURIComponent(String(product.id))}&qty=1`}
                           prefetch={false}
@@ -508,7 +499,6 @@ export default function ProductsPage() {
                           <span>Add to cart</span>
                         </button>
 
-                        {/* Buy -> direct checkout */}
                         <Link
                           href={`/api/checkout?productId=${encodeURIComponent(String(product.id))}&qty=1`}
                           prefetch={false}
