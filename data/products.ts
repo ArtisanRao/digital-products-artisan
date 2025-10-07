@@ -180,6 +180,8 @@ const PRICE_BY_TITLE: Record<string, number> = {
   [normTitle("Eating Healthy Ebook")]: 6.99,
   [normTitle("AI & ChatGPT Guides")]: 1.99,
   [normTitle("Chatgpt Side Hustles")]: 1.99, // title variant
+  // ✅ optional extra alias for safety (your request text)
+  [normTitle("The Art Of Giving No Fucks")]: 9.99,
 }
 
 /**
@@ -207,6 +209,18 @@ const MANUAL_OVERRIDES: Record<string, Partial<Product>> = {
   "digital-wealth":                { category: CATEGORY_LABELS.PASSIVE },
   "digital-wealth-ultimate-guide": { category: CATEGORY_LABELS.PASSIVE },
   "make-money-as-you-sleep":       { category: CATEGORY_LABELS.PASSIVE },
+
+  // ✅ Force the “Art of …” product into Self-Help (cover both slug variants)
+  "the-art-of-not-giving-a-fuck": {
+    title: "The Art Of Giving No Fucks",
+    category: CATEGORY_LABELS.SELF_HELP,
+    price: 9.99,
+  },
+  "the-art-of-giving-no-fucks": {
+    title: "The Art Of Giving No Fucks",
+    category: CATEGORY_LABELS.SELF_HELP,
+    price: 9.99,
+  },
 
   // ✸ Complete Shop with PLR / MRR Rights
   "complete-shop-with-plr-mrr-rights": {
