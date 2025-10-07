@@ -140,6 +140,7 @@ function normTitle(s: string): string {
 
 /** Price overrides by SLUG */
 const PRICE_BY_SLUG: Record<string, number> = {
+  // existing entries
   "chatgpt-side-hustles": 2.99,
   "make-money-as-you-sleep": 2.99,
   "faceless-marketing": 2.99,
@@ -156,9 +157,14 @@ const PRICE_BY_SLUG: Record<string, number> = {
   "100-christmas-digital-products": 1.99,
   "passive-income-ebook": 2.99,
   "eating-healthy-ebook": 6.99,
-  "ai-and-chatgpt-guides": 1.99,           // keep as requested earlier
+  "ai-and-chatgpt-guides": 1.99,           // category landing card
   "chatgpt-side-hustles-v2": 1.99,         // optional second variant
   "the-art-of-giving-no-fucks": 9.99,      // alias used in featured
+
+  // NEW explicit prices for your 8 items (where not already present)
+  "12-chatgpt-ai-side-streams": 2.99,
+  "faceless-digital-marketing-plr-bundle": 2.99,
+  "easy-way-to-build-30000-a-year-passive-income": 2.99,
 }
 
 /** Price overrides by TITLE (fallback) */
@@ -180,7 +186,7 @@ const PRICE_BY_TITLE: Record<string, number> = {
   [normTitle("Eating Healthy Ebook")]: 6.99,
   [normTitle("AI & ChatGPT Guides")]: 1.99,
   [normTitle("Chatgpt Side Hustles")]: 1.99, // title variant
-  // ✅ optional extra alias for safety (your request text)
+  // optional extra alias for safety
   [normTitle("The Art Of Giving No Fucks")]: 9.99,
 }
 
@@ -192,17 +198,17 @@ const MANUAL_OVERRIDES: Record<string, Partial<Product>> = {
   // Category landing niceties (if you have folders named like these)
   "ai-and-chatgpt-guides": { title: "AI & ChatGPT Guides", category: CATEGORY_LABELS.AI },
 
-  // ✅ Rename PLR & MRR Bundles entry + price
+  // Rename PLR & MRR Bundles entry + price
   "plr-and-mrr-bundles":  {
     title: "85 Million+ Ultimate PLR MRR Bundle Ideal for Passive Income $2.99",
     category: CATEGORY_LABELS.PLR,
     price: 2.99,
   },
 
-  // ✅ Keto & Diet Guides price = $1.99
+  // Keto & Diet Guides landing price
   "keto-and-diet-guides": { title: "Keto & Diet Guides", category: CATEGORY_LABELS.KETO, price: 1.99 },
 
-  // ✅ Rename Religious Ebooks entry + price
+  // Religious Ebooks landing rename
   "religious-ebooks":     { title: "The Exorcist Tradition", category: CATEGORY_LABELS.RELIGIOUS, price: 4.99 },
 
   // Put “wealth” / “as-you-sleep” in Passive Income (not Essentials)
@@ -210,7 +216,7 @@ const MANUAL_OVERRIDES: Record<string, Partial<Product>> = {
   "digital-wealth-ultimate-guide": { category: CATEGORY_LABELS.PASSIVE },
   "make-money-as-you-sleep":       { category: CATEGORY_LABELS.PASSIVE },
 
-  // ✅ Force the “Art of …” product into Self-Help (cover both slug variants)
+  // Force the “Art of …” product into Self-Help (cover both slug variants)
   "the-art-of-not-giving-a-fuck": {
     title: "The Art Of Giving No Fucks",
     category: CATEGORY_LABELS.SELF_HELP,
@@ -274,6 +280,66 @@ This listing is for a digital download. No physical product will be shipped.
 
 If you have any questions, please contact me and I will be more than happy to help!`,
     // downloadPath: "files/complete-shop-with-plr-mrr-rights.zip",
+  },
+
+  // ---------------------------------------------------------------------------
+  // YOUR 8 NEW PRODUCTS: Titles, Category LABELS, and helpful tags
+  // ---------------------------------------------------------------------------
+
+  // 1) 100 Christmas digital product ideas → Passive Income & Side Hustles
+  "100-christmas-digital-products": {
+    title: "100 Christmas Digital Product Ideas to Sell Online",
+    category: CATEGORY_LABELS.PASSIVE,
+    tags: ["ideas", "christmas", "etsy", "passive income", "side hustles"],
+  },
+
+  // 2) 12 ChatGPT AI Side Streams → AI & ChatGPT Guides
+  "12-chatgpt-ai-side-streams": {
+    title: "12 ChatGPT AI Side Streams",
+    category: CATEGORY_LABELS.AI,
+    tags: ["AI", "ChatGPT", "side income", "automation", "prompts"],
+  },
+
+  // 3) Cryptocurrency Secrets Ebook & Videos → Passive Income & Side Hustles
+  "cryptocurrency-secrets": {
+    title: "Cryptocurrency Secrets Ebook & Videos",
+    category: CATEGORY_LABELS.PASSIVE,
+    tags: ["crypto", "trading", "finance", "passive income", "video course"],
+  },
+
+  // 4) Eating Healthy Premium EBook & Complete Video Course → Keto & Diet Guides
+  "eating-healthy-ebook": {
+    title: "Eating Healthy Premium EBook & Complete Video Course",
+    category: CATEGORY_LABELS.KETO,
+    tags: ["health", "diet", "nutrition", "video course", "PLR"],
+  },
+
+  // 5) Faceless Digital Marketing Guide Bundle Template PLR Digital Product Bundle → Passive Income
+  "faceless-digital-marketing-plr-bundle": {
+    title: "Faceless Digital Marketing Guide Bundle Template — PLR Digital Product Bundle",
+    category: CATEGORY_LABELS.PASSIVE,
+    tags: ["PLR", "digital marketing", "templates", "bundle", "faceless brand"],
+  },
+
+  // 6) Keto Diet Secrets (MRR) → Keto & Diet Guides
+  "plr-keto-diet-secrets": {
+    title: "Keto Diet Secrets — Ebook, Sales Website & More (Master Resell Rights)",
+    category: CATEGORY_LABELS.KETO,
+    tags: ["keto", "diet", "MRR", "PLR", "sales page"],
+  },
+
+  // 7) The Cybersecurity Trinity → Self-Help & How-To
+  "cybersecurity-trinity": {
+    title: "The Cybersecurity Trinity",
+    category: CATEGORY_LABELS.SELF_HELP,
+    tags: ["security", "privacy", "how-to", "guides"],
+  },
+
+  // 8) The Easy Way To Build A $30,000 A Year Passive Income → Passive Income
+  "easy-way-to-build-30000-a-year-passive-income": {
+    title: "The Easy Way To Build A $30,000 A Year Passive Income",
+    category: CATEGORY_LABELS.PASSIVE,
+    tags: ["passive income", "systems", "wealth", "side hustle"],
   },
 }
 
