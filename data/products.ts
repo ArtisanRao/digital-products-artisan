@@ -1,3 +1,4 @@
+// data/products.ts
 import { imageManifest } from "./image-manifest"
 
 export type Product = {
@@ -69,6 +70,20 @@ export const CATEGORY_LABELS = {
 const DEFAULT_PRICE = 9.99 as number
 const DEFAULT_ORIGINAL_PRICE = 0 as number
 
+/** Hide these category-landing entries from the All Products feed */
+const HIDE_FROM_ALL_PRODUCTS = new Set<string>([
+  "self-help-and-how-to",
+  "social-media-kits",
+  "planners-and-productivity",
+  "passive-income-and-side-hustles",
+  "fonts-and-icons",
+  "health-and-fitness-ebooks",
+  "digital-essentials-hub",
+  "complete-shop-packages",
+  "web-templates",
+  "video-courses-and-training",
+])
+
 /**
  * Narrow, safe fallback from folder name.
  * Order matters: most specific first; no broad "ebook" catch-alls.
@@ -123,42 +138,30 @@ function normTitle(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9+ ]+/g, "").replace(/\s+/g, " ").trim()
 }
 
-/**
- * Price overrides by SLUG (highest priority).
- * These keys must match your folder names (imageManifest keys).
- * Values are NUMBERS (USD/EUR-agnostic).
- */
+/** Price overrides by SLUG */
 const PRICE_BY_SLUG: Record<string, number> = {
-  // From your list (1–15, 17):
-  "chatgpt-side-hustles": 2.99,           // 1
-  "make-money-as-you-sleep": 2.99,        // 2
-  "faceless-marketing": 2.99,             // 3
-  "digital-wealth": 28.99,                // 4 (alias; see also below)
-  "digital-wealth-ultimate-guide": 28.99, // 4 (common alt slug)
-  "cybersecurity-trinity": 12.99,         // 5
-  "85-million-plus": 2.99,                // 6
-  "beginners-guide-to-boolean": 9.99,     // 7
-  "the-art-of-not-giving-a-fuck": 9.99,   // 8
-  "plr-mrr-digital-products": 39.99,      // 9
-  "the-exorcist-tradition": 4.99,         // 10
-  "cryptocurrency-secrets": 2.99,         // 11
-  "plr-keto-diet-secrets": 1.99,          // 12
-  "100-christmas-digital-products": 1.99, // 13
-  "passive-income-ebook": 2.99,           // 14
-  "eating-healthy-ebook": 6.99,           // 15
-  // 16 looks like a category landing too; leaving as a product override just in case:
-  "ai-and-chatgpt-guides": 1.99,          // 16
-  // 17: second ChatGPT Side Hustles (ensure distinct slug in repo)
-  "chatgpt-side-hustles-v2": 1.99,        // 17 (use this slug for the $1.99 variant)
-
-  // Extra aliases that have appeared in your code in the past:
-  "the-art-of-giving-no-fucks": 9.99,     // featured variant seen earlier
+  "chatgpt-side-hustles": 2.99,
+  "make-money-as-you-sleep": 2.99,
+  "faceless-marketing": 2.99,
+  "digital-wealth": 28.99,
+  "digital-wealth-ultimate-guide": 28.99,
+  "cybersecurity-trinity": 12.99,
+  "85-million-plus": 2.99,
+  "beginners-guide-to-boolean": 9.99,
+  "the-art-of-not-giving-a-fuck": 9.99,
+  "plr-mrr-digital-products": 39.99,
+  "the-exorcist-tradition": 4.99,
+  "cryptocurrency-secrets": 2.99,
+  "plr-keto-diet-secrets": 1.99,
+  "100-christmas-digital-products": 1.99,
+  "passive-income-ebook": 2.99,
+  "eating-healthy-ebook": 6.99,
+  "ai-and-chatgpt-guides": 1.99,           // keep as requested earlier
+  "chatgpt-side-hustles-v2": 1.99,         // optional second variant
+  "the-art-of-giving-no-fucks": 9.99,      // alias used in featured
 }
 
-/**
- * Price overrides by TITLE (fallback if slug doesn’t match exactly).
- * Keys are normalized titles (lowercase, punctuation-stripped).
- */
+/** Price overrides by TITLE (fallback) */
 const PRICE_BY_TITLE: Record<string, number> = {
   [normTitle("ChatGPT Side hustles")]: 2.99,
   [normTitle("Make Money As You Sleep")]: 2.99,
@@ -176,8 +179,7 @@ const PRICE_BY_TITLE: Record<string, number> = {
   [normTitle("Passive Income Ebook")]: 2.99,
   [normTitle("Eating Healthy Ebook")]: 6.99,
   [normTitle("AI & ChatGPT Guides")]: 1.99,
-  // Optional: if you want a title signal for the $1.99 variant:
-  [normTitle("Chatgpt Side Hustles")]: 1.99, // maps to 1.99 if slug didn’t match
+  [normTitle("Chatgpt Side Hustles")]: 1.99, // title variant
 }
 
 /**
@@ -187,15 +189,26 @@ const PRICE_BY_TITLE: Record<string, number> = {
 const MANUAL_OVERRIDES: Record<string, Partial<Product>> = {
   // Category landing niceties (if you have folders named like these)
   "ai-and-chatgpt-guides": { title: "AI & ChatGPT Guides", category: CATEGORY_LABELS.AI },
-  "plr-and-mrr-bundles":  { title: "PLR & MRR Bundles",   category: CATEGORY_LABELS.PLR },
-  "keto-and-diet-guides": { title: "Keto & Diet Guides",  category: CATEGORY_LABELS.KETO },
+
+  // ✅ Rename PLR & MRR Bundles entry + price
+  "plr-and-mrr-bundles":  {
+    title: "85 Million+ Ultimate PLR MRR Bundle Ideal for Passive Income $2.99",
+    category: CATEGORY_LABELS.PLR,
+    price: 2.99,
+  },
+
+  // ✅ Keto & Diet Guides price = $1.99
+  "keto-and-diet-guides": { title: "Keto & Diet Guides", category: CATEGORY_LABELS.KETO, price: 1.99 },
+
+  // ✅ Rename Religious Ebooks entry + price
+  "religious-ebooks":     { title: "The Exorcist Tradition", category: CATEGORY_LABELS.RELIGIOUS, price: 4.99 },
 
   // Put “wealth” / “as-you-sleep” in Passive Income (not Essentials)
-  "digital-wealth":               { category: CATEGORY_LABELS.PASSIVE },
-  "digital-wealth-ultimate-guide":{ category: CATEGORY_LABELS.PASSIVE },
-  "make-money-as-you-sleep":      { category: CATEGORY_LABELS.PASSIVE },
+  "digital-wealth":                { category: CATEGORY_LABELS.PASSIVE },
+  "digital-wealth-ultimate-guide": { category: CATEGORY_LABELS.PASSIVE },
+  "make-money-as-you-sleep":       { category: CATEGORY_LABELS.PASSIVE },
 
-  // ✸ COMPLETE SHOP WITH PLR / MRR RIGHTS — edit slug/path to your actual file
+  // ✸ Complete Shop with PLR / MRR Rights
   "complete-shop-with-plr-mrr-rights": {
     title: "✸ Buy my complete Shop with PLR / MRR Rights ✸",
     category: CATEGORY_LABELS.SHOP,
@@ -255,14 +268,13 @@ const baseProducts: Omit<Product, "images">[] = Object.keys(imageManifest).map((
   const gallery = coverFirst(imageManifest[slug])
   const category = (MANUAL_OVERRIDES[slug]?.category as string) ?? inferCategory(slug)
 
-  // Start with defaults + manual non-price overrides
   const p: Omit<Product, "images"> = {
     id: stableId(slug),
     slug,
     title: (MANUAL_OVERRIDES[slug]?.title as string) ?? titleize(slug),
     description: `A curated digital product in ${category}.`,
     longDescription: undefined,
-    price: DEFAULT_PRICE,                 // default for items not in your list
+    price: DEFAULT_PRICE,
     originalPrice: DEFAULT_ORIGINAL_PRICE,
     category,
     tags: [],
@@ -274,12 +286,10 @@ const baseProducts: Omit<Product, "images">[] = Object.keys(imageManifest).map((
     ...(MANUAL_OVERRIDES[slug] ?? {}),
   }
 
-  // Apply price overrides with strong priority:
-  // 1) Exact slug match
+  // Apply price overrides by slug, then by title as fallback
   if (Object.prototype.hasOwnProperty.call(PRICE_BY_SLUG, slug)) {
     p.price = PRICE_BY_SLUG[slug]
   } else {
-    // 2) Title fallback (normalized)
     const key = normTitle(p.title)
     if (Object.prototype.hasOwnProperty.call(PRICE_BY_TITLE, key)) {
       p.price = PRICE_BY_TITLE[key]
@@ -289,11 +299,14 @@ const baseProducts: Omit<Product, "images">[] = Object.keys(imageManifest).map((
   return p
 })
 
-export const products: Product[] = baseProducts.map((p) => {
-  const gallery = coverFirst(imageManifest[p.slug])
-  const images = gallery?.length ? gallery : [p.image]
-  return { ...p, image: images[0], images }
-})
+export const products: Product[] = baseProducts
+  .map((p) => {
+    const gallery = coverFirst(imageManifest[p.slug])
+    const images = gallery?.length ? gallery : [p.image]
+    return { ...p, image: images[0], images }
+  })
+  // 🚫 Hide certain category-landing entries from the All Products page
+  .filter((p) => !HIDE_FROM_ALL_PRODUCTS.has(p.slug))
 
 /** Helper: select by category label (keeps Categories in sync with All Products). */
 export function productsInCategory(categoryLabel: string): Product[] {
