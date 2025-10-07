@@ -10,6 +10,7 @@ import Link from "next/link";
 import CoverImage from "@/components/ui/cover-image";
 import DescriptionClamp from "@/components/DescriptionClamp";
 import { productsBySlug, productPath, type Product } from "@/data/products";
+import { formatCurrency } from "@/lib/money"; // ← centralized currency formatter
 
 // Pick which products to feature by slug (must exist in productsBySlug)
 const FEATURED_SLUGS = [
@@ -19,10 +20,6 @@ const FEATURED_SLUGS = [
   "chatgpt-side-hustles",
   "make-money-as-you-sleep",
 ];
-
-// Small util so we always show € correctly (adjust if you wire a currency picker here)
-const formatPrice = (value: number, currency = "EUR", locale = "de-DE") =>
-  new Intl.NumberFormat(locale, { style: "currency", currency }).format(value);
 
 type CardProps = {
   product: Product;
@@ -74,7 +71,9 @@ function ProductCard({ product, index }: CardProps) {
           <Badge variant="secondary">{product.category}</Badge>
           <div className="flex items-center space-x-1">
             <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-            <span className="text-sm text-gray-600">{product.rating.toFixed?.(1) ?? product.rating}</span>
+            <span className="text-sm text-gray-600">
+              {product.rating.toFixed?.(1) ?? product.rating}
+            </span>
             <span className="text-sm text-gray-400">({product.reviews})</span>
           </div>
         </div>
@@ -94,11 +93,11 @@ function ProductCard({ product, index }: CardProps) {
         <div className="mt-3 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <span className="text-lg font-bold text-gray-900">
-              {formatPrice(product.price)}
+              {formatCurrency(product.price)}
             </span>
             {product.originalPrice > product.price && (
               <span className="text-sm text-gray-500 line-through">
-                {formatPrice(product.originalPrice)}
+                {formatCurrency(product.originalPrice)}
               </span>
             )}
           </div>
