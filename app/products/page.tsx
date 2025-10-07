@@ -12,7 +12,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import HoverableCover from '@/components/ui/hoverable-cover';
 import AddToCartWire from '@/components/catalog/AddToCartWire';
-import DescriptionClamp from '@/components/DescriptionClamp'; // ✅ ensure this is imported
+import DescriptionClamp from '@/components/DescriptionClamp'; // ✅ import
 
 // ✅ single source of truth for product data + canonical categories
 import { products, type Product, productPath, CATEGORY_LABELS } from '@/data/products';
@@ -44,23 +44,6 @@ const formatPrice = (value: number, currency = 'EUR', locale = 'de-DE') =>
 const buildImages = (p: Product) =>
   Array.from(new Set([p.image, ...((p.images ?? []) as string[])].filter(Boolean)));
 
-const tnorm = (s: string) => s.toLowerCase().trim();
-// Hide these “category landing” cards from All Products
-const HIDE_TITLES = new Set(
-  [
-    'Self Help And How To',
-    'Social Media Kits',
-    'Planners and Productivity',
-    'Passive Income And Side Hustles',
-    'Fonts And Icons',
-    'Health And Fitness Ebooks',
-    'Digital Essentials Hub',
-    'Complete Shop Packages',
-    'Web Templates',
-    'Video Courses And Training',
-  ].map(tnorm)
-);
-
 /* ---------------- page ---------------- */
 
 export default function ProductsPage() {
@@ -87,9 +70,6 @@ export default function ProductsPage() {
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
-      // 🚫 remove category landing titles from the list
-      if (HIDE_TITLES.has(tnorm(product.title))) return false;
-
       const q = searchQuery.toLowerCase();
       const text = (product.longDescription ?? product.description ?? '').toLowerCase();
       const matchesSearch = product.title.toLowerCase().includes(q) || text.includes(q);
@@ -241,7 +221,7 @@ export default function ProductsPage() {
                             setSelectedTags((prev) => (v ? [...prev, tag] : prev.filter((t) => t !== tag)));
                           }}
                         />
-                          <span className="text-sm text-gray-700 cursor-pointer">{tag}</span>
+                        <span className="text-sm text-gray-700 cursor-pointer">{tag}</span>
                       </label>
                     );
                   })}
@@ -274,7 +254,7 @@ export default function ProductsPage() {
               <div className="flex border rounded-lg" role="group" aria-label="Toggle view mode">
                 <Button
                   variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                  size="sm'
+                  size="sm"               {/* ✅ fixed quotes */}
                   onClick={() => setViewMode('grid')}
                   className="rounded-r-none"
                   aria-pressed={viewMode === 'grid'}
