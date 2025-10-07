@@ -12,9 +12,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import HoverableCover from '@/components/ui/hoverable-cover';
 import AddToCartWire from '@/components/catalog/AddToCartWire';
-import DescriptionClamp from '@/components/DescriptionClamp'; // ✅ FIX: add missing import
 
-// single source of truth for product data + canonical categories
+// ✅ single source of truth for product data + canonical categories
 import { products, type Product, productPath, CATEGORY_LABELS } from '@/data/products';
 
 /* ---------------- helpers ---------------- */
