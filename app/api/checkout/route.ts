@@ -10,6 +10,9 @@ import { bundlesBySlug } from "@/app/bundles/data"; // single source for bundle 
 const SUPPORTED = new Set(["USD", "EUR"]);
 type AllowedMethod = "card" | "paypal" | "klarna";
 
+const VERCEL_ENV = process.env.VERCEL_ENV || "";
+const IS_PROD_DEPLOY = VERCEL_ENV === "production";
+
 /* ------------------------ Utilities ------------------------ */
 function normalizeCurrency(c?: string) {
   const upper = String(c || "EUR").toUpperCase();
@@ -56,6 +59,12 @@ function getStripe(): Stripe {
   if (!key) {
     throw new Error("Missing STRIPE_SECRET_KEY");
   }
+  // Hard-stop if a test key is used on a Production deploy
+  if (IS_PROD_DEPLOY && /^sk_test_/i.test(key)) {
+    throw new Error(
+      "STRIPE_SECRET_KEY is a TEST key on a production deploy. Set a live key (sk_live_...) in Vercel → Environment Variables → Production."
+    );
+  }
   // Use the SDK's bundled apiVersion to avoid TS literal mismatches.
   return new Stripe(key);
 }
@@ -70,6 +79,19 @@ function paymentMethodsForCurrency(
     cur === "EUR" ? ["card", "klarna", "paypal"] : ["card", "paypal"];
   if (only && base.includes(only)) return [only];
   return base;
+}
+
+function logSession(kind: "product" | "bundle", s: Stripe.Checkout.Session) {
+  try {
+    console.log(
+      `[checkout:${kind}] id=${s.id} livemode=${s.livemode} currency=${s.currency} methods=${(s.payment_method_types || []).join(",")}`
+    );
+    if (IS_PROD_DEPLOY && s.livemode === false) {
+      console.warn(
+        "[checkout] WARNING: Stripe session is TEST in a production deploy. Check Vercel env vars (live keys) and any PayPal/Klarna live configuration."
+      );
+    }
+  } catch {}
 }
 
 /* -------------------- Core session builders -------------------- */
@@ -111,9 +133,7 @@ async function createSessionFromSingle(opts: {
         },
       ];
 
-  // URL-safe cancel path back to product page
   const cancelPath = productPath(product);
-  // Success URL goes to /downloads with useful params for UX
   const success = `${origin}/downloads?order={CHECKOUT_SESSION_ID}&email={CUSTOMER_EMAIL}&name={CUSTOMER_NAME}`;
 
   const session = await stripe.checkout.sessions.create({
@@ -121,7 +141,7 @@ async function createSessionFromSingle(opts: {
     payment_method_types: paymentMethodsForCurrency(currency, onlyMethod),
     line_items,
     allow_promotion_codes: true,
-    automatic_tax: { enabled: true }, // set to false if Stripe Tax not enabled LIVE
+    automatic_tax: { enabled: true }, // turn off if Stripe Tax not enabled live
     billing_address_collection: "auto",
     submit_type: "pay",
     client_reference_id: String(product.id),
@@ -136,6 +156,8 @@ async function createSessionFromSingle(opts: {
     success_url: success,
     cancel_url: `${origin}${cancelPath}`,
   });
+
+  logSession("product", session);
 
   if (!session.url) throw new Error("Stripe session did not return a URL");
   return session.url;
@@ -164,7 +186,7 @@ async function createSessionFromBundle(opts: {
         quantity: qty,
         price_data: {
           currency: lcCurrency(currency),
-          unit_amount: toMinorUnits(b.price), // price from bundles catalog
+          unit_amount: toMinorUnits(b.price),
           product_data: {
             name: b.title,
             images: [b.image.startsWith("http") ? b.image : `${origin}${b.image}`],
@@ -186,6 +208,8 @@ async function createSessionFromBundle(opts: {
     success_url: success,
     cancel_url: `${origin}/bundles/${handle}`,
   });
+
+  logSession("bundle", session);
 
   if (!session.url) throw new Error("Stripe session did not return a URL");
   return session.url;
@@ -302,6 +326,7 @@ export async function POST(req: NextRequest) {
         success_url: `${origin}/downloads?order={CHECKOUT_SESSION_ID}&email={CUSTOMER_EMAIL}&name={CUSTOMER_NAME}`,
         cancel_url: `${origin}/cart`,
       });
+      logSession("product", session);
       return NextResponse.json({ url: session.url });
     }
 
@@ -377,6 +402,7 @@ export async function POST(req: NextRequest) {
         success_url: `${origin}/downloads?order={CHECKOUT_SESSION_ID}&email={CUSTOMER_EMAIL}&name={CUSTOMER_NAME}`,
         cancel_url: `${origin}/cart`,
       });
+      logSession("product", session);
       return NextResponse.json({ url: session.url });
     }
 
