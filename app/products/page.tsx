@@ -522,7 +522,7 @@ export default function ProductsPage() {
               {showAll ? (
                 <Button
                   onClick={() => setShowAll(false)}
-                  variant="outline"
+                  className="bg-blue-600 text-white hover:bg-blue-700"
                   aria-controls="products-list"
                   title="See less products"
                 >
