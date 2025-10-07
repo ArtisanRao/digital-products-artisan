@@ -1,4 +1,3 @@
-// app/api/checkout/route.ts
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -12,6 +11,13 @@ type AllowedMethod = "card" | "paypal" | "klarna";
 
 const VERCEL_ENV = process.env.VERCEL_ENV || "";
 const IS_PROD_DEPLOY = VERCEL_ENV === "production";
+
+// Perf toggles / success target
+const TAX_ENABLED =
+  (process.env.STRIPE_TAX_ENABLED || "").toLowerCase() === "true";
+// Use a feather-weight page by default (see app/thank-you/page.tsx below)
+const SUCCESS_PATH =
+  (process.env.NEXT_PUBLIC_STRIPE_SUCCESS_PATH || "/thank-you").trim();
 
 /* ------------------------ Utilities ------------------------ */
 function normalizeCurrency(c?: string) {
@@ -89,11 +95,9 @@ function getStripe(): Stripe {
     );
   }
   if (!/^sk_(live|test)_/i.test(key) && !/^rk_(live|test)_/i.test(key)) {
-    // Unrecognized prefix (or restricted key not starting with rk_)
     console.warn("[stripe] STRIPE_SECRET_KEY has an unexpected prefix. Proceeding but this may fail.");
   }
   if (key.startsWith("rk_live_")) {
-    // Allowed, but permissions must include checkout.sessions:write
     console.warn(
       "[stripe] Using a restricted live key (rk_live_*). Ensure it has 'checkout.sessions:write', 'prices:read', 'products:read'."
     );
@@ -167,14 +171,14 @@ async function createSessionFromSingle(opts: {
       ];
 
   const cancelPath = productPath(product);
-  const success = `${origin}/downloads?order={CHECKOUT_SESSION_ID}&email={CUSTOMER_EMAIL}&name={CUSTOMER_NAME}`;
+  const success = `${origin}${SUCCESS_PATH}?order={CHECKOUT_SESSION_ID}&email={CUSTOMER_EMAIL}&name={CUSTOMER_NAME}`;
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
     payment_method_types: paymentMethodsForCurrency(currency, onlyMethod),
     line_items,
     allow_promotion_codes: true,
-    automatic_tax: { enabled: true }, // turn off if Stripe Tax not enabled live
+    automatic_tax: { enabled: TAX_ENABLED }, // perf: compute tax only if enabled
     billing_address_collection: "auto",
     submit_type: "pay",
     client_reference_id: String(product.id),
@@ -209,7 +213,7 @@ async function createSessionFromBundle(opts: {
   const b = bundlesBySlug[handle];
   if (!b) throw new Error(`Unknown bundle: ${handle}`);
 
-  const success = `${origin}/downloads?order={CHECKOUT_SESSION_ID}&email={CUSTOMER_EMAIL}&name={CUSTOMER_NAME}`;
+  const success = `${origin}${SUCCESS_PATH}?order={CHECKOUT_SESSION_ID}&email={CUSTOMER_EMAIL}&name={CUSTOMER_NAME}`;
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
@@ -228,7 +232,7 @@ async function createSessionFromBundle(opts: {
       },
     ],
     allow_promotion_codes: true,
-    automatic_tax: { enabled: true },
+    automatic_tax: { enabled: TAX_ENABLED },
     billing_address_collection: "auto",
     submit_type: "pay",
     client_reference_id: `bundle:${handle}`,
@@ -353,10 +357,10 @@ export async function POST(req: NextRequest) {
         payment_method_types: paymentMethodsForCurrency(currency, onlyMethod),
         line_items: body.line_items,
         allow_promotion_codes: true,
-        automatic_tax: { enabled: true },
+        automatic_tax: { enabled: TAX_ENABLED },
         billing_address_collection: "auto",
         submit_type: "pay",
-        success_url: `${origin}/downloads?order={CHECKOUT_SESSION_ID}&email={CUSTOMER_EMAIL}&name={CUSTOMER_NAME}`,
+        success_url: `${origin}${SUCCESS_PATH}?order={CHECKOUT_SESSION_ID}&email={CUSTOMER_EMAIL}&name={CUSTOMER_NAME}`,
         cancel_url: `${origin}/cart`,
       });
       logSession("product", session);
@@ -429,10 +433,10 @@ export async function POST(req: NextRequest) {
         payment_method_types: paymentMethodsForCurrency(currency, onlyMethod),
         line_items: resolved,
         allow_promotion_codes: true,
-        automatic_tax: { enabled: true },
+        automatic_tax: { enabled: TAX_ENABLED },
         billing_address_collection: "auto",
         submit_type: "pay",
-        success_url: `${origin}/downloads?order={CHECKOUT_SESSION_ID}&email={CUSTOMER_EMAIL}&name={CUSTOMER_NAME}`,
+        success_url: `${origin}${SUCCESS_PATH}?order={CHECKOUT_SESSION_ID}&email={CUSTOMER_EMAIL}&name={CUSTOMER_NAME}`,
         cancel_url: `${origin}/cart`,
       });
       logSession("product", session);
