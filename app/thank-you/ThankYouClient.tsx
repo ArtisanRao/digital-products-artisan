@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
 import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 
 export default function ThankYouClient() {
   const params = useSearchParams();
-  const router = useRouter();
 
   const order = params.get("order") || params.get("session_id") || "";
   const email = params.get("email") || "";
@@ -16,19 +15,17 @@ export default function ThankYouClient() {
     email
   )}&name=${encodeURIComponent(name)}`;
 
+  // Secondary safety redirect (if inline script was blocked)
   useEffect(() => {
-    router.prefetch("/downloads");
-    const t = setTimeout(() => {
-      router.replace(downloadsHref);
-    }, 300); // quick handoff
-    return () => clearTimeout(t);
-  }, [downloadsHref, router]);
+    // do not wait; hand off immediately
+    window.location.replace(downloadsHref);
+  }, [downloadsHref]);
 
   return (
     <main className="container mx-auto px-4 py-16 text-center">
       <h1 className="text-3xl md:text-4xl font-bold mb-3">Payment complete 🎉</h1>
       <p className="text-gray-600 mb-8">
-        We’re preparing your downloads… you’ll be redirected automatically.
+        Redirecting you to your downloads…
       </p>
       <Link
         href={downloadsHref}

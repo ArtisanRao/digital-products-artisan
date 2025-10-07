@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { products, productPath } from "@/data/products";
-import { bundlesBySlug } from "@/app/bundles/data"; // single source for bundle prices/images
+import { bundlesBySlug } from "@/app/bundles/data";
 
 const SUPPORTED = new Set(["USD", "EUR"]);
 type AllowedMethod = "card" | "paypal" | "klarna";
@@ -12,43 +12,30 @@ type AllowedMethod = "card" | "paypal" | "klarna";
 const VERCEL_ENV = process.env.VERCEL_ENV || "";
 const IS_PROD_DEPLOY = VERCEL_ENV === "production";
 
-// Perf toggles / success target
-const TAX_ENABLED =
-  (process.env.STRIPE_TAX_ENABLED || "").toLowerCase() === "true";
-// Use a feather-weight page by default (see app/thank-you/page.tsx below)
-const SUCCESS_PATH =
-  (process.env.NEXT_PUBLIC_STRIPE_SUCCESS_PATH || "/thank-you").trim();
-
 /* ------------------------ Utilities ------------------------ */
 function normalizeCurrency(c?: string) {
   const upper = String(c || "EUR").toUpperCase();
   return SUPPORTED.has(upper) ? upper : "EUR";
 }
 function lcCurrency(c: string) {
-  return c.toLowerCase(); // "eur" | "usd"
+  return c.toLowerCase();
 }
 function toMinorUnits(amount: number) {
-  return Math.round(amount * 100); // cents
+  return Math.round(amount * 100);
 }
-
 function siteBase(req: NextRequest) {
   const envBase = (process.env.NEXT_PUBLIC_SITE_URL || "").trim();
   if (envBase) return envBase.replace(/\/+$/, "");
-
-  // Vercel provides VERCEL_URL (no protocol) on server
   const vercelUrl = (process.env.VERCEL_URL || "").trim();
   if (vercelUrl) {
     const proto = IS_PROD_DEPLOY ? "https" : "http";
     return `${proto}://${vercelUrl.replace(/\/+$/, "")}`;
   }
-
-  // Fallback to request origin/host
   const hdr = req.headers.get("origin");
   if (hdr) return hdr.replace(/\/+$/, "");
   const url = new URL(req.url);
   return `${url.protocol}//${url.host}`;
 }
-
 function findProductByKey(key: string | number | null | undefined) {
   if (key === null || key === undefined) return null;
   const s = String(key);
@@ -63,7 +50,6 @@ function findProductByKey(key: string | number | null | undefined) {
     null
   );
 }
-
 function imageForProduct(origin: string, product: any) {
   const rel =
     Array.isArray(product.images) && product.images.length
@@ -73,41 +59,20 @@ function imageForProduct(origin: string, product: any) {
   return String(rel).startsWith("http") ? String(rel) : `${origin}${rel}`;
 }
 
-/** Strict key validation + helpful errors (prevents accidental test/webhook/publishable keys) */
+/** Strict key validation + helpful errors */
 function getStripe(): Stripe {
   const raw = process.env.STRIPE_SECRET_KEY ?? "";
   const key = raw.trim();
-
-  if (!key) {
-    throw new Error(
-      "Missing STRIPE_SECRET_KEY. Set a LIVE secret key (sk_live_...) in Vercel → Project → Settings → Environment Variables."
-    );
-  }
-  if (key.startsWith("pk_")) {
-    throw new Error("STRIPE_SECRET_KEY is a PUBLISHABLE key (pk_*). Use your LIVE SECRET key (sk_live_*).");
-  }
-  if (key.startsWith("whsec_")) {
-    throw new Error("STRIPE_SECRET_KEY is a WEBHOOK secret (whsec_*). Use your LIVE SECRET key (sk_live_*).");
-  }
+  if (!key) throw new Error("Missing STRIPE_SECRET_KEY (set live sk_live_... in Vercel).");
+  if (key.startsWith("pk_")) throw new Error("STRIPE_SECRET_KEY is publishable (pk_*). Use secret sk_*.");
+  if (key.startsWith("whsec_")) throw new Error("STRIPE_SECRET_KEY is a webhook secret (whsec_*). Use sk_*.");
   if (IS_PROD_DEPLOY && key.startsWith("sk_test_")) {
-    throw new Error(
-      "STRIPE_SECRET_KEY is a TEST key on a production deploy. Use a LIVE key (sk_live_*)."
-    );
+    throw new Error("STRIPE_SECRET_KEY is test on a production deploy. Use sk_live_*.");
   }
-  if (!/^sk_(live|test)_/i.test(key) && !/^rk_(live|test)_/i.test(key)) {
-    console.warn("[stripe] STRIPE_SECRET_KEY has an unexpected prefix. Proceeding but this may fail.");
-  }
-  if (key.startsWith("rk_live_")) {
-    console.warn(
-      "[stripe] Using a restricted live key (rk_live_*). Ensure it has 'checkout.sessions:write', 'prices:read', 'products:read'."
-    );
-  }
-
-  // Use SDK's bundled apiVersion; safer across SDK bumps
-  return new Stripe(key);
+  return new Stripe(key); // use SDK bundled apiVersion
 }
 
-/** Build allowed methods per currency; if `only` is provided and valid, restrict to that single method */
+/** Build allowed methods per currency */
 function paymentMethodsForCurrency(
   c?: string,
   only?: AllowedMethod | null
@@ -124,9 +89,7 @@ function logSession(kind: "product" | "bundle", s: Stripe.Checkout.Session) {
       `[checkout:${kind}] id=${s.id} livemode=${s.livemode} currency=${s.currency} methods=${(s.payment_method_types || []).join(",")}`
     );
     if (IS_PROD_DEPLOY && s.livemode === false) {
-      console.warn(
-        "[checkout] WARNING: Stripe session is TEST in a production deploy. Check Vercel env vars (live keys) and any PayPal/Klarna live configuration."
-      );
+      console.warn("[checkout] WARNING: test session on production deploy.");
     }
   } catch {}
 }
@@ -171,14 +134,15 @@ async function createSessionFromSingle(opts: {
       ];
 
   const cancelPath = productPath(product);
-  const success = `${origin}${SUCCESS_PATH}?order={CHECKOUT_SESSION_ID}&email={CUSTOMER_EMAIL}&name={CUSTOMER_NAME}`;
+  // ⚡ Send buyers to a super-light /thank-you that instantly forwards to /downloads
+  const success = `${origin}/thank-you?order={CHECKOUT_SESSION_ID}&email={CUSTOMER_EMAIL}&name={CUSTOMER_NAME}`;
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
     payment_method_types: paymentMethodsForCurrency(currency, onlyMethod),
     line_items,
     allow_promotion_codes: true,
-    automatic_tax: { enabled: TAX_ENABLED }, // perf: compute tax only if enabled
+    automatic_tax: { enabled: true }, // disable if you don't use Stripe Tax
     billing_address_collection: "auto",
     submit_type: "pay",
     client_reference_id: String(product.id),
@@ -195,7 +159,6 @@ async function createSessionFromSingle(opts: {
   });
 
   logSession("product", session);
-
   if (!session.url) throw new Error("Stripe session did not return a URL");
   return session.url;
 }
@@ -213,7 +176,7 @@ async function createSessionFromBundle(opts: {
   const b = bundlesBySlug[handle];
   if (!b) throw new Error(`Unknown bundle: ${handle}`);
 
-  const success = `${origin}${SUCCESS_PATH}?order={CHECKOUT_SESSION_ID}&email={CUSTOMER_EMAIL}&name={CUSTOMER_NAME}`;
+  const success = `${origin}/thank-you?order={CHECKOUT_SESSION_ID}&email={CUSTOMER_EMAIL}&name={CUSTOMER_NAME}`;
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
@@ -232,7 +195,7 @@ async function createSessionFromBundle(opts: {
       },
     ],
     allow_promotion_codes: true,
-    automatic_tax: { enabled: TAX_ENABLED },
+    automatic_tax: { enabled: true },
     billing_address_collection: "auto",
     submit_type: "pay",
     client_reference_id: `bundle:${handle}`,
@@ -247,7 +210,6 @@ async function createSessionFromBundle(opts: {
   });
 
   logSession("bundle", session);
-
   if (!session.url) throw new Error("Stripe session did not return a URL");
   return session.url;
 }
@@ -257,29 +219,20 @@ export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
     const bundleId = url.searchParams.get("bundleId");
-    let slug = url.searchParams.get("slug"); // may be "bundle:<slug>"
+    let slug = url.searchParams.get("slug");
     const productId = url.searchParams.get("productId");
     const qty = Math.max(1, Number(url.searchParams.get("qty") ?? 1));
     const currency = normalizeCurrency(url.searchParams.get("currency") ?? "EUR");
-    const onlyParam = url.searchParams.get("only")?.toLowerCase() as
-      | AllowedMethod
-      | undefined;
+    const onlyParam = url.searchParams.get("only")?.toLowerCase() as AllowedMethod | undefined;
     const onlyMethod: AllowedMethod | null =
       onlyParam && ["card", "paypal", "klarna"].includes(onlyParam) ? onlyParam : null;
 
     const origin = siteBase(req);
-
     if (!slug && bundleId) slug = `bundle:${bundleId}`;
 
     if (slug && slug.startsWith("bundle:")) {
       const handle = slug.replace(/^bundle:/, "");
-      const redirectUrl = await createSessionFromBundle({
-        handle,
-        qty,
-        currency,
-        origin,
-        onlyMethod,
-      });
+      const redirectUrl = await createSessionFromBundle({ handle, qty, currency, origin, onlyMethod });
       return NextResponse.redirect(redirectUrl, { status: 303 });
     }
 
@@ -288,14 +241,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Missing productId or slug" }, { status: 400 });
     }
 
-    const redirectUrl = await createSessionFromSingle({
-      productKey,
-      qty,
-      currency,
-      origin,
-      onlyMethod,
-    });
-
+    const redirectUrl = await createSessionFromSingle({ productKey, qty, currency, origin, onlyMethod });
     return NextResponse.redirect(redirectUrl, { status: 303 });
   } catch (err: any) {
     console.error("Checkout GET error:", err);
@@ -311,26 +257,16 @@ export async function POST(req: NextRequest) {
     const origin = siteBase(req);
     const body = await req.json().catch(() => ({} as any));
 
-    const methodParam = (body?.method || body?.only)?.toString()?.toLowerCase() as
-      | AllowedMethod
-      | undefined;
+    const methodParam = (body?.method || body?.only)?.toString()?.toLowerCase() as AllowedMethod | undefined;
     const onlyMethod: AllowedMethod | null =
-      methodParam && ["card", "paypal", "klarna"].includes(methodParam)
-        ? methodParam
-        : null;
+      methodParam && ["card", "paypal", "klarna"].includes(methodParam) ? methodParam : null;
 
     // Bundle
     if (body?.bundleId || (typeof body?.slug === "string" && body.slug.startsWith("bundle:"))) {
       const handle = body.bundleId ?? String(body.slug).replace(/^bundle:/, "");
       const qty = Math.max(1, Number(body?.qty ?? 1));
       const currency = normalizeCurrency(body?.currency ?? "EUR");
-      const url = await createSessionFromBundle({
-        handle,
-        qty,
-        currency,
-        origin,
-        onlyMethod,
-      });
+      const url = await createSessionFromBundle({ handle, qty, currency, origin, onlyMethod });
       return NextResponse.json({ url });
     }
 
@@ -339,13 +275,7 @@ export async function POST(req: NextRequest) {
       const qty = Math.max(1, Number(body?.qty ?? 1));
       const currency = normalizeCurrency(body?.currency ?? "EUR");
       const productKey = String(body.productId ?? body.slug);
-      const url = await createSessionFromSingle({
-        productKey,
-        qty,
-        currency,
-        origin,
-        onlyMethod,
-      });
+      const url = await createSessionFromSingle({ productKey, qty, currency, origin, onlyMethod });
       return NextResponse.json({ url });
     }
 
@@ -357,10 +287,10 @@ export async function POST(req: NextRequest) {
         payment_method_types: paymentMethodsForCurrency(currency, onlyMethod),
         line_items: body.line_items,
         allow_promotion_codes: true,
-        automatic_tax: { enabled: TAX_ENABLED },
+        automatic_tax: { enabled: true },
         billing_address_collection: "auto",
         submit_type: "pay",
-        success_url: `${origin}${SUCCESS_PATH}?order={CHECKOUT_SESSION_ID}&email={CUSTOMER_EMAIL}&name={CUSTOMER_NAME}`,
+        success_url: `${origin}/thank-you?order={CHECKOUT_SESSION_ID}&email={CUSTOMER_EMAIL}&name={CUSTOMER_NAME}`,
         cancel_url: `${origin}/cart`,
       });
       logSession("product", session);
@@ -373,7 +303,6 @@ export async function POST(req: NextRequest) {
       const resolved: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
 
       for (const it of body.items) {
-        // Support: { id } | { slug } | { productId } | { bundleId }
         if (it?.bundleId || (typeof it?.slug === "string" && it.slug.startsWith("bundle:"))) {
           const handle = it.bundleId ?? String(it.slug).replace(/^bundle:/, "");
           const b = bundlesBySlug[handle];
@@ -433,10 +362,10 @@ export async function POST(req: NextRequest) {
         payment_method_types: paymentMethodsForCurrency(currency, onlyMethod),
         line_items: resolved,
         allow_promotion_codes: true,
-        automatic_tax: { enabled: TAX_ENABLED },
+        automatic_tax: { enabled: true },
         billing_address_collection: "auto",
         submit_type: "pay",
-        success_url: `${origin}${SUCCESS_PATH}?order={CHECKOUT_SESSION_ID}&email={CUSTOMER_EMAIL}&name={CUSTOMER_NAME}`,
+        success_url: `${origin}/thank-you?order={CHECKOUT_SESSION_ID}&email={CUSTOMER_EMAIL}&name={CUSTOMER_NAME}`,
         cancel_url: `${origin}/cart`,
       });
       logSession("product", session);
