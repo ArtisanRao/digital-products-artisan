@@ -24,14 +24,25 @@ function lcCurrency(c: string) {
 function toMinorUnits(amount: number) {
   return Math.round(amount * 100); // cents
 }
+
 function siteBase(req: NextRequest) {
-  const envBase = process.env.NEXT_PUBLIC_SITE_URL;
+  const envBase = (process.env.NEXT_PUBLIC_SITE_URL || "").trim();
   if (envBase) return envBase.replace(/\/+$/, "");
+
+  // Vercel provides VERCEL_URL (no protocol) on server
+  const vercelUrl = (process.env.VERCEL_URL || "").trim();
+  if (vercelUrl) {
+    const proto = IS_PROD_DEPLOY ? "https" : "http";
+    return `${proto}://${vercelUrl.replace(/\/+$/, "")}`;
+  }
+
+  // Fallback to request origin/host
   const hdr = req.headers.get("origin");
   if (hdr) return hdr.replace(/\/+$/, "");
   const url = new URL(req.url);
   return `${url.protocol}//${url.host}`;
 }
+
 function findProductByKey(key: string | number | null | undefined) {
   if (key === null || key === undefined) return null;
   const s = String(key);
@@ -46,6 +57,7 @@ function findProductByKey(key: string | number | null | undefined) {
     null
   );
 }
+
 function imageForProduct(origin: string, product: any) {
   const rel =
     Array.isArray(product.images) && product.images.length
@@ -54,18 +66,40 @@ function imageForProduct(origin: string, product: any) {
   if (!rel) return undefined;
   return String(rel).startsWith("http") ? String(rel) : `${origin}${rel}`;
 }
+
+/** Strict key validation + helpful errors (prevents accidental test/webhook/publishable keys) */
 function getStripe(): Stripe {
-  const key = process.env.STRIPE_SECRET_KEY;
+  const raw = process.env.STRIPE_SECRET_KEY ?? "";
+  const key = raw.trim();
+
   if (!key) {
-    throw new Error("Missing STRIPE_SECRET_KEY");
-  }
-  // Hard-stop if a test key is used on a Production deploy
-  if (IS_PROD_DEPLOY && /^sk_test_/i.test(key)) {
     throw new Error(
-      "STRIPE_SECRET_KEY is a TEST key on a production deploy. Set a live key (sk_live_...) in Vercel → Environment Variables → Production."
+      "Missing STRIPE_SECRET_KEY. Set a LIVE secret key (sk_live_...) in Vercel → Project → Settings → Environment Variables."
     );
   }
-  // Use the SDK's bundled apiVersion to avoid TS literal mismatches.
+  if (key.startsWith("pk_")) {
+    throw new Error("STRIPE_SECRET_KEY is a PUBLISHABLE key (pk_*). Use your LIVE SECRET key (sk_live_*).");
+  }
+  if (key.startsWith("whsec_")) {
+    throw new Error("STRIPE_SECRET_KEY is a WEBHOOK secret (whsec_*). Use your LIVE SECRET key (sk_live_*).");
+  }
+  if (IS_PROD_DEPLOY && key.startsWith("sk_test_")) {
+    throw new Error(
+      "STRIPE_SECRET_KEY is a TEST key on a production deploy. Use a LIVE key (sk_live_*)."
+    );
+  }
+  if (!/^sk_(live|test)_/i.test(key) && !/^rk_(live|test)_/i.test(key)) {
+    // Unrecognized prefix (or restricted key not starting with rk_)
+    console.warn("[stripe] STRIPE_SECRET_KEY has an unexpected prefix. Proceeding but this may fail.");
+  }
+  if (key.startsWith("rk_live_")) {
+    // Allowed, but permissions must include checkout.sessions:write
+    console.warn(
+      "[stripe] Using a restricted live key (rk_live_*). Ensure it has 'checkout.sessions:write', 'prices:read', 'products:read'."
+    );
+  }
+
+  // Use SDK's bundled apiVersion; safer across SDK bumps
   return new Stripe(key);
 }
 
@@ -75,8 +109,7 @@ function paymentMethodsForCurrency(
   only?: AllowedMethod | null
 ): Stripe.Checkout.SessionCreateParams.PaymentMethodType[] {
   const cur = normalizeCurrency(c);
-  const base: AllowedMethod[] =
-    cur === "EUR" ? ["card", "klarna", "paypal"] : ["card", "paypal"];
+  const base: AllowedMethod[] = cur === "EUR" ? ["card", "klarna", "paypal"] : ["card", "paypal"];
   if (only && base.includes(only)) return [only];
   return base;
 }
@@ -96,9 +129,9 @@ function logSession(kind: "product" | "bundle", s: Stripe.Checkout.Session) {
 
 /* -------------------- Core session builders -------------------- */
 async function createSessionFromSingle(opts: {
-  productKey: string | number; // id or slug
+  productKey: string | number;
   qty?: number;
-  currency?: string; // USD/EUR
+  currency?: string;
   origin: string;
   onlyMethod?: AllowedMethod | null;
 }) {
@@ -164,7 +197,7 @@ async function createSessionFromSingle(opts: {
 }
 
 async function createSessionFromBundle(opts: {
-  handle: string; // bundle slug (e.g. "pro-bundle")
+  handle: string;
   qty?: number;
   currency?: string;
   origin: string;
