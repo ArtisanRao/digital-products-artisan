@@ -1,5 +1,6 @@
 ﻿// app/downloads/page.tsx
 import Link from "next/link";
+import { signDownloadToken } from "@/lib/download-token";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,11 @@ export default async function DownloadsPage(props: any) {
   const email = get("email");
   const name = get("name");
 
+  // Create expiring, signed tokens for your files under /private/files/*
+  const ONE_DAY = 60 * 60 * 24;
+  const sampleZipToken = signDownloadToken({ path: "files/sample-product.zip" }, ONE_DAY);
+  const checklistPdfToken = signDownloadToken({ path: "files/bonus-checklist.pdf" }, ONE_DAY);
+
   return (
     <main className="container mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold">Your downloads</h1>
@@ -33,14 +39,19 @@ export default async function DownloadsPage(props: any) {
         <div className="rounded-lg border p-4">
           <h2 className="font-semibold">Your product files</h2>
           <ul className="list-disc pl-5 mt-2 space-y-2">
-            {/* Replace with your real files or a signed /api/download route */}
             <li>
-              <Link className="underline" href="/files/sample-product.zip">
+              <Link
+                className="underline"
+                href={`/api/download?token=${encodeURIComponent(sampleZipToken)}`}
+              >
                 Download: sample-product.zip
               </Link>
             </li>
             <li>
-              <Link className="underline" href="/files/bonus-checklist.pdf">
+              <Link
+                className="underline"
+                href={`/api/download?token=${encodeURIComponent(checklistPdfToken)}`}
+              >
                 Bonus: checklist.pdf
               </Link>
             </li>
