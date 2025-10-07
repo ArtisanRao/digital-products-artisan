@@ -12,9 +12,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import HoverableCover from '@/components/ui/hoverable-cover';
 import AddToCartWire from '@/components/catalog/AddToCartWire';
-import DescriptionClamp from '@/components/DescriptionClamp'; // ✅ import
+import DescriptionClamp from '@/components/DescriptionClamp';
 
-// ✅ single source of truth for product data + canonical categories
+// single source of truth for product data + canonical categories
 import { products, type Product, productPath, CATEGORY_LABELS } from '@/data/products';
 
 /* ---------------- helpers ---------------- */
@@ -254,7 +254,7 @@ export default function ProductsPage() {
               <div className="flex border rounded-lg" role="group" aria-label="Toggle view mode">
                 <Button
                   variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                  size="sm"               {/* ✅ fixed quotes */}
+                  size="sm"
                   onClick={() => setViewMode('grid')}
                   className="rounded-r-none"
                   aria-pressed={viewMode === 'grid'}
