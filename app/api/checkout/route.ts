@@ -5,15 +5,12 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { products, productPath } from "@/data/products";
-import { bundlesBySlug } from "@/app/bundles/data"; // ← single source for bundle prices/images
+import { bundlesBySlug } from "@/app/bundles/data"; // single source for bundle prices/images
 
 const SUPPORTED = new Set(["USD", "EUR"]);
 type AllowedMethod = "card" | "paypal" | "klarna";
 
 /* ------------------------ Utilities ------------------------ */
-const isLiveKey = (k?: string) => !!k && k.startsWith("sk_live_");
-const isTestKey = (k?: string) => !!k && k.startsWith("sk_test_");
-
 function normalizeCurrency(c?: string) {
   const upper = String(c || "EUR").toUpperCase();
   return SUPPORTED.has(upper) ? upper : "EUR";
@@ -54,31 +51,13 @@ function imageForProduct(origin: string, product: any) {
   if (!rel) return undefined;
   return String(rel).startsWith("http") ? String(rel) : `${origin}${rel}`;
 }
-
-/** Centralized Stripe initialization with safety checks + logging. */
 function getStripe(): Stripe {
   const key = process.env.STRIPE_SECRET_KEY;
-
   if (!key) {
     throw new Error("Missing STRIPE_SECRET_KEY");
   }
-
-  // Hard guard: in production, refuse to run with a test secret.
-  if (process.env.NODE_ENV === "production" && isTestKey(key)) {
-    throw new Error(
-      "Server is using a TEST Stripe key in production. Set STRIPE_SECRET_KEY to sk_live_... and redeploy."
-    );
-  }
-
-  // Helpful log line in Vercel function logs so you know which mode created the session
-  console.log(
-    `[stripe] using ${isLiveKey(key) ? "LIVE" : "TEST"} secret (prefix=${
-      key.slice(0, 7)
-    }); site=${process.env.NEXT_PUBLIC_SITE_URL ?? "n/a"}`
-  );
-
-  // Use a pinned API version for consistency
-  return new Stripe(key, { apiVersion: "2024-06-20" });
+  // Use the SDK's bundled apiVersion to avoid TS literal mismatches.
+  return new Stripe(key);
 }
 
 /** Build allowed methods per currency; if `only` is provided and valid, restrict to that single method */
@@ -132,7 +111,9 @@ async function createSessionFromSingle(opts: {
         },
       ];
 
+  // URL-safe cancel path back to product page
   const cancelPath = productPath(product);
+  // Success URL goes to /downloads with useful params for UX
   const success = `${origin}/downloads?order={CHECKOUT_SESSION_ID}&email={CUSTOMER_EMAIL}&name={CUSTOMER_NAME}`;
 
   const session = await stripe.checkout.sessions.create({
@@ -140,7 +121,7 @@ async function createSessionFromSingle(opts: {
     payment_method_types: paymentMethodsForCurrency(currency, onlyMethod),
     line_items,
     allow_promotion_codes: true,
-    automatic_tax: { enabled: true }, // disable if Stripe Tax isn't enabled in LIVE
+    automatic_tax: { enabled: true }, // set to false if Stripe Tax not enabled LIVE
     billing_address_collection: "auto",
     submit_type: "pay",
     client_reference_id: String(product.id),
@@ -157,11 +138,6 @@ async function createSessionFromSingle(opts: {
   });
 
   if (!session.url) throw new Error("Stripe session did not return a URL");
-  console.log("[stripe] created session", {
-    id: session.id,
-    live: session.livemode,
-    amount_total: session.amount_total,
-  });
   return session.url;
 }
 
@@ -188,7 +164,7 @@ async function createSessionFromBundle(opts: {
         quantity: qty,
         price_data: {
           currency: lcCurrency(currency),
-          unit_amount: toMinorUnits(b.price),
+          unit_amount: toMinorUnits(b.price), // price from bundles catalog
           product_data: {
             name: b.title,
             images: [b.image.startsWith("http") ? b.image : `${origin}${b.image}`],
@@ -212,11 +188,6 @@ async function createSessionFromBundle(opts: {
   });
 
   if (!session.url) throw new Error("Stripe session did not return a URL");
-  console.log("[stripe] created bundle session", {
-    id: session.id,
-    live: session.livemode,
-    amount_total: session.amount_total,
-  });
   return session.url;
 }
 
@@ -331,10 +302,6 @@ export async function POST(req: NextRequest) {
         success_url: `${origin}/downloads?order={CHECKOUT_SESSION_ID}&email={CUSTOMER_EMAIL}&name={CUSTOMER_NAME}`,
         cancel_url: `${origin}/cart`,
       });
-      console.log("[stripe] created passthrough session", {
-        id: session.id,
-        live: session.livemode,
-      });
       return NextResponse.json({ url: session.url });
     }
 
@@ -409,10 +376,6 @@ export async function POST(req: NextRequest) {
         submit_type: "pay",
         success_url: `${origin}/downloads?order={CHECKOUT_SESSION_ID}&email={CUSTOMER_EMAIL}&name={CUSTOMER_NAME}`,
         cancel_url: `${origin}/cart`,
-      });
-      console.log("[stripe] created items session", {
-        id: session.id,
-        live: session.livemode,
       });
       return NextResponse.json({ url: session.url });
     }
