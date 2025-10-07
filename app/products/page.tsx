@@ -11,9 +11,10 @@ import { Star, Search, Filter, Grid, List } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import HoverableCover from '@/components/ui/hoverable-cover';
-import { products, type Product } from '@/data/products';
-import DescriptionClamp from '@/components/DescriptionClamp';
 import AddToCartWire from '@/components/catalog/AddToCartWire'; // delegated handler
+
+// ✅ single source of truth for product data
+import { products, type Product, productPath } from '@/data/products';
 
 /* ---------------- helpers ---------------- */
 
@@ -51,11 +52,8 @@ const sortOptions = [
 const formatPrice = (value: number, currency = 'EUR', locale = 'de-DE') =>
   new Intl.NumberFormat(locale, { style: 'currency', currency }).format(value);
 
-const slugify = (s: string) =>
-  s.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '').replace(/\-+/g, '-');
-
 const buildImages = (p: Product) =>
-  Array.from(new Set([p.image, ...(((p as any).images ?? []) as string[])].filter(Boolean)));
+  Array.from(new Set([p.image, ...((p.images ?? []) as string[])].filter(Boolean)));
 
 /* ---------------- page ---------------- */
 
@@ -291,7 +289,7 @@ export default function ProductsPage() {
             <div id="products-list" className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {visibleProducts.map((product, idx) => {
                 const imgs = buildImages(product);
-                const productHref = `/products/${product.id}`;
+                const productHref = productPath(product);
 
                 return (
                   <Card key={product.id} className="group hover:shadow-lg transition-shadow duration-300" tabIndex={0}>
@@ -413,7 +411,7 @@ export default function ProductsPage() {
             <ul id="products-list" className="space-y-4">
               {visibleProducts.map((product) => {
                 const imgs = buildImages(product);
-                const productHref = `/products/${product.id}`;
+                const productHref = productPath(product);
 
                 return (
                   <li
@@ -528,16 +526,28 @@ export default function ProductsPage() {
             </ul>
           )}
 
-          {/* See more */}
-          {!showAll && sortedProducts.length > PAGE_SIZE && (
-            <div className="mt-8 flex justify-center">
-              <Button
-                onClick={() => setShowAll(true)}
-                className="bg-blue-600 text-white hover:bg-blue-700"
-                aria-controls="products-list"
-              >
-                See more products
-              </Button>
+          {/* See more / See less */}
+          {sortedProducts.length > PAGE_SIZE && (
+            <div className="mt-8 flex justify-center gap-3">
+              {showAll ? (
+                <Button
+                  onClick={() => setShowAll(false)}
+                  variant="outline"
+                  aria-controls="products-list"
+                  title="See less products"
+                >
+                  See less products
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => setShowAll(true)}
+                  className="bg-blue-600 text-white hover:bg-blue-700"
+                  aria-controls="products-list"
+                  title="See more products"
+                >
+                  See more products
+                </Button>
+              )}
             </div>
           )}
         </section>
