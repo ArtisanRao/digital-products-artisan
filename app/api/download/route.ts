@@ -40,12 +40,13 @@ function contentDisposition(filename: string) {
 }
 
 /** Build quick lookup maps from the current products array. */
-function buildProductIndexes() {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function buildProductIndexes(productsArr: any[]) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const byId = new Map<number, any>();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const bySlug = new Map<string, any>();
-  for (const p of products as any[]) {
+  for (const p of productsArr) {
     if (!p) continue;
     if (p.id != null) byId.set(Number(p.id), p);
     if (p.slug) bySlug.set(String(p.slug), p);
@@ -53,22 +54,37 @@ function buildProductIndexes() {
   return { byId, bySlug };
 }
 
-/** Accepts numeric ID or slug; returns the configured downloadPath (relative to /private). */
-function resolveDownloadPathFromPidOrSlug(pidOrSlug: number | string | null | undefined): string | null {
-  const { byId, bySlug } = buildProductIndexes();
-  if (pidOrSlug == null) return null;
+/** Accepts numeric ID or slug; returns the product and its configured downloadPath. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function resolveProductFromPidOrSlug(pidOrSlug: number | string | null | undefined): { product: any | null, downloadPath: string | null } {
+  const { byId, bySlug } = buildProductIndexes(products as any[]);
+  if (pidOrSlug == null) return { product: null, downloadPath: null };
 
   // numeric ID?
   const num = typeof pidOrSlug === "string" ? Number(pidOrSlug) : pidOrSlug;
   if (Number.isFinite(num)) {
     const p = byId.get(Number(num));
-    return p?.downloadPath ?? null;
+    return { product: p ?? null, downloadPath: p?.downloadPath ?? null };
   }
 
   // slug string?
   const s = String(pidOrSlug);
   const p = bySlug.get(s);
-  return p?.downloadPath ?? null;
+  return { product: p ?? null, downloadPath: p?.downloadPath ?? null };
+}
+
+/** Map a product slug to an ENV var name like STRIPE_PRICE_ID_CHATGPT_SIDE_HUSTLES */
+function envNameForPriceId(slug: string) {
+  return `STRIPE_PRICE_ID_${slug.replace(/-/g, "_").toUpperCase()}`;
+}
+
+/** If present, return the expected Stripe price id for a product based on ENV. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function expectedPriceIdForProduct(product: any): string | null {
+  if (!product?.slug) return null;
+  const name = envNameForPriceId(product.slug);
+  const val = (process.env[name] || "").trim();
+  return val || null;
 }
 
 function getStripe(): Stripe | null {
@@ -82,7 +98,7 @@ async function handleDownload(req: NextRequest) {
   try {
     const url = new URL(req.url);
 
-    // 1) Token is required for authorization. (Defense-in-depth: also supports Stripe order check.)
+    // 1) Signed token is required (prevents link sharing)
     const token = url.searchParams.get("token");
     if (!token) return json({ error: "missing_token" }, 400);
 
@@ -92,27 +108,31 @@ async function handleDownload(req: NextRequest) {
       slug?: string;              // optional slug alias
       path?: string;              // optional absolute-like "/files/..." (relative to /private)
       downloadPath?: string;      // optional "files/..."
+      exp?: number;               // optional expiry (unix seconds)
+      sessionId?: string;         // optional Stripe session id bound into token
     };
 
-    // 2) Resolve the relative download path (priority: token.path|downloadPath → product.downloadPath)
+    // 2) Identify product & downloadPath
+    const pidOrSlug = (payload?.pid ?? payload?.slug) as string | number | undefined;
+    const { product, downloadPath } = resolveProductFromPidOrSlug(pidOrSlug ?? null);
+
+    // Prefer explicit path from token; otherwise use product.downloadPath
     const explicit = payload?.path || payload?.downloadPath || null;
-    let rel: string | null = explicit ?? null;
+    let rel: string | null = explicit ?? downloadPath ?? null;
+    if (!rel) return json({ error: "no_download_for_product" }, 404);
 
-    if (!rel) {
-      const pidOrSlug = (payload?.pid ?? payload?.slug) as string | number | undefined;
-      rel = resolveDownloadPathFromPidOrSlug(pidOrSlug ?? null);
-      if (!rel) return json({ error: "no_download_for_product" }, 404);
-    }
-
-    // 3) Optional: verify Stripe Checkout session if provided (?order=cs_xxx)
-    const orderId = url.searchParams.get("order");
+    // 3) Optional: verify a Stripe Checkout session (?order=cs_xxx).
+    //    This is a quick purchase check. If provided, we verify "paid"
+    //    and optionally ensure the line items match the expected price id.
+    const orderId = url.searchParams.get("order") || payload?.sessionId || null;
     if (orderId) {
       const stripe = getStripe();
       if (!stripe) return json({ error: "stripe_not_configured" }, 500);
 
-      const session = await stripe.checkout.sessions.retrieve(orderId, { expand: ["line_items"] });
+      const session = await stripe.checkout.sessions.retrieve(orderId, {
+        expand: ["line_items.data.price.product"],
+      });
 
-      // Consider "paid" or "no_payment_required" or a completed status as green lights
       const paid =
         session.payment_status === "paid" ||
         session.payment_status === "no_payment_required" ||
@@ -120,26 +140,34 @@ async function handleDownload(req: NextRequest) {
 
       if (!paid) return json({ error: "unauthorized" }, 403);
 
-      // If token carried a concrete product identity, optionally cross-check against session metadata
-      const tokenPid = payload?.pid;
-      if (tokenPid != null && session.metadata?.productId) {
-        const metaPidNum = Number(session.metadata.productId);
-        const tokenPidNum = Number(tokenPid);
-        // Only compare when both sides are numeric to avoid false negatives
-        if (Number.isFinite(metaPidNum) && Number.isFinite(tokenPidNum) && metaPidNum !== tokenPidNum) {
-          return json({ error: "mismatched_product" }, 403);
+      // If we can identify a product AND you configured its price id in ENV, require an exact price match.
+      // This blocks someone from reusing a paid session for another product.
+      if (product) {
+        const expectedPrice = expectedPriceIdForProduct(product);
+        const items = session.line_items?.data ?? [];
+
+        if (expectedPrice) {
+          const hasExpectedPrice = items.some((li) => li.price?.id === expectedPrice);
+          if (!hasExpectedPrice) return json({ error: "mismatched_product" }, 403);
+        } else {
+          // Fallback: if you included metadata during session creation, we can check that too.
+          // (Recommended: add both `productId` and `productSlug` in your /api/checkout)
+          const metaOk =
+            (session.metadata?.productId && String(session.metadata.productId) === String(product.id)) ||
+            (session.metadata?.productSlug && String(session.metadata.productSlug) === String(product.slug));
+
+          // If you didn't set metadata and no ENV price id is configured, we accept "paid" as sufficient.
+          // Uncomment the block below to make metadata mandatory instead:
+          // if (!metaOk) return json({ error: "missing_or_mismatched_metadata" }, 403);
         }
       }
     }
 
     // 4) Sanitize and locate file under /private
-    const FILE_ROOT = path.join(process.cwd(), "private"); // <-- Option B root
-    // Support both "files/foo.pdf" and "/files/foo.pdf"
-    const safeRel = String(rel).replace(/^[/\\]+/, "");
+    const FILE_ROOT = path.join(process.cwd(), "private"); // Option B root
+    const safeRel = String(rel).replace(/^[/\\]+/, "");     // support "/files/foo.pdf" or "files/foo.pdf"
     const absPath = path.join(FILE_ROOT, safeRel);
     const resolved = path.resolve(absPath);
-
-    // Ensure final path remains within /private
     if (!resolved.startsWith(FILE_ROOT)) return json({ error: "invalid_path" }, 400);
 
     const stat = await fs.stat(resolved).catch(() => null);
@@ -148,7 +176,7 @@ async function handleDownload(req: NextRequest) {
     const mime = guessMime(resolved);
     const filename = path.basename(resolved);
 
-    // HEAD: send headers only (no body)
+    // HEAD: headers only
     if (req.method === "HEAD") {
       const headers = new Headers({
         "Content-Type": mime,
@@ -161,10 +189,8 @@ async function handleDownload(req: NextRequest) {
       return new Response(null, { headers, status: 200 });
     }
 
-    // GET: read and return the file (buffered; switch to streaming if your files are huge)
+    // GET: read & return file (buffered)
     const buf = await fs.readFile(resolved);
-
-    // Deep-copy to guaranteed ArrayBuffer (never SharedArrayBuffer)
     const ab = new ArrayBuffer(buf.byteLength);
     new Uint8Array(ab).set(buf);
 

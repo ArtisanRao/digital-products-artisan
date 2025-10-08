@@ -5,10 +5,16 @@ import crypto from "node:crypto";
 export type DownloadTokenPayload = {
   /** Optional: product id (resolved via data/products) */
   pid?: number | string;
+  /** Optional: product slug (resolved via data/products) */
+  slug?: string;
+
   /** Optional: relative path under /private, e.g. "files/my.zip" */
   path?: string;
   /** Optional legacy alias; treated the same as `path` */
   downloadPath?: string;
+
+  /** Optional: bind token to a Stripe Checkout Session (e.g., "cs_live_...") */
+  sessionId?: string;
 
   /** Issued-at (unix seconds) */
   iat: number;
@@ -77,13 +83,16 @@ function safeEqualB64url(aB64url: string, bB64url: string) {
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
+type Signable = Partial<DownloadTokenPayload> & {
+  /** At least one of these must be provided */
+  pid?: number | string;
+  slug?: string;
+  path?: string;
+  downloadPath?: string;
+};
+
 export function signDownloadToken(
-  payload: Partial<DownloadTokenPayload> &
-    (
-      | { path: string; pid?: number | string }
-      | { downloadPath: string; pid?: number | string }
-      | { pid: number | string; path?: string; downloadPath?: string }
-    ),
+  payload: Signable,
   ttlSec: number = DEFAULT_TTL_SECONDS,
   secret?: string
 ): string {
@@ -92,13 +101,15 @@ export function signDownloadToken(
 
   const body: DownloadTokenPayload = {
     pid: payload.pid,
+    slug: payload.slug,
     path: payload.path ?? payload.downloadPath,
     downloadPath: payload.downloadPath, // keep for backward compat
+    sessionId: payload.sessionId,
     iat: now,
     exp: (payload as any).exp ?? now + ttlSec,
   };
 
-  if (!body.pid && !body.path && !body.downloadPath) {
+  if (!body.pid && !body.slug && !body.path && !body.downloadPath) {
     throw new Error("download_token_missing_target");
   }
 
@@ -155,8 +166,38 @@ export function signPidToken(
   return signDownloadToken({ pid }, ttlSec, secret);
 }
 
-/** Optional helper to build a full href to /api/download */
+/** Convenience: create a token that targets a product slug (resolved in the route) */
+export function signSlugToken(
+  slug: string,
+  ttlSec: number = DEFAULT_TTL_SECONDS,
+  secret?: string
+) {
+  return signDownloadToken({ slug }, ttlSec, secret);
+}
+
+/** Create a token bound to a Stripe Checkout Session (works with pid OR slug OR path) */
+export function signSessionBoundToken(
+  base: Signable & { sessionId: string },
+  ttlSec: number = DEFAULT_TTL_SECONDS,
+  secret?: string
+) {
+  return signDownloadToken(base, ttlSec, secret);
+}
+
+/** Optional helpers to build a full href to /api/download */
 export function buildDownloadUrl(token: string, base = "") {
   const prefix = base.replace(/\/+$/, "");
   return `${prefix}/api/download?token=${encodeURIComponent(token)}`;
+}
+
+/** Same as above, but also appends an order=cs_xxx param */
+export function buildDownloadUrlWithOrder(
+  token: string,
+  order: string,
+  base = ""
+) {
+  const prefix = base.replace(/\/+$/, "");
+  const t = encodeURIComponent(token);
+  const o = encodeURIComponent(order);
+  return `${prefix}/api/download?token=${t}&order=${o}`;
 }
