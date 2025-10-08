@@ -17,7 +17,7 @@ export type Product = {
   bestseller?: boolean
   image: string
   images?: string[]
-  /** Relative to /private (e.g., "files/passive-income-ebook.zip") */
+  /** Relative to /private (e.g., "files/passive-income-ebook.pdf") */
   downloadPath?: string
 }
 
@@ -185,8 +185,7 @@ const PRICE_BY_TITLE: Record<string, number> = {
   [normTitle("Passive Income Ebook")]: 2.99,
   [normTitle("Eating Healthy Ebook")]: 6.99,
   [normTitle("AI & ChatGPT Guides")]: 1.99,
-  [normTitle("Chatgpt Side Hustles")]: 1.99, // title variant
-  // optional extra alias for safety
+  [normTitle("Chatgpt Side Hustles")]: 1.99,
   [normTitle("The Art Of Giving No Fucks")]: 9.99,
 }
 
@@ -228,11 +227,12 @@ const MANUAL_OVERRIDES: Record<string, Partial<Product>> = {
     price: 9.99,
   },
 
-  // ✸ Complete Shop with PLR / MRR Rights
+  // ✸ Complete Shop with PLR / MRR Rights (price + secure download)
   "complete-shop-with-plr-mrr-rights": {
     title: "✸ Buy my complete Shop with PLR / MRR Rights ✸",
     category: CATEGORY_LABELS.SHOP,
     bestseller: true,
+    price: 42.99,
     description:
       "Own my complete digital shop with PLR + MRR rights. Edit, rebrand, and resell 30+ products. Instant download via Google Drive links.",
     longDescription: `You have here the opportunity to buy my complete shop with a big discount!! This Bundle is way more worth than 100 USD!
@@ -279,11 +279,11 @@ After your order is processed, you will receive a PDF document with the links to
 This listing is for a digital download. No physical product will be shipped.
 
 If you have any questions, please contact me and I will be more than happy to help!`,
-    // downloadPath: "files/complete-shop-with-plr-mrr-rights.zip",
+    downloadPath: "files/complete-shop-with-plr-mrr-rights.pdf",
   },
 
   // ---------------------------------------------------------------------------
-  // YOUR 8 NEW PRODUCTS: Titles, Category LABELS, and helpful tags
+  // YOUR 8 NEW PRODUCTS: Titles, Category LABELS, tags, and secure downloadPath
   // ---------------------------------------------------------------------------
 
   // 1) 100 Christmas digital product ideas → Passive Income & Side Hustles
@@ -291,6 +291,7 @@ If you have any questions, please contact me and I will be more than happy to he
     title: "100 Christmas Digital Product Ideas to Sell Online",
     category: CATEGORY_LABELS.PASSIVE,
     tags: ["ideas", "christmas", "etsy", "passive income", "side hustles"],
+    downloadPath: "files/100-christmas-digital-products.pdf",
   },
 
   // 2) 12 ChatGPT AI Side Streams → AI & ChatGPT Guides
@@ -298,6 +299,7 @@ If you have any questions, please contact me and I will be more than happy to he
     title: "12 ChatGPT AI Side Streams",
     category: CATEGORY_LABELS.AI,
     tags: ["AI", "ChatGPT", "side income", "automation", "prompts"],
+    downloadPath: "files/12-chatgpt-ai-side-streams.pdf",
   },
 
   // 3) Cryptocurrency Secrets Ebook & Videos → Passive Income & Side Hustles
@@ -305,6 +307,7 @@ If you have any questions, please contact me and I will be more than happy to he
     title: "Cryptocurrency Secrets Ebook & Videos",
     category: CATEGORY_LABELS.PASSIVE,
     tags: ["crypto", "trading", "finance", "passive income", "video course"],
+    downloadPath: "files/cryptocurrency-secrets.pdf",
   },
 
   // 4) Eating Healthy Premium EBook & Complete Video Course → Keto & Diet Guides
@@ -312,6 +315,7 @@ If you have any questions, please contact me and I will be more than happy to he
     title: "Eating Healthy Premium EBook & Complete Video Course",
     category: CATEGORY_LABELS.KETO,
     tags: ["health", "diet", "nutrition", "video course", "PLR"],
+    downloadPath: "files/eating-healthy-ebook.pdf",
   },
 
   // 5) Faceless Digital Marketing Guide Bundle Template PLR Digital Product Bundle → Passive Income
@@ -319,6 +323,7 @@ If you have any questions, please contact me and I will be more than happy to he
     title: "Faceless Digital Marketing Guide Bundle Template — PLR Digital Product Bundle",
     category: CATEGORY_LABELS.PASSIVE,
     tags: ["PLR", "digital marketing", "templates", "bundle", "faceless brand"],
+    downloadPath: "files/faceless-digital-marketing-plr-bundle.pdf",
   },
 
   // 6) Keto Diet Secrets (MRR) → Keto & Diet Guides
@@ -326,6 +331,7 @@ If you have any questions, please contact me and I will be more than happy to he
     title: "Keto Diet Secrets — Ebook, Sales Website & More (Master Resell Rights)",
     category: CATEGORY_LABELS.KETO,
     tags: ["keto", "diet", "MRR", "PLR", "sales page"],
+    downloadPath: "files/plr-keto-diet-secrets.pdf",
   },
 
   // 7) The Cybersecurity Trinity → Self-Help & How-To
@@ -333,6 +339,7 @@ If you have any questions, please contact me and I will be more than happy to he
     title: "The Cybersecurity Trinity",
     category: CATEGORY_LABELS.SELF_HELP,
     tags: ["security", "privacy", "how-to", "guides"],
+    downloadPath: "files/cybersecurity-trinity.pdf",
   },
 
   // 8) The Easy Way To Build A $30,000 A Year Passive Income → Passive Income
@@ -340,6 +347,7 @@ If you have any questions, please contact me and I will be more than happy to he
     title: "The Easy Way To Build A $30,000 A Year Passive Income",
     category: CATEGORY_LABELS.PASSIVE,
     tags: ["passive income", "systems", "wealth", "side hustle"],
+    downloadPath: "files/easy-way-to-build-30000-a-year-passive-income.pdf",
   },
 }
 
