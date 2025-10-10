@@ -2,7 +2,7 @@
 export type Category = {
   label: string;
   slug: string;           // may include &, $, ), spaces, unicode, etc.
-  image: string;          // /images/categories/<slug>/card.jpg
+  image: string;          // /images/categories/<encoded-slug>/card.jpg
   description: string;
   /**
    * Optional curated products to preview under the category title
@@ -25,6 +25,9 @@ export const CATEGORY_SLUG_ALIASES: Record<string, string> = {
 export function resolveCategorySlug(slug: string): string {
   return CATEGORY_SLUG_ALIASES[slug] ?? slug;
 }
+
+/* ---------- URL-safe encoder for a single path segment ---------- */
+export const encodeSeg = (s: string) => encodeURIComponent(String(s));
 
 /**
  * Base list (no image paths yet). You can add/adjust topProducts
@@ -109,10 +112,16 @@ const BASE: Array<Omit<Category, "image">> = [
   },
 ];
 
-/** Ensure every category points to its curated cover */
+/** Curated image path (single source of truth) */
+export function categoryImage(slug: string): string {
+  const normalized = resolveCategorySlug(slug);
+  return `/images/categories/${encodeSeg(normalized)}/card.jpg`;
+}
+
+/** Ensure every category points to its curated (encoded) cover */
 export const CATEGORIES: Category[] = BASE.map((c) => ({
   ...c,
-  image: `/images/categories/${resolveCategorySlug(c.slug)}/card.jpg`,
+  image: categoryImage(c.slug),
 }));
 
 /** Maps */
@@ -163,15 +172,7 @@ export function getCategory(slug: string): Category | undefined {
   return CATEGORY_BY_SLUG[normalized];
 }
 
-/** Curated image path (single source of truth) */
-export function categoryImage(slug: string): string {
-  const normalized = resolveCategorySlug(slug);
-  return `/images/categories/${normalized}/card.jpg`;
-}
-
-/* ---------- NEW: URL-safe helpers for linking & nav ---------- */
-
-export const encodeSeg = (s: string) => encodeURIComponent(String(s));
+/* ---------- URL-safe helpers for linking & nav ---------- */
 
 /**
  * Build a URL-safe path to a category page.
