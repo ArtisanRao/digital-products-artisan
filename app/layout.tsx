@@ -1,4 +1,3 @@
-// app/layout.tsx
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -101,8 +100,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
 
       <body className={inter.className} data-ui-build={BUILD_TAG}>
-        {/* ⛔ Force-unregister any old service worker + clear caches */}
-        <FlushServiceWorker reason="temp-disable-pwa-2025-10-10" />
+        {/* ⛔ Removed FlushServiceWorker component (no longer exists) */}
 
         {/* One-time SW + caches flush when BUILD_TAG changes (kept for safety) */}
         <Script id="sw-flush" strategy="afterInteractive">
