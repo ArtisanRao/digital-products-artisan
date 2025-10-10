@@ -4,7 +4,7 @@
 import InlineMore from "@/components/ui/inline-more";
 import { CATEGORIES } from "@/data/categories";
 import { useMemo, useState } from "react";
-import CatLink from "@/components/ui/CatLink"; // no-prefetch wrapper
+import CatLink from "@/components/ui/CatLink";
 
 /** Optional descriptions */
 const DESC_BY_LABEL: Record<string, string> = {
@@ -29,7 +29,6 @@ const GLOBAL_FALLBACKS = [
   "/images/placeholder.jpg",
 ];
 
-// Read the build tag set by app/layout.tsx (<body data-ui-build="...">)
 function useBuildTag() {
   const tag =
     (typeof document !== "undefined" && document.body?.dataset?.uiBuild) ||
@@ -39,7 +38,6 @@ function useBuildTag() {
 }
 
 /* ---------- helpers: category card image with fallbacks ---------- */
-
 function buildCandidates(slug: string, image?: string): string[] {
   const list: string[] = [];
   if (image) {
@@ -70,7 +68,6 @@ function useCategoryImage(slug: string, image?: string) {
 }
 
 /* ------------------------------- page ------------------------------- */
-
 export default function CategoriesPage() {
   const BUILD_TAG = useBuildTag();
 
@@ -81,7 +78,7 @@ export default function CategoriesPage() {
     >
       <h1 className="text-4xl font-bold text-center mb-12">🗂️ All Categories</h1>
 
-      {/* 🔑 Hook used by global CSS to force clicks to anchors */}
+      {/* Hook used by global CSS/debugging if needed */}
       <div
         id="categories-grid"
         className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"
@@ -90,7 +87,6 @@ export default function CategoriesPage() {
           const { src, onError } = useCategoryImage(c.slug, (c as any).image);
           const desc = DESC_BY_LABEL[c.label] ?? "Explore products in this category.";
 
-          // Bust both link HTML and image cache using the same tag
           const href = `/categories/${c.slug}?v=${encodeURIComponent(BUILD_TAG)}`;
           const imgSrc = src.includes("?") ? `${src}&v=${BUILD_TAG}` : `${src}?v=${BUILD_TAG}`;
 
@@ -101,6 +97,7 @@ export default function CategoriesPage() {
               aria-label={`Browse ${c.label}`}
               className="group block rounded-2xl border overflow-hidden bg-white shadow transition-all duration-300 hover:-translate-y-1 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2"
             >
+              {/* visuals must not catch clicks */}
               <div className="relative w-full bg-gray-50 pointer-events-none select-none">
                 <div className="aspect-[16/9] md:aspect-[3/2] overflow-hidden">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -108,7 +105,7 @@ export default function CategoriesPage() {
                     src={imgSrc}
                     onError={onError}
                     alt={c.label}
-                    className="h-full w-full object-cover pointer-events-none select-none"
+                    className="pointer-events-none h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                     loading="lazy"
                     decoding="async"
                     draggable={false}
