@@ -209,3 +209,42 @@
     height: auto !important;
   }
 }
+
+/* ===== CLICK-THROUGH HOTFIX (global) ===== */
+
+/* Any decorative overlays must NOT capture clicks */
+.hero-overlay,
+.gradient-overlay,
+.noise-overlay,
+.particles,
+.overlay,
+.page-hero,
+.page-cover,
+.bg-decor,
+[data-overlay],
+[data-decorative="true"] {
+  pointer-events: none !important;
+  z-index: -1 !important; /* keep behind content if positioned */
+}
+
+/* Primary interactive elements must always accept clicks */
+main a,
+nav a,
+button,
+[role="button"] {
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 20; /* sit above accidental layers */
+}
+
+/* Optional helpers you can drop onto wrappers when needed */
+.click-guard { position: relative; z-index: 100; pointer-events: auto; }
+.pe-none     { pointer-events: none !important; }
+.pe-auto     { pointer-events: auto !important; }
+
+/* If a full-bleed background exists, keep it under content */
+.full-bleed-bg,
+.full-bleed-overlay {
+  pointer-events: none !important;
+  z-index: -1 !important;
+}
