@@ -5,8 +5,11 @@ import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
 import ProductCardV4 from "../../../components/shop/ProductCardV4";
 
-// ⬇️ Pull canonical labels + helper from central data
+// ⬇️ Central data (unchanged)
 import { products, productsInCategory, CATEGORY_LABELS } from "@/data/products";
+
+// 🔓 Overlay click guard
+import ClickUnlocker from "@/components/debug/ClickUnlocker";
 
 export const runtime = "nodejs";
 export const revalidate = 0;
@@ -180,18 +183,38 @@ export async function generateMetadata(props: any) {
   };
 }
 
-export default async function CategoryPage(props: any) {
-  const raw = String(props?.params?.slug ?? "");
-  const slug = normalizeSlug(raw);
+// ✅ Next 15: Promise-based params/searchParams + URL param preservation
+type SP = Record<string, string | string[] | undefined>;
+
+export default async function CategoryPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams?: Promise<SP>;
+}) {
+  const { slug: rawSlug } = await params;
+  const sp = (await searchParams) || {};
+
+  const slug = normalizeSlug(String(rawSlug || ""));
   const meta = META[slug];
 
-  const subParam = String(props?.searchParams?.sub ?? "").trim();
-  const activeSub = subParam ? toSlug(subParam) : null;
+  // preserve query params (currency, others)
+  const spEntries = Object.entries(sp).filter(([k, v]) => v != null && v !== "");
+  const qs = spEntries.length
+    ? `?${new URLSearchParams(
+        spEntries.map(([k, v]) => [k, Array.isArray(v) ? v[0] : (v as string)])
+      ).toString()}`
+    : "";
+
+  const subParam = Array.isArray(sp.sub) ? sp.sub[0] : sp.sub;
+  const activeSub = subParam ? toSlug(String(subParam).trim()) : null;
 
   if (!meta) {
     const pretty = slug.replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
     return (
-      <main className="container mx-auto px-4 py-16" data-ui={`CategoryPage@${UI_VERSION}:not-found`}>
+      <main className="container mx-auto px-4 py-16 relative z-[100]" data-ui={`CategoryPage@${UI_VERSION}:not-found`}>
+        <ClickUnlocker targetSelector='main[data-ui^="CategoryPage@"]' />
         <h1 className="text-3xl md:text-4xl font-bold mb-2">{pretty}</h1>
         <InlineMore
           text="We couldn’t find a dedicated page for this category yet. Explore best sellers below or visit all products."
@@ -200,17 +223,16 @@ export default async function CategoryPage(props: any) {
           className="text-gray-700"
         />
         <p className="mt-2">
-          <Link href="/products" className="underline" prefetch={false}>Browse all products →</Link>
+          <Link href={`/products${qs}`} className="underline" prefetch={false}>Browse all products →</Link>
         </p>
       </main>
     );
   }
 
-  // ✅ Single source of truth: use canonical CATEGORY_LABELS via mapping
+  // ✅ Canonical category lookup
   const canonicalLabel = SLUG_TO_CANON_LABEL[slug];
   let catProducts = canonicalLabel
     ? productsInCategory(canonicalLabel)
-    // Fallback to previous behavior if mapping is missing (defensive)
     : products.filter((p) => {
         const eff = effectiveProductCategorySlug(p);
         return eff !== "__HIDE__" && eff === slug;
@@ -220,7 +242,11 @@ export default async function CategoryPage(props: any) {
   const groups = new Map<string, { label: string; items: any[] }>();
   for (const p of catProducts) {
     const sslug = effectiveSubSlug(p) ?? "__none__";
-    const label = readSubLabel(p) ?? (sslug === "__none__" ? "Other" : sslug.replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase()));
+    const label =
+      readSubLabel(p) ??
+      (sslug === "__none__"
+        ? "Other"
+        : sslug.replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase()));
     const key = sslug;
     if (!groups.has(key)) groups.set(key, { label, items: [] });
     groups.get(key)!.items.push(p);
@@ -241,13 +267,14 @@ export default async function CategoryPage(props: any) {
     );
 
     const seg = encodeURIComponent(String(p.slug ?? p.id));
-    const href = `/products/${seg}`;
+    // preserve the current query string (currency + others) on product links
+    const href = `/products/${seg}${qs}`;
 
     return {
       id: p.id,
       title: p.title,
       slug: p.slug,
-      price: p.price, // ← prices now always reflect MANUAL_OVERRIDES
+      price: p.price,
       images,
       description: p.description,
       href,
@@ -257,7 +284,15 @@ export default async function CategoryPage(props: any) {
   const totalVisible = Array.from(visibleGroups.values()).reduce((n, g) => n + g.items.length, 0);
 
   return (
-    <main className="container mx-auto px-4 py-12" data-ui={`CategoryPage@${UI_VERSION}`}>
+    <main
+      className="container mx-auto px-4 py-12 relative z-[100]"
+      data-ui={`CategoryPage@${UI_VERSION}`}
+      style={{ pointerEvents: "auto", isolation: "isolate" }}
+    >
+      {/* 🔓 Ensure no overlay blocks the subcategory pills or grid */}
+      <ClickUnlocker targetSelector='div[data-subcats="true"]' />
+      <ClickUnlocker targetSelector='div[data-grid="products"]' />
+
       <h1 className="text-3xl md:text-4xl font-bold">
         {meta.title}
         {activeSub ? `: ${(groups.get(activeSub)?.label ?? activeSub).replace(/\b\w/g,(m)=>m.toUpperCase())}` : ""}
@@ -265,16 +300,17 @@ export default async function CategoryPage(props: any) {
       <InlineMore text={meta.description} lines={1} minChars={40} className="mt-1 text-gray-700" />
 
       {!activeSub && groups.size > 1 && (
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-4 flex flex-wrap gap-2 relative z-[101]" data-subcats="true" style={{ pointerEvents: "auto" }}>
           {Array.from(groups.entries())
             .filter(([k]) => k !== "__none__")
             .map(([k, g]) => (
               <Link
                 key={k}
-                href={{ pathname: `/categories/${encodeURIComponent(slug)}`, query: { sub: k } }}
+                href={{ pathname: `/categories/${encodeURIComponent(slug)}`, query: { ...Object.fromEntries(spEntries), sub: k } }}
                 prefetch={false}
                 className="rounded-full border px-3 py-1.5 text-sm hover:bg-muted/30"
                 aria-label={`View subcategory ${g.label}`}
+                style={{ pointerEvents: "auto" }}
               >
                 {g.label}
               </Link>
@@ -284,23 +320,28 @@ export default async function CategoryPage(props: any) {
 
       {totalVisible ? (
         activeSub ? (
-          <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" data-ui={`category-grid@${UI_VERSION}:sub`}>
+          <div
+            className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 relative z-[100]"
+            data-grid="products"
+            style={{ pointerEvents: "auto" }}
+          >
             {visibleGroups.get(activeSub)!.items.map((p) => (
               <ProductCardV4 key={`${UI_VERSION}:${String(p.slug ?? p.id)}`} {...toCard(p)} />
             ))}
           </div>
         ) : (
-          <div className="mt-6 space-y-10">
+          <div className="mt-6 space-y-10 relative z-[100]" data-grid="products" style={{ pointerEvents: "auto" }}>
             {Array.from(groups.entries()).map(([k, g]) => (
               <section key={k} data-sub={k}>
                 <div className="mb-3 flex items-center justify-between">
                   <h2 className="text-xl font-semibold">{g.label}</h2>
                   {k !== "__none__" && (
                     <Link
-                      href={{ pathname: `/categories/${encodeURIComponent(slug)}`, query: { sub: k } }}
+                      href={{ pathname: `/categories/${encodeURIComponent(slug)}`, query: { ...Object.fromEntries(spEntries), sub: k } }}
                       prefetch={false}
                       className="text-sm underline"
                       aria-label={`View all in ${g.label}`}
+                      style={{ pointerEvents: "auto" }}
                     >
                       View all →
                     </Link>
@@ -318,7 +359,7 @@ export default async function CategoryPage(props: any) {
       ) : (
         <div className="mt-8">
           <p className="text-gray-600">No products in {activeSub ? "this subcategory" : "this category"} yet.</p>
-          <Link href="/products" prefetch={false} className="mt-3 inline-block underline">
+          <Link href={`/products${qs}`} prefetch={false} className="mt-3 inline-block underline">
             Browse all products →
           </Link>
         </div>
