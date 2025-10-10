@@ -1,10 +1,8 @@
 // app/products/[slug]/page.tsx
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import ForceCurrencyFromQuery from "@/components/currency/ForceCurrencyFromQuery";
 import ProductJsonLd from "@/components/seo/ProductJsonLd";
-import ClickUnlocker from "@/components/debug/ClickUnlocker"; // 🔓 new
-import { products } from "@/data/products"; // adjust if needed
+import { products } from "@/data/products"; // ← adjust if your path differs
 
 type SP = Record<string, string | string[] | undefined>;
 
@@ -15,39 +13,29 @@ export default async function Page({
   params: Promise<{ slug: string }>;
   searchParams?: Promise<SP>;
 }) {
-  // Next 15: params/searchParams are Promises
+  // Next 15 expects these as Promises in your route's generated types
   const { slug } = await params;
   const sp = (await searchParams) || {};
 
   const qCurrency = Array.isArray(sp.currency) ? sp.currency[0] : sp.currency;
   const currency = (qCurrency || "USD").toUpperCase() as "USD" | "EUR" | "GBP";
-  const qs = currency ? `?currency=${currency}` : "";
 
-  // Find product
+  // Find product by slug (adapt to your data structure)
   const product = (products as any[]).find((p) => p.slug === slug);
   if (!product) notFound();
 
-  // Map price (ensure product.priceEUR exists if using EUR)
+  // Use EUR when forced via ?currency=EUR (ensure priceEUR exists in your data)
   const price =
     currency === "EUR" ? product.priceEUR ?? product.price : product.price;
 
-  const url = `https://digitalproductsartisan.com/products/${slug}${qs}`;
+  const url = `https://digitalproductsartisan.com/products/${slug}?currency=${currency}`;
   const image =
     product.image ??
     `https://digitalproductsartisan.com/images/products/${slug}/cover.jpg`;
 
-  // Subcategory links (adjust slugs/labels to your taxonomy)
-  const subcategories: Array<{ label: string; href: string }> = [
-    { label: "All", href: `/products${qs}` },
-    { label: "AI & ChatGPT", href: `/categories/ai-and-chatgpt-guides${qs}` },
-    { label: "Planners", href: `/categories/planners-productivity${qs}` },
-    { label: "Self-Help", href: `/categories/self-help-and-how-to${qs}` },
-    { label: "PLR & MRR", href: `/categories/plr-mrr-bundles${qs}` },
-  ];
-
   return (
     <>
-      {/* Sync site currency with ?currency= param */}
+      {/* Client helper to sync site currency with ?currency= param */}
       <ForceCurrencyFromQuery />
 
       {/* JSON-LD MUST match page price & currency */}
@@ -60,35 +48,13 @@ export default async function Page({
         currency={currency}
       />
 
-      <main className="container mx-auto px-4 py-8">
-        {/* ✅ Clickable subcategory bar with unlocker */}
-        <div
-          className="relative z-[100] mb-6 click-guard"
-          style={{ pointerEvents: "auto", isolation: "isolate" }}
-        >
-          {/* 🔓 Ensure nothing overlays this nav */}
-          <ClickUnlocker targetSelector='nav[data-subcats="true"]' />
-          <nav data-subcats="true" className="flex flex-wrap gap-2 border-b pb-3">
-            {subcategories.map((s) => (
-              <Link
-                key={s.href}
-                href={s.href}
-                className="px-3 py-1 rounded-full border text-sm hover:bg-muted transition"
-                style={{ pointerEvents: "auto" }}
-              >
-                {s.label}
-              </Link>
-            ))}
-          </nav>
-        </div>
-
-        {/* --- PDP content --- */}
+      {/* --- your existing PDP UI --- */}
+      <main className="container mx-auto px-4 py-10">
         <h1 className="text-3xl font-semibold mb-3">{product.title}</h1>
         <p className="text-muted-foreground mb-6">{product.description}</p>
         <p className="text-xl font-bold">
           {currency} {Number(price).toFixed(2)}
         </p>
-        {/* gallery, buy buttons, etc. */}
       </main>
     </>
   );
