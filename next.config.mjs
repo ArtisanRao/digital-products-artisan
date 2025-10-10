@@ -7,9 +7,11 @@ const withPWACfg = withPWA({
   dest: "public",
   register: true,
   skipWaiting: true,
+  // Disable PWA in dev so you don't fight caches locally
   disable: process.env.NODE_ENV === "development",
 
-  /** Runtime caching rules:
+  /**
+   * Runtime caching rules:
    *  - NEVER cache RSC/Flight/data payloads
    *  - NEVER cache dynamic category/product pages
    *  - NEVER cache HTML navigations (documents)
@@ -21,11 +23,11 @@ const withPWACfg = withPWA({
       urlPattern: ({ url, request }) => {
         const u = url.toString();
         return (
-          u.includes("/_next/data/") ||                 // SSG/ISR JSON
-          u.includes("__flight__")   ||                 // React Flight
-          u.includes("/_rsc")        ||                 // Next 15 RSC endpoint
-          u.includes("react-server") ||                 // RSC internals
-          request?.headers?.get?.("RSC")                // RSC header
+          u.includes("/_next/data/") || // SSG/ISR JSON
+          u.includes("__flight__")   || // React Flight
+          u.includes("/_rsc")        || // Next 15 RSC endpoint
+          u.includes("react-server") || // RSC internals
+          request?.headers?.get?.("RSC")
         );
       },
       handler: "NetworkOnly",
@@ -44,10 +46,10 @@ const withPWACfg = withPWA({
       options: { cacheName: "html-no-cache" },
     },
 
-    // ✅ (leave default static asset caching to next-pwa)
+    // ✅ leave static asset caching to next-pwa defaults
   ],
 
-  // Don't precache anything that might include dynamic HTML by mistake
+  // Don’t precache anything under these paths
   publicExcludes: ["**/categories/**", "**/products/**"],
 });
 
