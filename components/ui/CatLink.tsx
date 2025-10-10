@@ -1,4 +1,3 @@
-// components/ui/CatLink.tsx
 "use client";
 
 import * as React from "react";
@@ -23,7 +22,7 @@ export default function CatLink({ href, className = "", children, ...rest }: Pro
       ].join(" ")}
       {...rest}
     >
-      {/* All visuals go inside .catlink-content so they cannot steal clicks */}
+      {/* IMPORTANT: no full-card overlay; all visuals are inside this container */}
       <div className="catlink-content relative z-0">
         {children}
       </div>
