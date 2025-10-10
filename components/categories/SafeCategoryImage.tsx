@@ -13,6 +13,8 @@ type Props = {
   height?: number;
   priority?: boolean;
   className?: string;
+  /** Allow callers (e.g., CategoryCard) to set draggable explicitly */
+  draggable?: boolean;
 };
 
 const GLOBAL_FALLBACKS = [
@@ -30,6 +32,7 @@ export default function SafeCategoryImage({
   height = 900,
   priority = false,
   className = "",
+  draggable, // <- new
 }: Props) {
   // Build candidate list (deduped, ordered)
   const candidates = useMemo(() => {
@@ -46,12 +49,10 @@ export default function SafeCategoryImage({
         list.push(src.replace(/\.webp$/i, ".jpg"), src.replace(/\.webp$/i, ".png"));
       }
     } else if (slug) {
-      // default pattern if only slug is known
       const base = `/images/categories/${slug}/card`;
       list.push(`${base}.jpg`, `${base}.png`, `${base}.webp`);
     }
 
-    // Append global fallbacks and remove duplicates
     return Array.from(new Set([...list, ...GLOBAL_FALLBACKS]));
   }, [src, slug]);
 
@@ -64,19 +65,18 @@ export default function SafeCategoryImage({
       width={width}
       height={height}
       priority={priority}
-      // Ensure the visual can never eat clicks; anchor handles them
+      // Ensure visuals never intercept clicks; the anchor handles them
       className={[
         "pointer-events-none select-none",
         "h-full w-full object-cover",
         className,
       ].join(" ")}
-      // If a candidate fails, try the next one
       onError={() => {
         if (idx + 1 < candidates.length) setIdx((i) => i + 1);
       }}
-      // Belt & suspenders: if some class overrides pointer-events, inline style still prevents capture
+      // belt & suspenders against any CSS overrides
       style={{ pointerEvents: "none", userSelect: "none" }}
-      draggable={false}
+      draggable={draggable ?? false}
     />
   );
 }
