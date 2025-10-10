@@ -17,9 +17,18 @@
   .no-scrollbar::-webkit-scrollbar { display: none; }
 
   /* hover lift */
-  .hover-lift { transition: transform .2s, box-shadow .2s, background-color .2s, color .2s; will-change: transform, box-shadow; }
-  .hover-lift:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / .10), 0 4px 6px -4px rgb(0 0 0 / .08); }
-  .hover-lift:active { transform: translateY(0); box-shadow: 0 6px 10px -4px rgb(0 0 0 / .08); }
+  .hover-lift {
+    transition: transform .2s, box-shadow .2s, background-color .2s, color .2s;
+    will-change: transform, box-shadow;
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / .10), 0 4px 6px -4px rgb(0 0 0 / .08);
+  }
+  .hover-lift:active {
+    transform: translateY(0);
+    box-shadow: 0 6px 10px -4px rgb(0 0 0 / .08);
+  }
 
   /* image zoom */
   .hover-zoom img { transition: transform .3s ease; }
@@ -30,13 +39,19 @@
 
   /* cart badge */
   .cart-badge {
-    position: absolute; top:-.4rem; right:-.4rem; min-width:1.25rem; height:1.25rem; padding:0 .25rem;
-    border-radius:9999px; background:#2563eb; color:#fff; font-size:.75rem; font-weight:700; line-height:1.25rem; display:inline-flex; align-items:center; justify-content:center;
+    position: absolute; top:-.4rem; right:-.4rem;
+    min-width:1.25rem; height:1.25rem; padding:0 .25rem;
+    border-radius:9999px; background:#2563eb; color:#fff;
+    font-size:.75rem; font-weight:700; line-height:1.25rem;
+    display:inline-flex; align-items:center; justify-content:center;
   }
 
   /* mobile tweaks */
   @media (max-width: 1023px) {
-    .mobile-link { margin: 0 .75rem; display:inline-flex; align-items:center; text-decoration:none; color:#374151; transition: color .2s; }
+    .mobile-link {
+      margin: 0 .75rem; display:inline-flex; align-items:center;
+      text-decoration:none; color:#374151; transition: color .2s;
+    }
     .mobile-link:hover { color:#2563eb; }
     .mobile-header-fit { display:flex; gap:1rem; padding:0 1rem; align-items:center; }
     header img { max-width:60px; max-height:30px; height:auto; object-fit:contain; display:block; }
@@ -50,10 +65,19 @@
   }
 
   /* fade-in */
-  @keyframes fadeInSmooth { 0%{opacity:0;transform:translateY(-10px) scale(.98)} 100%{opacity:1;transform:translateY(0) scale(1)} }
-  @keyframes fadeInSmoothIOS { 0%{opacity:0;transform:translate3d(0,-10px,0) scale(.98)} 100%{opacity:1;transform:translate3d(0,0,0) scale(1)} }
+  @keyframes fadeInSmooth {
+    0%{opacity:0;transform:translateY(-10px) scale(.98)}
+    100%{opacity:1;transform:translateY(0) scale(1)}
+  }
+  @keyframes fadeInSmoothIOS {
+    0%{opacity:0;transform:translate3d(0,-10px,0) scale(.98)}
+    100%{opacity:1;transform:translate3d(0,0,0) scale(1)}
+  }
   .animate-fadeIn { animation: fadeInSmooth .25s ease-out forwards; will-change: transform,opacity; backface-visibility:hidden; }
-  .animate-fadeIn-ios { animation: fadeInSmoothIOS .25s ease-out forwards; will-change: transform,opacity; backface-visibility:hidden; -webkit-font-smoothing: antialiased; transform-style:preserve-3d; transform: translateZ(0); }
+  .animate-fadeIn-ios {
+    animation: fadeInSmoothIOS .25s ease-out forwards; will-change: transform,opacity; backface-visibility:hidden;
+    -webkit-font-smoothing: antialiased; transform-style:preserve-3d; transform: translateZ(0);
+  }
 
   @media (prefers-reduced-motion: reduce) {
     .hover-lift, .animate-fadeIn, .animate-fadeIn-ios, .hover-zoom img {
@@ -167,7 +191,9 @@
 }
 
 /* Primary interactive elements must accept clicks */
-main a, nav a, button, [role="button"] { pointer-events:auto !important; position:relative; z-index:20; }
+main a, nav a, button, [role="button"] {
+  pointer-events:auto !important; position:relative; z-index:20;
+}
 
 /* --- Card Link Click Hotfix --- */
 a[data-card-link] { position:relative !important; z-index:200 !important; pointer-events:auto !important; }
@@ -185,3 +211,23 @@ a[data-card-link] .catlink-content [data-allow-events="true"] { pointer-events:a
 nav[data-subcats="true"] * { pointer-events:none !important; }
 nav[data-subcats="true"] a,
 nav[data-subcats="true"] a * { pointer-events:auto !important; position:relative !important; z-index:300 !important; }
+
+/* --- Emergency: release clicks from floating overlays/icons that sit above content --- */
+
+/* The fixed overlay stack that was intercepting clicks (z-[100]) */
+ol.fixed.top-0.z-\[100\],
+ol.fixed.top-0.z-\[100\].flex.max-h-screen,
+ol.fixed.top-0.z-\[100\].flex.max-h-screen.w-full.flex-col-reverse.p-4,
+div.fixed.top-0.z-\[100\] {
+  pointer-events: none !important;
+}
+
+/* Lucide SVGs should not capture clicks; the parent button/link will */
+svg.lucide,
+svg.lucide.lucide-message-circle,
+svg.lucide.lucide-menu,
+svg.lucide.lucide-x,
+svg.lucide.lucide-send,
+svg.lucide.lucide-bell {
+  pointer-events: none !important;
+}
