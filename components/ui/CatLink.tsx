@@ -9,23 +9,35 @@ type Props = LinkProps &
     children: React.ReactNode;
   };
 
-export default function CatLink({ href, className = "", children, ...rest }: Props) {
+/**
+ * Minimal, bullet-proof clickable card link:
+ *  - No overlay span
+ *  - No inner element with pointer events
+ *  - Prefetch disabled to avoid RSC fetch noise while debugging
+ */
+export default function CatLink({
+  href,
+  className = "",
+  children,
+  ...rest
+}: Props) {
   return (
     <Link
       href={href}
-      data-card-link
       prefetch={false}
+      data-card-link
+      role="link"
+      tabIndex={0}
       className={[
-        "relative block focus-visible:outline-none",
+        "block focus-visible:outline-none",
         "focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2",
         className,
       ].join(" ")}
+      style={{ pointerEvents: "auto" }}
       {...rest}
     >
-      {/* IMPORTANT: no full-card overlay; all visuals are inside this container */}
-      <div className="catlink-content relative z-0">
-        {children}
-      </div>
+      {/* visuals; keep them simple so the <a> receives the click */}
+      <div className="catlink-content">{children}</div>
     </Link>
   );
 }
