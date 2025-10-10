@@ -37,7 +37,7 @@ export default async function Page({
 
   // Subcategory items (adjust as needed)
   const subcategories = [
-    { label: "All", slug: "all", href: "/products" },
+    { label: "All", slug: "all", href: "/products" }, // or "/categories"
     { label: "AI & ChatGPT", slug: "ai-and-chatgpt-guides", href: "/categories/ai-and-chatgpt-guides" },
     { label: "Planners", slug: "planners-productivity", href: "/categories/planners-productivity" },
     { label: "Self-Help", slug: "self-help-and-how-to", href: "/categories/self-help-and-how-to" },
@@ -61,7 +61,18 @@ export default async function Page({
 
       <main className="container mx-auto px-4 py-8">
         {/* ✅ Clickable client nav; sits above any overlays */}
-        <div className="relative z-50 mb-6 clickable-surface" style={{ pointerEvents: "auto", isolation: "isolate" }}>
+        <div
+          id="subcat-nav"
+          className="relative z-50 mb-6 clickable-surface"
+          style={{ pointerEvents: "auto", isolation: "isolate" }}
+        >
+          {/* Runtime guard to ensure no ancestor disables pointer events */}
+          {typeof window !== "undefined" && (
+            <style suppressHydrationWarning>{`
+              #subcat-nav, #subcat-nav * { pointer-events: auto !important; }
+            `}</style>
+          )}
+
           <SubcategoryNav
             items={subcategories}
             basePath="/categories"
