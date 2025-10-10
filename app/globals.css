@@ -6,129 +6,87 @@
 @layer utilities {
   .text-balance { text-wrap: balance; }
 
-  /* Custom cm-based spacing utilities */
+  /* cm-based spacing (reduced) */
   .mt-1cm { margin-top: 1cm; }
   .mb-1cm { margin-bottom: 1cm; }
-
-  /* Reduced gap spacing from 1cm to 1rem (16px) */
   .gap-1cm { gap: 1rem; }
-
-  /* Desktop-only gap utility */
   @media (min-width: 1024px) { .desktop-gap-1cm { gap: 1rem; } }
 
-  /* Hide horizontal scrollbar for overflow-x-auto rails */
+  /* rails */
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   .no-scrollbar::-webkit-scrollbar { display: none; }
 
-  /* Generic hover/press lift */
-  .hover-lift {
-    transition: transform .2s ease, box-shadow .2s ease, background-color .2s ease, color .2s ease;
-    will-change: transform, box-shadow;
-  }
-  .hover-lift:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 15px -3px rgb(0 0 0 / .10), 0 4px 6px -4px rgb(0 0 0 / .08);
-  }
-  .hover-lift:active {
-    transform: translateY(0);
-    box-shadow: 0 6px 10px -4px rgb(0 0 0 / .08);
-  }
+  /* hover lift */
+  .hover-lift { transition: transform .2s, box-shadow .2s, background-color .2s, color .2s; will-change: transform, box-shadow; }
+  .hover-lift:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / .10), 0 4px 6px -4px rgb(0 0 0 / .08); }
+  .hover-lift:active { transform: translateY(0); box-shadow: 0 6px 10px -4px rgb(0 0 0 / .08); }
 
-  /* Reusable image hover zoom utility (wrap a block that contains <img>) */
+  /* image zoom */
   .hover-zoom img { transition: transform .3s ease; }
   .hover-zoom:hover img { transform: scale(1.03); }
 
-  /* Consistent blue focus ring helper for interactive elements */
+  /* focus ring */
   .focus-ring-blue { @apply focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none; }
 
-  /* Cart count badge helper */
+  /* cart badge */
   .cart-badge {
-    position: absolute; top: -.4rem; right: -.4rem;
-    min-width: 1.25rem; height: 1.25rem; padding: 0 .25rem;
-    border-radius: 9999px; background: rgb(37 99 235); color: #fff;
-    font-size: .75rem; font-weight: 700; line-height: 1.25rem;
-    display: inline-flex; align-items: center; justify-content: center;
+    position: absolute; top:-.4rem; right:-.4rem; min-width:1.25rem; height:1.25rem; padding:0 .25rem;
+    border-radius:9999px; background:#2563eb; color:#fff; font-size:.75rem; font-weight:700; line-height:1.25rem; display:inline-flex; align-items:center; justify-content:center;
   }
 
-  /* Mobile-specific utilities */
+  /* mobile tweaks */
   @media (max-width: 1023px) {
-    .mobile-link {
-      margin-left: .75rem; margin-right: .75rem;
-      display: inline-flex; align-items: center; text-decoration: none;
-      color: #374151; transition: color .2s;
-    }
-    .mobile-link:hover { color: #2563eb; }
-
-    .mobile-header-fit { display: flex; gap: 1rem; padding-left: 1rem; padding-right: 1rem; align-items: center; }
-
-    header img { max-width: 60px; max-height: 30px; height: auto; object-fit: contain; display: block; }
+    .mobile-link { margin: 0 .75rem; display:inline-flex; align-items:center; text-decoration:none; color:#374151; transition: color .2s; }
+    .mobile-link:hover { color:#2563eb; }
+    .mobile-header-fit { display:flex; gap:1rem; padding:0 1rem; align-items:center; }
+    header img { max-width:60px; max-height:30px; height:auto; object-fit:contain; display:block; }
   }
-
-  /* Extra-small mobile spacing tweaks */
   @media (max-width: 767px) {
-    nav.flex.md\:hidden.items-center.space-x-2 > a.mobile-link {
-      margin-left: .25rem; margin-right: .25rem; font-size: .875rem;
-    }
-    nav.flex.md\:hidden.items-center.space-x-2 { gap: .5rem; }
+    nav.flex.md\:hidden.items-center.space-x-2 > a.mobile-link { margin:0 .25rem; font-size:.875rem; }
+    nav.flex.md\:hidden.items-center.space-x-2 { gap:.5rem; }
   }
-
-  /* Hide Clear Cart on mobile (fallback if component didn't add responsive classes) */
   @media (max-width: 639px) {
-    .clear-cart-btn, [data-action="clear-cart"] { display: none !important; }
+    .clear-cart-btn, [data-action="clear-cart"] { display:none !important; }
   }
 
-  /* ===== Smooth Fade-In Animation (iOS-friendly) ===== */
+  /* fade-in */
   @keyframes fadeInSmooth { 0%{opacity:0;transform:translateY(-10px) scale(.98)} 100%{opacity:1;transform:translateY(0) scale(1)} }
   @keyframes fadeInSmoothIOS { 0%{opacity:0;transform:translate3d(0,-10px,0) scale(.98)} 100%{opacity:1;transform:translate3d(0,0,0) scale(1)} }
+  .animate-fadeIn { animation: fadeInSmooth .25s ease-out forwards; will-change: transform,opacity; backface-visibility:hidden; }
+  .animate-fadeIn-ios { animation: fadeInSmoothIOS .25s ease-out forwards; will-change: transform,opacity; backface-visibility:hidden; -webkit-font-smoothing: antialiased; transform-style:preserve-3d; transform: translateZ(0); }
 
-  .animate-fadeIn { animation: fadeInSmooth .25s ease-out forwards; will-change: transform,opacity; backface-visibility: hidden; }
-  .animate-fadeIn-ios {
-    animation: fadeInSmoothIOS .25s ease-out forwards; will-change: transform,opacity; backface-visibility: hidden;
-    -webkit-font-smoothing: antialiased; transform-style: preserve-3d; transform: translateZ(0);
-  }
-
-  /* Respect reduced motion */
   @media (prefers-reduced-motion: reduce) {
     .hover-lift, .animate-fadeIn, .animate-fadeIn-ios, .hover-zoom img {
-      transition: none !important; animation: none !important; transform: none !important; box-shadow: none !important;
+      transition:none !important; animation:none !important; transform:none !important; box-shadow:none !important;
     }
   }
+
+  /* helpers */
+  .click-guard { position:relative !important; z-index:100 !important; pointer-events:auto !important; }
+  .pe-none { pointer-events:none !important; }
+  .pe-auto { pointer-events:auto !important; }
 }
 
 /* ===== Header & Navigation Safeguards ===== */
 @layer components {
-  html, body { margin: 0; padding: 0; }
-
+  html, body { margin:0; padding:0; }
   .nav-link { @apply text-gray-700 hover:text-blue-700 transition-colors duration-200 font-medium; }
   .mobile-link { @apply text-gray-700 hover:text-blue-700 transition-colors duration-200 block; }
-
   [data-radix-popper-content-wrapper] { @apply bg-white shadow-lg rounded-md; }
-
-  header input[type="search"] {
-    @apply border border-blue-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 rounded-md;
-  }
+  header input[type="search"] { @apply border border-blue-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 rounded-md; }
 }
 
 /* ===== Theme & Base Defaults ===== */
 @layer base {
-  /* Keep media responsive, avoid global layout shifts */
   *, *::before, *::after { box-sizing: border-box; }
-  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
-  html, body { width: 100%; overflow-x: hidden; }
-  img, video, canvas, svg, picture { max-width: 100%; height: auto; }
-  iframe { max-width: 100%; }
+  html { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
+  html, body { width:100%; overflow-x:hidden; }
+  img, video, canvas, svg, picture { max-width:100%; height:auto; }
+  iframe { max-width:100%; }
 
-  /* Optional helper for any explicit media wrapper you add */
-  .product-media, .product-media img, .product-media picture {
-    max-width: 100%;
-    width: 100%;
-    height: auto;
-    object-fit: contain;
-  }
-
-  /* Product page hover zoom (server-safe, no styled-jsx) */
-  .product-page img { transition: transform .3s ease; }
-  .product-page img:hover { transform: scale(1.03); }
+  .product-media, .product-media img, .product-media picture { max-width:100%; width:100%; height:auto; object-fit:contain; }
+  .product-page img { transition:transform .3s ease; }
+  .product-page img:hover { transform:scale(1.03); }
 
   :root {
     --background: 0 0% 100%;
@@ -155,7 +113,7 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
+    --radius: .5rem;
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.3% 23.1%;
@@ -165,29 +123,21 @@
   }
 }
 
-/* === SCOPED mobile fix for the PRODUCT DETAIL page only ===
-   Apply to a wrapper element with class "product-page"
-   or set <body class="product-page"> or <main data-page="product">
-*/
+/* === SCOPED mobile fix for the PRODUCT DETAIL page only === */
 @media (max-width: 768px) {
   body.product-page .w-screen,
   body.product-page [class*="w-\\[100vw\\]"],
   .product-page .w-screen,
   .product-page [class*="w-\\[100vw\\]"],
   main[data-page="product"] .w-screen,
-  main[data-page="product"] [class*="w-\\[100vw\\]"] {
-    width: 100% !important;
-  }
+  main[data-page="product"] [class*="w-\\[100vw\\]"] { width:100% !important; }
 
   body.product-page [class*="-mx-"],
   body.product-page [class*="mx-\\[-"],
   .product-page [class*="-mx-"],
   .product-page [class*="mx-\\[-"],
   main[data-page="product"] [class*="-mx-"],
-  main[data-page="product"] [class*="mx-\\[-"] {
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-  }
+  main[data-page="product"] [class*="mx-\\[-"] { margin-left:0 !important; margin-right:0 !important; }
 
   body.product-page .swiper, body.product-page .swiper-wrapper, body.product-page .swiper-slide,
   body.product-page .embla,  body.product-page .embla__container, body.product-page .embla__slide,
@@ -198,100 +148,40 @@
   main[data-page="product"] .swiper, main[data-page="product"] .swiper-wrapper, main[data-page="product"] .swiper-slide,
   main[data-page="product"] .embla,  main[data-page="product"] .embla__container, main[data-page="product"] .embla__slide,
   main[data-page="product"] .keen-slider, main[data-page="product"] .keen-slider__slide {
-    max-width: 100% !important;
-    overflow: hidden !important;
+    max-width:100% !important; overflow:hidden !important;
   }
 
   body.product-page img, body.product-page video, body.product-page canvas, body.product-page picture,
   .product-page img, .product-page video, .product-page canvas, .product-page picture,
   main[data-page="product"] img, main[data-page="product"] video, main[data-page="product"] canvas, main[data-page="product"] picture {
-    max-width: 100% !important;
-    height: auto !important;
+    max-width:100% !important; height:auto !important;
   }
 }
 
 /* ===== CLICK-THROUGH HOTFIX (global) ===== */
 
 /* Decorative overlays must NOT capture clicks */
-.hero-overlay,
-.gradient-overlay,
-.noise-overlay,
-.particles,
-.overlay,
-.page-hero,
-.page-cover,
-.bg-decor,
-[data-overlay],
-[data-decorative="true"] {
-  pointer-events: none !important;
-  z-index: -1 !important;
+.hero-overlay, .gradient-overlay, .noise-overlay, .particles, .overlay,
+.page-hero, .page-cover, .bg-decor, [data-overlay], [data-decorative="true"] {
+  pointer-events:none !important; z-index:-1 !important;
 }
 
-/* Primary interactive elements should always accept clicks */
-main a,
-nav a,
-button,
-[role="button"] {
-  pointer-events: auto !important;
-  position: relative;
-  z-index: 20;
-}
+/* Primary interactive elements must accept clicks */
+main a, nav a, button, [role="button"] { pointer-events:auto !important; position:relative; z-index:20; }
 
-/* Optional helpers */
-@layer utilities {
-  .click-guard { position: relative !important; z-index: 100 !important; pointer-events: auto !important; }
-  .pe-none { pointer-events: none !important; }
-  .pe-auto { pointer-events: auto !important; }
-}
-
-/* --- Card Link Click Hotfix ---
-   Route all clicks to the anchor itself; children can't swallow them.
-   Works with CatLink (which renders <a data-card-link><div class="catlink-content">…).
-*/
-a[data-card-link] {
-  position: relative !important;
-  z-index: 200 !important;
-  pointer-events: auto !important;
-}
+/* --- Card Link Click Hotfix --- */
+a[data-card-link] { position:relative !important; z-index:200 !important; pointer-events:auto !important; }
 a[data-card-link] .catlink-content,
-a[data-card-link] .catlink-content * {
-  pointer-events: none !important;
-}
-/* Allow specific interactive children if you ever need them */
-a[data-card-link] .catlink-content [data-allow-events="true"] {
-  pointer-events: auto !important;
-}
+a[data-card-link] .catlink-content * { pointer-events:none !important; }
+a[data-card-link] .catlink-content [data-allow-events="true"] { pointer-events:auto !important; }
 
-/* --- Card Link Click Hotfix (anchor is the only target) --- */
-a[data-card-link] {
-  position: relative !important;
-  z-index: 200 !important;
-  pointer-events: auto !important;
-}
-a[data-card-link] .catlink-content,
-a[data-card-link] .catlink-content * {
-  pointer-events: none !important;
-}
-/* Opt-in for interactive children if ever needed */
-a[data-card-link] .catlink-content [data-allow-events="true"] {
-  pointer-events: auto !important;
-}
 /* === NUCLEAR CLICK FIXES === */
-/* /categories grid: only anchors can receive clicks */
-#categories-grid * { pointer-events: none !important; }
+/* /categories grid: only anchors should be clickable */
+#categories-grid * { pointer-events:none !important; }
 #categories-grid a,
-#categories-grid a * {
-  pointer-events: auto !important;
-  position: relative !important;
-  z-index: 300 !important;
-}
+#categories-grid a * { pointer-events:auto !important; position:relative !important; z-index:300 !important; }
 
 /* PDP subcategory pills: only the links can receive clicks */
-nav[data-subcats="true"] * { pointer-events: none !important; }
+nav[data-subcats="true"] * { pointer-events:none !important; }
 nav[data-subcats="true"] a,
-nav[data-subcats="true"] a * {
-  pointer-events: auto !important;
-  position: relative !important;
-  z-index: 300 !important;
-}
-
+nav[data-subcats="true"] a * { pointer-events:auto !important; position:relative !important; z-index:300 !important; }
