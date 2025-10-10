@@ -4,11 +4,10 @@ import Link, { type LinkProps } from "next/link";
 import React, { forwardRef } from "react";
 
 /**
- * Anchor that always navigates:
- * - no overlay spans
- * - pointer-events on
- * - sits above decorative layers
- * - inner content can't steal clicks
+ * Minimal, bullet-proof card/link:
+ * - No overlays
+ * - Anchor is the only click target
+ * - High z-index + pointer-events: auto
  */
 type Props = LinkProps &
   Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, "href"> & {
@@ -24,17 +23,16 @@ const CatLink = forwardRef<HTMLAnchorElement, Props>(function CatLink(
       href={href}
       prefetch={prefetch ?? false}
       ref={ref}
-      data-card-link // used by CSS hotfix below
+      data-card-link
       className={[
-        "block cursor-pointer focus:outline-none",
-        "focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2",
+        "block cursor-pointer",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2",
         className,
       ].join(" ")}
-      // ensure the anchor itself wins the stacking and accepts clicks
       style={{ position: "relative", zIndex: 200, pointerEvents: "auto", ...style }}
       {...rest}
     >
-      {/* Make all descendants ignore pointer events by default */}
+      {/* descendants are visuals only; see CSS to disable their pointer events */}
       <div className="catlink-content">{children}</div>
     </Link>
   );

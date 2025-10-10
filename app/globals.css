@@ -261,3 +261,18 @@ a[data-card-link] .catlink-content * {
 a[data-card-link] .catlink-content [data-allow-events="true"] {
   pointer-events: auto !important;
 }
+
+/* --- Card Link Click Hotfix (anchor is the only target) --- */
+a[data-card-link] {
+  position: relative !important;
+  z-index: 200 !important;
+  pointer-events: auto !important;
+}
+a[data-card-link] .catlink-content,
+a[data-card-link] .catlink-content * {
+  pointer-events: none !important;
+}
+/* Opt-in for interactive children if ever needed */
+a[data-card-link] .catlink-content [data-allow-events="true"] {
+  pointer-events: auto !important;
+}

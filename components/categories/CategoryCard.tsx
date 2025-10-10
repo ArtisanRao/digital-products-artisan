@@ -1,18 +1,17 @@
-// components/categories/CategoryCard.tsx
 "use client";
 
-import CatLink from "@/components/ui/CatLink"; // no-prefetch wrapper (anchor handles clicks)
+import CatLink from "@/components/ui/CatLink";
 import SafeCategoryImage from "@/components/categories/SafeCategoryImage";
 
 export type CategoryLike = {
   label: string;
   slug: string;
-  image?: string; // "/images/categories/<slug>/card.jpg"
+  image?: string;
 };
 
 type Props = {
   category: CategoryLike;
-  hrefBase?: string; // defaults to "/categories"
+  hrefBase?: string;
   className?: string;
 };
 
@@ -24,20 +23,18 @@ export default function CategoryCard({ category, hrefBase = "/categories", class
       href={href}
       aria-label={`Browse ${category.label}`}
       className={[
-        "group block overflow-hidden rounded-2xl border border-black/5 bg-white shadow-sm",
-        "transition-shadow hover:shadow-md focus-visible:outline-none",
-        "focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2",
+        "group overflow-hidden rounded-2xl border border-black/5 bg-white shadow-sm",
+        "transition-shadow hover:shadow-md",
         className ?? "",
       ].join(" ")}
     >
-      {/* All visuals are non-interactive so they can't swallow clicks */}
       <div className="relative w-full aspect-[4/3] bg-neutral-50 pointer-events-none select-none">
         <SafeCategoryImage
           src={category.image}
           slug={category.slug}
           alt={category.label}
-          draggable={false}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+          draggable={false}
         />
       </div>
 
@@ -45,7 +42,6 @@ export default function CategoryCard({ category, hrefBase = "/categories", class
         <h3 className="text-base font-semibold leading-tight transition-colors group-hover:text-blue-600">
           {category.label}
         </h3>
-        {/* Optional: add a short description if you add it to your data later */}
       </div>
     </CatLink>
   );
