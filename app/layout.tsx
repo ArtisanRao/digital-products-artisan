@@ -1,3 +1,4 @@
+// app/layout.tsx
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -10,6 +11,7 @@ import LiveChat from "@/components/live-chat";
 import AutoCurrency from "@/components/auto-currency";
 import Script from "next/script";
 import React from "react";
+import ClickDelegator from "@/components/debug/ClickDelegator"; // 👈 mount global capture-phase click handler
 
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 
@@ -100,8 +102,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
 
       <body className={inter.className} data-ui-build={BUILD_TAG}>
-        {/* ⛔ Removed FlushServiceWorker component (no longer exists) */}
-
         {/* One-time SW + caches flush when BUILD_TAG changes (kept for safety) */}
         <Script id="sw-flush" strategy="afterInteractive">
           {`(async()=>{try{
@@ -155,6 +155,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             )}
           </CartProvider>
         </AuthProvider>
+
+        {/* 👇 capture-phase click delegator to force navigation to nearest <a> */}
+        <ClickDelegator />
       </body>
     </html>
   );

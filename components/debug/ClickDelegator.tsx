@@ -2,51 +2,65 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 
+/**
+ * Global capture-phase click delegator.
+ * Any click/tap inside a card will navigate to the nearest <a href="...">,
+ * even if a child blocks bubble-phase events or an overlay sits above it.
+ */
 export default function ClickDelegator() {
-  const router = useRouter();
-
   useEffect(() => {
-    const root = document.getElementById("categories-grid");
-    if (!root) return;
+    const onClickCapture = (ev: MouseEvent) => {
+      // Ignore modified clicks (open in new tab, etc.)
+      if (ev.defaultPrevented) return;
+      if (ev.button !== 0) return; // left click only
+      if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
 
-    const handler = (evt: Event) => {
-      const target = evt.target as Element | null;
-      if (!target) return;
+      // Walking composed path catches shadow DOM / weird wrappers
+      const path = (ev.composedPath?.() ?? []) as Element[];
+      let anchor: HTMLAnchorElement | null = null;
 
-      // Only operate inside the grid
-      const grid = target.closest("#categories-grid");
-      if (!grid) return;
-
-      // Find the card link to navigate to
-      const cardLink = (target as Element).closest<HTMLAnchorElement>("a[data-card-link]");
-      if (!cardLink) return;
-
-      // Prevent anything else from swallowing it
-      evt.preventDefault();
-      evt.stopPropagation();
-
-      // Use router for client-side nav (fallback to hard nav)
-      const href = cardLink.getAttribute("href") || "#";
-      if (href && href !== "#") {
-        try {
-          router.push(href);
-        } catch {
-          window.location.assign(href);
+      for (const el of path) {
+        if (!el || !(el as Element).closest) continue;
+        const a = (el as Element).closest("a[href]") as HTMLAnchorElement | null;
+        if (a) {
+          anchor = a;
+          break;
         }
+      }
+
+      if (!anchor) return;
+
+      // Respect target="_blank" / downloads
+      const href = anchor.getAttribute("href");
+      const target = anchor.getAttribute("target");
+      const download = anchor.hasAttribute("download");
+      if (!href || download || (target && target.toLowerCase() === "_blank")) return;
+
+      // Don’t double-handle real external links
+      const isExternal = /^https?:\/\//i.test(href) && !href.startsWith(location.origin);
+      if (isExternal) return;
+
+      // Force navigation (prevents “static/unresponsive” cards)
+      ev.preventDefault();
+      ev.stopPropagation();
+      // Use assign to keep back button behavior
+      try {
+        const url = new URL(href, location.href);
+        window.location.assign(url.toString());
+      } catch {
+        // If somehow invalid, fallback to setting location
+        (window as any).location = href;
       }
     };
 
-    // Capture phase to beat other listeners
-    root.addEventListener("click", handler, { capture: true, passive: false });
-    root.addEventListener("touchend", handler, { capture: true, passive: false });
+    // Capture-phase so we beat any bubbling blockers
+    document.addEventListener("click", onClickCapture, { capture: true, passive: false });
 
     return () => {
-      root.removeEventListener("click", handler, { capture: true } as any);
-      root.removeEventListener("touchend", handler, { capture: true } as any);
+      document.removeEventListener("click", onClickCapture, { capture: true } as any);
     };
-  }, [router]);
+  }, []);
 
   return null;
 }
