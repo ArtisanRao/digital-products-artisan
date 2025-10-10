@@ -1,3 +1,4 @@
+// app/categories/page.tsx
 "use client";
 
 import InlineMore from "@/components/ui/inline-more";
@@ -29,7 +30,6 @@ const GLOBAL_FALLBACKS = [
 ];
 
 // Read the build tag set by app/layout.tsx (<body data-ui-build="...">)
-// fallback to NEXT_PUBLIC_BUILD_TAG, then a static string.
 function useBuildTag() {
   const tag =
     (typeof document !== "undefined" && document.body?.dataset?.uiBuild) ||
@@ -55,7 +55,6 @@ function buildCandidates(slug: string, image?: string): string[] {
       list.push(image.replace(/\.webp$/i, ".png"));
     }
   }
-  // Curated cover only
   const base = `/images/categories/${slug}/card`;
   list.push(`${base}.jpg`, `${base}.png`, `${base}.webp`);
   list.push(...GLOBAL_FALLBACKS);
@@ -76,10 +75,17 @@ export default function CategoriesPage() {
   const BUILD_TAG = useBuildTag();
 
   return (
-    <main className="max-w-7xl mx-auto px-4 py-12">
+    <main
+      className="max-w-7xl mx-auto px-4 py-12"
+      style={{ pointerEvents: "auto", isolation: "isolate" }}
+    >
       <h1 className="text-4xl font-bold text-center mb-12">🗂️ All Categories</h1>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      {/* 🔑 Hook used by global CSS to force clicks to anchors */}
+      <div
+        id="categories-grid"
+        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"
+      >
         {CATEGORIES.map((c) => {
           const { src, onError } = useCategoryImage(c.slug, (c as any).image);
           const desc = DESC_BY_LABEL[c.label] ?? "Explore products in this category.";
@@ -95,21 +101,22 @@ export default function CategoriesPage() {
               aria-label={`Browse ${c.label}`}
               className="group block rounded-2xl border overflow-hidden bg-white shadow transition-all duration-300 hover:-translate-y-1 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2"
             >
-              <div className="relative w-full bg-gray-50">
+              <div className="relative w-full bg-gray-50 pointer-events-none select-none">
                 <div className="aspect-[16/9] md:aspect-[3/2] overflow-hidden">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={imgSrc}
                     onError={onError}
                     alt={c.label}
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-cover pointer-events-none select-none"
                     loading="lazy"
                     decoding="async"
+                    draggable={false}
                   />
                 </div>
               </div>
 
-              <div className="p-4">
+              <div className="p-4 pointer-events-none select-none">
                 <h2 className="text-xl font-semibold transition-colors group-hover:text-blue-600">
                   {c.label}
                 </h2>
