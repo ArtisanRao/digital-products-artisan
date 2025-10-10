@@ -1,4 +1,3 @@
-// data/products.ts
 import { imageManifest } from "./image-manifest"
 
 export type Product = {
@@ -8,6 +7,8 @@ export type Product = {
   description: string
   longDescription?: string
   price: number
+  /** Optional EUR price for DE feed / EUR landing pages */
+  priceEUR?: number
   originalPrice: number
   category: string               // canonical Category LABEL (not slug)
   tags: string[]
@@ -138,7 +139,7 @@ function normTitle(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9+ ]+/g, "").replace(/\s+/g, " ").trim()
 }
 
-/** Price overrides by SLUG */
+/** Price overrides by SLUG (USD) */
 const PRICE_BY_SLUG: Record<string, number> = {
   // existing entries
   "chatgpt-side-hustles": 2.99,
@@ -167,7 +168,17 @@ const PRICE_BY_SLUG: Record<string, number> = {
   "easy-way-to-build-30000-a-year-passive-income": 2.99,
 }
 
-/** Price overrides by TITLE (fallback) */
+/** EUR price overrides by SLUG (for DE/EUR pages) */
+const PRICE_EUR_BY_SLUG: Record<string, number> = {
+  // Matches your DE feed numbers you asked for earlier
+  "complete-shop-with-plr-mrr-rights": 39.99,
+  "the-art-of-giving-no-fucks": 13.99,
+  "digital-wealth-ultimate-guide": 17.99,
+  "chatgpt-side-hustles": 16.99,            // if this represents the long eBook; adjust if needed
+  "passive-income-ebook": 11.99,
+}
+
+/** Price overrides by TITLE (USD fallback) */
 const PRICE_BY_TITLE: Record<string, number> = {
   [normTitle("ChatGPT Side hustles")]: 2.99,
   [normTitle("Make Money As You Sleep")]: 2.99,
@@ -286,7 +297,6 @@ If you have any questions, please contact me and I will be more than happy to he
   // YOUR 8 NEW PRODUCTS: Titles, Category LABELS, tags, and secure downloadPath
   // ---------------------------------------------------------------------------
 
-  // 1) 100 Christmas digital product ideas → Passive Income & Side Hustles
   "100-christmas-digital-products": {
     title: "100 Christmas Digital Product Ideas to Sell Online",
     category: CATEGORY_LABELS.PASSIVE,
@@ -294,7 +304,6 @@ If you have any questions, please contact me and I will be more than happy to he
     downloadPath: "files/100-christmas-digital-products.pdf",
   },
 
-  // 2) 12 ChatGPT AI Side Streams → AI & ChatGPT Guides
   "12-chatgpt-ai-side-streams": {
     title: "12 ChatGPT AI Side Streams",
     category: CATEGORY_LABELS.AI,
@@ -302,7 +311,6 @@ If you have any questions, please contact me and I will be more than happy to he
     downloadPath: "files/12-chatgpt-ai-side-streams.pdf",
   },
 
-  // 3) Cryptocurrency Secrets Ebook & Videos → Passive Income & Side Hustles
   "cryptocurrency-secrets": {
     title: "Cryptocurrency Secrets Ebook & Videos",
     category: CATEGORY_LABELS.PASSIVE,
@@ -310,7 +318,6 @@ If you have any questions, please contact me and I will be more than happy to he
     downloadPath: "files/cryptocurrency-secrets.pdf",
   },
 
-  // 4) Eating Healthy Premium EBook & Complete Video Course → Keto & Diet Guides
   "eating-healthy-ebook": {
     title: "Eating Healthy Premium EBook & Complete Video Course",
     category: CATEGORY_LABELS.KETO,
@@ -318,7 +325,6 @@ If you have any questions, please contact me and I will be more than happy to he
     downloadPath: "files/eating-healthy-ebook.pdf",
   },
 
-  // 5) Faceless Digital Marketing Guide Bundle Template PLR Digital Product Bundle → Passive Income
   "faceless-digital-marketing-plr-bundle": {
     title: "Faceless Digital Marketing Guide Bundle Template — PLR Digital Product Bundle",
     category: CATEGORY_LABELS.PASSIVE,
@@ -326,7 +332,6 @@ If you have any questions, please contact me and I will be more than happy to he
     downloadPath: "files/faceless-digital-marketing-plr-bundle.pdf",
   },
 
-  // 6) Keto Diet Secrets (MRR) → Keto & Diet Guides
   "plr-keto-diet-secrets": {
     title: "Keto Diet Secrets — Ebook, Sales Website & More (Master Resell Rights)",
     category: CATEGORY_LABELS.KETO,
@@ -334,7 +339,6 @@ If you have any questions, please contact me and I will be more than happy to he
     downloadPath: "files/plr-keto-diet-secrets.pdf",
   },
 
-  // 7) The Cybersecurity Trinity → Self-Help & How-To
   "cybersecurity-trinity": {
     title: "The Cybersecurity Trinity",
     category: CATEGORY_LABELS.SELF_HELP,
@@ -342,7 +346,6 @@ If you have any questions, please contact me and I will be more than happy to he
     downloadPath: "files/cybersecurity-trinity.pdf",
   },
 
-  // 8) The Easy Way To Build A $30,000 A Year Passive Income → Passive Income
   "easy-way-to-build-30000-a-year-passive-income": {
     title: "The Easy Way To Build A $30,000 A Year Passive Income",
     category: CATEGORY_LABELS.PASSIVE,
@@ -374,7 +377,7 @@ const baseProducts: Omit<Product, "images">[] = Object.keys(imageManifest).map((
     ...(MANUAL_OVERRIDES[slug] ?? {}),
   }
 
-  // Apply price overrides by slug, then by title as fallback
+  // Apply price overrides (USD)
   if (Object.prototype.hasOwnProperty.call(PRICE_BY_SLUG, slug)) {
     p.price = PRICE_BY_SLUG[slug]
   } else {
@@ -382,6 +385,11 @@ const baseProducts: Omit<Product, "images">[] = Object.keys(imageManifest).map((
     if (Object.prototype.hasOwnProperty.call(PRICE_BY_TITLE, key)) {
       p.price = PRICE_BY_TITLE[key]
     }
+  }
+
+  // Apply EUR price override if present
+  if (Object.prototype.hasOwnProperty.call(PRICE_EUR_BY_SLUG, slug)) {
+    p.priceEUR = PRICE_EUR_BY_SLUG[slug]
   }
 
   return p
@@ -403,3 +411,10 @@ export function productsInCategory(categoryLabel: string): Product[] {
 
 export const productsById   = Object.fromEntries(products.map((p) => [p.id,   p])) as Record<number, Product>
 export const productsBySlug = Object.fromEntries(products.map((p) => [p.slug, p])) as Record<string, Product>
+
+/** Optional helper if you ever want a single-source price picker */
+export function priceForCurrency(p: Product, currency: "USD" | "EUR" | "GBP" = "USD"): number {
+  if (currency === "EUR" && typeof p.priceEUR === "number") return p.priceEUR
+  // (GBP not set — fall back to USD)
+  return p.price
+}
