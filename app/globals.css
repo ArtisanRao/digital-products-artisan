@@ -276,3 +276,22 @@ a[data-card-link] .catlink-content * {
 a[data-card-link] .catlink-content [data-allow-events="true"] {
   pointer-events: auto !important;
 }
+/* === NUCLEAR CLICK FIXES === */
+/* /categories grid: only anchors can receive clicks */
+#categories-grid * { pointer-events: none !important; }
+#categories-grid a,
+#categories-grid a * {
+  pointer-events: auto !important;
+  position: relative !important;
+  z-index: 300 !important;
+}
+
+/* PDP subcategory pills: only the links can receive clicks */
+nav[data-subcats="true"] * { pointer-events: none !important; }
+nav[data-subcats="true"] a,
+nav[data-subcats="true"] a * {
+  pointer-events: auto !important;
+  position: relative !important;
+  z-index: 300 !important;
+}
+
