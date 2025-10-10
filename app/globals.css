@@ -209,3 +209,55 @@
     height: auto !important;
   }
 }
+
+/* ===== CLICK-THROUGH HOTFIX (global) ===== */
+
+/* Decorative overlays must NOT capture clicks */
+.hero-overlay,
+.gradient-overlay,
+.noise-overlay,
+.particles,
+.overlay,
+.page-hero,
+.page-cover,
+.bg-decor,
+[data-overlay],
+[data-decorative="true"] {
+  pointer-events: none !important;
+  z-index: -1 !important;
+}
+
+/* Primary interactive elements should always accept clicks */
+main a,
+nav a,
+button,
+[role="button"] {
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 20;
+}
+
+/* Optional helpers */
+@layer utilities {
+  .click-guard { position: relative !important; z-index: 100 !important; pointer-events: auto !important; }
+  .pe-none { pointer-events: none !important; }
+  .pe-auto { pointer-events: auto !important; }
+}
+
+/* --- Card Link Click Hotfix ---
+   Route all clicks to the anchor itself; children can't swallow them.
+   Works with CatLink (which renders <a data-card-link><div class="catlink-content">…).
+*/
+a[data-card-link] {
+  position: relative !important;
+  z-index: 200 !important;
+  pointer-events: auto !important;
+}
+a[data-card-link] .catlink-content,
+a[data-card-link] .catlink-content * {
+  pointer-events: none !important;
+}
+/* Allow specific interactive children if you ever need them */
+a[data-card-link] .catlink-content [data-allow-events="true"] {
+  pointer-events: auto !important;
+}
