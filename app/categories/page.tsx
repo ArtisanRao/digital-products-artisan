@@ -3,7 +3,8 @@
 import InlineMore from "@/components/ui/inline-more";
 import { CATEGORIES } from "@/data/categories";
 import { useMemo, useState } from "react";
-import CatLink from "@/components/ui/CatLink"; // no-prefetch wrapper
+import { useSearchParams } from "next/navigation";
+import CatLink from "@/components/ui/CatLink";          // no-prefetch wrapper
 import ClickUnlocker from "@/components/debug/ClickUnlocker"; // 🔓 overlay guard
 
 /** Optional descriptions */
@@ -20,7 +21,7 @@ const DESC_BY_LABEL: Record<string, string> = {
   "Web Templates": "Website, UI kits and theme starters.",
   "Digital Essentials Hub": "Prompt packs, automations, and utilities.",
   "Social Media Kits": "Post templates and brandable assets for socials.",
-  "Fonts & Icons": "Font families and icon sets for brands & apps.",
+  "Fonts & Icons": "Font families and icon sets.",
   "Religious eBooks": "Faith-centered books, devotionals, and study guides.",
 };
 
@@ -74,6 +75,12 @@ function useCategoryImage(slug: string, image?: string) {
 
 export default function CategoriesPage() {
   const BUILD_TAG = useBuildTag();
+  const sp = useSearchParams();
+
+  // Build a query string that preserves existing params (e.g., currency)
+  // and adds the cache-busting build tag.
+  const baseQS = useMemo(() => new URLSearchParams(sp?.toString() ?? ""), [sp]);
+  baseQS.set("v", BUILD_TAG); // add/override cache key
 
   return (
     <main
@@ -95,8 +102,12 @@ export default function CategoriesPage() {
           const { src, onError } = useCategoryImage(c.slug, (c as any).image);
           const desc = DESC_BY_LABEL[c.label] ?? "Explore products in this category.";
 
-          // Bust both link HTML and image cache using the same tag
-          const href = `/categories/${c.slug}?v=${encodeURIComponent(BUILD_TAG)}`;
+          // Ensure a single slash and preserve params
+          const pathname = `/categories/${encodeURIComponent(c.slug)}`;
+          const qs = baseQS.toString();
+          const href = qs ? `${pathname}?${qs}` : pathname;
+
+          // cache-bust the image with same tag
           const imgSrc = src.includes("?") ? `${src}&v=${BUILD_TAG}` : `${src}?v=${BUILD_TAG}`;
 
           return (
