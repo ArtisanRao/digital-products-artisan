@@ -1,67 +1,35 @@
 // components/ui/CatLink.tsx
 "use client";
 
-import * as React from "react";
-import Link, { type LinkProps } from "next/link";
-import { useRouter } from "next/navigation";
+import React from "react";
 
-type Props = LinkProps &
-  React.AnchorHTMLAttributes<HTMLAnchorElement> & {
-    className?: string;
-    children: React.ReactNode;
+type Props = {
+  href: string;
+  className?: string;
+  "aria-label"?: string;
+  children: React.ReactNode;
+};
+
+/**
+ * Hard-nav anchor for card links.
+ * Bypasses Next.js client router + RSC fetch so clicks never stall.
+ */
+export default function CatLink({ href, className, children, ...rest }: Props) {
+  const onClick: React.MouseEventHandler<HTMLAnchorElement> = (e) => {
+    e.preventDefault();
+    if (typeof window !== "undefined") window.location.assign(href);
   };
 
-export default function CatLink({
-  href,
-  className = "",
-  children,
-  onClick,
-  ...rest
-}: Props) {
-  const router = useRouter();
-
-  const forceNav = React.useCallback(
-    (e: React.MouseEvent<HTMLAnchorElement> | React.TouchEvent<HTMLAnchorElement>) => {
-      // If something prevented default, still force navigation as a last resort
-      if (e.defaultPrevented) {
-        try {
-          const url = typeof href === "string" ? href : (href as any)?.pathname ?? "#";
-          if (url && url !== "#") router.push(url);
-        } catch {}
-        return;
-      }
-    },
-    [href, router]
-  );
-
   return (
-    <Link
+    <a
       href={href}
-      prefetch={false}
       data-card-link
-      role="link"
-      onClick={(e) => {
-        onClick?.(e as any);
-        // If any child tried to stop it, ensure we still navigate
-        forceNav(e);
-      }}
-      className={[
-        "relative block cursor-pointer select-none",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2",
-        // Make sure the anchor always receives the tap/click
-        "z-[200]",
-        className,
-      ].join(" ")}
-      // iOS tap quirks
-      style={{
-        WebkitTapHighlightColor: "transparent",
-        WebkitTouchCallout: "none",
-        touchAction: "manipulation",
-      }}
+      onClick={onClick}
+      className={className}
+      style={{ pointerEvents: "auto" }}
       {...rest}
     >
-      {/*👇 Everything visual is non-interactive so it can't eat taps */}
-      <div className="catlink-content pointer-events-none">{children}</div>
-    </Link>
+      <div className="catlink-content">{children}</div>
+    </a>
   );
 }
