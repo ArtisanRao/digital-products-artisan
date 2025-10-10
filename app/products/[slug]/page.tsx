@@ -3,8 +3,10 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import ForceCurrencyFromQuery from "@/components/currency/ForceCurrencyFromQuery";
 import ProductJsonLd from "@/components/seo/ProductJsonLd";
-import ClickUnlocker from "@/components/debug/ClickUnlocker"; // 🔓 new
-import { products } from "@/data/products"; // adjust if needed
+import ClickUnlocker from "@/components/debug/ClickUnlocker";
+import { products } from "@/data/products";
+
+export const dynamic = "force-dynamic";
 
 type SP = Record<string, string | string[] | undefined>;
 
@@ -21,7 +23,7 @@ export default async function Page({
 
   const qCurrency = Array.isArray(sp.currency) ? sp.currency[0] : sp.currency;
   const currency = (qCurrency || "USD").toUpperCase() as "USD" | "EUR" | "GBP";
-  const qs = currency ? `?currency=${currency}` : "";
+  const qs = `?currency=${currency}`;
 
   // Find product
   const product = (products as any[]).find((p) => p.slug === slug);
@@ -68,15 +70,19 @@ export default async function Page({
         >
           {/* 🔓 Ensure nothing overlays this nav */}
           <ClickUnlocker targetSelector='nav[data-subcats="true"]' />
+
           <nav data-subcats="true" className="flex flex-wrap gap-2 border-b pb-3">
             {subcategories.map((s) => (
               <Link
                 key={s.href}
                 href={s.href}
+                data-card-link
                 className="px-3 py-1 rounded-full border text-sm hover:bg-muted transition"
-                style={{ pointerEvents: "auto" }}
+                style={{ pointerEvents: "auto", position: "relative", zIndex: 300 }}
+                aria-label={`View ${s.label}`}
               >
-                {s.label}
+                {/* Child is visual only so it can't intercept clicks */}
+                <span className="pointer-events-none select-none">{s.label}</span>
               </Link>
             ))}
           </nav>
