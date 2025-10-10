@@ -3,12 +3,12 @@ import fs from "node:fs";
 import path from "node:path";
 import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
-import ProductCardV4 from "../../../components/shop/ProductCardV4";
+import ProductCardV4 from "@/components/shop/ProductCardV4"; // use alias
 
-// ⬇️ Central data (unchanged)
+// Central data
 import { products, productsInCategory, CATEGORY_LABELS } from "@/data/products";
 
-// 🔓 Overlay click guard
+// Overlay click guard
 import ClickUnlocker from "@/components/debug/ClickUnlocker";
 
 export const runtime = "nodejs";
@@ -47,7 +47,6 @@ const LEGACY_TO_NEW: Record<string, string> = {
 const pub = (...p: string[]) => path.join(process.cwd(), "public", ...p);
 const tnorm = (s: string) => s.toLowerCase().trim();
 
-// Normalize a few tricky titles we’ve seen in the wild
 const FIX_BY_TITLE: Record<string, { forceSlug?: string; hide?: boolean }> = {
   [tnorm("Video Courses And Training")]: { forceSlug: "video-courses-and-training" },
   [tnorm("Self Help And How To")]: { hide: true },
@@ -70,7 +69,7 @@ const LABEL_TO_SLUG: Record<string, string> = Object.fromEntries(
   Object.entries(META).map(([slug, m]) => [m.title.toLowerCase(), slug])
 );
 
-// 🔗 Canonical mapping from page slug → canonical CATEGORY_LABELS (single source of truth)
+// Canonical mapping page slug → CATEGORY_LABELS
 const SLUG_TO_CANON_LABEL: Record<string, string> = {
   "ai-and-chatgpt-guides": CATEGORY_LABELS.AI,
   "planners-and-productivity": CATEGORY_LABELS.PLANNERS,
@@ -88,7 +87,7 @@ const SLUG_TO_CANON_LABEL: Record<string, string> = {
   "social-media-kits": CATEGORY_LABELS.SOCIAL,
 };
 
-// --- Helpers for subcategories/imagery (unchanged) ---
+// --- Helpers for subcategories/imagery ---
 function effectiveProductCategorySlug(p: any): string | null {
   const titleKey = tnorm(String(p.title ?? ""));
   const fix = FIX_BY_TITLE[titleKey];
@@ -183,7 +182,7 @@ export async function generateMetadata(props: any) {
   };
 }
 
-// ✅ Next 15: Promise-based params/searchParams + URL param preservation
+// Promise-based props (Next 15)
 type SP = Record<string, string | string[] | undefined>;
 
 export default async function CategoryPage({
@@ -199,8 +198,8 @@ export default async function CategoryPage({
   const slug = normalizeSlug(String(rawSlug || ""));
   const meta = META[slug];
 
-  // preserve query params (currency, others)
-  const spEntries = Object.entries(sp).filter(([k, v]) => v != null && v !== "");
+  // preserve all query params (currency, etc.)
+  const spEntries = Object.entries(sp).filter(([_, v]) => v != null && v !== "");
   const qs = spEntries.length
     ? `?${new URLSearchParams(
         spEntries.map(([k, v]) => [k, Array.isArray(v) ? v[0] : (v as string)])
@@ -229,7 +228,7 @@ export default async function CategoryPage({
     );
   }
 
-  // ✅ Canonical category lookup
+  // Canonical category lookup
   const canonicalLabel = SLUG_TO_CANON_LABEL[slug];
   let catProducts = canonicalLabel
     ? productsInCategory(canonicalLabel)
@@ -247,9 +246,8 @@ export default async function CategoryPage({
       (sslug === "__none__"
         ? "Other"
         : sslug.replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase()));
-    const key = sslug;
-    if (!groups.has(key)) groups.set(key, { label, items: [] });
-    groups.get(key)!.items.push(p);
+    if (!groups.has(sslug)) groups.set(sslug, { label, items: [] });
+    groups.get(sslug)!.items.push(p);
   }
 
   let visibleGroups = groups;
@@ -261,24 +259,12 @@ export default async function CategoryPage({
 
   const toCard = (p: any) => {
     const imagesRaw = buildCardImages(p);
-    const deduped = Array.from(new Set(imagesRaw)) as string[];
-    const images = deduped.map((src) =>
+    const images = Array.from(new Set(imagesRaw)).map((src) =>
       src.includes("?") ? `${src}&v=${UI_VERSION}` : `${src}?v=${UI_VERSION}`
     );
-
     const seg = encodeURIComponent(String(p.slug ?? p.id));
-    // preserve the current query string (currency + others) on product links
-    const href = `/products/${seg}${qs}`;
-
-    return {
-      id: p.id,
-      title: p.title,
-      slug: p.slug,
-      price: p.price,
-      images,
-      description: p.description,
-      href,
-    };
+    const href = `/products/${seg}${qs}`; // keep query string (currency, etc.)
+    return { id: p.id, title: p.title, slug: p.slug, price: p.price, images, description: p.description, href };
   };
 
   const totalVisible = Array.from(visibleGroups.values()).reduce((n, g) => n + g.items.length, 0);
@@ -289,7 +275,7 @@ export default async function CategoryPage({
       data-ui={`CategoryPage@${UI_VERSION}`}
       style={{ pointerEvents: "auto", isolation: "isolate" }}
     >
-      {/* 🔓 Ensure no overlay blocks the subcategory pills or grid */}
+      {/* Guard against decorative overlays */}
       <ClickUnlocker targetSelector='div[data-subcats="true"]' />
       <ClickUnlocker targetSelector='div[data-grid="products"]' />
 
@@ -299,8 +285,14 @@ export default async function CategoryPage({
       </h1>
       <InlineMore text={meta.description} lines={1} minChars={40} className="mt-1 text-gray-700" />
 
+      {/* 🔹 Subcategory pills: wrapped for click safety */}
       {!activeSub && groups.size > 1 && (
-        <div className="mt-4 flex flex-wrap gap-2 relative z-[101]" data-subcats="true" style={{ pointerEvents: "auto" }}>
+        <div
+          id="subcat-nav"
+          className="mt-4 flex flex-wrap gap-2 relative z-[101] clickable-surface"
+          data-subcats="true"
+          style={{ pointerEvents: "auto" }}
+        >
           {Array.from(groups.entries())
             .filter(([k]) => k !== "__none__")
             .map(([k, g]) => (
@@ -320,11 +312,7 @@ export default async function CategoryPage({
 
       {totalVisible ? (
         activeSub ? (
-          <div
-            className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 relative z-[100]"
-            data-grid="products"
-            style={{ pointerEvents: "auto" }}
-          >
+          <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 relative z-[100]" data-grid="products" style={{ pointerEvents: "auto" }}>
             {visibleGroups.get(activeSub)!.items.map((p) => (
               <ProductCardV4 key={`${UI_VERSION}:${String(p.slug ?? p.id)}`} {...toCard(p)} />
             ))}
