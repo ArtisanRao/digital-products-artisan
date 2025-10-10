@@ -1,9 +1,9 @@
 // app/categories/page.tsx
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import InlineMore from "@/components/ui/inline-more";
 import { CATEGORIES } from "@/data/categories";
-import { useMemo, useState } from "react";
 import CatLink from "@/components/ui/CatLink";
 
 /** Optional descriptions */
@@ -71,6 +71,37 @@ function useCategoryImage(slug: string, image?: string) {
 export default function CategoriesPage() {
   const BUILD_TAG = useBuildTag();
 
+  // 🔧 One-time SW cleanup on this page (avoids stale PWA caching of RSC/Flight)
+  useEffect(() => {
+    const FLAG = "swFix@categories";
+    if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
+    if (sessionStorage.getItem(FLAG)) return;
+
+    (async () => {
+      try {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map((r) => r.unregister().catch(() => {})));
+        if ("caches" in window) {
+          const keys = await caches.keys();
+          await Promise.all(
+            keys
+              .filter((k) =>
+                /workbox|precache|html-no-cache|rsc-no-cache|cat-no-cache|pdp-no-cache/i.test(
+                  k,
+                ),
+              )
+              .map((k) => caches.delete(k).catch(() => false)),
+          );
+        }
+        sessionStorage.setItem(FLAG, "1");
+        // Reload once to get a clean runtime without stale SW
+        window.location.reload();
+      } catch {
+        // ignore
+      }
+    })();
+  }, []);
+
   return (
     <main
       className="max-w-7xl mx-auto px-4 py-12"
@@ -85,10 +116,15 @@ export default function CategoriesPage() {
       >
         {CATEGORIES.map((c) => {
           const { src, onError } = useCategoryImage(c.slug, (c as any).image);
-          const desc = DESC_BY_LABEL[c.label] ?? "Explore products in this category.";
+          const desc =
+            DESC_BY_LABEL[c.label] ?? "Explore products in this category.";
 
-          const href = `/categories/${c.slug}?v=${encodeURIComponent(BUILD_TAG)}`;
-          const imgSrc = src.includes("?") ? `${src}&v=${BUILD_TAG}` : `${src}?v=${BUILD_TAG}`;
+          const href = `/categories/${c.slug}?v=${encodeURIComponent(
+            BUILD_TAG,
+          )}`;
+          const imgSrc = src.includes("?")
+            ? `${src}&v=${BUILD_TAG}`
+            : `${src}?v=${BUILD_TAG}`;
 
           return (
             <CatLink

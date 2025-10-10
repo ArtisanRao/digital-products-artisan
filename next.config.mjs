@@ -9,17 +9,46 @@ const withPWACfg = withPWA({
   skipWaiting: true,
   disable: process.env.NODE_ENV === "development",
 
-  /** 👇 runtime caching — never cache HTML documents */
+  /** Runtime caching rules:
+   *  - NEVER cache RSC/Flight/data payloads
+   *  - NEVER cache dynamic category/product pages
+   *  - NEVER cache HTML navigations (documents)
+   *  - Keep static assets cached by default
+   */
   runtimeCaching: [
+    // ❌ React Server Components / Next data / Flight
     {
-      // Treat navigations / HTML as network-only so stale pages aren't served
+      urlPattern: ({ url, request }) => {
+        const u = url.toString();
+        return (
+          u.includes("/_next/data/") ||                 // SSG/ISR JSON
+          u.includes("__flight__")   ||                 // React Flight
+          u.includes("/_rsc")        ||                 // Next 15 RSC endpoint
+          u.includes("react-server") ||                 // RSC internals
+          request?.headers?.get?.("RSC")                // RSC header
+        );
+      },
+      handler: "NetworkOnly",
+      options: { cacheName: "rsc-no-cache" },
+    },
+
+    // ❌ Dynamic app routes (server-rendered)
+    { urlPattern: /\/categories(\/.*)?(\?.*)?$/i, handler: "NetworkOnly", options: { cacheName: "cat-no-cache" } },
+    { urlPattern: /\/products(\/.*)?(\?.*)?$/i,   handler: "NetworkOnly", options: { cacheName: "pdp-no-cache" } },
+
+    // ❌ All HTML navigations must come from network
+    {
       urlPattern: ({ request }) =>
         request.destination === "document" || request.mode === "navigate",
       handler: "NetworkOnly",
       options: { cacheName: "html-no-cache" },
     },
-    // (Keep default asset caching behavior; add more rules here if desired)
+
+    // ✅ (leave default static asset caching to next-pwa)
   ],
+
+  // Don't precache anything that might include dynamic HTML by mistake
+  publicExcludes: ["**/categories/**", "**/products/**"],
 });
 
 /** Content Security Policy (tune domains as needed) */
@@ -29,15 +58,11 @@ const csp = [
   "object-src 'none'",
   "worker-src 'self' blob:",
   "font-src 'self' data: https: https://cdn.snipcart.com",
-  // add PayPal images + keep Stripe/Snipcart
   "img-src 'self' data: blob: https: https://cdn.snipcart.com https://app.snipcart.com https://www.paypalobjects.com https://www.paypal.com",
   "media-src 'self' blob:",
-  // add PayPal scripts + keep GA/Stripe/Snipcart (note: remove 'unsafe-eval' if you can)
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://js.stripe.com https://cdn.snipcart.com https://app.snipcart.com https://www.paypal.com https://www.paypalobjects.com",
   "style-src 'self' 'unsafe-inline' https://cdn.snipcart.com",
-  // add PayPal connect
   "connect-src 'self' https://www.google-analytics.com https://vitals.vercel-insights.com https://api.stripe.com https://checkout.stripe.com https://cdn.snipcart.com https://app.snipcart.com https://www.paypal.com https://www.paypalobjects.com",
-  // add PayPal frames (Stripe Checkout already here)
   "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com https://app.snipcart.com https://www.paypal.com",
   "form-action 'self' https://app.snipcart.com https://checkout.stripe.com https://www.paypal.com",
   "frame-ancestors 'self'",
@@ -76,28 +101,9 @@ const assetNoIndexHeaders = [
       { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
     ],
   },
-  // Favicons
-  {
-    source: "/favicon.ico",
-    headers: [
-      { key: "X-Robots-Tag", value: "noindex" },
-      { key: "Cache-Control", value: "public, max-age=604800, immutable" },
-    ],
-  },
-  {
-    source: "/favicon-48x48.png",
-    headers: [
-      { key: "X-Robots-Tag", value: "noindex" },
-      { key: "Cache-Control", value: "public, max-age=604800, immutable" },
-    ],
-  },
-  {
-    source: "/apple-touch-icon.png",
-    headers: [
-      { key: "X-Robots-Tag", value: "noindex" },
-      { key: "Cache-Control", value: "public, max-age=604800, immutable" },
-    ],
-  },
+  { source: "/favicon.ico", headers: [{ key: "X-Robots-Tag", value: "noindex" }, { key: "Cache-Control", value: "public, max-age=604800, immutable" }] },
+  { source: "/favicon-48x48.png", headers: [{ key: "X-Robots-Tag", value: "noindex" }, { key: "Cache-Control", value: "public, max-age=604800, immutable" }] },
+  { source: "/apple-touch-icon.png", headers: [{ key: "X-Robots-Tag", value: "noindex" }, { key: "Cache-Control", value: "public, max-age=604800, immutable" }] },
 
   { source: "/sw.js", headers: [{ key: "X-Robots-Tag", value: "noindex" }, { key: "Cache-Control", value: "no-cache" }] },
   { source: "/workbox-:hash.js", headers: [{ key: "X-Robots-Tag", value: "noindex" }] },
