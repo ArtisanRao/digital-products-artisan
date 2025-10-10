@@ -11,7 +11,6 @@ import LiveChat from "@/components/live-chat";
 import AutoCurrency from "@/components/auto-currency";
 import Script from "next/script";
 import React from "react";
-import FlushServiceWorker from "@/components/debug/FlushServiceWorker"; // ⬅️ added
 
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 
