@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import ForceCurrencyFromQuery from "@/components/currency/ForceCurrencyFromQuery";
 import ProductJsonLd from "@/components/seo/ProductJsonLd";
+import ClickUnlocker from "@/components/debug/ClickUnlocker"; // 🔓 new
 import { products } from "@/data/products"; // adjust if needed
 
 type SP = Record<string, string | string[] | undefined>;
@@ -60,16 +61,14 @@ export default async function Page({
       />
 
       <main className="container mx-auto px-4 py-8">
-        {/* ✅ Clickable subcategory bar (server-rendered Links, no client code needed) */}
+        {/* ✅ Clickable subcategory bar with unlocker */}
         <div
-          className="relative z-50 mb-6"
+          className="relative z-[100] mb-6 click-guard"
           style={{ pointerEvents: "auto", isolation: "isolate" }}
         >
-          {/* If you have any decorative overlays, make sure they DO NOT capture clicks */}
-          {/* Example overlay pattern (keep pointer-events-none on decorative layers):
-          <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden />
-          */}
-          <nav className="flex flex-wrap gap-2 border-b pb-3">
+          {/* 🔓 Ensure nothing overlays this nav */}
+          <ClickUnlocker targetSelector='nav[data-subcats="true"]' />
+          <nav data-subcats="true" className="flex flex-wrap gap-2 border-b pb-3">
             {subcategories.map((s) => (
               <Link
                 key={s.href}
