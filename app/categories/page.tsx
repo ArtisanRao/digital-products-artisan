@@ -1,13 +1,12 @@
-"use client";
-
+// app/categories/page.tsx — Server Component (no "use client")
 import InlineMore from "@/components/ui/inline-more";
 import { CATEGORIES } from "@/data/categories";
-import { useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import CatLink from "@/components/ui/CatLink";          // no-prefetch wrapper
-import ClickUnlocker from "@/components/debug/ClickUnlocker"; // 🔓 overlay guard
+import CatLink from "@/components/ui/CatLink";               // client ok inside server
+import ClickUnlocker from "@/components/debug/ClickUnlocker"; // client ok inside server
 
-/** Optional descriptions */
+type SP = Record<string, string | string[] | undefined>;
+
+// Optional descriptions
 const DESC_BY_LABEL: Record<string, string> = {
   "AI & ChatGPT Guides": "Actionable guides, prompts and workflows to build with AI.",
   "Planners & Productivity": "Digital planners, journals and organization systems.",
@@ -30,57 +29,38 @@ const GLOBAL_FALLBACKS = [
   "/images/placeholder.jpg",
 ];
 
-// Read the build tag set by app/layout.tsx (<body data-ui-build="...">)
-function useBuildTag() {
-  const tag =
-    (typeof document !== "undefined" && document.body?.dataset?.uiBuild) ||
-    (process.env.NEXT_PUBLIC_BUILD_TAG as string) ||
-    "catlinks-2025-09-26-f";
-  return tag;
-}
+// Build tag for cache-busting (prefer env; fallback constant)
+const BUILD_TAG = process.env.NEXT_PUBLIC_BUILD_TAG || "catlinks-2025-09-26-f";
 
-/* ---------- helpers: category card image with fallbacks ---------- */
-
+// Build a list of candidate images for a category
 function buildCandidates(slug: string, image?: string): string[] {
   const list: string[] = [];
   if (image) {
     list.push(image);
-    if (/\.jpe?g$/i.test(image)) {
-      list.push(image.replace(/\.jpe?g$/i, ".png"));
-      list.push(image.replace(/\.jpe?g$/i, ".webp"));
-    } else if (/\.png$/i.test(image)) {
-      list.push(image.replace(/\.png$/i, ".jpg"));
-      list.push(image.replace(/\.png$/i, ".webp"));
-    } else if (/\.webp$/i.test(image)) {
-      list.push(image.replace(/\.webp$/i, ".jpg"));
-      list.push(image.replace(/\.webp$/i, ".png"));
-    }
+    if (/\.jpe?g$/i.test(image)) list.push(image.replace(/\.jpe?g$/i, ".png"), image.replace(/\.jpe?g$/i, ".webp"));
+    else if (/\.png$/i.test(image)) list.push(image.replace(/\.png$/i, ".jpg"), image.replace(/\.png$/i, ".webp"));
+    else if (/\.webp$/i.test(image)) list.push(image.replace(/\.webp$/i, ".jpg"), image.replace(/\.webp$/i, ".png"));
   }
-  // Curated cover only
   const base = `/images/categories/${slug}/card`;
   list.push(`${base}.jpg`, `${base}.png`, `${base}.webp`);
   list.push(...GLOBAL_FALLBACKS);
+  // dedupe
   return Array.from(new Set(list));
 }
 
-function useCategoryImage(slug: string, image?: string) {
-  const candidates = useMemo(() => buildCandidates(slug, image), [slug, image]);
-  const [idx, setIdx] = useState(0);
-  const src = candidates[idx] ?? GLOBAL_FALLBACKS[0];
-  const onError = () => setIdx((i) => (i + 1 < candidates.length ? i + 1 : i));
-  return { src, onError };
-}
+export default async function CategoriesPage({
+  searchParams,
+}: {
+  searchParams?: Promise<SP>;
+}) {
+  // Read query params on the server
+  const sp = (await searchParams) || {};
+  const spEntries = Object.entries(sp).filter(([_, v]) => v != null && v !== "");
 
-/* ------------------------------- page ------------------------------- */
-
-export default function CategoriesPage() {
-  const BUILD_TAG = useBuildTag();
-  const sp = useSearchParams();
-
-  // Build a query string that preserves existing params (e.g., currency)
-  // and adds the cache-busting build tag.
-  const baseQS = useMemo(() => new URLSearchParams(sp?.toString() ?? ""), [sp]);
-  baseQS.set("v", BUILD_TAG); // add/override cache key
+  // Preserve existing params and add cache-busting tag
+  const qs = new URLSearchParams(
+    [...spEntries.map(([k, v]) => [k, Array.isArray(v) ? v[0] : (v as string)]), ["v", BUILD_TAG]]
+  ).toString();
 
   return (
     <main
@@ -99,16 +79,14 @@ export default function CategoriesPage() {
         style={{ pointerEvents: "auto" }}
       >
         {CATEGORIES.map((c) => {
-          const { src, onError } = useCategoryImage(c.slug, (c as any).image);
           const desc = DESC_BY_LABEL[c.label] ?? "Explore products in this category.";
-
-          // Ensure a single slash and preserve params
-          const pathname = `/categories/${encodeURIComponent(c.slug)}`;
-          const qs = baseQS.toString();
+          const pathname = `/categories/${encodeURIComponent(c.slug)}`; // single slash
           const href = qs ? `${pathname}?${qs}` : pathname;
 
-          // cache-bust the image with same tag
-          const imgSrc = src.includes("?") ? `${src}&v=${BUILD_TAG}` : `${src}?v=${BUILD_TAG}`;
+          // choose first viable image (server-side; no onError swapping)
+          const candidates = buildCandidates(c.slug, (c as any).image);
+          const src0 = candidates[0] || GLOBAL_FALLBACKS[0];
+          const imgSrc = src0.includes("?") ? `${src0}&v=${BUILD_TAG}` : `${src0}?v=${BUILD_TAG}`;
 
           return (
             <CatLink
@@ -123,7 +101,6 @@ export default function CategoriesPage() {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={imgSrc}
-                    onError={onError}
                     alt={c.label}
                     className="h-full w-full object-cover pointer-events-none select-none"
                     loading="lazy"
