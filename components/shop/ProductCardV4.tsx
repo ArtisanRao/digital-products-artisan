@@ -1,7 +1,8 @@
+// components/shop/ProductCardV4.tsx
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import CatLink from "@/components/ui/CatLink";
 import * as cart from "@/lib/cart";
 
 export type ProductCardData = {
@@ -23,12 +24,9 @@ export default function ProductCardV4({
   href,
   description,
 }: ProductCardData) {
-  const pics = useMemo(
-    () => Array.from(new Set((images || []).filter(Boolean))),
-    [images]
-  );
+  const pics = useMemo(() => Array.from(new Set((images || []).filter(Boolean))), [images]);
 
-  // 1 main + 3 thumbs (<=4 total)
+  // 1 main + up to 3 thumbs
   const cover = pics[0] ?? "/images/placeholder.jpg";
   const extras = useMemo(() => pics.slice(1).filter((s) => s !== cover), [pics, cover]);
   const displayPics = useMemo(() => [cover, ...extras.slice(0, 3)], [cover, extras]);
@@ -63,18 +61,14 @@ export default function ProductCardV4({
       ? new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(price)
       : price ?? "";
 
-  // Add to cart (fallback when delegated wire isn't mounted)
+  // Fallback add to cart
   const addToCart = () => {
     const key = String(slug ?? id ?? "");
     if (!key) return;
-    cart.add(key, 1, {
-      title,
-      price: priceNumber,
-      image: cover,
-    });
+    cart.add(key, 1, { title, price: priceNumber, image: cover });
   };
 
-  // Build checkout href (prefer id, fallback to slug)
+  // Direct checkout link
   const buyHref = useMemo(() => {
     const idStr = id != null ? String(id) : "";
     if (idStr) return `/api/checkout?productId=${encodeURIComponent(idStr)}&qty=1`;
@@ -83,69 +77,75 @@ export default function ProductCardV4({
   }, [id, slug, productUrl]);
 
   return (
-    <article
-      className="group rounded-2xl border bg-white/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-      data-version="ProductCardV4@buy-redirect+delegated"
+    <CatLink
+      href={productUrl}
+      prefetch={false}
+      data-card-link
+      aria-label={`Open ${title}`}
+      className="group block rounded-2xl border bg-white/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+      // The anchor is the click target; children visuals won't eat clicks.
     >
-      {/* Main image (click → product page) */}
-      <Link href={productUrl} prefetch={false} aria-label={`Open ${title}`}>
-        <div className="relative overflow-hidden rounded-t-2xl bg-gray-50">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={displayPics[idx] ?? "/images/placeholder.jpg"}
-            alt={title}
-            className="aspect-[3/2] w-full object-contain p-2 transition-transform duration-300 group-hover:scale-[1.01]"
-            loading="lazy"
-          />
-          {displayPics.length > 1 && (
-            <>
-              <button
-                type="button"
-                onClick={(e) => { e.preventDefault(); prev(); }}
-                aria-label="Previous"
-                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-2 py-1 text-[11px] shadow hover:bg-white"
-              >
-                ‹
-              </button>
-              <button
-                type="button"
-                onClick={(e) => { e.preventDefault(); next(); }}
-                aria-label="Next"
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-2 py-1 text-[11px] shadow hover:bg-white"
-              >
-                ›
-              </button>
-            </>
-          )}
-        </div>
-      </Link>
+      {/* Visuals (no pointer events) */}
+      <div className="relative overflow-hidden rounded-t-2xl bg-gray-50 pointer-events-none select-none">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={displayPics[idx] ?? "/images/placeholder.jpg"}
+          alt={title}
+          className="aspect-[3/2] w-full object-contain p-2 transition-transform duration-300 group-hover:scale-[1.01]"
+          loading="lazy"
+          draggable={false}
+        />
+        {displayPics.length > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                prev();
+              }}
+              aria-label="Previous"
+              className="pointer-events-auto absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-2 py-1 text-[11px] shadow hover:bg-white"
+              data-allow-events="true"
+            >
+              ‹
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                next();
+              }}
+              aria-label="Next"
+              className="pointer-events-auto absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-2 py-1 text-[11px] shadow hover:bg-white"
+              data-allow-events="true"
+            >
+              ›
+            </button>
+          </>
+        )}
+      </div>
 
-      <div className="p-4">
-        {/* Title (hover underline) */}
-        <Link href={productUrl} prefetch={false} className="block">
-          <h3 className="line-clamp-2 text-lg font-semibold hover:underline">{title}</h3>
-        </Link>
+      {/* Content (no pointer events except explicit controls) */}
+      <div className="p-4 pointer-events-none select-none">
+        <h3 className="line-clamp-2 text-lg font-semibold group-hover:text-blue-600">
+          {title}
+        </h3>
 
-        {/* Subtitle + “More” pill to #description */}
         {description && (
           <>
-            <Link href={productUrl} prefetch={false} className="block mt-1">
-              <p className="line-clamp-2 text-sm text-gray-600 hover:underline">
-                {description}
-              </p>
-            </Link>
-            <Link
+            <p className="mt-1 line-clamp-2 text-sm text-gray-600">{description}</p>
+            <a
               href={`${productUrl}#description`}
-              prefetch={false}
-              className="mt-2 inline-flex items-center rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
+              className="pointer-events-auto mt-2 inline-flex items-center rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
               aria-label={`Read more about ${title}`}
+              data-allow-events="true"
             >
               More
-            </Link>
+            </a>
           </>
         )}
 
-        {/* Thumbs (exactly 4 UI slots) */}
+        {/* Thumbs */}
         <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
           {thumbsRow.map((src, i) => {
             const isReal = i < displayPics.length;
@@ -155,13 +155,17 @@ export default function ProductCardV4({
               <button
                 type="button"
                 key={`${src}-${i}`}
-                onClick={(e) => { e.preventDefault(); setIdx(targetIndex); }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIdx(targetIndex);
+                }}
                 aria-label={`Preview ${title} (image ${targetIndex + 1})`}
                 aria-pressed={active}
                 className={[
-                  "block h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-white transition cursor-pointer",
+                  "pointer-events-auto block h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-white transition cursor-pointer",
                   active ? "ring-2 ring-blue-500" : "opacity-80 hover:opacity-100",
                 ].join(" ")}
+                data-allow-events="true"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={src} alt="" className="h-full w-full object-cover" />
@@ -173,52 +177,53 @@ export default function ProductCardV4({
         {/* Price */}
         {priceLabel && <div className="mt-3 text-xl font-semibold">{priceLabel}</div>}
 
-        {/* CTAs — icons in fixed slots; middle wider; delegated add-to-cart attrs */}
+        {/* CTAs (explicitly opt back in to events) */}
         <div className="mt-3 grid gap-2 [grid-template-columns:.9fr_1.2fr_.9fr]">
-          <Link
+          <a
             href={productUrl}
-            prefetch={false}
-            className="inline-flex !h-8 items-center justify-center gap-2 rounded-lg bg-blue-600 !px-2 text-xs font-medium leading-tight text-white hover:bg-blue-700 whitespace-nowrap"
+            className="pointer-events-auto inline-flex !h-8 items-center justify-center gap-2 rounded-lg bg-blue-600 !px-2 text-xs font-medium leading-tight text-white hover:bg-blue-700 whitespace-nowrap"
             aria-label={`View ${title}`}
+            data-allow-events="true"
           >
             <span aria-hidden className="inline-block w-3 text-center">👁️</span>
             <span>View</span>
-          </Link>
+          </a>
 
           <button
             type="button"
-            // Fallback: only run locally when delegated handler isn't active
-            onClick={() => {
-              if (typeof document !== "undefined" &&
-                  (document.documentElement as any)?.dataset?.delegatedCart === "1") {
-                return; // let the delegated listener handle it
+            onClick={(e) => {
+              e.preventDefault();
+              if (
+                typeof document !== "undefined" &&
+                (document.documentElement as any)?.dataset?.delegatedCart === "1"
+              ) {
+                return; // delegated listener will handle
               }
               addToCart();
             }}
-            // Delegated wire hooks for pages that mount AddToCartWire
             data-add-to-cart
             data-product-id={String(id ?? "")}
             {...(slug ? { "data-product-slug": slug } : {})}
             data-qty="1"
-            className="inline-flex !h-8 items-center justify-center gap-2 rounded-lg bg-blue-600 !px-3 text-xs font-medium leading-tight text-white hover:bg-blue-700 whitespace-nowrap"
+            className="pointer-events-auto inline-flex !h-8 items-center justify-center gap-2 rounded-lg bg-blue-600 !px-3 text-xs font-medium leading-tight text-white hover:bg-blue-700 whitespace-nowrap"
             aria-label="Add to cart"
+            data-allow-events="true"
           >
             <span aria-hidden className="inline-block w-5 text-center">🛒</span>
             <span>Add to cart</span>
           </button>
 
-          {/* Buy -> direct checkout */}
-          <Link
+          <a
             href={buyHref}
-            prefetch={false}
-            className="inline-flex !h-8 items-center justify-center gap-2 rounded-lg bg-blue-600 !px-2 text-xs font-medium leading-tight text-white hover:bg-blue-700 whitespace-nowrap"
+            className="pointer-events-auto inline-flex !h-8 items-center justify-center gap-2 rounded-lg bg-blue-600 !px-2 text-xs font-medium leading-tight text-white hover:bg-blue-700 whitespace-nowrap"
             aria-label="Buy now"
+            data-allow-events="true"
           >
             <span aria-hidden className="inline-block w-3 text-center">⚡</span>
             <span>Buy</span>
-          </Link>
+          </a>
         </div>
       </div>
-    </article>
+    </CatLink>
   );
 }
