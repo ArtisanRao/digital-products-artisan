@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+ï»¿import { notFound } from "next/navigation";
 import Link from "next/link";
 import ForceCurrencyFromQuery from "@/components/currency/ForceCurrencyFromQuery";
 import ProductJsonLd from "@/components/seo/ProductJsonLd";
@@ -50,7 +50,6 @@ export default async function Page({
       />
 
       <main className="container mx-auto px-4 py-8">
-        {/* Subcategory pills — anchor-only clicks */}
         <nav data-subcats="true" className="flex flex-wrap gap-2 border-b pb-3 mb-6">
           {subcategories.map((s) => (
             <Link
