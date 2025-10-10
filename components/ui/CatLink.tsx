@@ -1,36 +1,48 @@
 // components/ui/CatLink.tsx
 "use client";
 
-import Link, { type LinkProps } from "next/link";
-import React, { forwardRef } from "react";
+import React from "react";
 
-type Props = LinkProps &
-  Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, "href"> & {
-    /** default false to avoid heavy hover prefetch on grids */
-    prefetch?: boolean | null;
+/**
+ * Hard-nav anchor for card links.
+ * We extend full anchor attributes so things like `prefetch`, `target`,
+ * `data-*` attrs etc. don’t cause TS errors. `prefetch` is ignored.
+ */
+type Props = Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, "href"> & {
+  href: string;
+  children: React.ReactNode;
+  prefetch?: boolean; // accepted for compatibility; no effect
+};
+
+export default function CatLink({
+  href,
+  children,
+  prefetch, // eslint-disable-line @typescript-eslint/no-unused-vars
+  onClick,
+  style,
+  ...rest
+}: Props) {
+  const handleClick: React.MouseEventHandler<HTMLAnchorElement> = (e) => {
+    // allow user-provided onClick first
+    onClick?.(e);
+    if (e.defaultPrevented) return;
+
+    e.preventDefault();
+    if (typeof window !== "undefined") {
+      window.location.assign(href);
+    }
   };
 
-const CatLink = forwardRef<HTMLAnchorElement, Props>(function CatLink(
-  { href, prefetch = false, className = "", children, style, ...rest },
-  ref
-) {
   return (
-    <Link
+    <a
       href={href}
-      prefetch={prefetch ?? false}
-      ref={ref}
-      className={[
-        "block cursor-pointer",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2",
-        "pe-auto", // from globals hotfix (pointer-events: auto)
-        className,
-      ].join(" ")}
-      style={{ pointerEvents: "auto", position: "relative", zIndex: 20, ...style }}
+      data-card-link
+      onClick={handleClick}
+      // ensure anchors can receive clicks even if a parent had pointer-events:none
+      style={{ pointerEvents: "auto", ...(style || {}) }}
       {...rest}
     >
-      {children}
-    </Link>
+      <div className="catlink-content">{children}</div>
+    </a>
   );
-});
-
-export default CatLink;
+}
