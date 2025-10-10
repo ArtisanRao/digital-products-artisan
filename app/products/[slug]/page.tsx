@@ -1,8 +1,8 @@
 // app/products/[slug]/page.tsx
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import ForceCurrencyFromQuery from "@/components/currency/ForceCurrencyFromQuery";
 import ProductJsonLd from "@/components/seo/ProductJsonLd";
+import SubcategoryNav from "@/components/products/SubcategoryNav";
 import { products } from "@/data/products"; // adjust if needed
 
 type SP = Record<string, string | string[] | undefined>;
@@ -26,7 +26,7 @@ export default async function Page({
   const product = (products as any[]).find((p) => p.slug === slug);
   if (!product) notFound();
 
-  // Map price (ensure product.priceEUR exists if using EUR)
+  // Price map (ensure product.priceEUR exists if using EUR)
   const price =
     currency === "EUR" ? product.priceEUR ?? product.price : product.price;
 
@@ -35,13 +35,13 @@ export default async function Page({
     product.image ??
     `https://digitalproductsartisan.com/images/products/${slug}/cover.jpg`;
 
-  // Subcategory links (adjust slugs/labels to your taxonomy)
-  const subcategories: Array<{ label: string; href: string }> = [
-    { label: "All", href: `/products${qs}` },
-    { label: "AI & ChatGPT", href: `/categories/ai-and-chatgpt-guides${qs}` },
-    { label: "Planners", href: `/categories/planners-productivity${qs}` },
-    { label: "Self-Help", href: `/categories/self-help-and-how-to${qs}` },
-    { label: "PLR & MRR", href: `/categories/plr-mrr-bundles${qs}` },
+  // Subcategory items (adjust as needed)
+  const subcategories = [
+    { label: "All", slug: "all", href: "/products" },
+    { label: "AI & ChatGPT", slug: "ai-and-chatgpt-guides", href: "/categories/ai-and-chatgpt-guides" },
+    { label: "Planners", slug: "planners-productivity", href: "/categories/planners-productivity" },
+    { label: "Self-Help", slug: "self-help-and-how-to", href: "/categories/self-help-and-how-to" },
+    { label: "PLR & MRR", slug: "plr-mrr-bundles", href: "/categories/plr-mrr-bundles" },
   ];
 
   return (
@@ -60,27 +60,13 @@ export default async function Page({
       />
 
       <main className="container mx-auto px-4 py-8">
-        {/* ✅ Clickable subcategory bar (server-rendered Links, no client code needed) */}
-        <div
-          className="relative z-50 mb-6"
-          style={{ pointerEvents: "auto", isolation: "isolate" }}
-        >
-          {/* If you have any decorative overlays, make sure they DO NOT capture clicks */}
-          {/* Example overlay pattern (keep pointer-events-none on decorative layers):
-          <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden />
-          */}
-          <nav className="flex flex-wrap gap-2 border-b pb-3">
-            {subcategories.map((s) => (
-              <Link
-                key={s.href}
-                href={s.href}
-                className="px-3 py-1 rounded-full border text-sm hover:bg-muted transition"
-                style={{ pointerEvents: "auto" }}
-              >
-                {s.label}
-              </Link>
-            ))}
-          </nav>
+        {/* ✅ Clickable client nav; sits above any overlays */}
+        <div className="relative z-50 mb-6 clickable-surface" style={{ pointerEvents: "auto", isolation: "isolate" }}>
+          <SubcategoryNav
+            items={subcategories}
+            basePath="/categories"
+            className="border-b pb-3"
+          />
         </div>
 
         {/* --- PDP content --- */}

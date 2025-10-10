@@ -165,10 +165,7 @@
   }
 }
 
-/* === SCOPED mobile fix for the PRODUCT DETAIL page only ===
-   Apply to a wrapper element with class "product-page"
-   or set <body class="product-page"> or <main data-page="product">
-*/
+/* === SCOPED mobile fix for the PRODUCT DETAIL page only === */
 @media (max-width: 768px) {
   body.product-page .w-screen,
   body.product-page [class*="w-\\[100vw\\]"],
@@ -212,7 +209,7 @@
 
 /* ===== CLICK-THROUGH HOTFIX (global) ===== */
 
-/* Any decorative overlays must NOT capture clicks */
+/* Decorative overlays must NOT capture clicks */
 .hero-overlay,
 .gradient-overlay,
 .noise-overlay,
@@ -222,7 +219,10 @@
 .page-cover,
 .bg-decor,
 [data-overlay],
-[data-decorative="true"] {
+[data-decorative="true"],
+/* NEW: catch common overlay class patterns */
+[class*="overlay-"],
+[class$="-overlay"] {
   pointer-events: none !important;
   z-index: -1 !important; /* keep behind content if positioned */
 }
@@ -235,6 +235,14 @@ button,
   pointer-events: auto !important;
   position: relative;
   z-index: 20; /* sit above accidental layers */
+}
+
+/* NEW: reusable surface that is guaranteed clickable & layered above */
+.clickable-surface {
+  pointer-events: auto !important;
+  position: relative;
+  isolation: isolate;
+  z-index: 50;
 }
 
 /* Optional helpers you can drop onto wrappers when needed */
