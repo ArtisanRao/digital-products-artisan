@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import InlineMore from "@/components/ui/inline-more";
 import { CATEGORIES } from "@/data/categories";
 import CatLink from "@/components/ui/CatLink";
+import ClickDelegator from "@/components/debug/ClickDelegator";
 
 /** Optional descriptions */
 const DESC_BY_LABEL: Record<string, string> = {
@@ -86,9 +87,7 @@ export default function CategoriesPage() {
           await Promise.all(
             keys
               .filter((k) =>
-                /workbox|precache|html-no-cache|rsc-no-cache|cat-no-cache|pdp-no-cache/i.test(
-                  k,
-                ),
+                /workbox|precache|html-no-cache|rsc-no-cache|cat-no-cache|pdp-no-cache/i.test(k),
               )
               .map((k) => caches.delete(k).catch(() => false)),
           );
@@ -109,22 +108,19 @@ export default function CategoriesPage() {
     >
       <h1 className="text-4xl font-bold text-center mb-12">🗂️ All Categories</h1>
 
-      {/* Hook used by global CSS/debugging if needed */}
+      {/* ✅ Capture-phase delegator to force nav even if something swallows the event */}
+      <ClickDelegator />
+
       <div
         id="categories-grid"
         className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"
       >
         {CATEGORIES.map((c) => {
           const { src, onError } = useCategoryImage(c.slug, (c as any).image);
-          const desc =
-            DESC_BY_LABEL[c.label] ?? "Explore products in this category.";
+          const desc = DESC_BY_LABEL[c.label] ?? "Explore products in this category.";
 
-          const href = `/categories/${c.slug}?v=${encodeURIComponent(
-            BUILD_TAG,
-          )}`;
-          const imgSrc = src.includes("?")
-            ? `${src}&v=${BUILD_TAG}`
-            : `${src}?v=${BUILD_TAG}`;
+          const href = `/categories/${c.slug}?v=${encodeURIComponent(BUILD_TAG)}`;
+          const imgSrc = src.includes("?") ? `${src}&v=${BUILD_TAG}` : `${src}?v=${BUILD_TAG}`;
 
           return (
             <CatLink
