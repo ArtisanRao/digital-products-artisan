@@ -5,13 +5,12 @@ import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
 import ProductCardV4 from "../../../components/shop/ProductCardV4";
 
-// ⬇️ Pull canonical labels + helper from central data
+// ⬇️ Central data
 import { products, productsInCategory, CATEGORY_LABELS } from "@/data/products";
 
+// ✅ Cache-friendly: this page doesn't need per-request SSR
 export const runtime = "nodejs";
-export const revalidate = 0;
-export const dynamic = "force-dynamic";
-export const fetchCache = "force-no-store";
+export const revalidate = 1800; // 30 min
 
 const UI_VERSION = "cat-v16-subviews-1main+3thumbs";
 
@@ -67,7 +66,7 @@ const LABEL_TO_SLUG: Record<string, string> = Object.fromEntries(
   Object.entries(META).map(([slug, m]) => [m.title.toLowerCase(), slug])
 );
 
-// 🔗 Canonical mapping from page slug → canonical CATEGORY_LABELS (single source of truth)
+// 🔗 Canonical mapping from page slug → CATEGORY_LABELS
 const SLUG_TO_CANON_LABEL: Record<string, string> = {
   "ai-and-chatgpt-guides": CATEGORY_LABELS.AI,
   "planners-and-productivity": CATEGORY_LABELS.PLANNERS,
@@ -85,7 +84,7 @@ const SLUG_TO_CANON_LABEL: Record<string, string> = {
   "social-media-kits": CATEGORY_LABELS.SOCIAL,
 };
 
-// --- Helpers for subcategories/imagery (unchanged) ---
+// --- Helpers for subcategories/imagery ---
 function effectiveProductCategorySlug(p: any): string | null {
   const titleKey = tnorm(String(p.title ?? ""));
   const fix = FIX_BY_TITLE[titleKey];
@@ -185,8 +184,17 @@ export default async function CategoryPage(props: any) {
   const slug = normalizeSlug(raw);
   const meta = META[slug];
 
-  const subParam = String(props?.searchParams?.sub ?? "").trim();
-  const activeSub = subParam ? toSlug(subParam) : null;
+  // Preserve existing search params (e.g. currency) on all links
+  const sp = props?.searchParams ?? {};
+  const spEntries = Object.entries(sp).filter(([k, v]) => v != null && v !== "");
+  const qs = spEntries.length
+    ? `?${new URLSearchParams(
+        spEntries.map(([k, v]) => [k, Array.isArray(v) ? v[0] : (v as string)])
+      ).toString()}`
+    : "";
+
+  const subParam = Array.isArray(sp.sub) ? sp.sub[0] : sp.sub;
+  const activeSub = subParam ? toSlug(String(subParam).trim()) : null;
 
   if (!meta) {
     const pretty = slug.replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
@@ -200,17 +208,16 @@ export default async function CategoryPage(props: any) {
           className="text-gray-700"
         />
         <p className="mt-2">
-          <Link href="/products" className="underline" prefetch={false}>Browse all products →</Link>
+          <Link href={`/products${qs}`} className="underline" prefetch={false} data-card-link>Browse all products →</Link>
         </p>
       </main>
     );
   }
 
-  // ✅ Single source of truth: use canonical CATEGORY_LABELS via mapping
+  // ✅ Single source of truth: canonical CATEGORY_LABELS
   const canonicalLabel = SLUG_TO_CANON_LABEL[slug];
   let catProducts = canonicalLabel
     ? productsInCategory(canonicalLabel)
-    // Fallback to previous behavior if mapping is missing (defensive)
     : products.filter((p) => {
         const eff = effectiveProductCategorySlug(p);
         return eff !== "__HIDE__" && eff === slug;
@@ -220,7 +227,11 @@ export default async function CategoryPage(props: any) {
   const groups = new Map<string, { label: string; items: any[] }>();
   for (const p of catProducts) {
     const sslug = effectiveSubSlug(p) ?? "__none__";
-    const label = readSubLabel(p) ?? (sslug === "__none__" ? "Other" : sslug.replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase()));
+    const label =
+      readSubLabel(p) ??
+      (sslug === "__none__"
+        ? "Other"
+        : sslug.replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase()));
     const key = sslug;
     if (!groups.has(key)) groups.set(key, { label, items: [] });
     groups.get(key)!.items.push(p);
@@ -241,13 +252,13 @@ export default async function CategoryPage(props: any) {
     );
 
     const seg = encodeURIComponent(String(p.slug ?? p.id));
-    const href = `/products/${seg}`;
+    const href = `/products/${seg}${qs}`; // preserve query string
 
     return {
       id: p.id,
       title: p.title,
       slug: p.slug,
-      price: p.price, // ← prices now always reflect MANUAL_OVERRIDES
+      price: p.price,
       images,
       description: p.description,
       href,
@@ -265,26 +276,36 @@ export default async function CategoryPage(props: any) {
       <InlineMore text={meta.description} lines={1} minChars={40} className="mt-1 text-gray-700" />
 
       {!activeSub && groups.size > 1 && (
-        <div className="mt-4 flex flex-wrap gap-2">
+        <nav
+          data-subcats="true"
+          className="mt-4 flex flex-wrap gap-2"
+          style={{ pointerEvents: "auto", isolation: "isolate" }}
+        >
           {Array.from(groups.entries())
             .filter(([k]) => k !== "__none__")
             .map(([k, g]) => (
               <Link
                 key={k}
-                href={{ pathname: `/categories/${encodeURIComponent(slug)}`, query: { sub: k } }}
+                href={{ pathname: `/categories/${encodeURIComponent(slug)}`, query: { ...Object.fromEntries(spEntries), sub: k } }}
                 prefetch={false}
+                data-card-link
                 className="rounded-full border px-3 py-1.5 text-sm hover:bg-muted/30"
                 aria-label={`View subcategory ${g.label}`}
               >
-                {g.label}
+                <span className="pointer-events-none select-none">{g.label}</span>
               </Link>
             ))}
-        </div>
+        </nav>
       )}
 
       {totalVisible ? (
         activeSub ? (
-          <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" data-ui={`category-grid@${UI_VERSION}:sub`}>
+          <div
+            id="categories-grid"
+            className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+            style={{ pointerEvents: "auto", isolation: "isolate" }}
+            data-ui={`category-grid@${UI_VERSION}:sub`}
+          >
             {visibleGroups.get(activeSub)!.items.map((p) => (
               <ProductCardV4 key={`${UI_VERSION}:${String(p.slug ?? p.id)}`} {...toCard(p)} />
             ))}
@@ -297,16 +318,21 @@ export default async function CategoryPage(props: any) {
                   <h2 className="text-xl font-semibold">{g.label}</h2>
                   {k !== "__none__" && (
                     <Link
-                      href={{ pathname: `/categories/${encodeURIComponent(slug)}`, query: { sub: k } }}
+                      href={{ pathname: `/categories/${encodeURIComponent(slug)}`, query: { ...Object.fromEntries(spEntries), sub: k } }}
                       prefetch={false}
+                      data-card-link
                       className="text-sm underline"
                       aria-label={`View all in ${g.label}`}
                     >
-                      View all →
+                      <span className="pointer-events-none select-none">View all →</span>
                     </Link>
                   )}
                 </div>
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                <div
+                  id="categories-grid"
+                  className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+                  style={{ pointerEvents: "auto", isolation: "isolate" }}
+                >
                   {g.items.map((p) => (
                     <ProductCardV4 key={`${UI_VERSION}:${String(p.slug ?? p.id)}`} {...toCard(p)} />
                   ))}
@@ -318,8 +344,8 @@ export default async function CategoryPage(props: any) {
       ) : (
         <div className="mt-8">
           <p className="text-gray-600">No products in {activeSub ? "this subcategory" : "this category"} yet.</p>
-          <Link href="/products" prefetch={false} className="mt-3 inline-block underline">
-            Browse all products →
+          <Link href={`/products${qs}`} prefetch={false} className="mt-3 inline-block underline" data-card-link>
+            <span className="pointer-events-none select-none">Browse all products →</span>
           </Link>
         </div>
       )}
