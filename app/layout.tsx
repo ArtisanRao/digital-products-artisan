@@ -2,7 +2,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Header from "@/components/Header";
+import Header from "@/components/layout/Header";           // ⬅️ updated path
 import Footer from "@/components/footer";
 import { CartProvider } from "@/contexts/cart-context";
 import { AuthProvider } from "@/contexts/auth-context";
@@ -11,6 +11,7 @@ import LiveChat from "@/components/live-chat";
 import AutoCurrency from "@/components/auto-currency";
 import Script from "next/script";
 import React from "react";
+import ClickDoctor from "@/components/debug/ClickDoctor";  // ⬅️ added
 
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 
@@ -154,6 +155,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             )}
           </CartProvider>
         </AuthProvider>
+
+        {/* Client helper: neutralize accidental overlays above links/buttons */}
+        <ClickDoctor />
 
         {/* -- click-through hardener: no hooks, runs in the browser -- */}
         <Script id="click-through-hardener" strategy="afterInteractive">
