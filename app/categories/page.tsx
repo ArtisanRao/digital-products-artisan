@@ -1,4 +1,4 @@
-// app/categories/page.tsx  — SAFE SERVER VERSION (no client components/hooks)
+// app/categories/page.tsx — SAFE SERVER VERSION (no client components/hooks)
 import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
 import { CATEGORIES, categoryImage } from "@/data/categories";
@@ -30,7 +30,6 @@ export default async function CategoriesPage({
         {CATEGORIES.map((c) => {
           const pathname = `/categories/${encodeURIComponent(c.slug)}`;
           const href = qs ? `${pathname}${qs}` : pathname;
-
           const img = categoryImage(c.slug);
 
           return (
