@@ -1,42 +1,33 @@
-// app/layout.tsx
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Header from "@/components/layout/Header";           // ⬅️ updated path
+import Header from "@/components/Header";
 import Footer from "@/components/footer";
 import { CartProvider } from "@/contexts/cart-context";
 import { AuthProvider } from "@/contexts/auth-context";
 import { Toaster } from "@/components/ui/toaster";
-import LiveChat from "@/components/live-chat";
+// import LiveChat from "@/components/live-chat"; // ⛔️ TEMP: disable to rule out overlay
 import AutoCurrency from "@/components/auto-currency";
 import Script from "next/script";
 import React from "react";
-import ClickDoctor from "@/components/debug/ClickDoctor";  // ⬅️ added
 
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 
-/** Global site metadata (fixes the metadataBase warning) */
 export const metadata: Metadata = {
   metadataBase: new URL("https://digitalproductsartisan.com"),
-  title: {
-    default: "Digital Products Artisan",
-    template: "%s | Digital Products Artisan",
-  },
-  description:
-    "Premium handcrafted digital downloads for creators and entrepreneurs.",
+  title: { default: "Digital Products Artisan", template: "%s | Digital Products Artisan" },
+  description: "Premium handcrafted digital downloads for creators and entrepreneurs.",
   openGraph: {
     type: "website",
     url: "https://digitalproductsartisan.com",
     title: "Digital Products Artisan",
-    description:
-      "Premium handcrafted digital downloads for creators and entrepreneurs.",
+    description: "Premium handcrafted digital downloads for creators and entrepreneurs.",
     images: ["/images/logo-new.png"],
   },
   twitter: {
     card: "summary_large_image",
     title: "Digital Products Artisan",
-    description:
-      "Premium handcrafted digital downloads for creators and entrepreneurs.",
+    description: "Premium handcrafted digital downloads for creators and entrepreneurs.",
     images: ["/images/logo-new.png"],
   },
   manifest: "/site.webmanifest",
@@ -61,8 +52,8 @@ export const viewport: Viewport = {
   themeColor: "#ffffff",
 };
 
-/** Bump this on each deploy to force clients to unregister old SW and clear caches */
-const BUILD_TAG = "sw-flush-2025-09-26-k";
+/** Bump on each deploy to flush old SW & caches */
+const BUILD_TAG = "sw-flush-restore-01";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const snipcartKey = process.env.NEXT_PUBLIC_SNIPCART_KEY;
@@ -71,10 +62,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Build/debug marker so you can confirm the new layout is live */}
         <meta name="x-build-tag" content={BUILD_TAG} />
 
-        {/* JSON-LD (Organization) */}
+        {/* Force base clarity in case a style left global blur/opacity */}
+        <style>{`
+          html, body, main { opacity: 1 !important; filter: none !important; backdrop-filter: none !important; }
+          body { pointer-events: auto !important; }
+        `}</style>
+
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -88,15 +83,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
 
-        {/* Snipcart v3 CSS + preconnect (only if key present) */}
+        {/* Snipcart CSS only if key present */}
         {hasSnipcart && (
           <>
             <link rel="preconnect" href="https://app.snipcart.com" crossOrigin="anonymous" />
             <link rel="preconnect" href="https://cdn.snipcart.com" crossOrigin="anonymous" />
-            <link
-              rel="stylesheet"
-              href="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.css"
-            />
+            <link rel="stylesheet" href="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.css" />
           </>
         )}
       </head>
@@ -124,11 +116,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AuthProvider>
           <CartProvider>
             <AutoCurrency />
-
             <Header />
             {children}
             <Footer />
-            <LiveChat />
+            {/* <LiveChat />  ⛔️ TEMP: disabled to eliminate overlay as cause */}
             <Toaster />
 
             <noscript>
@@ -137,60 +128,65 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </div>
             </noscript>
 
-            {/* Snipcart JS + container (only if key present) */}
+            {/* Snipcart JS only if key present */}
             {hasSnipcart && (
               <>
-                <Script
-                  src="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.js"
-                  strategy="afterInteractive"
-                />
-                <div
-                  hidden
-                  id="snipcart"
-                  data-api-key={snipcartKey}
-                  data-config-modal-style="side"
-                  data-currency="EUR"
-                />
+                <Script src="https://cdn.snipcart.com/themes/v3.6.0/default/snipcart.js" strategy="afterInteractive" />
+                <div hidden id="snipcart" data-api-key={snipcartKey} data-config-modal-style="side" data-currency="EUR" />
               </>
             )}
           </CartProvider>
         </AuthProvider>
 
-        {/* Client helper: neutralize accidental overlays above links/buttons */}
-        <ClickDoctor />
-
-        {/* -- click-through hardener: no hooks, runs in the browser -- */}
-        <Script id="click-through-hardener" strategy="afterInteractive">
+        {/* 🔧 Overlay killer: neutralize any full-viewport, non-interactive blocker */}
+        <Script id="overlay-killer" strategy="afterInteractive">
           {`
 (function(){
-  function guard(sel){
-    var el = document.querySelector(sel);
-    if(!el) return;
-    function kill(ev){
-      try{
-        var r = el.getBoundingClientRect();
-        var x = Math.min(Math.max((ev && ev.clientX || r.left+8), r.left+1), r.right-1);
-        var y = Math.min(Math.max((ev && ev.clientY || r.top+8),  r.top+1), r.bottom-1);
-        var stack = document.elementsFromPoint(x, y);
-        var blocker = stack.find(function(n){
-          if(!n || n===el) return false;
-          var tag = n.tagName;
-          if(tag==='A' || tag==='BUTTON') return false;
-          var cs = getComputedStyle(n);
-          return cs.pointerEvents !== 'none' && cs.opacity !== '0' && Number(cs.zIndex || 0) >= 0;
-        });
-        if(blocker){
-          blocker.style.pointerEvents = 'none';
-          blocker.style.zIndex = '-1';
-        }
-      }catch(e){}
-    }
-    ['mouseenter','mousemove','touchstart'].forEach(function(t){ el.addEventListener(t, kill, {passive:true}); });
+  function isBig(el){
+    try{
+      var r = el.getBoundingClientRect();
+      return r.width >= innerWidth * 0.9 && r.height >= innerHeight * 0.2;
+    }catch(e){ return false; }
   }
-  // header main nav + PDP subcat bar + categories grid
-  guard('header nav');
-  guard('#subcat-nav');
-  guard('#categories-grid');
+  function isBlocker(el){
+    if(!el || el.tagName==='A' || el.tagName==='BUTTON' || el.closest('a,button')) return false;
+    var cs = getComputedStyle(el);
+    if(cs.pointerEvents === 'none') return false;
+    var z = parseInt(cs.zIndex || '0', 10);
+    var pos = cs.position;
+    var op = parseFloat(cs.opacity || '1');
+    var hasBg = (cs.backgroundColor && cs.backgroundColor !== 'rgba(0, 0, 0, 0)');
+    return (pos === 'fixed' || pos === 'absolute') && (z >= 10) && (op < 1 || hasBg) && isBig(el);
+  }
+  function neuter(el){
+    el.setAttribute('data-overlay-neutralized','1');
+    el.style.pointerEvents = 'none';
+    el.style.zIndex = '-1';
+  }
+  function sweep(){
+    // look at center and corners
+    var probe = [
+      [innerWidth/2, innerHeight/2],
+      [16,16],
+      [innerWidth-16, 16],
+      [16, innerHeight-16],
+      [innerWidth-16, innerHeight-16]
+    ];
+    for(var i=0;i<probe.length;i++){
+      var stack = document.elementsFromPoint(probe[i][0], probe[i][1]) || [];
+      for(var j=0;j<stack.length;j++){
+        var el = stack[j];
+        if(el && el !== document.documentElement && el !== document.body && isBlocker(el)){
+          neuter(el);
+        }
+      }
+    }
+  }
+  // run a few times on load and on route changes
+  var runs = 0;
+  var timer = setInterval(function(){ sweep(); if(++runs>20) clearInterval(timer); }, 250);
+  window.addEventListener('resize', sweep, {passive:true});
+  document.addEventListener('visibilitychange', sweep);
 })();
           `}
         </Script>
