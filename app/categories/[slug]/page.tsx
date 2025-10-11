@@ -1,5 +1,4 @@
-﻿// app/categories/[slug]/page.tsx
-import fs from "node:fs";
+﻿import fs from "node:fs";
 import path from "node:path";
 import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
@@ -168,7 +167,7 @@ const normalizeSlug = (s: string) => LEGACY_TO_NEW[s] ?? s;
 
 export async function generateMetadata(props: any) {
   const raw = String(props?.params?.slug ?? "");
-  the slug = normalizeSlug(raw);
+  const slug = normalizeSlug(raw);
   const m = META[slug];
   const title = m ? `${m.title} | Digital Products Artisan` : "Digital Products | Digital Products Artisan";
   const description = m?.description ?? "Browse our curated digital products.";
