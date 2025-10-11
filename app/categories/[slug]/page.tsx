@@ -1,14 +1,15 @@
-﻿import fs from "node:fs";
+﻿// app/categories/[slug]/page.tsx — Scoped OverlayFix + fallback click on links
+import fs from "node:fs";
 import path from "node:path";
 import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
 import ProductCardV4 from "@/components/shop/ProductCardV4";
-import OverlayFix from "@/components/debug/OverlayFix"; // 🔐 runtime click-through fixer
+import OverlayFix from "@/components/debug/OverlayFix"; // ✅ client scrubber
 
 // Central data
 import { products, productsInCategory, CATEGORY_LABELS } from "@/data/products";
 
-// Overlay click guard (client component; safe to render from server)
+// Overlay click guard (still helpful, keep it)
 import ClickUnlocker from "@/components/debug/ClickUnlocker";
 
 export const runtime = "nodejs";
@@ -35,7 +36,6 @@ const META: Record<string, { title: string; description: string }> = {
   "social-media-kits":           { title: "Social Media Kits",       description: "Post templates and brandable assets for socials." },
 };
 
-// Legacy → new slug redirects
 const LEGACY_TO_NEW: Record<string, string> = {
   "planners-productivity": "planners-and-productivity",
   "plr-mrr-bundles": "plr-and-mrr-bundles",
@@ -69,7 +69,6 @@ const LABEL_TO_SLUG: Record<string, string> = Object.fromEntries(
   Object.entries(META).map(([slug, m]) => [m.title.toLowerCase(), slug])
 );
 
-// Canonical mapping page slug → CATEGORY_LABELS
 const SLUG_TO_CANON_LABEL: Record<string, string> = {
   "ai-and-chatgpt-guides": CATEGORY_LABELS.AI,
   "planners-and-productivity": CATEGORY_LABELS.PLANNERS,
@@ -87,7 +86,6 @@ const SLUG_TO_CANON_LABEL: Record<string, string> = {
   "social-media-kits": CATEGORY_LABELS.SOCIAL,
 };
 
-// --- Helpers for subcategories/imagery ---
 function effectiveProductCategorySlug(p: any): string | null {
   const titleKey = tnorm(String(p.title ?? ""));
   const fix = FIX_BY_TITLE[titleKey];
@@ -96,7 +94,7 @@ function effectiveProductCategorySlug(p: any): string | null {
 
   if (p.categorySlug) {
     const s = toSlug(String(p.categorySlug));
-       const normalized = LEGACY_TO_NEW[s] ?? s;
+    const normalized = LEGACY_TO_NEW[s] ?? s;
     return ALL_SLUGS.has(normalized) ? normalized : null;
   }
   if (p.category) {
@@ -182,8 +180,17 @@ export async function generateMetadata(props: any) {
   };
 }
 
-// Promise-based props (Next 15)
 type SP = Record<string, string | string[] | undefined>;
+
+function forceNav(href: string | undefined, ev: React.MouseEvent<HTMLAnchorElement>) {
+  if (!href) return;
+  try { ev.preventDefault(); ev.stopPropagation(); } catch {}
+  if (href.startsWith("/") || href.startsWith(window.location.origin)) {
+    window.location.assign(href);
+  } else {
+    window.open(href, "_self");
+  }
+}
 
 export default async function CategoryPage({
   params,
@@ -198,7 +205,6 @@ export default async function CategoryPage({
   const slug = normalizeSlug(String(rawSlug || ""));
   const meta = META[slug];
 
-  // preserve all query params (currency, etc.)
   const spEntries = Object.entries(sp).filter(([_, v]) => v != null && v !== "");
   const qs = spEntries.length
     ? `?${new URLSearchParams(
@@ -213,12 +219,12 @@ export default async function CategoryPage({
     const pretty = slug.replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
     return (
       <main
-        id="cat-scope"
-        className="container mx-auto px-4 py-16 relative z-[100] clickable-surface"
+        id="cat-root"
+        className="container mx-auto px-4 py-16 relative z-[10000] clickable-surface"
         data-ui={`CategoryPage@${UI_VERSION}:not-found`}
         style={{ pointerEvents: "auto", isolation: "isolate" }}
       >
-        <OverlayFix scope="#cat-scope" />
+        <OverlayFix scope="#cat-root" />
         <ClickUnlocker targetSelector='main[data-ui^="CategoryPage@"]' />
         <h1 className="text-3xl md:text-4xl font-bold mb-2">{pretty}</h1>
         <InlineMore
@@ -228,13 +234,14 @@ export default async function CategoryPage({
           className="text-gray-700"
         />
         <p className="mt-2">
-          <Link href={`/products${qs}`} className="underline" prefetch={false}>Browse all products →</Link>
+          <Link href={`/products${qs}`} className="underline" prefetch={false} onClick={(ev)=>forceNav(`/products${qs}`, ev)}>
+            Browse all products →
+          </Link>
         </p>
       </main>
     );
   }
 
-  // Canonical category lookup
   const canonicalLabel = SLUG_TO_CANON_LABEL[slug];
   let catProducts = canonicalLabel
     ? productsInCategory(canonicalLabel)
@@ -243,7 +250,6 @@ export default async function CategoryPage({
         return eff !== "__HIDE__" && eff === slug;
       });
 
-  // Group by optional subcategory fields
   const groups = new Map<string, { label: string; items: any[] }>();
   for (const p of catProducts) {
     const sslug = effectiveSubSlug(p) ?? "__none__";
@@ -277,44 +283,21 @@ export default async function CategoryPage({
 
   return (
     <main
-      id="cat-scope"
-      className="container mx-auto px-4 py-12 relative z-[100] clickable-surface"
+      id="cat-root"
+      className="container mx-auto px-4 py-12 relative z-[10000] clickable-surface"
       data-ui={`CategoryPage@${UI_VERSION}`}
       style={{ pointerEvents: "auto", isolation: "isolate" }}
     >
-      {/* Scoped hardening so overlays can’t eat clicks */}
+      <OverlayFix scope="#cat-root" />
+
       <style>{`
-        #cat-scope .hero-overlay,
-        #cat-scope .gradient-overlay,
-        #cat-scope .noise-overlay,
-        #cat-scope .overlay,
-        #cat-scope [data-overlay],
-        #cat-scope [data-decorative="true"],
-        #cat-scope [class*="overlay-"],
-        #cat-scope [class$="-overlay"],
-        #cat-scope .fixed-overlay,
-        #cat-scope .absolute-overlay,
-        #cat-scope [data-blocking-overlay="true"] {
-          pointer-events: none !important;
-          z-index: -1 !important;
-        }
-        #cat-scope #subcat-nav,
-        #cat-scope #subcat-nav *,
-        #cat-scope [data-grid="products"],
-        #cat-scope [data-grid="products"] * {
-          pointer-events: auto !important;
-          position: relative;
-          z-index: 25;
-        }
-        #cat-scope a, #cat-scope button, #cat-scope [role="button"] {
-          pointer-events: auto !important;
-          position: relative;
-          z-index: 30;
+        #cat-root a, #cat-root button { pointer-events: auto !important; position: relative; z-index: 30; }
+        #cat-root [data-grid="products"], #cat-root #subcat-nav { position: relative; isolation: isolate; z-index: 25; }
+        #cat-root .decor, #cat-root [data-overlay], #cat-root [class*="overlay-"], #cat-root [class$="-overlay"] {
+          pointer-events: none !important; z-index: -1 !important;
         }
       `}</style>
 
-      {/* Runtime sweep to catch any remaining blockers */}
-      <OverlayFix scope="#cat-scope" />
       <ClickUnlocker targetSelector="#subcat-nav" />
       <ClickUnlocker targetSelector='div[data-grid="products"]' />
 
@@ -334,18 +317,28 @@ export default async function CategoryPage({
         >
           {Array.from(groups.entries())
             .filter(([k]) => k !== "__none__")
-            .map(([k, g]) => (
-              <Link
-                key={k}
-                href={{ pathname: `/categories/${encodeURIComponent(slug)}`, query: { ...Object.fromEntries(spEntries), sub: k } }}
-                prefetch={false}
-                className="rounded-full border px-3 py-1.5 text-sm hover:bg-muted/30"
-                aria-label={`View subcategory ${g.label}`}
-                style={{ pointerEvents: "auto", position: "relative", zIndex: 102 }}
-              >
-                {g.label}
-              </Link>
-            ))}
+            .map(([k, g]) => {
+              const href = {
+                pathname: `/categories/${encodeURIComponent(slug)}`,
+                query: { ...Object.fromEntries(spEntries), sub: k },
+              };
+              const hrefString = `/categories/${encodeURIComponent(slug)}?${new URLSearchParams({
+                ...Object.fromEntries(spEntries),
+                sub: k,
+              }).toString()}`;
+              return (
+                <Link
+                  key={k}
+                  href={href}
+                  prefetch={false}
+                  className="rounded-full border px-3 py-1.5 text-sm hover:bg-muted/30"
+                  aria-label={`View subcategory ${g.label}`}
+                  onClick={(ev) => forceNav(hrefString, ev)}
+                >
+                  {g.label}
+                </Link>
+              );
+            })}
         </div>
       )}
 
@@ -366,35 +359,46 @@ export default async function CategoryPage({
             data-grid="products"
             style={{ pointerEvents: "auto", isolation: "isolate" }}
           >
-            {Array.from(groups.entries()).map(([k, g]) => (
-              <section key={k} data-sub={k}>
-                <div className="mb-3 flex items-center justify-between">
-                  <h2 className="text-xl font-semibold">{g.label}</h2>
-                  {k !== "__none__" && (
-                    <Link
-                      href={{ pathname: `/categories/${encodeURIComponent(slug)}`, query: { ...Object.fromEntries(spEntries), sub: k } }}
-                      prefetch={false}
-                      className="text-sm underline"
-                      aria-label={`View all in ${g.label}`}
-                      style={{ pointerEvents: "auto" }}
-                    >
-                      View all →
-                    </Link>
-                  )}
-                </div>
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  {g.items.map((p) => (
-                    <ProductCardV4 key={`${UI_VERSION}:${String(p.slug ?? p.id)}`} {...toCard(p)} />
-                  ))}
-                </div>
-              </section>
-            ))}
+            {Array.from(groups.entries()).map(([k, g]) => {
+              const hrefString = k === "__none__"
+                ? ""
+                : `/categories/${encodeURIComponent(slug)}?${new URLSearchParams({
+                    ...Object.fromEntries(spEntries),
+                    sub: k,
+                  }).toString()}`;
+              return (
+                <section key={k} data-sub={k}>
+                  <div className="mb-3 flex items-center justify-between">
+                    <h2 className="text-xl font-semibold">{g.label}</h2>
+                    {k !== "__none__" && (
+                      <Link
+                        href={{
+                          pathname: `/categories/${encodeURIComponent(slug)}`,
+                          query: { ...Object.fromEntries(spEntries), sub: k },
+                        }}
+                        prefetch={false}
+                        className="text-sm underline"
+                        aria-label={`View all in ${g.label}`}
+                        onClick={(ev) => forceNav(hrefString, ev)}
+                      >
+                        View all →
+                      </Link>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {g.items.map((p) => (
+                      <ProductCardV4 key={`${UI_VERSION}:${String(p.slug ?? p.id)}`} {...toCard(p)} />
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
           </div>
         )
       ) : (
         <div className="mt-8">
           <p className="text-gray-600">No products in {activeSub ? "this subcategory" : "this category"} yet.</p>
-          <Link href={`/products${qs}`} prefetch={false} className="mt-3 inline-block underline">
+          <Link href={`/products${qs}`} prefetch={false} onClick={(ev)=>forceNav(`/products${qs}`, ev)} className="mt-3 inline-block underline">
             Browse all products →
           </Link>
         </div>

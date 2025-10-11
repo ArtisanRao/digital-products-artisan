@@ -1,10 +1,25 @@
-// app/categories/page.tsx — SAFE SERVER VERSION (no client hooks except the mounted OverlayFix)
+// app/categories/page.tsx — SAFE SERVER VERSION with scoped OverlayFix + fallback click
 import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
 import { CATEGORIES, categoryImage } from "@/data/categories";
-import OverlayFix from "@/components/debug/OverlayFix"; // 🔐 client-side click-through fixer
+import OverlayFix from "@/components/debug/OverlayFix"; // ✅ client scrubber
 
 type SP = Record<string, string | string[] | undefined>;
+
+function forceNav(href: string | undefined, ev: React.MouseEvent<HTMLAnchorElement>) {
+  if (!href) return;
+  try {
+    // If something blocks Next's normal navigation, force it
+    ev.preventDefault();
+    ev.stopPropagation();
+  } catch {}
+  if (href.startsWith("/") || href.startsWith(window.location.origin)) {
+    window.location.assign(href);
+  } else {
+    // external
+    window.open(href, "_self");
+  }
+}
 
 export default async function CategoriesPage({
   searchParams,
@@ -22,35 +37,21 @@ export default async function CategoriesPage({
 
   return (
     <main
-      id="cat-index"
-      className="relative z-[100] max-w-7xl mx-auto px-4 py-12 clickable-surface"
+      id="cat-root"
+      className="relative z-[10000] max-w-7xl mx-auto px-4 py-12 clickable-surface"
       style={{ pointerEvents: "auto", isolation: "isolate" }}
+      data-page="categories-index"
     >
-      {/* Scoped hardening so *nothing* inside can block clicks */}
+      {/* 🔧 scoped overlay neutralizer */}
+      <OverlayFix scope="#cat-root" />
+
       <style>{`
-        #cat-index .hero-overlay,
-        #cat-index .gradient-overlay,
-        #cat-index .noise-overlay,
-        #cat-index .overlay,
-        #cat-index [data-overlay],
-        #cat-index [data-decorative="true"],
-        #cat-index [class*="overlay-"],
-        #cat-index [class$="-overlay"],
-        #cat-index .fixed-overlay,
-        #cat-index .absolute-overlay,
-        #cat-index [data-blocking-overlay="true"] {
-          pointer-events: none !important;
-          z-index: -1 !important;
-        }
-        #cat-index a, #cat-index button, #cat-index [role="button"],
-        #cat-index nav, #cat-index #categories-grid, #cat-index #categories-grid * {
-          pointer-events: auto !important;
-          position: relative;
-          z-index: 30;
+        #cat-root a, #cat-root button { pointer-events: auto !important; position: relative; z-index: 2; }
+        #cat-root .card { position: relative; z-index: 1; }
+        #cat-root .decor, #cat-root [data-overlay], #cat-root [class*="overlay-"], #cat-root [class$="-overlay"] {
+          pointer-events: none !important; z-index: -1 !important;
         }
       `}</style>
-      {/* Runtime sweep to disable any surprise blockers */}
-      <OverlayFix scope="#cat-index" />
 
       <h1 className="text-4xl font-bold text-center mb-12">🗂️ All Categories</h1>
 
@@ -68,8 +69,9 @@ export default async function CategoriesPage({
               key={c.slug}
               href={href}
               prefetch={false}
-              className="group block rounded-2xl border overflow-hidden bg-white shadow transition-all duration-300 hover:-translate-y-1 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2"
-              style={{ pointerEvents: "auto" }}
+              data-safe-link
+              className="card group block rounded-2xl border overflow-hidden bg-white shadow transition-all duration-300 hover:-translate-y-1 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2"
+              onClick={(ev) => forceNav(href, ev)}
             >
               <div className="relative w-full bg-gray-50">
                 <div className="aspect-[16/9] md:aspect-[3/2] overflow-hidden">
