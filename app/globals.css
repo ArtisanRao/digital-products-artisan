@@ -216,27 +216,16 @@
   }
 }
 
-/* ===== CLICK-THROUGH HOTFIX (global) ===== */
+/* ===== CLICK-THROUGH SAFE (scoped) ===== */
 
-/* Decorative overlays must NOT capture clicks */
+/* Decorative overlays we explicitly use must NOT capture clicks */
 .hero-overlay,
-.gradient-overlay,
-.noise-overlay,
-.particles,
-.overlay,
 .page-hero,
 .page-cover,
 .bg-decor,
-[data-overlay],
-[data-decorative="true"],
-/* NEW: catch more overlay class patterns */
-[class*="overlay-"],
-[class$="-overlay"],
-.fixed-overlay,
-.absolute-overlay,
-[data-blocking-overlay="true"] {
+[data-overlay="true"],
+[data-decorative="true"] {
   pointer-events: none !important;
-  z-index: -1 !important; /* keep behind content if positioned */
 }
 
 /* Primary interactive elements must always accept clicks */
@@ -246,10 +235,10 @@ button,
 [role="button"] {
   pointer-events: auto !important;
   position: relative;
-  z-index: 20; /* sit above accidental layers */
+  z-index: 20;
 }
 
-/* NEW: reusable surface that is guaranteed clickable & layered above */
+/* Reusable surface guaranteed clickable & layered above */
 .clickable-surface {
   pointer-events: auto !important;
   position: relative;
@@ -258,12 +247,12 @@ button,
 }
 .clickable-surface * { pointer-events: auto !important; }
 
-/* Optional helpers you can drop onto wrappers when needed */
+/* Optional helpers */
 .click-guard { position: relative; z-index: 100; pointer-events: auto; }
 .pe-none     { pointer-events: none !important; }
 .pe-auto     { pointer-events: auto !important; }
 
-/* If a full-bleed background exists, keep it under content */
+/* Full-bleed backgrounds stay under content */
 .full-bleed-bg,
 .full-bleed-overlay {
   pointer-events: none !important;
