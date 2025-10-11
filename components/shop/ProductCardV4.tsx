@@ -1,3 +1,4 @@
+// components/shop/ProductCardV4.tsx
 "use client";
 
 import Link from "next/link";
@@ -57,7 +58,6 @@ export default function ProductCardV4({
   }, [href, slug, id]);
 
   const priceNumber = typeof price === "number" ? price : Number(price) || 0;
-
   const priceLabel =
     typeof price === "number"
       ? new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(price)
@@ -82,36 +82,53 @@ export default function ProductCardV4({
     return handle ? `/api/checkout?product=${encodeURIComponent(handle)}&qty=1` : productUrl;
   }, [id, slug, productUrl]);
 
+  // Prevent nested buttons from triggering parent links
+  const stopLink = (e: React.MouseEvent | React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
   return (
     <article
-      className="group rounded-2xl border bg-white/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+      className="group rounded-2xl border bg-white/60 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md clickable-surface"
       data-version="ProductCardV4@buy-redirect+delegated"
+      style={{ pointerEvents: "auto", position: "relative", isolation: "isolate", zIndex: 1000 }}
     >
       {/* Main image (click → product page) */}
-      <Link href={productUrl} prefetch={false} aria-label={`Open ${title}`}>
+      <Link
+        href={productUrl}
+        prefetch={false}
+        aria-label={`Open ${title}`}
+        className="block"
+        style={{ pointerEvents: "auto", position: "relative", zIndex: 1001 }}
+      >
         <div className="relative overflow-hidden rounded-t-2xl bg-gray-50">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={displayPics[idx] ?? "/images/placeholder.jpg"}
             alt={title}
-            className="aspect-[3/2] w-full object-contain p-2 transition-transform duration-300 group-hover:scale-[1.01]"
+            className="aspect-[3/2] w-full object-contain p-2 transition-transform duration-300 group-hover:scale-[1.01] pointer-events-none select-none"
             loading="lazy"
           />
           {displayPics.length > 1 && (
             <>
               <button
                 type="button"
-                onClick={(e) => { e.preventDefault(); prev(); }}
+                onMouseDown={stopLink}
+                onClick={(e) => { stopLink(e); prev(); }}
                 aria-label="Previous"
                 className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-2 py-1 text-[11px] shadow hover:bg-white"
+                style={{ pointerEvents: "auto", zIndex: 1002 }}
               >
                 ‹
               </button>
               <button
                 type="button"
-                onClick={(e) => { e.preventDefault(); next(); }}
+                onMouseDown={stopLink}
+                onClick={(e) => { stopLink(e); next(); }}
                 aria-label="Next"
                 className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 px-2 py-1 text-[11px] shadow hover:bg-white"
+                style={{ pointerEvents: "auto", zIndex: 1002 }}
               >
                 ›
               </button>
@@ -120,16 +137,16 @@ export default function ProductCardV4({
         </div>
       </Link>
 
-      <div className="p-4">
+      <div className="p-4" style={{ pointerEvents: "auto", position: "relative", zIndex: 1001 }}>
         {/* Title (hover underline) */}
-        <Link href={productUrl} prefetch={false} className="block">
+        <Link href={productUrl} prefetch={false} className="block" style={{ pointerEvents: "auto" }}>
           <h3 className="line-clamp-2 text-lg font-semibold hover:underline">{title}</h3>
         </Link>
 
         {/* Subtitle + “More” pill to #description */}
         {description && (
           <>
-            <Link href={productUrl} prefetch={false} className="block mt-1">
+            <Link href={productUrl} prefetch={false} className="block mt-1" style={{ pointerEvents: "auto" }}>
               <p className="line-clamp-2 text-sm text-gray-600 hover:underline">
                 {description}
               </p>
@@ -139,6 +156,7 @@ export default function ProductCardV4({
               prefetch={false}
               className="mt-2 inline-flex items-center rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
               aria-label={`Read more about ${title}`}
+              style={{ pointerEvents: "auto" }}
             >
               More
             </Link>
@@ -155,16 +173,18 @@ export default function ProductCardV4({
               <button
                 type="button"
                 key={`${src}-${i}`}
-                onClick={(e) => { e.preventDefault(); setIdx(targetIndex); }}
+                onMouseDown={stopLink}
+                onClick={(e) => { stopLink(e); setIdx(targetIndex); }}
                 aria-label={`Preview ${title} (image ${targetIndex + 1})`}
                 aria-pressed={active}
                 className={[
                   "block h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-white transition cursor-pointer",
                   active ? "ring-2 ring-blue-500" : "opacity-80 hover:opacity-100",
                 ].join(" ")}
+                style={{ pointerEvents: "auto" }}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={src} alt="" className="h-full w-full object-cover" />
+                <img src={src} alt="" className="h-full w-full object-cover pointer-events-none" />
               </button>
             );
           })}
@@ -173,13 +193,15 @@ export default function ProductCardV4({
         {/* Price */}
         {priceLabel && <div className="mt-3 text-xl font-semibold">{priceLabel}</div>}
 
-        {/* CTAs — icons in fixed slots; middle wider; delegated add-to-cart attrs */}
+        {/* CTAs — use stopLink so they don't bubble into the image link */}
         <div className="mt-3 grid gap-2 [grid-template-columns:.9fr_1.2fr_.9fr]">
           <Link
             href={productUrl}
             prefetch={false}
+            onMouseDown={stopLink}
             className="inline-flex !h-8 items-center justify-center gap-2 rounded-lg bg-blue-600 !px-2 text-xs font-medium leading-tight text-white hover:bg-blue-700 whitespace-nowrap"
             aria-label={`View ${title}`}
+            style={{ pointerEvents: "auto" }}
           >
             <span aria-hidden className="inline-block w-3 text-center">👁️</span>
             <span>View</span>
@@ -187,32 +209,35 @@ export default function ProductCardV4({
 
           <button
             type="button"
-            // Fallback: only run locally when delegated handler isn't active
+            onMouseDown={stopLink}
             onClick={() => {
-              if (typeof document !== "undefined" &&
-                  (document.documentElement as any)?.dataset?.delegatedCart === "1") {
+              if (
+                typeof document !== "undefined" &&
+                (document.documentElement as any)?.dataset?.delegatedCart === "1"
+              ) {
                 return; // let the delegated listener handle it
               }
               addToCart();
             }}
-            // Delegated wire hooks for pages that mount AddToCartWire
             data-add-to-cart
             data-product-id={String(id ?? "")}
             {...(slug ? { "data-product-slug": slug } : {})}
             data-qty="1"
             className="inline-flex !h-8 items-center justify-center gap-2 rounded-lg bg-blue-600 !px-3 text-xs font-medium leading-tight text-white hover:bg-blue-700 whitespace-nowrap"
             aria-label="Add to cart"
+            style={{ pointerEvents: "auto" }}
           >
             <span aria-hidden className="inline-block w-5 text-center">🛒</span>
             <span>Add to cart</span>
           </button>
 
-          {/* Buy -> direct checkout */}
           <Link
             href={buyHref}
             prefetch={false}
+            onMouseDown={stopLink}
             className="inline-flex !h-8 items-center justify-center gap-2 rounded-lg bg-blue-600 !px-2 text-xs font-medium leading-tight text-white hover:bg-blue-700 whitespace-nowrap"
             aria-label="Buy now"
+            style={{ pointerEvents: "auto" }}
           >
             <span aria-hidden className="inline-block w-3 text-center">⚡</span>
             <span>Buy</span>
