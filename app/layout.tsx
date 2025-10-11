@@ -193,7 +193,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* 🚨 Capture-phase forced navigation on /categories* and /products* */}
         <Script id="forced-link-delegate" strategy="afterInteractive">
           {`(function(){
-  function onRoute() {
+  function inScope() {
     var p = location.pathname || '';
     return p.startsWith('/categories') || p.startsWith('/products');
   }
@@ -204,7 +204,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     }
     return null;
   }
-  function shouldBypass(a){
+  function externalOrBypass(a){
     if (!a) return true;
     var href = a.getAttribute('href') || '';
     if (a.hasAttribute('download')) return true;
@@ -214,18 +214,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     return false;
   }
   function handle(ev){
-    if (!onRoute()) return;
+    if (!inScope()) return;
     var a = findAnchor(ev.target);
-    if (!a || shouldBypass(a)) return;
-
-    var isPlainLeftClick = (ev.button === 0 || ev.button === undefined) &&
-                           !ev.metaKey && !ev.ctrlKey && !ev.shiftKey && !ev.altKey;
-    if (!isPlainLeftClick) return;
+    if (!a || externalOrBypass(a)) return;
+    var plain = (ev.button === 0 || ev.button === undefined) &&
+                !ev.metaKey && !ev.ctrlKey && !ev.shiftKey && !ev.altKey;
+    if (!plain) return;
 
     try { ev.preventDefault(); ev.stopPropagation(); } catch(e){}
     var href = a.href ? a.href : a.getAttribute('href');
     if (!href) return;
-
     if (href.startsWith('/') || href.indexOf(location.origin) === 0) {
       location.assign(href);
     } else {
@@ -236,8 +234,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   window.addEventListener('auxclick', handle, true);
   window.addEventListener('touchend', handle, true);
 
-  function raise(){
-    if (!onRoute()) return;
+  // Lift MAIN above any weird z-index stacks on these routes
+  function lift(){
+    if (!inScope()) return;
     var m = document.querySelector('main');
     if (m) {
       m.style.position = 'relative';
@@ -246,9 +245,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       m.style.pointerEvents = 'auto';
     }
   }
-  raise();
-  document.addEventListener('visibilitychange', raise);
-  window.addEventListener('resize', raise, {passive:true});
+  lift();
+  document.addEventListener('visibilitychange', lift);
+  window.addEventListener('resize', lift, {passive:true});
 })();`}
         </Script>
       </body>
