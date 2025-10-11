@@ -3,12 +3,12 @@ import fs from "node:fs";
 import path from "node:path";
 import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
-import ProductCardV4 from "@/components/shop/ProductCardV4"; // use alias
+import ProductCardV4 from "@/components/shop/ProductCardV4";
 
 // Central data
 import { products, productsInCategory, CATEGORY_LABELS } from "@/data/products";
 
-// Overlay click guard
+// Overlay click guard (client component; safe to render from server)
 import ClickUnlocker from "@/components/debug/ClickUnlocker";
 
 export const runtime = "nodejs";
@@ -212,7 +212,7 @@ export default async function CategoryPage({
   if (!meta) {
     const pretty = slug.replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
     return (
-      <main className="container mx-auto px-4 py-16 relative z-[100]" data-ui={`CategoryPage@${UI_VERSION}:not-found`}>
+      <main className="container mx-auto px-4 py-16 relative z-[100] clickable-surface" data-ui={`CategoryPage@${UI_VERSION}:not-found`}>
         <ClickUnlocker targetSelector='main[data-ui^="CategoryPage@"]' />
         <h1 className="text-3xl md:text-4xl font-bold mb-2">{pretty}</h1>
         <InlineMore
@@ -271,10 +271,16 @@ export default async function CategoryPage({
 
   return (
     <main
-      className="container mx-auto px-4 py-12 relative z-[100]"
+      className="container mx-auto px-4 py-12 relative z-[100] clickable-surface"
       data-ui={`CategoryPage@${UI_VERSION}`}
       style={{ pointerEvents: "auto", isolation: "isolate" }}
     >
+      {/* 🔐 Force pointer-events on key regions (SSR-safe) */}
+      <style>{`
+        #subcat-nav, #subcat-nav * { pointer-events: auto !important; }
+        [data-grid="products"], [data-grid="products"] * { pointer-events: auto !important; }
+      `}</style>
+
       {/* Guard against decorative overlays */}
       <ClickUnlocker targetSelector='div[data-subcats="true"]' />
       <ClickUnlocker targetSelector='div[data-grid="products"]' />
@@ -291,7 +297,7 @@ export default async function CategoryPage({
           id="subcat-nav"
           className="mt-4 flex flex-wrap gap-2 relative z-[101] clickable-surface"
           data-subcats="true"
-          style={{ pointerEvents: "auto" }}
+          style={{ pointerEvents: "auto", isolation: "isolate" }}
         >
           {Array.from(groups.entries())
             .filter(([k]) => k !== "__none__")
@@ -302,7 +308,7 @@ export default async function CategoryPage({
                 prefetch={false}
                 className="rounded-full border px-3 py-1.5 text-sm hover:bg-muted/30"
                 aria-label={`View subcategory ${g.label}`}
-                style={{ pointerEvents: "auto" }}
+                style={{ pointerEvents: "auto", position: "relative", zIndex: 102 }}
               >
                 {g.label}
               </Link>
@@ -312,13 +318,21 @@ export default async function CategoryPage({
 
       {totalVisible ? (
         activeSub ? (
-          <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 relative z-[100]" data-grid="products" style={{ pointerEvents: "auto" }}>
+          <div
+            className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 relative z-[100] clickable-surface"
+            data-grid="products"
+            style={{ pointerEvents: "auto", isolation: "isolate" }}
+          >
             {visibleGroups.get(activeSub)!.items.map((p) => (
               <ProductCardV4 key={`${UI_VERSION}:${String(p.slug ?? p.id)}`} {...toCard(p)} />
             ))}
           </div>
         ) : (
-          <div className="mt-6 space-y-10 relative z-[100]" data-grid="products" style={{ pointerEvents: "auto" }}>
+          <div
+            className="mt-6 space-y-10 relative z-[100] clickable-surface"
+            data-grid="products"
+            style={{ pointerEvents: "auto", isolation: "isolate" }}
+          >
             {Array.from(groups.entries()).map(([k, g]) => (
               <section key={k} data-sub={k}>
                 <div className="mb-3 flex items-center justify-between">
