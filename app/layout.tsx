@@ -154,6 +154,42 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             )}
           </CartProvider>
         </AuthProvider>
+
+        {/* -- click-through hardener: no hooks, runs in the browser -- */}
+        <Script id="click-through-hardener" strategy="afterInteractive">
+          {`
+(function(){
+  function guard(sel){
+    var el = document.querySelector(sel);
+    if(!el) return;
+    function kill(ev){
+      try{
+        var r = el.getBoundingClientRect();
+        var x = Math.min(Math.max((ev && ev.clientX || r.left+8), r.left+1), r.right-1);
+        var y = Math.min(Math.max((ev && ev.clientY || r.top+8),  r.top+1), r.bottom-1);
+        var stack = document.elementsFromPoint(x, y);
+        var blocker = stack.find(function(n){
+          if(!n || n===el) return false;
+          var tag = n.tagName;
+          if(tag==='A' || tag==='BUTTON') return false;
+          var cs = getComputedStyle(n);
+          return cs.pointerEvents !== 'none' && cs.opacity !== '0' && Number(cs.zIndex || 0) >= 0;
+        });
+        if(blocker){
+          blocker.style.pointerEvents = 'none';
+          blocker.style.zIndex = '-1';
+        }
+      }catch(e){}
+    }
+    ['mouseenter','mousemove','touchstart'].forEach(function(t){ el.addEventListener(t, kill, {passive:true}); });
+  }
+  // header main nav + PDP subcat bar + categories grid
+  guard('header nav');
+  guard('#subcat-nav');
+  guard('#categories-grid');
+})();
+          `}
+        </Script>
       </body>
     </html>
   );
