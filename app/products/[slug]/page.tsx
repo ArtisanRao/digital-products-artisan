@@ -54,7 +54,9 @@ function productImages(p: any): string[] {
   const extras = arr.slice(1).filter(Boolean);
   const unique = Array.from(new Set([cover, ...extras])).slice(0, 8);
   // add a cache-buster tied to UI version so CDN flushes on deploy
-  return unique.map((src) => (src.includes("?") ? `${src}&v=${UI_VERSION}` : `${src}?v=${UI_VERSION}`));
+  return unique.map((src) =>
+    src.includes("?") ? `${src}&v=${UI_VERSION}` : `${src}?v=${UI_VERSION}`
+  );
 }
 
 /* ---------------------- metadata ---------------------- */
@@ -72,12 +74,20 @@ export async function generateStaticParams() {
   return [...new Set([...slugs, ...ids])].map((slug) => ({ slug }));
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   const { slug } = await params;
   const p = byParam(String(slug));
-  const title = p ? `${p.title} | Digital Products Artisan` : "Product | Digital Products Artisan";
+  const title = p
+    ? `${p.title} | Digital Products Artisan`
+    : "Product | Digital Products Artisan";
   const description = p?.description ?? "Explore premium digital downloads.";
-  const canonical = p ? `https://digitalproductsartisan.com${canonicalHref(p)}` : undefined;
+  const canonical = p
+    ? `https://digitalproductsartisan.com${canonicalHref(p)}`
+    : undefined;
 
   return {
     title,
@@ -90,7 +100,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 /* ---------------------- page ---------------------- */
 
-export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function ProductPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   const { slug } = await params;
 
   // Resolve product from slug or legacy id
@@ -99,11 +113,23 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   // If user hit a numeric id or a title-slug, 301 to canonical product slug
   const target = canonicalHref(p);
-  if (!String(slug).toLowerCase().includes(String(p.slug || toSlug(p.title)).toLowerCase())) {
+  if (
+    !String(slug)
+      .toLowerCase()
+      .includes(String(p.slug || toSlug(p.title)).toLowerCase())
+  ) {
     redirect(target);
   }
 
   const imgs = productImages(p);
+
+  // ✅ Safe-read subtitle without changing your Product type
+  const subtitle: string | undefined =
+    typeof (p as any)?.subtitle === "string" && (p as any).subtitle.trim()
+      ? (p as any).subtitle.trim()
+      : typeof p.description === "string" && p.description.trim()
+      ? p.description.trim()
+      : undefined;
 
   return (
     <main
@@ -124,15 +150,20 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
       {/* Title + price */}
       <h1 className="text-3xl md:text-4xl font-bold">{p.title}</h1>
-      {p.subtitle ? (
-        <p className="mt-1 text-gray-700">{p.subtitle}</p>
+      {subtitle ? (
+        <p className="mt-1 text-gray-700">{subtitle}</p>
       ) : (
-        <p className="mt-1 text-gray-700">A curated digital product{p.category ? ` in ${p.category}.` : "."}</p>
+        <p className="mt-1 text-gray-700">
+          A curated digital product{p.category ? ` in ${p.category}.` : "."}
+        </p>
       )}
       {p.price != null && (
         <div className="mt-4 text-2xl font-semibold">
           {typeof p.price === "number"
-            ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(p.price)
+            ? new Intl.NumberFormat("en-US", {
+                style: "currency",
+                currency: "USD",
+              }).format(p.price)
             : String(p.price)}
         </div>
       )}
@@ -154,7 +185,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               {imgs.slice(1, 5).map((src, i) => (
                 <div key={src + i} className="rounded-lg border bg-white p-1">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={src} alt="" className="w-full h-20 object-cover" loading="lazy" />
+                  <img
+                    src={src}
+                    alt=""
+                    className="w-full h-20 object-cover"
+                    loading="lazy"
+                  />
                 </div>
               ))}
             </div>
@@ -169,7 +205,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           </p>
           <div className="mt-4 flex gap-2">
             <Link
-              href={`/api/checkout?product=${encodeURIComponent(String(p.slug || toSlug(p.title)))}&qty=1`}
+              href={`/api/checkout?product=${encodeURIComponent(
+                String(p.slug || toSlug(p.title))
+              )}&qty=1`}
               prefetch={false}
               className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
             >
@@ -201,7 +239,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       {/* Description */}
       <section className="mt-10 prose max-w-none">
         <h2>About this product</h2>
-        <p>{p.description || "High-quality digital resource crafted for creators and entrepreneurs."}</p>
+        <p>
+          {p.description ||
+            "High-quality digital resource crafted for creators and entrepreneurs."}
+        </p>
       </section>
     </main>
   );
