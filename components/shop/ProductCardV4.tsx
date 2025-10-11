@@ -61,7 +61,7 @@ export default function ProductCardV4({
   const priceLabel =
     typeof price === "number"
       ? new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(price)
-      : price ?? "";
+      : (price ?? "");
 
   // Add to cart (fallback when delegated wire isn't mounted)
   const addToCart = () => {
@@ -94,6 +94,14 @@ export default function ProductCardV4({
       data-version="ProductCardV4@buy-redirect+delegated"
       style={{ pointerEvents: "auto", position: "relative", isolation: "isolate", zIndex: 1000 }}
     >
+      {/* local safety: ensure all descendants accept clicks */}
+      <style>{`
+        [data-version="ProductCardV4@buy-redirect+delegated"],
+        [data-version="ProductCardV4@buy-redirect+delegated"] * {
+          pointer-events: auto !important;
+        }
+      `}</style>
+
       {/* Main image (click → product page) */}
       <Link
         href={productUrl}
@@ -109,6 +117,7 @@ export default function ProductCardV4({
             alt={title}
             className="aspect-[3/2] w-full object-contain p-2 transition-transform duration-300 group-hover:scale-[1.01] pointer-events-none select-none"
             loading="lazy"
+            decoding="async"
           />
           {displayPics.length > 1 && (
             <>

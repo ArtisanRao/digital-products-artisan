@@ -168,7 +168,7 @@ const normalizeSlug = (s: string) => LEGACY_TO_NEW[s] ?? s;
 
 export async function generateMetadata(props: any) {
   const raw = String(props?.params?.slug ?? "");
-  const slug = normalizeSlug(raw);
+  the slug = normalizeSlug(raw);
   const m = META[slug];
   const title = m ? `${m.title} | Digital Products Artisan` : "Digital Products | Digital Products Artisan";
   const description = m?.description ?? "Browse our curated digital products.";
@@ -212,7 +212,12 @@ export default async function CategoryPage({
   if (!meta) {
     const pretty = slug.replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
     return (
-      <main className="container mx-auto px-4 py-16 relative z-[100] clickable-surface" data-ui={`CategoryPage@${UI_VERSION}:not-found`}>
+      <main
+        id="cat-scope"
+        className="container mx-auto px-4 py-16 relative z-[100] clickable-surface"
+        data-ui={`CategoryPage@${UI_VERSION}:not-found`}
+        style={{ pointerEvents: "auto", isolation: "isolate" }}
+      >
         <ClickUnlocker targetSelector='main[data-ui^="CategoryPage@"]' />
         <h1 className="text-3xl md:text-4xl font-bold mb-2">{pretty}</h1>
         <InlineMore
@@ -271,18 +276,44 @@ export default async function CategoryPage({
 
   return (
     <main
+      id="cat-scope"
       className="container mx-auto px-4 py-12 relative z-[100] clickable-surface"
       data-ui={`CategoryPage@${UI_VERSION}`}
       style={{ pointerEvents: "auto", isolation: "isolate" }}
     >
-      {/* 🔐 Force pointer-events on key regions (SSR-safe) */}
+      {/* SSR-scoped safety styles: push overlays behind and force click-through */}
       <style>{`
-        #subcat-nav, #subcat-nav * { pointer-events: auto !important; }
-        [data-grid="products"], [data-grid="products"] * { pointer-events: auto !important; }
+        #cat-scope .hero-overlay,
+        #cat-scope .gradient-overlay,
+        #cat-scope .noise-overlay,
+        #cat-scope .overlay,
+        #cat-scope [data-overlay],
+        #cat-scope [data-decorative="true"],
+        #cat-scope [class*="overlay-"],
+        #cat-scope [class$="-overlay"],
+        #cat-scope .fixed-overlay,
+        #cat-scope .absolute-overlay,
+        #cat-scope [data-blocking-overlay="true"] {
+          pointer-events: none !important;
+          z-index: -1 !important;
+        }
+        #cat-scope #subcat-nav,
+        #cat-scope #subcat-nav *,
+        #cat-scope [data-grid="products"],
+        #cat-scope [data-grid="products"] * {
+          pointer-events: auto !important;
+          position: relative;
+          z-index: 25;
+        }
+        #cat-scope a, #cat-scope button, #cat-scope [role="button"] {
+          pointer-events: auto !important;
+          position: relative;
+          z-index: 30;
+        }
       `}</style>
 
-      {/* Guard against decorative overlays */}
-      <ClickUnlocker targetSelector='div[data-subcats="true"]' />
+      {/* extra runtime guard against unknown overlays */}
+      <ClickUnlocker targetSelector="#subcat-nav" />
       <ClickUnlocker targetSelector='div[data-grid="products"]' />
 
       <h1 className="text-3xl md:text-4xl font-bold">
@@ -291,7 +322,7 @@ export default async function CategoryPage({
       </h1>
       <InlineMore text={meta.description} lines={1} minChars={40} className="mt-1 text-gray-700" />
 
-      {/* 🔹 Subcategory pills: wrapped for click safety */}
+      {/* Subcategory pills */}
       {!activeSub && groups.size > 1 && (
         <div
           id="subcat-nav"
