@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const UI_VERSION = "product-fallback-v4";
+const UI_VERSION = "product-fallback-v5";
 
 /* ---------------- helpers ---------------- */
 
@@ -73,13 +73,14 @@ export async function generateMetadata({
     ? `${p.title ?? "Product"} | Digital Products Artisan`
     : "Product | Digital Products Artisan";
   const description =
-    p?.description ??
+    (p && (p as any)?.description) ??
     "Explore premium digital downloads crafted for creators and entrepreneurs.";
-  const canonical = p?.slug
-    ? `https://digitalproductsartisan.com/products/${encodeURIComponent(
-        String(p.slug)
-      )}`
-    : undefined;
+  const canonical =
+    p && (p as any)?.slug
+      ? `https://digitalproductsartisan.com/products/${encodeURIComponent(
+          String((p as any).slug)
+        )}`
+      : undefined;
 
   return {
     title,
@@ -102,13 +103,17 @@ export default async function ProductPage({
   if (!p) notFound();
 
   const title = String(p?.title ?? "Product");
-  const category = p?.category ? String(p.category) : undefined;
+  const category = (p as any)?.category ? String((p as any).category) : undefined;
+  const subtitle = (p as any)?.subtitle as string | undefined;
+  const description = (p as any)?.description as string | undefined;
 
+  // Price (defensive)
+  const rawPrice = (p as any)?.price;
   const priceVal =
-    typeof p?.price === "number"
-      ? p.price
-      : Number(p?.price) && isFinite(Number(p?.price))
-      ? Number(p?.price)
+    typeof rawPrice === "number"
+      ? rawPrice
+      : Number(rawPrice) && isFinite(Number(rawPrice))
+      ? Number(rawPrice)
       : null;
 
   const priceLabel =
@@ -117,14 +122,14 @@ export default async function ProductPage({
           style: "currency",
           currency: "USD",
         }).format(priceVal)
-      : typeof p?.price === "string"
-      ? String(p.price)
+      : typeof rawPrice === "string"
+      ? String(rawPrice)
       : "";
 
   const imgs = productImages(p);
 
   const canonicalCategorySlug = category ? toSlug(category) : null;
-  const canonicalProductSlug = String(p?.slug || toSlug(title));
+  const canonicalProductSlug = String((p as any)?.slug || toSlug(title));
 
   return (
     <main
@@ -148,11 +153,9 @@ export default async function ProductPage({
       {/* Title + price */}
       <h1 className="text-3xl md:text-4xl font-bold">{title}</h1>
       <p className="mt-1 text-gray-700">
-        {p?.subtitle
-          ? String(p.subtitle)
-          : `A curated digital product${
-              category ? ` in ${category}.` : `.`
-            }`}
+        {subtitle
+          ? subtitle
+          : `A curated digital product${category ? ` in ${category}.` : `.`}`}
       </p>
 
       {priceLabel && (
@@ -233,8 +236,8 @@ export default async function ProductPage({
       <section className="mt-10 prose max-w-none">
         <h2>About this product</h2>
         <p>
-          {p?.description
-            ? String(p.description)
+          {description
+            ? String(description)
             : "High-quality digital resource crafted for creators and entrepreneurs."}
         </p>
       </section>
