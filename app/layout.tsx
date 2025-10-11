@@ -165,7 +165,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     el.style.zIndex = '-1';
   }
   function sweep(){
-    // look at center and corners
     var probe = [
       [innerWidth/2, innerHeight/2],
       [16,16],
@@ -183,13 +182,74 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       }
     }
   }
-  // run a few times on load and on route changes
   var runs = 0;
   var timer = setInterval(function(){ sweep(); if(++runs>20) clearInterval(timer); }, 250);
   window.addEventListener('resize', sweep, {passive:true});
   document.addEventListener('visibilitychange', sweep);
 })();
           `}
+        </Script>
+
+        {/* 🚨 Capture-phase forced navigation on /categories* and /products* */}
+        <Script id="forced-link-delegate" strategy="afterInteractive">
+          {`(function(){
+  function onRoute() {
+    var p = location.pathname || '';
+    return p.startsWith('/categories') || p.startsWith('/products');
+  }
+  function findAnchor(el){
+    while (el && el !== document && el !== document.documentElement){
+      if (el.tagName === 'A' && el.getAttribute('href')) return el;
+      el = el.parentElement;
+    }
+    return null;
+  }
+  function shouldBypass(a){
+    if (!a) return true;
+    var href = a.getAttribute('href') || '';
+    if (a.hasAttribute('download')) return true;
+    if (a.target && a.target.toLowerCase() === '_blank') return true;
+    if (/^(mailto:|tel:|javascript:)/i.test(href)) return true;
+    if (/^https?:\\/\\//i.test(href) && href.indexOf(location.origin) !== 0) return true;
+    return false;
+  }
+  function handle(ev){
+    if (!onRoute()) return;
+    var a = findAnchor(ev.target);
+    if (!a || shouldBypass(a)) return;
+
+    var isPlainLeftClick = (ev.button === 0 || ev.button === undefined) &&
+                           !ev.metaKey && !ev.ctrlKey && !ev.shiftKey && !ev.altKey;
+    if (!isPlainLeftClick) return;
+
+    try { ev.preventDefault(); ev.stopPropagation(); } catch(e){}
+    var href = a.href ? a.href : a.getAttribute('href');
+    if (!href) return;
+
+    if (href.startsWith('/') || href.indexOf(location.origin) === 0) {
+      location.assign(href);
+    } else {
+      a.click();
+    }
+  }
+  window.addEventListener('click', handle, true);
+  window.addEventListener('auxclick', handle, true);
+  window.addEventListener('touchend', handle, true);
+
+  function raise(){
+    if (!onRoute()) return;
+    var m = document.querySelector('main');
+    if (m) {
+      m.style.position = 'relative';
+      m.style.isolation = 'isolate';
+      m.style.zIndex = '9999';
+      m.style.pointerEvents = 'auto';
+    }
+  }
+  raise();
+  document.addEventListener('visibilitychange', raise);
+  window.addEventListener('resize', raise, {passive:true});
+})();`}
         </Script>
       </body>
     </html>
