@@ -3,6 +3,7 @@ import path from "node:path";
 import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
 import ProductCardV4 from "@/components/shop/ProductCardV4";
+import OverlayFix from "@/components/debug/OverlayFix"; // 🔐 runtime click-through fixer
 
 // Central data
 import { products, productsInCategory, CATEGORY_LABELS } from "@/data/products";
@@ -95,7 +96,7 @@ function effectiveProductCategorySlug(p: any): string | null {
 
   if (p.categorySlug) {
     const s = toSlug(String(p.categorySlug));
-    const normalized = LEGACY_TO_NEW[s] ?? s;
+       const normalized = LEGACY_TO_NEW[s] ?? s;
     return ALL_SLUGS.has(normalized) ? normalized : null;
   }
   if (p.category) {
@@ -217,6 +218,7 @@ export default async function CategoryPage({
         data-ui={`CategoryPage@${UI_VERSION}:not-found`}
         style={{ pointerEvents: "auto", isolation: "isolate" }}
       >
+        <OverlayFix scope="#cat-scope" />
         <ClickUnlocker targetSelector='main[data-ui^="CategoryPage@"]' />
         <h1 className="text-3xl md:text-4xl font-bold mb-2">{pretty}</h1>
         <InlineMore
@@ -267,7 +269,7 @@ export default async function CategoryPage({
       src.includes("?") ? `${src}&v=${UI_VERSION}` : `${src}?v=${UI_VERSION}`
     );
     const seg = encodeURIComponent(String(p.slug ?? p.id));
-    const href = `/products/${seg}${qs}`; // keep query string (currency, etc.)
+    const href = `/products/${seg}${qs}`;
     return { id: p.id, title: p.title, slug: p.slug, price: p.price, images, description: p.description, href };
   };
 
@@ -280,7 +282,7 @@ export default async function CategoryPage({
       data-ui={`CategoryPage@${UI_VERSION}`}
       style={{ pointerEvents: "auto", isolation: "isolate" }}
     >
-      {/* SSR-scoped safety styles: push overlays behind and force click-through */}
+      {/* Scoped hardening so overlays can’t eat clicks */}
       <style>{`
         #cat-scope .hero-overlay,
         #cat-scope .gradient-overlay,
@@ -311,7 +313,8 @@ export default async function CategoryPage({
         }
       `}</style>
 
-      {/* extra runtime guard against unknown overlays */}
+      {/* Runtime sweep to catch any remaining blockers */}
+      <OverlayFix scope="#cat-scope" />
       <ClickUnlocker targetSelector="#subcat-nav" />
       <ClickUnlocker targetSelector='div[data-grid="products"]' />
 

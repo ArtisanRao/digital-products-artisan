@@ -1,7 +1,8 @@
-// app/categories/page.tsx — SAFE SERVER VERSION (no client components/hooks)
+// app/categories/page.tsx — SAFE SERVER VERSION (no client hooks except the mounted OverlayFix)
 import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
 import { CATEGORIES, categoryImage } from "@/data/categories";
+import OverlayFix from "@/components/debug/OverlayFix"; // 🔐 client-side click-through fixer
 
 type SP = Record<string, string | string[] | undefined>;
 
@@ -21,41 +22,35 @@ export default async function CategoriesPage({
 
   return (
     <main
-      id="cat-scope"
+      id="cat-index"
       className="relative z-[100] max-w-7xl mx-auto px-4 py-12 clickable-surface"
       style={{ pointerEvents: "auto", isolation: "isolate" }}
-      data-route="categories"
     >
-      {/* SSR-safe assertions to keep links clickable and push overlays behind */}
+      {/* Scoped hardening so *nothing* inside can block clicks */}
       <style>{`
-        /* neuter common overlay containers within this route scope */
-        #cat-scope .hero-overlay,
-        #cat-scope .gradient-overlay,
-        #cat-scope .noise-overlay,
-        #cat-scope .overlay,
-        #cat-scope [data-overlay],
-        #cat-scope [data-decorative="true"],
-        #cat-scope [class*="overlay-"],
-        #cat-scope [class$="-overlay"],
-        #cat-scope .fixed-overlay,
-        #cat-scope .absolute-overlay,
-        #cat-scope [data-blocking-overlay="true"] {
+        #cat-index .hero-overlay,
+        #cat-index .gradient-overlay,
+        #cat-index .noise-overlay,
+        #cat-index .overlay,
+        #cat-index [data-overlay],
+        #cat-index [data-decorative="true"],
+        #cat-index [class*="overlay-"],
+        #cat-index [class$="-overlay"],
+        #cat-index .fixed-overlay,
+        #cat-index .absolute-overlay,
+        #cat-index [data-blocking-overlay="true"] {
           pointer-events: none !important;
           z-index: -1 !important;
         }
-        /* ensure the grid and its anchors are always clickable and above decor */
-        #cat-scope #categories-grid,
-        #cat-scope #categories-grid * {
+        #cat-index a, #cat-index button, #cat-index [role="button"],
+        #cat-index nav, #cat-index #categories-grid, #cat-index #categories-grid * {
           pointer-events: auto !important;
           position: relative;
-          z-index: 20;
-        }
-        #cat-scope a, #cat-scope button, #cat-scope [role="button"] {
-          pointer-events: auto !important;
-          position: relative;
-          z-index: 25;
+          z-index: 30;
         }
       `}</style>
+      {/* Runtime sweep to disable any surprise blockers */}
+      <OverlayFix scope="#cat-index" />
 
       <h1 className="text-4xl font-bold text-center mb-12">🗂️ All Categories</h1>
 
@@ -74,7 +69,7 @@ export default async function CategoriesPage({
               href={href}
               prefetch={false}
               className="group block rounded-2xl border overflow-hidden bg-white shadow transition-all duration-300 hover:-translate-y-1 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2"
-              style={{ pointerEvents: "auto", isolation: "isolate" }}
+              style={{ pointerEvents: "auto" }}
             >
               <div className="relative w-full bg-gray-50">
                 <div className="aspect-[16/9] md:aspect-[3/2] overflow-hidden">
