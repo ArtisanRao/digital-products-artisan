@@ -6,12 +6,13 @@ import { useMemo } from "react";
 
 type Item = { label: string; slug?: string; href?: string };
 
-function encodeSeg(s: string) {
-  return encodeURIComponent(String(s));
-}
+const encodeSeg = (s: string) => encodeURIComponent(String(s));
+const decodeSeg = (s: string) => {
+  try { return decodeURIComponent(s); } catch { return s; }
+};
 
 function joinBase(basePath: string, slug?: string) {
-  const base = basePath.endsWith("/") ? basePath.slice(0, -1) : basePath;
+  const base = (basePath || "/").replace(/\/+$/, "");
   if (!slug) return base || "/";
   return `${base}/${encodeSeg(slug)}`;
 }
@@ -39,7 +40,8 @@ export default function SubcategoryNav({
   const current = useMemo(() => {
     if (activeSlug) return activeSlug;
     const seg = pathname?.split("/").filter(Boolean) ?? [];
-    return seg[seg.length - 1];
+    const last = seg[seg.length - 1] || "";
+    return decodeSeg(last);
   }, [activeSlug, pathname]);
 
   // preserve all current query params (e.g., currency)
@@ -50,17 +52,18 @@ export default function SubcategoryNav({
       className={`flex flex-wrap gap-2 py-3 clickable-surface ${className}`}
       style={{ pointerEvents: "auto", isolation: "isolate", zIndex: 1000 }}
       aria-label="Subcategories"
+      data-ui="SubcategoryNav"
     >
       {items.map((it) => {
         // Prefer explicit href; otherwise build from basePath + slug
         const built = it.href ? it.href : joinBase(basePath, it.slug);
         const href = queryStr ? appendQuery(built, queryStr) : built;
 
-        // Active detection: match by slug if provided, else compare path
+        // Active detection: match by slug if provided, else compare path (case-insensitive)
         const key = it.slug ?? it.href ?? it.label;
         const active =
-          (it.slug && current === it.slug) ||
-          (!!it.href && pathname === it.href.replace(/\?.*$/, ""));
+          (it.slug && String(current).toLowerCase() === String(it.slug).toLowerCase()) ||
+          (!!it.href && pathname?.replace(/\?.*$/, "") === it.href.replace(/\?.*$/, ""));
 
         return (
           <Link
