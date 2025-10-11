@@ -93,6 +93,10 @@
       transition: none !important; animation: none !important; transform: none !important; box-shadow: none !important;
     }
   }
+
+  /* Small helpers */
+  .z-max { z-index: 2147483647 !important; }
+  .pe-force-auto, .pe-force-auto * { pointer-events: auto !important; }
 }
 
 /* ===== Header & Navigation Safeguards ===== */
@@ -107,18 +111,24 @@
   header input[type="search"] {
     @apply border border-blue-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 rounded-md;
   }
+
+  /* Keep header/nav reliably clickable above decor */
+  header nav, header .nav {
+    position: relative;
+    isolation: isolate;
+    z-index: 1000;
+    pointer-events: auto !important;
+  }
 }
 
 /* ===== Theme & Base Defaults ===== */
 @layer base {
-  /* Keep media responsive, avoid global layout shifts */
   *, *::before, *::after { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   html, body { width: 100%; overflow-x: hidden; }
   img, video, canvas, svg, picture { max-width: 100%; height: auto; }
   iframe { max-width: 100%; }
 
-  /* Optional helper for any explicit media wrapper you add */
   .product-media, .product-media img, .product-media picture {
     max-width: 100%;
     width: 100%;
@@ -126,7 +136,6 @@
     object-fit: contain;
   }
 
-  /* Product page hover zoom (server-safe, no styled-jsx) */
   .product-page img { transition: transform .3s ease; }
   .product-page img:hover { transform: scale(1.03); }
 
@@ -220,9 +229,12 @@
 .bg-decor,
 [data-overlay],
 [data-decorative="true"],
-/* NEW: catch common overlay class patterns */
+/* NEW: catch more overlay class patterns */
 [class*="overlay-"],
-[class$="-overlay"] {
+[class$="-overlay"],
+.fixed-overlay,
+.absolute-overlay,
+[data-blocking-overlay="true"] {
   pointer-events: none !important;
   z-index: -1 !important; /* keep behind content if positioned */
 }
@@ -244,6 +256,7 @@ button,
   isolation: isolate;
   z-index: 50;
 }
+.clickable-surface * { pointer-events: auto !important; }
 
 /* Optional helpers you can drop onto wrappers when needed */
 .click-guard { position: relative; z-index: 100; pointer-events: auto; }
