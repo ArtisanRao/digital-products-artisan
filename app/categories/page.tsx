@@ -1,32 +1,18 @@
-// app/categories/page.tsx — SAFE SERVER VERSION with scoped OverlayFix + fallback click
+// app/categories/page.tsx — STATIC + ISR
 import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
 import { CATEGORIES, categoryImage } from "@/data/categories";
-import OverlayFix from "@/components/debug/OverlayFix"; // ✅ client scrubber
+
+export const revalidate = 300;     // 5 min ISR
+export const dynamic = "error";    // generate at build/ISR only
 
 type SP = Record<string, string | string[] | undefined>;
-
-function forceNav(href: string | undefined, ev: React.MouseEvent<HTMLAnchorElement>) {
-  if (!href) return;
-  try {
-    // If something blocks Next's normal navigation, force it
-    ev.preventDefault();
-    ev.stopPropagation();
-  } catch {}
-  if (href.startsWith("/") || href.startsWith(window.location.origin)) {
-    window.location.assign(href);
-  } else {
-    // external
-    window.open(href, "_self");
-  }
-}
 
 export default async function CategoriesPage({
   searchParams,
 }: {
   searchParams?: Promise<SP>;
 }) {
-  // read query on the server
   const sp = (await searchParams) || {};
   const entries = Object.entries(sp).filter(([_, v]) => v != null && v !== "");
   const qs = entries.length
@@ -36,29 +22,10 @@ export default async function CategoriesPage({
     : "";
 
   return (
-    <main
-      id="cat-root"
-      className="relative z-[10000] max-w-7xl mx-auto px-4 py-12 clickable-surface"
-      style={{ pointerEvents: "auto", isolation: "isolate" }}
-      data-page="categories-index"
-    >
-      {/* 🔧 scoped overlay neutralizer */}
-      <OverlayFix scope="#cat-root" />
-
-      <style>{`
-        #cat-root a, #cat-root button { pointer-events: auto !important; position: relative; z-index: 2; }
-        #cat-root .card { position: relative; z-index: 1; }
-        #cat-root .decor, #cat-root [data-overlay], #cat-root [class*="overlay-"], #cat-root [class$="-overlay"] {
-          pointer-events: none !important; z-index: -1 !important;
-        }
-      `}</style>
-
+    <main className="relative z-[100] max-w-7xl mx-auto px-4 py-12">
       <h1 className="text-4xl font-bold text-center mb-12">🗂️ All Categories</h1>
 
-      <div
-        id="categories-grid"
-        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"
-      >
+      <div id="categories-grid" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {CATEGORIES.map((c) => {
           const pathname = `/categories/${encodeURIComponent(c.slug)}`;
           const href = qs ? `${pathname}${qs}` : pathname;
@@ -69,9 +36,7 @@ export default async function CategoriesPage({
               key={c.slug}
               href={href}
               prefetch={false}
-              data-safe-link
-              className="card group block rounded-2xl border overflow-hidden bg-white shadow transition-all duration-300 hover:-translate-y-1 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2"
-              onClick={(ev) => forceNav(href, ev)}
+              className="group block rounded-2xl border overflow-hidden bg-white shadow transition-all duration-300 hover:-translate-y-1 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2"
             >
               <div className="relative w-full bg-gray-50">
                 <div className="aspect-[16/9] md:aspect-[3/2] overflow-hidden">

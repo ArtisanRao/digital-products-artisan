@@ -1,21 +1,13 @@
-﻿// app/categories/[slug]/page.tsx — Scoped OverlayFix + fallback click on links
-import fs from "node:fs";
+﻿// app/categories/[slug]/page.tsx — STATIC/ISR + NO RUNTIME FS
 import path from "node:path";
 import Link from "next/link";
 import InlineMore from "@/components/ui/inline-more";
 import ProductCardV4 from "@/components/shop/ProductCardV4";
-import OverlayFix from "@/components/debug/OverlayFix"; // ✅ client scrubber
-
-// Central data
 import { products, productsInCategory, CATEGORY_LABELS } from "@/data/products";
 
-// Overlay click guard (still helpful, keep it)
-import ClickUnlocker from "@/components/debug/ClickUnlocker";
-
 export const runtime = "nodejs";
-export const revalidate = 0;
-export const dynamic = "force-dynamic";
-export const fetchCache = "force-no-store";
+export const revalidate = 300;     // 5 min ISR
+export const dynamic = "error";    // do not force SSR each hit
 
 const UI_VERSION = "cat-v16-subviews-1main+3thumbs";
 
@@ -36,6 +28,7 @@ const META: Record<string, { title: string; description: string }> = {
   "social-media-kits":           { title: "Social Media Kits",       description: "Post templates and brandable assets for socials." },
 };
 
+// legacy redirects
 const LEGACY_TO_NEW: Record<string, string> = {
   "planners-productivity": "planners-and-productivity",
   "plr-mrr-bundles": "plr-and-mrr-bundles",
@@ -44,7 +37,6 @@ const LEGACY_TO_NEW: Record<string, string> = {
   "fonts": "fonts-and-icons",
 };
 
-const pub = (...p: string[]) => path.join(process.cwd(), "public", ...p);
 const tnorm = (s: string) => s.toLowerCase().trim();
 
 const FIX_BY_TITLE: Record<string, { forceSlug?: string; hide?: boolean }> = {
@@ -56,12 +48,7 @@ const FIX_BY_TITLE: Record<string, { forceSlug?: string; hide?: boolean }> = {
 };
 
 function toSlug(s: string) {
-  return s
-    .toLowerCase()
-    .trim()
-    .replace(/&/g, "and")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+  return s.toLowerCase().trim().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
 
 const ALL_SLUGS = new Set(Object.keys(META));
@@ -126,20 +113,12 @@ function effectiveSubSlug(p: any): string | null {
   return null;
 }
 
-function readProductThumbs(slug?: string, max = 3): string[] {
-  if (!slug) return [];
-  const dir = pub("images", "products", slug);
-  if (!fs.existsSync(dir)) return [];
-  const names = fs
-    .readdirSync(dir)
-    .filter((f) => /^thumb-\d+\.(png|jpe?g|webp|avif)$/i.test(f))
-    .sort((a, b) => {
-      const na = Number(a.match(/\d+/)?.[0] ?? 0);
-      const nb = Number(b.match(/\d+/)?.[0] ?? 0);
-      return na - nb;
-    })
-    .slice(0, max);
-  return names.map((n) => `/images/products/${slug}/${n}`);
+/** 🚫 Disable runtime filesystem thumbnail scan on serverless to avoid timeouts */
+const ENABLE_FS_THUMBS = false;
+function readProductThumbs(_slug?: string, _max = 3): string[] {
+  if (!ENABLE_FS_THUMBS) return []; // fast path
+  // (If you re-enable later, prefer build-time manifest generation.)
+  return [];
 }
 
 function buildCardImages(p: any): string[] {
@@ -148,7 +127,6 @@ function buildCardImages(p: any): string[] {
 
   const extrasFromProduct = productImages.slice(1).filter(Boolean);
   const extrasFromFS = readProductThumbs(p.slug, 3);
-
   const extras = Array.from(new Set([...extrasFromProduct, ...extrasFromFS]))
     .filter((src) => src && src !== cover)
     .slice(0, 3);
@@ -182,16 +160,6 @@ export async function generateMetadata(props: any) {
 
 type SP = Record<string, string | string[] | undefined>;
 
-function forceNav(href: string | undefined, ev: React.MouseEvent<HTMLAnchorElement>) {
-  if (!href) return;
-  try { ev.preventDefault(); ev.stopPropagation(); } catch {}
-  if (href.startsWith("/") || href.startsWith(window.location.origin)) {
-    window.location.assign(href);
-  } else {
-    window.open(href, "_self");
-  }
-}
-
 export default async function CategoryPage({
   params,
   searchParams,
@@ -218,14 +186,7 @@ export default async function CategoryPage({
   if (!meta) {
     const pretty = slug.replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
     return (
-      <main
-        id="cat-root"
-        className="container mx-auto px-4 py-16 relative z-[10000] clickable-surface"
-        data-ui={`CategoryPage@${UI_VERSION}:not-found`}
-        style={{ pointerEvents: "auto", isolation: "isolate" }}
-      >
-        <OverlayFix scope="#cat-root" />
-        <ClickUnlocker targetSelector='main[data-ui^="CategoryPage@"]' />
+      <main className="container mx-auto px-4 py-16">
         <h1 className="text-3xl md:text-4xl font-bold mb-2">{pretty}</h1>
         <InlineMore
           text="We couldn’t find a dedicated page for this category yet. Explore best sellers below or visit all products."
@@ -234,9 +195,7 @@ export default async function CategoryPage({
           className="text-gray-700"
         />
         <p className="mt-2">
-          <Link href={`/products${qs}`} className="underline" prefetch={false} onClick={(ev)=>forceNav(`/products${qs}`, ev)}>
-            Browse all products →
-          </Link>
+          <Link href={`/products${qs}`} className="underline" prefetch={false}>Browse all products →</Link>
         </p>
       </main>
     );
@@ -282,123 +241,49 @@ export default async function CategoryPage({
   const totalVisible = Array.from(visibleGroups.values()).reduce((n, g) => n + g.items.length, 0);
 
   return (
-    <main
-      id="cat-root"
-      className="container mx-auto px-4 py-12 relative z-[10000] clickable-surface"
-      data-ui={`CategoryPage@${UI_VERSION}`}
-      style={{ pointerEvents: "auto", isolation: "isolate" }}
-    >
-      <OverlayFix scope="#cat-root" />
-
-      <style>{`
-        #cat-root a, #cat-root button { pointer-events: auto !important; position: relative; z-index: 30; }
-        #cat-root [data-grid="products"], #cat-root #subcat-nav { position: relative; isolation: isolate; z-index: 25; }
-        #cat-root .decor, #cat-root [data-overlay], #cat-root [class*="overlay-"], #cat-root [class$="-overlay"] {
-          pointer-events: none !important; z-index: -1 !important;
-        }
-      `}</style>
-
-      <ClickUnlocker targetSelector="#subcat-nav" />
-      <ClickUnlocker targetSelector='div[data-grid="products"]' />
-
+    <main className="container mx-auto px-4 py-12">
       <h1 className="text-3xl md:text-4xl font-bold">
         {meta.title}
         {activeSub ? `: ${(groups.get(activeSub)?.label ?? activeSub).replace(/\b\w/g,(m)=>m.toUpperCase())}` : ""}
       </h1>
       <InlineMore text={meta.description} lines={1} minChars={40} className="mt-1 text-gray-700" />
 
-      {/* Subcategory pills */}
-      {!activeSub && groups.size > 1 && (
-        <div
-          id="subcat-nav"
-          className="mt-4 flex flex-wrap gap-2 relative z-[101] clickable-surface"
-          data-subcats="true"
-          style={{ pointerEvents: "auto", isolation: "isolate" }}
-        >
-          {Array.from(groups.entries())
-            .filter(([k]) => k !== "__none__")
-            .map(([k, g]) => {
-              const href = {
-                pathname: `/categories/${encodeURIComponent(slug)}`,
-                query: { ...Object.fromEntries(spEntries), sub: k },
-              };
-              const hrefString = `/categories/${encodeURIComponent(slug)}?${new URLSearchParams({
-                ...Object.fromEntries(spEntries),
-                sub: k,
-              }).toString()}`;
-              return (
-                <Link
-                  key={k}
-                  href={href}
-                  prefetch={false}
-                  className="rounded-full border px-3 py-1.5 text-sm hover:bg-muted/30"
-                  aria-label={`View subcategory ${g.label}`}
-                  onClick={(ev) => forceNav(hrefString, ev)}
-                >
-                  {g.label}
-                </Link>
-              );
-            })}
-        </div>
-      )}
-
       {totalVisible ? (
         activeSub ? (
-          <div
-            className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 relative z-[100] clickable-surface"
-            data-grid="products"
-            style={{ pointerEvents: "auto", isolation: "isolate" }}
-          >
+          <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {visibleGroups.get(activeSub)!.items.map((p) => (
               <ProductCardV4 key={`${UI_VERSION}:${String(p.slug ?? p.id)}`} {...toCard(p)} />
             ))}
           </div>
         ) : (
-          <div
-            className="mt-6 space-y-10 relative z-[100] clickable-surface"
-            data-grid="products"
-            style={{ pointerEvents: "auto", isolation: "isolate" }}
-          >
-            {Array.from(groups.entries()).map(([k, g]) => {
-              const hrefString = k === "__none__"
-                ? ""
-                : `/categories/${encodeURIComponent(slug)}?${new URLSearchParams({
-                    ...Object.fromEntries(spEntries),
-                    sub: k,
-                  }).toString()}`;
-              return (
-                <section key={k} data-sub={k}>
-                  <div className="mb-3 flex items-center justify-between">
-                    <h2 className="text-xl font-semibold">{g.label}</h2>
-                    {k !== "__none__" && (
-                      <Link
-                        href={{
-                          pathname: `/categories/${encodeURIComponent(slug)}`,
-                          query: { ...Object.fromEntries(spEntries), sub: k },
-                        }}
-                        prefetch={false}
-                        className="text-sm underline"
-                        aria-label={`View all in ${g.label}`}
-                        onClick={(ev) => forceNav(hrefString, ev)}
-                      >
-                        View all →
-                      </Link>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    {g.items.map((p) => (
-                      <ProductCardV4 key={`${UI_VERSION}:${String(p.slug ?? p.id)}`} {...toCard(p)} />
-                    ))}
-                  </div>
-                </section>
-              );
-            })}
+          <div className="mt-6 space-y-10">
+            {Array.from(groups.entries()).map(([k, g]) => (
+              <section key={k} data-sub={k}>
+                <div className="mb-3 flex items-center justify-between">
+                  <h2 className="text-xl font-semibold">{g.label}</h2>
+                  {k !== "__none__" && (
+                    <Link
+                      href={{ pathname: `/categories/${encodeURIComponent(slug)}`, query: { ...Object.fromEntries(spEntries), sub: k } }}
+                      prefetch={false}
+                      className="text-sm underline"
+                    >
+                      View all →
+                    </Link>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {g.items.map((p) => (
+                    <ProductCardV4 key={`${UI_VERSION}:${String(p.slug ?? p.id)}`} {...toCard(p)} />
+                  ))}
+                </div>
+              </section>
+            ))}
           </div>
         )
       ) : (
         <div className="mt-8">
           <p className="text-gray-600">No products in {activeSub ? "this subcategory" : "this category"} yet.</p>
-          <Link href={`/products${qs}`} prefetch={false} onClick={(ev)=>forceNav(`/products${qs}`, ev)} className="mt-3 inline-block underline">
+          <Link href={`/products${qs}`} prefetch={false} className="mt-3 inline-block underline">
             Browse all products →
           </Link>
         </div>
