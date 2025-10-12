@@ -1,12 +1,13 @@
 ﻿// next.config.mjs
-import withPWA from "next-pwa";
+import withPWA from "@ducanh2912/next-pwa"; // ⬅️ migrate from "next-pwa"
 import path from "node:path";
 
-/** Configure next-pwa */
+/** Configure next-pwa (maintained fork) */
 const withPWACfg = withPWA({
   dest: "public",
   register: true,
   skipWaiting: true,
+  // disable PWA in dev; enable in prod
   disable: process.env.NODE_ENV === "development",
 
   /** 👇 runtime caching — never cache HTML documents */
