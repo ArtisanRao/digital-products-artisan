@@ -1,7 +1,8 @@
 // app/products/[slug]/page.tsx
 import Link from "next/link";
 import { products } from "@/data/products";
-import ProductGallery from "@/components/ProductGallery"; // ← updated import
+import ProductGallery from "@/components/ProductGallery";
+import { Eye, ShoppingCart, Zap } from "lucide-react";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -99,14 +100,10 @@ async function getSlugFromParams(params: any): Promise<string> {
   }
 }
 
-/* ---------------- PAGE (metadata temporarily removed) ---------------- */
+/* ---------------- PAGE ---------------- */
 export default async function ProductPage({ params }: any) {
-  console.log("[PDP] render begin");
   const slug = await getSlugFromParams(params);
-  console.log("[PDP] slug =", slug);
-
   const raw = pickByParam(slug);
-  console.log("[PDP] found =", !!raw);
 
   if (!raw) {
     return (
@@ -123,7 +120,6 @@ export default async function ProductPage({ params }: any) {
     );
   }
 
-  // Precompute
   const p = sanitize(raw);
   const title = sstr(p.title, "Product");
   const category = sstr(p.category, "");
@@ -147,22 +143,17 @@ export default async function ProductPage({ params }: any) {
   const safeImgs = Array.isArray(imgs) && imgs.length ? imgs : ["/images/placeholder.jpg"];
   const cover = typeof safeImgs[0] === "string" ? safeImgs[0] : "/images/placeholder.jpg";
 
-  console.log("[PDP] imgs =", safeImgs.length, "price =", price);
-
   return (
     <main
       className="container mx-auto px-4 py-10 relative z-[100]"
       data-ui={`ProductPage@${UI_VERSION}`}
       style={{ pointerEvents: "auto", isolation: "isolate" }}
     >
-      {/* GRID: Left = Gallery + Title/CTA block under it. Right = Aside. */}
       <section className="grid gap-6 md:grid-cols-[1fr_360px]">
-        {/* LEFT COLUMN */}
+        {/* LEFT: Gallery + Title/Subtitle + 'More' link */}
         <div className="flex flex-col gap-4">
-          {/* Gallery with hover + prev/next + fullscreen */}
-          <ProductGallery images={safeImgs} alt={title} /> {/* ← removed maxThumbs */}
+          <ProductGallery images={safeImgs} alt={title} maxThumbs={4} />
 
-          {/* Title + subtitle + CTAs (directly under gallery) */}
           <div className="pt-1">
             <h1 className="text-3xl md:text-4xl font-bold leading-tight">
               <Link
@@ -186,33 +177,19 @@ export default async function ProductPage({ params }: any) {
               </p>
             ) : null}
 
-            <div className="mt-4 flex flex-wrap gap-3">
-              <Link
-                href={cover || "#"}
-                prefetch={false}
-                className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-gray-50"
+            {/* Only "More" link here – buttons moved to the right */}
+            <div className="mt-3">
+              <a
+                href="#details"
+                className="inline-flex items-center gap-2 rounded-lg border px-4 py-2 hover:bg-gray-50"
               >
-                View
-              </Link>
-              <Link
-                href={`/api/checkout?product=${encodeURIComponent(canonSlug(p))}&qty=1&mode=add`}
-                prefetch={false}
-                className="inline-flex items-center justify-center rounded-lg bg-blue-600/90 px-4 py-2 text-white hover:bg-blue-600"
-              >
-                Add to cart
-              </Link>
-              <Link
-                href={`/api/checkout?product=${encodeURIComponent(canonSlug(p))}&qty=1`}
-                prefetch={false}
-                className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-              >
-                Buy
-              </Link>
+                More about this product
+              </a>
             </div>
           </div>
 
-          {/* Description under the title/CTAs on the left */}
-          <section className="mt-6 max-w-none">
+          {/* Details (anchor target) */}
+          <section id="details" className="mt-6 max-w-none">
             <h2 className="text-xl font-semibold mb-2">About this product</h2>
             <p>
               {typeof p.description === "string" && p.description.trim()
@@ -222,27 +199,45 @@ export default async function ProductPage({ params }: any) {
           </section>
         </div>
 
-        {/* RIGHT COLUMN (ASIDE) */}
+        {/* RIGHT: Purchase box with icon buttons */}
         <aside className="rounded-xl border bg-white p-4 h-fit">
           <h2 className="text-lg font-semibold">Get this product</h2>
           <p className="mt-1 text-sm text-gray-600">Instant download. Lifetime access.</p>
+
           {price ? <div className="mt-4 text-2xl font-semibold">{price}</div> : null}
-          <div className="mt-4 flex gap-2">
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            {/* View (eye) */}
+            <Link
+              href={cover || "#"}
+              prefetch={false}
+              className="inline-flex items-center gap-2 rounded-lg border px-4 py-2 hover:bg-gray-50"
+            >
+              <Eye className="w-5 h-5" />
+              View
+            </Link>
+
+            {/* Add to cart (cart) */}
+            <Link
+              href={`/api/checkout?product=${encodeURIComponent(canonSlug(p))}&qty=1&mode=add`}
+              prefetch={false}
+              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+            >
+              <ShoppingCart className="w-5 h-5" />
+              Add to cart
+            </Link>
+
+            {/* Buy now (lightning) */}
             <Link
               href={`/api/checkout?product=${encodeURIComponent(canonSlug(p))}&qty=1`}
               prefetch={false}
-              className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
             >
+              <Zap className="w-5 h-5" />
               Buy now
             </Link>
-            <Link
-              href="/cart"
-              prefetch={false}
-              className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-gray-50"
-            >
-              View cart
-            </Link>
           </div>
+
           {category ? (
             <p className="mt-4 text-xs text-gray-500">
               Category:{" "}
