@@ -4,7 +4,7 @@ import { products } from "@/data/products";
 
 export const runtime = "nodejs";
 export const revalidate = 300;
-// IMPORTANT: keep this dynamic while we stabilize renders
+// keep dynamic while stabilizing renders
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
 
