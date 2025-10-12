@@ -114,6 +114,30 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }catch(e){console.warn('SW flush failed', e);}})();`}
         </Script>
 
+        {/* Tag body with route classes so our click-through CSS can scope */}
+        <Script id="route-classnames" strategy="afterInteractive">
+          {`
+(function(){
+  function cls(path){
+    var c = document.body.classList;
+    // clear previous
+    Array.from(c).forEach(function(n){ if(n.startsWith('route-')) c.remove(n); });
+    if (path.startsWith('/categories')) c.add('route-categories');
+    else if (path.startsWith('/products')) c.add('route-products');
+    else c.add('route-other');
+  }
+  function apply(){ try{ cls(location.pathname || '/'); }catch{} }
+  // catch SPA navigations
+  var _ps = history.pushState, _rs = history.replaceState;
+  history.pushState = function(){ _ps.apply(this, arguments); apply(); };
+  history.replaceState = function(){ _rs.apply(this, arguments); apply(); };
+  window.addEventListener('popstate', apply);
+  document.addEventListener('visibilitychange', apply);
+  apply();
+})();
+          `}
+        </Script>
+
         <AuthProvider>
           <CartProvider>
             <AutoCurrency />
@@ -249,6 +273,48 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   document.addEventListener('visibilitychange', lift);
   window.addEventListener('resize', lift, {passive:true});
 })();`}
+        </Script>
+
+        {/* 🧯 Client error banner so we see the exact exception instead of a blank app */}
+        <Script id="client-error-banner" strategy="afterInteractive">
+          {`
+(function(){
+  if (window.__clientErrorBannerInstalled) return;
+  window.__clientErrorBannerInstalled = true;
+
+  function show(msg){
+    try{
+      var el = document.createElement('div');
+      el.setAttribute('data-client-error','1');
+      el.style.position='fixed';
+      el.style.left='12px';
+      el.style.bottom='12px';
+      el.style.maxWidth='520px';
+      el.style.background='#fee2e2';
+      el.style.border='1px solid #fecaca';
+      el.style.color='#991b1b';
+      el.style.padding='10px 12px';
+      el.style.borderRadius='10px';
+      el.style.zIndex='2147483647';
+      el.style.boxShadow='0 8px 20px rgba(0,0,0,.15)';
+      el.style.fontFamily='system-ui, sans-serif';
+      el.style.fontSize='13px';
+      el.innerHTML='<strong>Client error:</strong> ' + (msg || 'Unknown');
+      document.body.appendChild(el);
+    }catch(e){}
+  }
+
+  window.addEventListener('error', function(e){
+    var msg = (e && e.error && e.error.message) || (e && e.message) || 'Client error';
+    show(String(msg));
+  });
+  window.addEventListener('unhandledrejection', function(e){
+    var r = e && e.reason;
+    var msg = (r && r.message) || (typeof r === 'string' ? r : JSON.stringify(r||{}));
+    show(String(msg || 'Unhandled rejection'));
+  });
+})();
+          `}
         </Script>
       </body>
     </html>
