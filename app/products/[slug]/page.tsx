@@ -163,7 +163,6 @@ export default async function ProductPage({ params }: any) {
               </Link>
             </h1>
 
-            {/* Subtitle (category) */}
             {category ? (
               <p className="mt-1 text-gray-700">
                 <Link
@@ -186,7 +185,7 @@ export default async function ProductPage({ params }: any) {
                 : "High-quality digital resource crafted for creators and entrepreneurs."}
             </p>
 
-            {/* 'More' moved here, under About text */}
+            {/* 'More' under About */}
             <div className="mt-4">
               <a
                 href="#more"
@@ -199,7 +198,7 @@ export default async function ProductPage({ params }: any) {
           </section>
         </div>
 
-        {/* RIGHT: Purchase box with icon buttons */}
+        {/* RIGHT: Purchase box with new redirects */}
         <aside className="rounded-xl border bg-white p-4 h-fit">
           <h2 className="text-lg font-semibold">Get this product</h2>
           <p className="mt-1 text-sm text-gray-600">Instant download. Lifetime access.</p>
@@ -207,9 +206,9 @@ export default async function ProductPage({ params }: any) {
           {price ? <div className="mt-4 text-2xl font-semibold">{price}</div> : null}
 
           <div className="mt-4 flex flex-wrap gap-2">
-            {/* Add to cart */}
+            {/* Add to cart → /cart */}
             <Link
-              href={`/api/checkout?product=${encodeURIComponent(canonSlug(p))}&qty=1&mode=add`}
+              href="/cart"
               prefetch={false}
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
             >
@@ -217,9 +216,9 @@ export default async function ProductPage({ params }: any) {
               Add to cart
             </Link>
 
-            {/* Buy now */}
+            {/* Buy now → /checkout */}
             <Link
-              href={`/api/checkout?product=${encodeURIComponent(canonSlug(p))}&qty=1`}
+              href="/checkout"
               prefetch={false}
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
             >
