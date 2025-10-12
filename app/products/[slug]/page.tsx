@@ -8,7 +8,7 @@ export const revalidate = 300;
 export const dynamic = "force-static";
 export const dynamicParams = true;
 
-const UI_VERSION = "product-hardened-v8";
+const UI_VERSION = "product-hardened-v9";
 
 /* ---------------- helpers ---------------- */
 function toSlug(s: string) {
@@ -55,7 +55,6 @@ function canonicalHref(p: any) {
   return `/products/${encodeURIComponent(canonicalSlug(p))}`;
 }
 function productImages(p: any): string[] {
-  // only strings; dedupe; cap to 8; make absolute-ish strings safe
   const arr = Array.isArray(p?.images)
     ? (p.images as any[]).filter((x) => typeof x === "string" && x.trim())
     : [];
@@ -65,8 +64,7 @@ function productImages(p: any): string[] {
 
   return unique.map((raw) => {
     const src = safeString(raw, "/images/placeholder.jpg");
-    const withV = src.includes("?") ? `${src}&v=${UI_VERSION}` : `${src}?v=${UI_VERSION}`;
-    return withV;
+    return src.includes("?") ? `${src}&v=${UI_VERSION}` : `${src}?v=${UI_VERSION}`;
   });
 }
 function sanitizeProduct(raw: any) {
@@ -86,8 +84,6 @@ function sanitizeProduct(raw: any) {
   safe.description = typeof raw.description === "string" ? raw.description : "";
   return safe;
 }
-
-/** Accept params as object or promise (Next 15-safe) */
 async function getSlugFromParams(params: any): Promise<string> {
   try {
     const p = await Promise.resolve(params);
@@ -97,7 +93,7 @@ async function getSlugFromParams(params: any): Promise<string> {
   }
 }
 
-/* --------- metadata (loose typing) --------- */
+/* --------- metadata --------- */
 export async function generateMetadata({ params }: any) {
   const slug = await getSlugFromParams(params);
   const pretty =
@@ -124,189 +120,217 @@ export async function generateMetadata({ params }: any) {
 
 /* ---------------- PAGE ---------------- */
 export default async function ProductPage({ params }: any) {
-  const slug = await getSlugFromParams(params);
+  try {
+    const slug = await getSlugFromParams(params);
 
-  // Resolve product or 404
-  const raw = byParam(slug);
-  if (!raw) notFound();
-
-  // Harden all downstream reads
-  const p = sanitizeProduct(raw);
-  const title = safeString(p.title, "Product");
-  const category = safeString(p.category, "");
-  const imgs = productImages(p);
-  const canonical = canonicalHref(p);
-
-  let price = "";
-  if (typeof p.price === "number") {
-    try {
-      price = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
-        p.price
+    const raw = byParam(slug);
+    if (!raw) {
+      // Soft 404 instead of RSC throw to avoid 500s
+      return (
+        <main className="container mx-auto px-4 py-16">
+          <h1 className="text-2xl font-semibold">Product not found</h1>
+          <p className="mt-2 text-gray-600">
+            We couldn’t find that product.{" "}
+            <Link href="/products" className="underline">
+              Browse all products
+            </Link>
+            .
+          </p>
+        </main>
       );
-    } catch {
-      price = `$${p.price}`;
     }
-  } else if (typeof p.price === "string") {
-    price = p.price;
-  }
 
-  return (
-    <main
-      className="container mx-auto px-4 py-10 relative z-[100] clickable-surface"
-      data-ui={`ProductPage@${UI_VERSION}`}
-      style={{ pointerEvents: "auto", isolation: "isolate" }}
-    >
-      <style>{`
-        [data-ui^="ProductPage@"] a,
-        [data-ui^="ProductPage@"] button,
-        [data-ui^="ProductPage@"] [role="button"] {
-          pointer-events:auto !important; position:relative; z-index:20;
-        }
-        .hero-overlay,.gradient-overlay,.noise-overlay,.overlay,[data-overlay],[data-decorative="true"],
-        [class*="overlay-"],[class$="-overlay"],.fixed-overlay,.absolute-overlay,[data-blocking-overlay="true"] {
-          pointer-events:none !important; z-index:-1 !important;
-        }
-      `}</style>
+    const p = sanitizeProduct(raw);
+    const title = safeString(p.title, "Product");
+    const category = safeString(p.category, "");
+    const imgs = productImages(p);
+    const canonical = canonicalHref(p);
 
-      {/* Canonical hint */}
-      <link rel="canonical" href={canonical} />
+    let price = "";
+    if (typeof p.price === "number") {
+      try {
+        price = new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+        }).format(p.price);
+      } catch {
+        price = `$${p.price}`;
+      }
+    } else if (typeof p.price === "string") {
+      price = p.price;
+    }
 
-      {/* Title + subtitle + CTAs under it */}
-      <header className="mb-6">
-        <h1 className="text-3xl md:text-4xl font-bold leading-tight">
-          <Link
-            href={canonical}
-            className="hover:underline underline-offset-4 decoration-2 decoration-transparent hover:decoration-current transition"
-            prefetch={false}
-          >
-            {title}
-          </Link>
-        </h1>
+    return (
+      <main
+        className="container mx-auto px-4 py-10 relative z-[100] clickable-surface"
+        data-ui={`ProductPage@${UI_VERSION}`}
+        style={{ pointerEvents: "auto", isolation: "isolate" }}
+      >
+        <style>{`
+          [data-ui^="ProductPage@"] a,
+          [data-ui^="ProductPage@"] button,
+          [data-ui^="ProductPage@"] [role="button"] {
+            pointer-events:auto !important; position:relative; z-index:20;
+          }
+          .hero-overlay,.gradient-overlay,.noise-overlay,.overlay,[data-overlay],[data-decorative="true"],
+          [class*="overlay-"],[class$="-overlay"],.fixed-overlay,.absolute-overlay,[data-blocking-overlay="true"] {
+            pointer-events:none !important; z-index:-1 !important;
+          }
+        `}</style>
 
-        {category && (
-          <p className="mt-1 text-gray-700">
+        <link rel="canonical" href={canonical} />
+
+        {/* Title + subtitle + CTAs under it */}
+        <header className="mb-6">
+          <h1 className="text-3xl md:text-4xl font-bold leading-tight">
             <Link
-              href={`/categories/${encodeURIComponent(toSlug(category))}`}
+              href={canonical}
               className="hover:underline underline-offset-4 decoration-2 decoration-transparent hover:decoration-current transition"
               prefetch={false}
             >
-              {category}
+              {title}
             </Link>
-          </p>
-        )}
+          </h1>
 
-        <div className="mt-4 flex flex-wrap gap-3">
-          <Link
-            href={imgs[0] || "#"}
-            prefetch={false}
-            className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-gray-50"
-          >
-            View
-          </Link>
-          <Link
-            href={`/api/checkout?product=${encodeURIComponent(canonicalSlug(p))}&qty=1&mode=add`}
-            prefetch={false}
-            className="inline-flex items-center justify-center rounded-lg bg-blue-600/90 px-4 py-2 text-white hover:bg-blue-600"
-          >
-            Add to cart
-          </Link>
-          <Link
-            href={`/api/checkout?product=${encodeURIComponent(canonicalSlug(p))}&qty=1`}
-            prefetch={false}
-            className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-          >
-            Buy
-          </Link>
-        </div>
-      </header>
-
-      {/* Media + Aside */}
-      <section className="grid gap-6 md:grid-cols-[120px_1fr_360px]">
-        {/* LEFT RAIL: vertical thumbnails */}
-        <div className="hidden md:block">
-          <div className="sticky top-24 flex max-h=[70vh] flex-col gap-2 overflow-auto pr-1">
-            {imgs.map((src, i) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                key={src + i}
-                src={src}
-                alt=""
-                className="w-full h-24 object-cover rounded-md border bg-white"
-                loading={i < 3 ? "eager" : "lazy"}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* MAIN IMAGE */}
-        <div>
-          <div className="rounded-xl border bg-white p-2">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={(imgs[0] ?? "/images/placeholder.jpg") as string}
-              alt={title}
-              className="w-full h-auto object-contain"
-              loading="eager"
-            />
-          </div>
-
-          {/* mobile thumbs */}
-          {imgs.length > 1 && (
-            <div className="md:hidden mt-3 grid grid-cols-4 gap-2">
-              {imgs.slice(1, 5).map((src, i) => (
-                <div key={src + i} className="rounded-lg border bg-white p-1">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={src} alt="" className="w-full h-20 object-cover" loading="lazy" />
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* ASIDE */}
-        <aside className="rounded-xl border bg-white p-4 h-fit">
-          <h2 className="text-lg font-semibold">Get this product</h2>
-          <p className="mt-1 text-sm text-gray-600">Instant download. Lifetime access.</p>
-          {price && <div className="mt-4 text-2xl font-semibold">{price}</div>}
-          <div className="mt-4 flex gap-2">
-            <Link
-              href={`/api/checkout?product=${encodeURIComponent(canonicalSlug(p))}&qty=1`}
-              prefetch={false}
-              className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-            >
-              Buy now
-            </Link>
-            <Link
-              href="/cart"
-              prefetch={false}
-              className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-gray-50"
-            >
-              View cart
-            </Link>
-          </div>
           {category && (
-            <p className="mt-4 text-xs text-gray-500">
-              Category:{" "}
+            <p className="mt-1 text-gray-700">
               <Link
                 href={`/categories/${encodeURIComponent(toSlug(category))}`}
-                className="underline"
+                className="hover:underline underline-offset-4 decoration-2 decoration-transparent hover:decoration-current transition"
                 prefetch={false}
               >
                 {category}
               </Link>
             </p>
           )}
-        </aside>
-      </section>
 
-      <section className="mt-10 prose max-w-none">
-        <h2>About this product</h2>
-        <p>
-          {typeof p.description === "string" && p.description.trim()
-            ? p.description
-            : "High-quality digital resource crafted for creators and entrepreneurs."}
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link
+              href={imgs[0] || "#"}
+              prefetch={false}
+              className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-gray-50"
+            >
+              View
+            </Link>
+            <Link
+              href={`/api/checkout?product=${encodeURIComponent(canonicalSlug(p))}&qty=1&mode=add`}
+              prefetch={false}
+              className="inline-flex items-center justify-center rounded-lg bg-blue-600/90 px-4 py-2 text-white hover:bg-blue-600"
+            >
+              Add to cart
+            </Link>
+            <Link
+              href={`/api/checkout?product=${encodeURIComponent(canonicalSlug(p))}&qty=1`}
+              prefetch={false}
+              className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+            >
+              Buy
+            </Link>
+          </div>
+        </header>
+
+        {/* Media + Aside */}
+        <section className="grid gap-6 md:grid-cols-[120px_1fr_360px]">
+          {/* LEFT RAIL: vertical thumbnails */}
+          <div className="hidden md:block">
+            <div className="sticky top-24 flex max-h-[70vh] flex-col gap-2 overflow-auto pr-1">
+              {imgs.map((src, i) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={src + i}
+                  src={src}
+                  alt=""
+                  className="w-full h-24 object-cover rounded-md border bg-white"
+                  loading={i < 3 ? "eager" : "lazy"}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* MAIN IMAGE */}
+          <div>
+            <div className="rounded-xl border bg-white p-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={(imgs[0] ?? "/images/placeholder.jpg") as string}
+                alt={title}
+                className="w-full h-auto object-contain"
+                loading="eager"
+              />
+            </div>
+
+            {/* mobile thumbs */}
+            {imgs.length > 1 && (
+              <div className="md:hidden mt-3 grid grid-cols-4 gap-2">
+                {imgs.slice(1, 5).map((src, i) => (
+                  <div key={src + i} className="rounded-lg border bg-white p-1">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={src} alt="" className="w-full h-20 object-cover" loading="lazy" />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* ASIDE */}
+          <aside className="rounded-xl border bg-white p-4 h-fit">
+            <h2 className="text-lg font-semibold">Get this product</h2>
+            <p className="mt-1 text-sm text-gray-600">Instant download. Lifetime access.</p>
+            {price && <div className="mt-4 text-2xl font-semibold">{price}</div>}
+            <div className="mt-4 flex gap-2">
+              <Link
+                href={`/api/checkout?product=${encodeURIComponent(canonicalSlug(p))}&qty=1`}
+                prefetch={false}
+                className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+              >
+                Buy now
+              </Link>
+              <Link
+                href="/cart"
+                prefetch={false}
+                className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-gray-50"
+              >
+                View cart
+              </Link>
+            </div>
+            {category && (
+              <p className="mt-4 text-xs text-gray-500">
+                Category:{" "}
+                <Link
+                  href={`/categories/${encodeURIComponent(toSlug(category))}`}
+                  className="underline"
+                  prefetch={false}
+                >
+                  {category}
+                </Link>
+              </p>
+            )}
+          </aside>
+        </section>
+
+        <section className="mt-10 prose max-w-none">
+          <h2>About this product</h2>
+          <p>
+            {typeof p.description === "string" && p.description.trim()
+              ? p.description
+              : "High-quality digital resource crafted for creators and entrepreneurs."}
+          </p>
+        </section>
+      </main>
+    );
+  } catch {
+    // Final safety net: render a friendly page instead of a hard 500
+    return (
+      <main className="container mx-auto px-4 py-16">
+        <h1 className="text-2xl font-semibold">We hit a snag</h1>
+        <p className="mt-2 text-gray-600">
+          Something went wrong while loading this product. Try{" "}
+          <Link href="/products" className="underline">
+            browsing all products
+          </Link>
+          .
         </p>
-      </section>
-    </main>
-  );
+      </main>
+    );
+  }
 }
