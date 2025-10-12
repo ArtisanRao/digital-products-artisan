@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 export const revalidate = 300;
 export const dynamic = "force-static";
 
-const UI_VERSION = "product-fallback-v4";
+const UI_VERSION = "product-fallback-v4.1";
 
 // ---------- helpers ----------
 function toSlug(s: string) {
@@ -86,7 +86,7 @@ export async function generateMetadata({
     ? `${p.title} | Digital Products Artisan`
     : "Product | Digital Products Artisan";
   const description =
-    (typeof p?.description === "string" && p.description) ||
+    (typeof (p as any)?.description === "string" && (p as any).description) ||
     "Explore premium digital downloads.";
   const canonical = p
     ? `https://digitalproductsartisan.com${canonicalHref(p)}`
@@ -118,21 +118,26 @@ export default async function ProductPage({
   }
 
   // Defensive locals
-  const title = String(p?.title || "Product");
+  const pAny = p as any;
+  const title = String(pAny?.title || "Product");
   const category =
-    typeof p?.category === "string" && p.category.trim()
-      ? p.category.trim()
+    typeof pAny?.category === "string" && pAny.category.trim()
+      ? pAny.category.trim()
+      : "";
+  const subtitle =
+    typeof pAny?.subtitle === "string" && pAny.subtitle.trim()
+      ? String(pAny.subtitle)
       : "";
   const price =
-    typeof p?.price === "number"
+    typeof pAny?.price === "number"
       ? new Intl.NumberFormat("en-US", {
           style: "currency",
           currency: "USD",
-        }).format(p.price)
-      : typeof p?.price === "string"
-      ? p.price
+        }).format(pAny.price)
+      : typeof pAny?.price === "string"
+      ? pAny.price
       : "";
-  const imgs = productImages(p);
+  const imgs = productImages(pAny);
 
   return (
     <main
@@ -148,16 +153,14 @@ export default async function ProductPage({
         }
         .hero-overlay,.gradient-overlay,.noise-overlay,.overlay,[data-overlay],[data-decorative="true"],
         [class*="overlay-"],[class$="-overlay"],.fixed-overlay,.absolute-overlay,[data-blocking-overlay="true"] {
-          pointer-events:none !important; z-index:-1 !important;
+          pointer-events:none !重要; z-index:-1 !important;
         }
       `}</style>
 
       {/* Title + subline */}
       <h1 className="text-3xl md:text-4xl font-bold">{title}</h1>
       <p className="mt-1 text-gray-700">
-        {typeof p?.subtitle === "string" && p.subtitle.trim()
-          ? String(p.subtitle)
-          : `A curated digital product${category ? ` in ${category}.` : `.`}`}
+        {subtitle || `A curated digital product${category ? ` in ${category}.` : `.`}`}
       </p>
       {price && <div className="mt-4 text-2xl font-semibold">{price}</div>}
 
@@ -190,7 +193,7 @@ export default async function ProductPage({
           <p className="mt-1 text-sm text-gray-600">Instant download. Lifetime access.</p>
           <div className="mt-4 flex gap-2">
             <Link
-              href={`/api/checkout?product=${encodeURIComponent(canonicalSlug(p))}&qty=1`}
+              href={`/api/checkout?product=${encodeURIComponent(canonicalSlug(pAny))}&qty=1`}
               prefetch={false}
               className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
             >
@@ -222,8 +225,8 @@ export default async function ProductPage({
       <section className="mt-10 prose max-w-none">
         <h2>About this product</h2>
         <p>
-          {typeof p?.description === "string" && p.description.trim()
-            ? p.description
+          {typeof pAny?.description === "string" && pAny.description.trim()
+            ? pAny.description
             : "High-quality digital resource crafted for creators and entrepreneurs."}
         </p>
       </section>
