@@ -22,7 +22,6 @@ export default function ProductGallery({
   alt = 'Product image',
   maxThumbs = 4,
 }: Props) {
-  // Normalize extras cap (>= 0)
   const cap = Math.max(0, Math.floor(Number.isFinite(maxThumbs) ? maxThumbs : 4));
 
   // Dedupe + fallback
@@ -73,25 +72,21 @@ export default function ProductGallery({
     [safe, len]
   );
 
-  // Reset preloads when list length changes; warm first 3
   React.useEffect(() => {
     loaded.current.clear();
     if (!len) return;
     preload([0, 1, 2]);
   }, [len, preload]);
 
-  // Always keep neighbors warm
   React.useEffect(() => {
     if (!len) return;
     preload([index - 1, index + 1]);
   }, [index, len, preload]);
 
-  // Clamp index when images array changes
   React.useEffect(() => {
     if (index >= len) setIndex(0);
   }, [len, index]);
 
-  // If collapsing hides the current index, clamp to last visible instead of jumping to 0
   React.useEffect(() => {
     if (!showAll && index >= visibleCount) {
       setIndex(Math.max(0, visibleCount - 1));
@@ -112,16 +107,31 @@ export default function ProductGallery({
 
   const current = safe[index] ?? safe[0];
 
+  // --- NEW: auto-scroll active thumb into view (vertical rail) ---
+  const railRef = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    const el = railRef.current?.querySelector<HTMLButtonElement>(`[data-i="${index}"]`);
+    el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [index, visibleCount]);
+
   return (
     <>
       <div className="grid grid-cols-[80px,1fr] sm:grid-cols-[96px,1fr] gap-4 w-full items-start">
-        {/* Thumbnails (click-only; cover + up to `maxThumbs` extras, rest behind More/Less) */}
-        <div className="flex flex-col gap-3 w-20 sm:w-24 sticky top-4 self-start z-20">
+        {/* Thumbnails (hover + click; cover + up to `maxThumbs` extras, rest behind More/Less) */}
+        <div
+          ref={railRef}
+          className="flex flex-col gap-3 w-20 sm:w-24 sticky top-4 self-start z-20 max-h-[75vh] overflow-auto pr-1"
+          role="listbox"
+          aria-label="Product images"
+        >
           {thumbs.map((src, i) => {
             const active = i === index;
             return (
               <button
                 key={src + i}
+                data-i={i}
+                onMouseEnter={() => setIndex(i)}   // <-- NEW: hover to preview
+                onFocus={() => setIndex(i)}        // keyboard focus
                 onClick={() => setIndex(i)}
                 className={[
                   'relative aspect-square overflow-hidden rounded-md border transition ring-offset-2 cursor-pointer',
@@ -129,6 +139,7 @@ export default function ProductGallery({
                     ? 'ring-2 ring-blue-600 border-blue-200'
                     : 'hover:shadow-sm border-gray-200',
                 ].join(' ')}
+                aria-selected={active}
                 aria-label={`Show image ${i + 1}`}
                 title={`Show image ${i + 1}`}
               >
@@ -195,6 +206,7 @@ export default function ProductGallery({
               alt={alt}
               width={1600}
               height={1200}
+              sizes="(min-width: 1024px) 900px, 100vw"
               className="w-full h-auto object-contain"
               loading="eager"
               priority
@@ -249,6 +261,7 @@ export default function ProductGallery({
                 alt={alt}
                 width={1800}
                 height={1400}
+                sizes="95vw"
                 className="w-auto max-w-[95vw] h-auto max-h-[85vh] object-contain rounded-lg shadow-2xl"
                 loading="eager"
                 priority

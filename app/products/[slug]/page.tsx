@@ -1,13 +1,14 @@
 // app/products/[slug]/page.tsx
 import Link from "next/link";
 import { products } from "@/data/products";
+import ProductGallery from "@/components/product-gallery";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
 export const revalidate = 300;
 
-const UI_VERSION = "product-hardened-v11";
+const UI_VERSION = "product-hardened-v12";
 
 /* ---------------- helpers ---------------- */
 const toSlug = (s: string) =>
@@ -56,7 +57,7 @@ function productImages(p: any): string[] {
       : [];
     const cover = sstr(arr[0] ?? p?.image, "/images/placeholder.jpg");
     const extras = arr.slice(1).filter((x) => typeof x === "string" && x.trim());
-    const unique = Array.from(new Set([cover, ...extras])).slice(0, 8);
+    const unique = Array.from(new Set([cover, ...extras])).slice(0, 12);
     return unique.map((raw) => {
       const src = sstr(raw, "/images/placeholder.jpg");
       return src.includes("?") ? `${src}&v=${UI_VERSION}` : `${src}?v=${UI_VERSION}`;
@@ -90,7 +91,6 @@ function sanitize(raw: any) {
 
 async function getSlugFromParams(params: any): Promise<string> {
   try {
-    // Next 15 may pass an object or a Promise
     const p = await Promise.resolve(params);
     return String(p?.slug ?? "");
   } catch (e) {
@@ -101,7 +101,6 @@ async function getSlugFromParams(params: any): Promise<string> {
 
 /* ---------------- PAGE (metadata temporarily removed) ---------------- */
 export default async function ProductPage({ params }: any) {
-  // Step logs → show up in Vercel Function Logs
   console.log("[PDP] render begin");
   const slug = await getSlugFromParams(params);
   console.log("[PDP] slug =", slug);
@@ -124,7 +123,7 @@ export default async function ProductPage({ params }: any) {
     );
   }
 
-  // Precompute everything BEFORE JSX to avoid throwing mid-render
+  // Precompute
   const p = sanitize(raw);
   const title = sstr(p.title, "Product");
   const category = sstr(p.category, "");
@@ -145,7 +144,6 @@ export default async function ProductPage({ params }: any) {
     price = p.price;
   }
 
-  // Extra guards for arrays/strings used in maps/attributes
   const safeImgs = Array.isArray(imgs) && imgs.length ? imgs : ["/images/placeholder.jpg"];
   const cover = typeof safeImgs[0] === "string" ? safeImgs[0] : "/images/placeholder.jpg";
 
@@ -157,101 +155,74 @@ export default async function ProductPage({ params }: any) {
       data-ui={`ProductPage@${UI_VERSION}`}
       style={{ pointerEvents: "auto", isolation: "isolate" }}
     >
-      <header className="mb-6">
-        <h1 className="text-3xl md:text-4xl font-bold leading-tight">
-          <Link
-            href={canonical}
-            className="hover:underline underline-offset-4 decoration-2 decoration-transparent hover:decoration-current transition"
-            prefetch={false}
-          >
-            {title}
-          </Link>
-        </h1>
+      {/* GRID: Left = Gallery + Title/CTA block under it. Right = Aside. */}
+      <section className="grid gap-6 md:grid-cols-[1fr_360px]">
+        {/* LEFT COLUMN */}
+        <div className="flex flex-col gap-4">
+          {/* Gallery with hover + prev/next + fullscreen */}
+          <ProductGallery images={safeImgs} alt={title} maxThumbs={4} />
 
-        {category ? (
-          <p className="mt-1 text-gray-700">
-            <Link
-              href={`/categories/${encodeURIComponent(toSlug(category))}`}
-              className="hover:underline underline-offset-4 decoration-2 decoration-transparent hover:decoration-current transition"
-              prefetch={false}
-            >
-              {category}
-            </Link>
-          </p>
-        ) : null}
+          {/* Title + subtitle + CTAs (directly under gallery) */}
+          <div className="pt-1">
+            <h1 className="text-3xl md:text-4xl font-bold leading-tight">
+              <Link
+                href={canonical}
+                className="hover:underline underline-offset-4 decoration-2 decoration-transparent hover:decoration-current transition"
+                prefetch={false}
+              >
+                {title}
+              </Link>
+            </h1>
 
-        <div className="mt-4 flex flex-wrap gap-3">
-          <Link
-            href={cover || "#"}
-            prefetch={false}
-            className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-gray-50"
-          >
-            View
-          </Link>
-          <Link
-            href={`/api/checkout?product=${encodeURIComponent(canonSlug(p))}&qty=1&mode=add`}
-            prefetch={false}
-            className="inline-flex items-center justify-center rounded-lg bg-blue-600/90 px-4 py-2 text-white hover:bg-blue-600"
-          >
-            Add to cart
-          </Link>
-          <Link
-            href={`/api/checkout?product=${encodeURIComponent(canonSlug(p))}&qty=1`}
-            prefetch={false}
-            className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-          >
-            Buy
-          </Link>
-        </div>
-      </header>
+            {category ? (
+              <p className="mt-1 text-gray-700">
+                <Link
+                  href={`/categories/${encodeURIComponent(toSlug(category))}`}
+                  className="hover:underline underline-offset-4 decoration-2 decoration-transparent hover:decoration-current transition"
+                  prefetch={false}
+                >
+                  {category}
+                </Link>
+              </p>
+            ) : null}
 
-      <section className="grid gap-6 md:grid-cols-[120px_1fr_360px]">
-        {/* Left rail thumbs */}
-        <div className="hidden md:block">
-          <div className="sticky top-24 flex max-h-[70vh] flex-col gap-2 overflow-auto pr-1">
-            {safeImgs.map((src, i) =>
-              typeof src === "string" ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  key={`${src}-${i}`}
-                  src={src}
-                  alt=""
-                  className="w-full h-24 object-cover rounded-md border bg-white"
-                  loading={i < 3 ? "eager" : "lazy"}
-                />
-              ) : null
-            )}
-          </div>
-        </div>
-
-        {/* Main image */}
-        <div>
-          <div className="rounded-xl border bg-white p-2">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={cover}
-              alt={title}
-              className="w-full h-auto object-contain"
-              loading="eager"
-            />
-          </div>
-
-          {/* mobile thumbs */}
-          {safeImgs.length > 1 ? (
-            <div className="md:hidden mt-3 grid grid-cols-4 gap-2">
-              {safeImgs.slice(1, 5).map((src, i) =>
-                typeof src === "string" ? (
-                  <div key={`${src}-${i}`} className="rounded-lg border bg-white p-1">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={src} alt="" className="w-full h-20 object-cover" loading="lazy" />
-                  </div>
-                ) : null
-              )}
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Link
+                href={cover || "#"}
+                prefetch={false}
+                className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-gray-50"
+              >
+                View
+              </Link>
+              <Link
+                href={`/api/checkout?product=${encodeURIComponent(canonSlug(p))}&qty=1&mode=add`}
+                prefetch={false}
+                className="inline-flex items-center justify-center rounded-lg bg-blue-600/90 px-4 py-2 text-white hover:bg-blue-600"
+              >
+                Add to cart
+              </Link>
+              <Link
+                href={`/api/checkout?product=${encodeURIComponent(canonSlug(p))}&qty=1`}
+                prefetch={false}
+                className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+              >
+                Buy
+              </Link>
             </div>
-          ) : null}
+          </div>
+
+          {/* Description under the title/CTAs on the left */}
+          <section className="mt-6 max-w-none">
+            <h2 className="text-xl font-semibold mb-2">About this product</h2>
+            <p>
+              {typeof p.description === "string" && p.description.trim()
+                ? p.description
+                : "High-quality digital resource crafted for creators and entrepreneurs."}
+            </p>
+          </section>
         </div>
 
-        {/* Aside */}
+        {/* RIGHT COLUMN (ASIDE) */}
         <aside className="rounded-xl border bg-white p-4 h-fit">
           <h2 className="text-lg font-semibold">Get this product</h2>
           <p className="mt-1 text-sm text-gray-600">Instant download. Lifetime access.</p>
@@ -285,15 +256,6 @@ export default async function ProductPage({ params }: any) {
             </p>
           ) : null}
         </aside>
-      </section>
-
-      <section className="mt-10 max-w-none">
-        <h2 className="text-xl font-semibold mb-2">About this product</h2>
-        <p>
-          {typeof p.description === "string" && p.description.trim()
-            ? p.description
-            : "High-quality digital resource crafted for creators and entrepreneurs."}
-        </p>
       </section>
     </main>
   );
