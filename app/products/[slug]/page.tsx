@@ -8,7 +8,7 @@ export const revalidate = 300;
 export const dynamic = "force-static";
 export const dynamicParams = true;
 
-const UI_VERSION = "product-hardened-v7";
+const UI_VERSION = "product-hardened-v8";
 
 /* ---------------- helpers ---------------- */
 function toSlug(s: string) {
@@ -22,39 +22,52 @@ function toSlug(s: string) {
 function isNumeric(x: string) {
   return /^[0-9]+$/.test(String(x || ""));
 }
+function safeString(x: any, fallback = ""): string {
+  return typeof x === "string" ? x : fallback;
+}
 function byParam(param: string) {
   const needle = String(param || "").trim();
   if (!needle) return null;
 
-  if (isNumeric(needle)) {
-    const n = Number(needle);
-    const hit = (products as any[]).find((p: any) => Number(p?.id) === n);
-    if (hit) return hit;
-  }
-  const bySlug =
-    (products as any[]).find(
-      (p: any) => String(p?.slug || "").toLowerCase() === needle.toLowerCase()
-    ) ?? null;
-  if (bySlug) return bySlug;
+  try {
+    if (isNumeric(needle)) {
+      const n = Number(needle);
+      const hit = (products as any[]).find((p: any) => Number(p?.id) === n);
+      if (hit) return hit;
+    }
+    const bySlug =
+      (products as any[]).find(
+        (p: any) => String(p?.slug || "").toLowerCase() === needle.toLowerCase()
+      ) ?? null;
+    if (bySlug) return bySlug;
 
-  const byTitle =
-    (products as any[]).find((p: any) => toSlug(p?.title) === needle) ?? null;
-  return byTitle;
+    const byTitle =
+      (products as any[]).find((p: any) => toSlug(p?.title) === needle) ?? null;
+    return byTitle;
+  } catch {
+    return null;
+  }
 }
 function canonicalSlug(p: any) {
-  return String(p?.slug || toSlug(p?.title || "product"));
+  return safeString(p?.slug) || toSlug(safeString(p?.title, "product"));
 }
 function canonicalHref(p: any) {
   return `/products/${encodeURIComponent(canonicalSlug(p))}`;
 }
 function productImages(p: any): string[] {
-  const arr = Array.isArray(p?.images) ? p.images.filter(Boolean) : [];
-  const cover = (arr[0] ?? p?.image ?? "/images/placeholder.jpg") as string;
-  const extras = arr.slice(1).filter(Boolean);
+  // only strings; dedupe; cap to 8; make absolute-ish strings safe
+  const arr = Array.isArray(p?.images)
+    ? (p.images as any[]).filter((x) => typeof x === "string" && x.trim())
+    : [];
+  const cover = safeString(arr[0] ?? p?.image, "/images/placeholder.jpg");
+  const extras = arr.slice(1).filter((x) => typeof x === "string" && x.trim());
   const unique = Array.from(new Set([cover, ...extras])).slice(0, 8);
-  return unique.map((src) =>
-    src.includes("?") ? `${src}&v=${UI_VERSION}` : `${src}?v=${UI_VERSION}`
-  );
+
+  return unique.map((raw) => {
+    const src = safeString(raw, "/images/placeholder.jpg");
+    const withV = src.includes("?") ? `${src}&v=${UI_VERSION}` : `${src}?v=${UI_VERSION}`;
+    return withV;
+  });
 }
 function sanitizeProduct(raw: any) {
   const safe: any = {};
@@ -74,13 +87,17 @@ function sanitizeProduct(raw: any) {
   return safe;
 }
 
-/** Next 15-safe: normalize params whether it's a plain object or a Promise */
+/** Accept params as object or promise (Next 15-safe) */
 async function getSlugFromParams(params: any): Promise<string> {
-  const p = await Promise.resolve(params as any);
-  return String(p?.slug ?? "");
+  try {
+    const p = await Promise.resolve(params);
+    return String(p?.slug ?? "");
+  } catch {
+    return "";
+  }
 }
 
-/* --------- metadata (keep loose typing to satisfy Next’s constraint) --------- */
+/* --------- metadata (loose typing) --------- */
 export async function generateMetadata({ params }: any) {
   const slug = await getSlugFromParams(params);
   const pretty =
@@ -109,22 +126,29 @@ export async function generateMetadata({ params }: any) {
 export default async function ProductPage({ params }: any) {
   const slug = await getSlugFromParams(params);
 
-  const raw = byParam(String(slug));
+  // Resolve product or 404
+  const raw = byParam(slug);
   if (!raw) notFound();
 
+  // Harden all downstream reads
   const p = sanitizeProduct(raw);
-  const title = p.title || "Product";
-  const category = p.category || "";
-  const price =
-    typeof p.price === "number"
-      ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
-          p.price
-        )
-      : typeof p.price === "string"
-      ? p.price
-      : "";
+  const title = safeString(p.title, "Product");
+  const category = safeString(p.category, "");
   const imgs = productImages(p);
   const canonical = canonicalHref(p);
+
+  let price = "";
+  if (typeof p.price === "number") {
+    try {
+      price = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
+        p.price
+      );
+    } catch {
+      price = `$${p.price}`;
+    }
+  } else if (typeof p.price === "string") {
+    price = p.price;
+  }
 
   return (
     <main
@@ -200,7 +224,7 @@ export default async function ProductPage({ params }: any) {
       <section className="grid gap-6 md:grid-cols-[120px_1fr_360px]">
         {/* LEFT RAIL: vertical thumbnails */}
         <div className="hidden md:block">
-          <div className="sticky top-24 flex max-h-[70vh] flex-col gap-2 overflow-auto pr-1">
+          <div className="sticky top-24 flex max-h=[70vh] flex-col gap-2 overflow-auto pr-1">
             {imgs.map((src, i) => (
               // eslint-disable-next-line @next/next/no-img-element
               <img
