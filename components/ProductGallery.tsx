@@ -107,7 +107,7 @@ export default function ProductGallery({
 
   const current = safe[index] ?? safe[0];
 
-  // --- NEW: auto-scroll active thumb into view (vertical rail) ---
+  // Auto-scroll active thumb into view
   const railRef = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
     const el = railRef.current?.querySelector<HTMLButtonElement>(`[data-i="${index}"]`);
@@ -120,7 +120,7 @@ export default function ProductGallery({
         {/* Thumbnails (hover + click; cover + up to `maxThumbs` extras, rest behind More/Less) */}
         <div
           ref={railRef}
-          className="flex flex-col gap-3 w-20 sm:w-24 sticky top-4 self-start z-20 max-h-[75vh] overflow-auto pr-1"
+          className="flex flex-col gap-3 w-20 sm:w-24 sticky top-4 self-start z-20 max-h=[75vh] max-h-[75vh] overflow-auto pr-1"
           role="listbox"
           aria-label="Product images"
         >
@@ -130,8 +130,8 @@ export default function ProductGallery({
               <button
                 key={src + i}
                 data-i={i}
-                onMouseEnter={() => setIndex(i)}   // <-- NEW: hover to preview
-                onFocus={() => setIndex(i)}        // keyboard focus
+                onMouseEnter={() => setIndex(i)} // hover to preview
+                onFocus={() => setIndex(i)}      // keyboard focus
                 onClick={() => setIndex(i)}
                 className={[
                   'relative aspect-square overflow-hidden rounded-md border transition ring-offset-2 cursor-pointer',
