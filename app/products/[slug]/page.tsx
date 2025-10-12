@@ -73,12 +73,13 @@ function sanitizeProduct(raw: any) {
   return safe;
 }
 
-/* --------- types compatible with Next 15 page constraint --------- */
-type Props = { params: Promise<{ slug: string }> };
+/* --------- Next 15-friendly types --------- */
+type Params = { slug: string };
+type Props = { params: Params | Promise<Params> };
 
 /* --------- metadata --------- */
 export async function generateMetadata({ params }: Props) {
-  const { slug } = await params;
+  const { slug } = await Promise.resolve(params);
   const pretty =
     String(slug || "")
       .split("/")
@@ -103,7 +104,7 @@ export async function generateMetadata({ params }: Props) {
 
 /* ---------------- PAGE ---------------- */
 export default async function ProductPage({ params }: Props) {
-  const { slug } = await params;
+  const { slug } = await Promise.resolve(params);
 
   const raw = byParam(String(slug));
   if (!raw) notFound();
