@@ -26,6 +26,7 @@ export default function ProductError({
       <p className="mt-2 text-gray-600">
         Try{" "}
         <button
+          type="button"
           onClick={() => reset()}
           className="underline underline-offset-4 decoration-2"
         >
