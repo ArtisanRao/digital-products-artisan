@@ -1,11 +1,11 @@
 // app/products/[slug]/page.tsx
 import Link from "next/link";
-import { products } from "@/data/products";
+import { products as _products } from "@/data/products";
 
 export const runtime = "nodejs";
 export const revalidate = 300;
 
-const UI_VERSION = "product-hardened-v8";
+const UI_VERSION = "product-hardened-v9";
 
 /* ---------------- helpers ---------------- */
 const toSlug = (s: string) =>
@@ -18,28 +18,37 @@ const toSlug = (s: string) =>
 
 const isNumeric = (x: string) => /^[0-9]+$/.test(String(x || ""));
 
+function getProductsArray() {
+  // If the import isn’t an array for any reason, guard it
+  try {
+    return Array.isArray(_products) ? _products : [];
+  } catch {
+    return [];
+  }
+}
+
 function byParam(param: string) {
   const needle = String(param || "").trim();
   if (!needle) return null;
 
+  const products = getProductsArray();
+
   // by numeric id
   if (isNumeric(needle)) {
     const n = Number(needle);
-    const hit = (products as any[]).find((p) => Number(p?.id) === n);
+    const hit = products.find((p: any) => Number(p?.id) === n);
     if (hit) return hit;
   }
 
   // by slug
   const bySlug =
-    (products as any[]).find(
-      (p) => String(p?.slug || "").toLowerCase() === needle.toLowerCase()
+    products.find(
+      (p: any) => String(p?.slug || "").toLowerCase() === needle.toLowerCase()
     ) ?? null;
   if (bySlug) return bySlug;
 
   // by normalized title
-  const byTitle =
-    (products as any[]).find((p) => toSlug(p?.title) === needle) ?? null;
-
+  const byTitle = products.find((p: any) => toSlug(p?.title) === needle) ?? null;
   return byTitle;
 }
 
@@ -77,42 +86,19 @@ function sanitizeProduct(raw: any) {
   return out;
 }
 
-/* ------- metadata stays generic/safe ------- */
-export async function generateMetadata(props: any) {
-  const { params } = props || {};
-  const { slug } = (await Promise.resolve(params)) || {};
-  const pretty =
-    String(slug ?? "")
-      .split("/")
-      .pop()
-      ?.replace(/-/g, " ")
-      .replace(/\b\w/g, (m) => m.toUpperCase()) || "Product";
-
-  const title = `${pretty} | Digital Products Artisan`;
-  const description = "Explore premium digital downloads.";
-  const canonical = `https://digitalproductsartisan.com/products/${encodeURIComponent(
-    String(slug ?? "")
-  )}`;
-
-  return {
-    title,
-    description,
-    alternates: { canonical },
-    openGraph: { title, description, type: "product", url: canonical },
-    twitter: { card: "summary_large_image", title, description },
-  };
-}
-
 /* ---------------- PAGE ---------------- */
 export default async function ProductPage(props: any) {
   const { params } = props || {};
-  const { slug } = (await Promise.resolve(params)) || {};
+  // Next 15 sometimes passes plain object; normalize without assuming a Promise
+  const safeParams = (await Promise.resolve(params)) || {};
+  const slug = String(safeParams.slug ?? "");
 
   try {
-    const raw = byParam(String(slug ?? ""));
+    const raw = byParam(slug);
+
+    // No hard throws — render soft-not-found instead
     if (!raw) {
-      // Soft 404 (no throws) — avoids RSC 500s
-      const safeSlug = toSlug(String(slug || "product"));
+      const safeSlug = toSlug(slug || "product");
       return (
         <main className="container mx-auto px-4 py-16">
           <h1 className="text-3xl font-bold">Product not found</h1>
@@ -132,12 +118,21 @@ export default async function ProductPage(props: any) {
     const p = sanitizeProduct(raw);
     const title = p.title || "Product";
     const category = p.category || "";
-    const priceText =
-      typeof p.price === "number"
-        ? `$${p.price.toFixed(2)}`
-        : typeof p.price === "string"
-        ? p.price
-        : "";
+
+    let priceText = "";
+    if (typeof p.price === "number") {
+      try {
+        priceText = new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+        }).format(p.price);
+      } catch {
+        priceText = `$${p.price.toFixed?.(2) ?? String(p.price)}`;
+      }
+    } else if (typeof p.price === "string") {
+      priceText = p.price;
+    }
+
     const imgs = productImages(p);
 
     return (
@@ -146,6 +141,18 @@ export default async function ProductPage(props: any) {
         data-ui={`ProductPage@${UI_VERSION}`}
         style={{ pointerEvents: "auto", isolation: "isolate" }}
       >
+        <style>{`
+          [data-ui^="ProductPage@"] a,
+          [data-ui^="ProductPage@"] button,
+          [data-ui^="ProductPage@"] [role="button"] {
+            pointer-events:auto !important; position:relative; z-index:20;
+          }
+          .hero-overlay,.gradient-overlay,.noise-overlay,.overlay,[data-overlay],[data-decorative="true"],
+          [class*="overlay-"],[class$="-overlay"],.fixed-overlay,.absolute-overlay,[data-blocking-overlay="true"] {
+            pointer-events:none !important; z-index:-1 !important;
+          }
+        `}</style>
+
         <h1 className="text-3xl md:text-4xl font-bold">{title}</h1>
         <p className="mt-1 text-gray-700">
           {`A curated digital product${category ? ` in ${category}.` : `.`}`}
@@ -219,17 +226,21 @@ export default async function ProductPage(props: any) {
         </section>
       </main>
     );
-  } catch {
-    // Absolute last-ditch non-throw fallback
+  } catch (err) {
+    console.error("[products/[slug]] render error:", err);
+    // Non-throw fallback so error boundary won’t trigger
     return (
       <main className="container mx-auto px-4 py-16">
-        <h1 className="text-3xl font-bold">Something went wrong</h1>
+        <h1 className="text-3xl font-bold">Product page error</h1>
         <p className="mt-2 text-gray-700">
-          We’re sorry — this product page couldn’t be displayed right now.
+          Something went wrong while loading this product.
         </p>
-        <div className="mt-6">
+        <div className="mt-6 flex gap-3">
           <Link href="/products" prefetch={false} className="underline">
-            Browse all products →
+            All products
+          </Link>
+          <Link href="/" prefetch={false} className="underline">
+            Home
           </Link>
         </div>
       </main>
