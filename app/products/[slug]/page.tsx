@@ -1,4 +1,3 @@
-// app/products/[slug]/page.tsx
 import Link from "next/link";
 import { products } from "@/data/products";
 import ProductGallery from "@/components/ProductGallery";
@@ -33,7 +32,6 @@ function pickByParam(param: string) {
       const hit = (products as any[]).find((p: any) => Number(p?.id) === n);
       if (hit) return hit;
     }
-
     const bySlug =
       (products as any[]).find(
         (p: any) => String(p?.slug || "").toLowerCase() === needle.toLowerCase()
@@ -60,7 +58,6 @@ function productImages(p: any): string[] {
     const cover = sstr(arr[0] ?? p?.image, "/images/placeholder.jpg");
     const extras = arr.slice(1).filter((x) => typeof x === "string" && x.trim());
     const unique = Array.from(new Set([cover, ...extras])).slice(0, 12);
-
     return unique.map((raw) => {
       const src = sstr(raw, "/images/placeholder.jpg");
       return src.includes("?") ? `${src}&v=${UI_VERSION}` : `${src}?v=${UI_VERSION}`;
@@ -151,9 +148,8 @@ export default async function ProductPage({ params }: any) {
       style={{ pointerEvents: "auto", isolation: "isolate" }}
     >
       <section className="grid gap-6 md:grid-cols-[1fr_360px]">
-        {/* LEFT: Gallery + Title/Subtitle + 'More' link */}
+        {/* LEFT: Gallery + Title/Subtitle + 'More' under subtitle */}
         <div className="flex flex-col gap-4">
-          {/* The gallery makes the MAIN preview hoverable (arrows appear). Left thumbs change on click only. */}
           <ProductGallery images={safeImgs} alt={title} maxThumbs={4} />
 
           <div className="pt-1">
@@ -167,27 +163,39 @@ export default async function ProductPage({ params }: any) {
               </Link>
             </h1>
 
+            {/* Subtitle (category) */}
             {category ? (
-              <p className="mt-1 text-gray-700">
-                <Link
-                  href={`/categories/${encodeURIComponent(toSlug(category))}`}
-                  className="hover:underline underline-offset-4 decoration-2 decoration-transparent hover:decoration-current transition"
-                  prefetch={false}
-                >
-                  {category}
-                </Link>
-              </p>
-            ) : null}
+              <>
+                <p className="mt-1 text-gray-700">
+                  <Link
+                    href={`/categories/${encodeURIComponent(toSlug(category))}`}
+                    className="hover:underline underline-offset-4 decoration-2 decoration-transparent hover:decoration-current transition"
+                    prefetch={false}
+                  >
+                    {category}
+                  </Link>
+                </p>
 
-            {/* Only "More" link here – CTAs live in the right column */}
-            <div className="mt-3">
-              <a
-                href="#details"
-                className="inline-flex items-center gap-2 rounded-lg border px-4 py-2 hover:bg-gray-50"
-              >
-                More about this product
-              </a>
-            </div>
+                {/* 'More' directly under subtitle */}
+                <div className="mt-3">
+                  <a
+                    href="#details"
+                    className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                  >
+                    More
+                  </a>
+                </div>
+              </>
+            ) : (
+              <div className="mt-3">
+                <a
+                  href="#details"
+                  className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                >
+                  More
+                </a>
+              </div>
+            )}
           </div>
 
           {/* Details (anchor target) */}

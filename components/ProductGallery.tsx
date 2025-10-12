@@ -39,26 +39,28 @@ export default function ProductGallery({
 
   const len = safe.length;
 
-  // Collapsed vs full thumb list
+  // When collapsed, show: cover (1) + extras (cap)
   const collapsedCount = Math.min(len, 1 + cap);
   const hasMore = len > collapsedCount;
   const visibleCount = showAll ? len : collapsedCount;
+
   const thumbs = React.useMemo(() => safe.slice(0, visibleCount), [safe, visibleCount]);
 
   const prev = React.useCallback(() => {
     setIndex((i) => (i - 1 + len) % len);
   }, [len]);
+
   const next = React.useCallback(() => {
     setIndex((i) => (i + 1) % len);
   }, [len]);
 
-  // Preload neighbors (speed)
+  // Preload neighbors
   const loaded = React.useRef<Set<number>>(new Set());
   const preload = React.useCallback(
     (idxs: number[]) => {
       if (typeof window === 'undefined') return;
       idxs.forEach((i) => {
-        const j = ((i % len) + len) % len;
+        const j = ((i % len) + len) % len; // clamp
         if (!loaded.current.has(j) && safe[j]) {
           const img = new window.Image();
           img.src = safe[j]!;
@@ -68,11 +70,13 @@ export default function ProductGallery({
     },
     [safe, len]
   );
+
   React.useEffect(() => {
     loaded.current.clear();
     if (!len) return;
     preload([0, 1, 2]);
   }, [len, preload]);
+
   React.useEffect(() => {
     if (!len) return;
     preload([index - 1, index + 1]);
@@ -81,13 +85,14 @@ export default function ProductGallery({
   React.useEffect(() => {
     if (index >= len) setIndex(0);
   }, [len, index]);
+
   React.useEffect(() => {
     if (!showAll && index >= visibleCount) {
       setIndex(Math.max(0, visibleCount - 1));
     }
   }, [showAll, visibleCount, index]);
 
-  // Keyboard in fullscreen
+  // Keyboard support in fullscreen
   React.useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -101,7 +106,7 @@ export default function ProductGallery({
 
   const current = safe[index] ?? safe[0];
 
-  // Keep active thumb visible in the rail
+  // Auto-scroll active thumb into view
   const railRef = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
     const el = railRef.current?.querySelector<HTMLButtonElement>(`[data-i="${index}"]`);
@@ -111,7 +116,7 @@ export default function ProductGallery({
   return (
     <>
       <div className="grid grid-cols-[80px,1fr] sm:grid-cols-[96px,1fr] gap-4 w-full items-start">
-        {/* Thumbnails: CLICK ONLY (no hover swap) */}
+        {/* Thumbnails (click-only; hover just animates) */}
         <div
           ref={railRef}
           className="flex flex-col gap-3 w-20 sm:w-24 sticky top-4 self-start z-20 max-h-[75vh] overflow-auto pr-1"
@@ -124,12 +129,10 @@ export default function ProductGallery({
               <button
                 key={src + i}
                 data-i={i}
-                onClick={() => setIndex(i)}
+                onClick={() => setIndex(i)} // CLICK to change (no hover change)
                 className={[
                   'relative aspect-square overflow-hidden rounded-md border transition ring-offset-2 cursor-pointer',
-                  active
-                    ? 'ring-2 ring-blue-600 border-blue-200'
-                    : 'hover:shadow-sm border-gray-200',
+                  active ? 'ring-2 ring-blue-600 border-blue-200' : 'border-gray-200',
                 ].join(' ')}
                 aria-selected={active}
                 aria-label={`Show image ${i + 1}`}
@@ -140,7 +143,7 @@ export default function ProductGallery({
                   alt={`${alt} thumbnail ${i + 1}`}
                   fill
                   sizes="96px"
-                  className="object-cover"
+                  className="object-cover transition-transform duration-200 ease-out hover:scale-95"
                 />
               </button>
             );
@@ -159,9 +162,9 @@ export default function ProductGallery({
           )}
         </div>
 
-        {/* Main image / viewer (click to open fullscreen) */}
-        <div className="relative w-full max-w-full overflow-hidden rounded-lg border bg-white group">
-          {/* Open fullscreen */}
+        {/* Main image / viewer */}
+        <div className="relative w-full max-w-full overflow-hidden rounded-lg border bg-white">
+          {/* Expand */}
           <button
             onClick={() => setOpen(true)}
             className="absolute top-3 right-3 z-30 inline-flex items-center justify-center rounded-full w-10 h-10 bg-white/90 shadow-md hover:bg-white"
@@ -170,19 +173,19 @@ export default function ProductGallery({
             <Maximize2 className="w-5 h-5" />
           </button>
 
-          {/* Prev / Next (show on hover) */}
+          {/* Prev / Next on page (hover interaction is visual only) */}
           {len > 1 && (
             <>
               <button
                 onClick={prev}
-                className="opacity-0 group-hover:opacity-100 transition absolute left-3 top-1/2 -translate-y-1/2 z-30 inline-flex items-center justify-center rounded-full w-11 h-11 bg-neutral-800/90 text-white shadow-md hover:bg-neutral-900 focus:outline-none"
+                className="absolute left-3 top-1/2 -translate-y-1/2 z-30 inline-flex items-center justify-center rounded-full w-11 h-11 bg-neutral-800/90 text-white shadow-md hover:bg-neutral-900 focus:outline-none"
                 aria-label="Previous image"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
               <button
                 onClick={next}
-                className="opacity-0 group-hover:opacity-100 transition absolute right-3 top-1/2 -translate-y-1/2 z-30 inline-flex items-center justify-center rounded-full w-11 h-11 bg-neutral-800/90 text-white shadow-md hover:bg-neutral-900 focus:outline-none"
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-30 inline-flex items-center justify-center rounded-full w-11 h-11 bg-neutral-800/90 text-white shadow-md hover:bg-neutral-900 focus:outline-none"
                 aria-label="Next image"
               >
                 <ChevronRight className="w-5 h-5" />
@@ -190,13 +193,8 @@ export default function ProductGallery({
             </>
           )}
 
-          {/* Main image (clickable) */}
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            className="block w-full cursor-zoom-in"
-            aria-label="Open fullscreen preview"
-          >
+          {/* Main image with hover zoom-out */}
+          <div className="w-full">
             <Image
               key={current}
               src={current}
@@ -204,11 +202,11 @@ export default function ProductGallery({
               width={1600}
               height={1200}
               sizes="(min-width: 1024px) 900px, 100vw"
-              className="w-full h-auto object-contain"
+              className="w-full h-auto object-contain transition-transform duration-200 ease-out hover:scale-95"
               loading="eager"
               priority
             />
-          </button>
+          </div>
         </div>
       </div>
 
@@ -222,6 +220,7 @@ export default function ProductGallery({
           <DialogDescription className="sr-only">Fullscreen preview</DialogDescription>
 
           <div className="relative w-full h-full bg-black/80 flex items-center justify-center">
+            {/* Close */}
             <button
               onClick={() => setOpen(false)}
               className="absolute top-4 right-4 z-[120] inline-flex items-center justify-center rounded-full w-12 h-12 bg-white/95 text-gray-800 shadow-lg hover:bg-white"
@@ -230,6 +229,7 @@ export default function ProductGallery({
               <X className="w-7 h-7" />
             </button>
 
+            {/* Prev / Next in fullscreen */}
             {len > 1 && (
               <>
                 <button
