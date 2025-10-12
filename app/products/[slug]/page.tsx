@@ -148,7 +148,7 @@ export default async function ProductPage({ params }: any) {
       style={{ pointerEvents: "auto", isolation: "isolate" }}
     >
       <section className="grid gap-6 md:grid-cols-[1fr_360px]">
-        {/* LEFT: Gallery + Title/Subtitle + 'More' under subtitle */}
+        {/* LEFT: Gallery + Title/Subtitle */}
         <div className="flex flex-col gap-4">
           <ProductGallery images={safeImgs} alt={title} maxThumbs={4} />
 
@@ -165,37 +165,16 @@ export default async function ProductPage({ params }: any) {
 
             {/* Subtitle (category) */}
             {category ? (
-              <>
-                <p className="mt-1 text-gray-700">
-                  <Link
-                    href={`/categories/${encodeURIComponent(toSlug(category))}`}
-                    className="hover:underline underline-offset-4 decoration-2 decoration-transparent hover:decoration-current transition"
-                    prefetch={false}
-                  >
-                    {category}
-                  </Link>
-                </p>
-
-                {/* 'More' directly under subtitle */}
-                <div className="mt-3">
-                  <a
-                    href="#details"
-                    className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-                  >
-                    More
-                  </a>
-                </div>
-              </>
-            ) : (
-              <div className="mt-3">
-                <a
-                  href="#details"
-                  className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+              <p className="mt-1 text-gray-700">
+                <Link
+                  href={`/categories/${encodeURIComponent(toSlug(category))}`}
+                  className="hover:underline underline-offset-4 decoration-2 decoration-transparent hover:decoration-current transition"
+                  prefetch={false}
                 >
-                  More
-                </a>
-              </div>
-            )}
+                  {category}
+                </Link>
+              </p>
+            ) : null}
           </div>
 
           {/* Details (anchor target) */}
@@ -206,6 +185,17 @@ export default async function ProductPage({ params }: any) {
                 ? p.description
                 : "High-quality digital resource crafted for creators and entrepreneurs."}
             </p>
+
+            {/* 'More' moved here, under About text */}
+            <div className="mt-4">
+              <a
+                href="#more"
+                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+              >
+                More
+              </a>
+              <div id="more" />
+            </div>
           </section>
         </div>
 

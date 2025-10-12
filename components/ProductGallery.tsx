@@ -143,7 +143,7 @@ export default function ProductGallery({
                   alt={`${alt} thumbnail ${i + 1}`}
                   fill
                   sizes="96px"
-                  className="object-cover transition-transform duration-200 ease-out hover:scale-95"
+                  className="object-cover transition-transform duration-200 ease-out hover:scale-105"
                 />
               </button>
             );
@@ -173,7 +173,7 @@ export default function ProductGallery({
             <Maximize2 className="w-5 h-5" />
           </button>
 
-          {/* Prev / Next on page (hover interaction is visual only) */}
+          {/* Prev / Next on page */}
           {len > 1 && (
             <>
               <button
@@ -193,7 +193,7 @@ export default function ProductGallery({
             </>
           )}
 
-          {/* Main image with hover zoom-out */}
+          {/* Main image with hover zoom-in */}
           <div className="w-full">
             <Image
               key={current}
@@ -202,7 +202,7 @@ export default function ProductGallery({
               width={1600}
               height={1200}
               sizes="(min-width: 1024px) 900px, 100vw"
-              className="w-full h-auto object-contain transition-transform duration-200 ease-out hover:scale-95"
+              className="w-full h-auto object-contain transition-transform duration-200 ease-out hover:scale-105"
               loading="eager"
               priority
             />
