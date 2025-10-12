@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import * as RechartsPrimitive from "recharts"
-import type { TooltipProps, LegendProps } from "recharts"
+import type { LegendProps } from "recharts"
 
 import { cn } from "@/lib/utils"
 
@@ -94,24 +94,44 @@ ${colorConfig
   )
 }
 
-/* ===== Tooltip (typed) ===== */
+/* ===== Tooltip (typed minimally to what we use) ===== */
 
 const ChartTooltip = RechartsPrimitive.Tooltip
 
-type ChartTooltipContentProps = TooltipProps<number, string> &
-  React.ComponentProps<"div"> & {
-    hideLabel?: boolean
-    hideIndicator?: boolean
-    indicator?: "line" | "dot" | "dashed"
-    nameKey?: string
-    labelKey?: string
-  }
+type TooltipItem = {
+  name?: string
+  value?: number | string
+  dataKey?: string | number
+  color?: string
+  payload?: Record<string, unknown>
+}
+
+type ChartTooltipContentProps = React.ComponentProps<"div"> & {
+  active?: boolean
+  payload?: TooltipItem[]
+  label?: unknown
+  labelFormatter?: (value: unknown, payload?: TooltipItem[]) => React.ReactNode
+  formatter?: (
+    value: unknown,
+    name: unknown,
+    item: TooltipItem,
+    index: number,
+    rawPayload?: unknown
+  ) => React.ReactNode
+  labelClassName?: string
+  hideLabel?: boolean
+  hideIndicator?: boolean
+  indicator?: "line" | "dot" | "dashed"
+  nameKey?: string
+  labelKey?: string
+  color?: string
+}
 
 const ChartTooltipContent = React.forwardRef<HTMLDivElement, ChartTooltipContentProps>(
   (
     {
       active,
-      payload, // typed from TooltipProps
+      payload, // our own minimal typing
       className,
       indicator = "dot",
       hideLabel = false,
@@ -178,12 +198,9 @@ const ChartTooltipContent = React.forwardRef<HTMLDivElement, ChartTooltipContent
               key
             )
 
-            // Recharts types don’t guarantee these at compile time; handle safely.
             const indicatorColor =
               color ||
-              // @ts-expect-error – runtime-provided by recharts
-              item.payload?.fill ||
-              // @ts-expect-error – runtime-provided by recharts
+              (item.payload && (item.payload as any).fill) ||
               item.color
 
             return (
@@ -195,7 +212,8 @@ const ChartTooltipContent = React.forwardRef<HTMLDivElement, ChartTooltipContent
                 )}
               >
                 {formatter && item.value !== undefined && item.name ? (
-                  // @ts-expect-error – formatter’s runtime signature is flexible
+                  // formatter’s runtime signature is permissive
+                  // @ts-expect-error
                   formatter(item.value, item.name, item, index, item.payload)
                 ) : (
                   <>
@@ -253,7 +271,7 @@ const ChartTooltipContent = React.forwardRef<HTMLDivElement, ChartTooltipContent
 )
 ChartTooltipContent.displayName = "ChartTooltip"
 
-/* ===== Legend passthrough (if you use it elsewhere) ===== */
+/* ===== Legend passthrough (typed) ===== */
 
 const ChartLegend = RechartsPrimitive.Legend
 
@@ -278,11 +296,11 @@ const ChartLegendContent = React.forwardRef<
       )}
     >
       {payload.map((item) => {
-        const key = `${nameKey || item.dataKey || "value"}`
+        const key = `${nameKey || (item as any).dataKey || "value"}`
         const itemConfig = getPayloadConfigFromPayload(config, item as unknown as Record<string, unknown>, key)
         return (
           <div
-            key={String(item.value)}
+            key={String((item as any).value)}
             className="flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-muted-foreground"
           >
             {itemConfig?.icon && !hideIcon ? (
@@ -309,7 +327,7 @@ function getPayloadConfigFromPayload(
   if (typeof payload !== "object" || payload === null) return undefined
 
   const payloadPayload =
-    "payload" in payload &&
+    "payload" in (payload as any) &&
     typeof (payload as any).payload === "object" &&
     (payload as any).payload !== null
       ? (payload as any).payload
