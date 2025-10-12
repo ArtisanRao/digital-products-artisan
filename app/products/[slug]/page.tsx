@@ -145,7 +145,7 @@ export default async function ProductPage({ params }: any) {
   const safeImgs =
     Array.isArray(imgs) && imgs.length ? imgs : ["/images/placeholder.jpg"];
 
-  // Numeric product id for buttons
+  // numeric id (for buttons)
   const productIdNum: number = (() => {
     const n = Number(p.id);
     if (Number.isFinite(n)) return n;
@@ -162,7 +162,7 @@ export default async function ProductPage({ params }: any) {
       style={{ pointerEvents: "auto", isolation: "isolate" }}
     >
       <section className="grid gap-6 md:grid-cols-[1fr_360px]">
-        {/* LEFT: Gallery + Title/Subtitle and 'More' button (blue) under subtitle */}
+        {/* LEFT: Gallery + Title/Subtitle */}
         <div className="flex flex-col gap-4">
           <ProductGallery images={safeImgs} alt={title} maxThumbs={4} />
 
@@ -188,30 +188,27 @@ export default async function ProductPage({ params }: any) {
                 </Link>
               </div>
             ) : null}
-
-            {/* Blue 'More' directly under the subtitle */}
-            <div className="mt-3">
-              <a
-                href="#details"
-                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-              >
-                More
-              </a>
-            </div>
           </div>
 
-          {/* Details */}
+          {/* Details + More (blue) BELOW the About section */}
           <section id="details" className="mt-6 max-w-none">
             <h2 className="text-xl font-semibold mb-2">About this product</h2>
-            <p>
+            <p className="mb-3">
               {typeof p.description === "string" && p.description.trim()
                 ? p.description
                 : "High-quality digital resource crafted for creators and entrepreneurs."}
             </p>
+
+            <a
+              href="#details"
+              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+            >
+              More
+            </a>
           </section>
         </div>
 
-        {/* RIGHT: Purchase box (Add silently + Buy now → payment) */}
+        {/* RIGHT: Purchase box (silent Add + Buy now → payment) */}
         <aside className="rounded-xl border bg-white p-4 h-fit">
           <h2 className="text-lg font-semibold">Get this product</h2>
           <p className="mt-1 text-sm text-gray-600">Instant download. Lifetime access.</p>
@@ -219,12 +216,10 @@ export default async function ProductPage({ params }: any) {
           {price ? <div className="mt-4 text-2xl font-semibold">{price}</div> : null}
 
           <div className="mt-4 flex flex-wrap gap-2">
-            {/* Add to cart (silent add + badge update via your existing component) */}
             {Number.isFinite(productIdNum) && productIdNum > 0 ? (
               <AddToCartButton productId={productIdNum} />
             ) : null}
 
-            {/* Buy now → payment (pass id and slug for robust fallback) */}
             {Number.isFinite(productIdNum) && productIdNum > 0 ? (
               <BuyNowButton productId={productIdNum} productSlug={slugForCheckout} />
             ) : (
