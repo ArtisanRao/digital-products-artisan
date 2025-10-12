@@ -1,14 +1,14 @@
 // app/products/[slug]/page.tsx
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { products } from "@/data/products";
 
 export const runtime = "nodejs";
 export const revalidate = 300;
-export const dynamic = "force-static";
+// IMPORTANT: keep this dynamic while we stabilize renders
+export const dynamic = "force-dynamic";
 export const dynamicParams = true;
 
-const UI_VERSION = "product-hardened-v9";
+const UI_VERSION = "product-hardened-v10";
 
 /* ---------------- helpers ---------------- */
 function toSlug(s: string) {
@@ -125,13 +125,13 @@ export default async function ProductPage({ params }: any) {
 
     const raw = byParam(slug);
     if (!raw) {
-      // Soft 404 instead of RSC throw to avoid 500s
+      // Soft 404 instead of throw to avoid 500s while we debug
       return (
         <main className="container mx-auto px-4 py-16">
           <h1 className="text-2xl font-semibold">Product not found</h1>
           <p className="mt-2 text-gray-600">
             We couldn’t find that product.{" "}
-            <Link href="/products" className="underline">
+            <Link href="/products" className="underline underline-offset-4 decoration-2">
               Browse all products
             </Link>
             .
@@ -325,7 +325,7 @@ export default async function ProductPage({ params }: any) {
         <h1 className="text-2xl font-semibold">We hit a snag</h1>
         <p className="mt-2 text-gray-600">
           Something went wrong while loading this product. Try{" "}
-          <Link href="/products" className="underline">
+          <Link href="/products" className="underline underline-offset-4 decoration-2">
             browsing all products
           </Link>
           .
