@@ -1,6 +1,5 @@
 // app/products/[slug]/page.tsx
 import Link from "next/link";
-import type { PageProps } from "next";
 import { notFound } from "next/navigation";
 import { products } from "@/data/products";
 
@@ -57,7 +56,6 @@ function productImages(p: any): string[] {
     src.includes("?") ? `${src}&v=${UI_VERSION}` : `${src}?v=${UI_VERSION}`
   );
 }
-/** Strip to plain JSON-ish values only */
 function sanitizeProduct(raw: any) {
   const safe: any = {};
   if (!raw || typeof raw !== "object") return safe;
@@ -65,10 +63,8 @@ function sanitizeProduct(raw: any) {
   safe.slug = typeof raw.slug === "string" ? raw.slug : undefined;
   safe.title = typeof raw.title === "string" ? raw.title : "Product";
   safe.category = typeof raw.category === "string" ? raw.category : "";
-  // number|string only
   safe.price =
     typeof raw.price === "number" || typeof raw.price === "string" ? raw.price : "";
-  // arrays of strings only
   safe.images = Array.isArray(raw.images)
     ? raw.images.filter((x: any) => typeof x === "string" && x.trim())
     : [];
@@ -77,8 +73,11 @@ function sanitizeProduct(raw: any) {
   return safe;
 }
 
-/* --------- metadata (typed for Next 15) --------- */
-export async function generateMetadata({ params }: PageProps<{ slug: string }>) {
+/* --------- types compatible with Next 15 page constraint --------- */
+type Props = { params: Promise<{ slug: string }> };
+
+/* --------- metadata --------- */
+export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const pretty =
     String(slug || "")
@@ -103,7 +102,7 @@ export async function generateMetadata({ params }: PageProps<{ slug: string }>) 
 }
 
 /* ---------------- PAGE ---------------- */
-export default async function ProductPage({ params }: PageProps<{ slug: string }>) {
+export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
 
   const raw = byParam(String(slug));
@@ -141,7 +140,7 @@ export default async function ProductPage({ params }: PageProps<{ slug: string }
 
       <link rel="canonical" href={canonical} />
 
-      {/* Title + subtitle + CTAs */}
+      {/* Title + subtitle + CTAs under it */}
       <header className="mb-6">
         <h1 className="text-3xl md:text-4xl font-bold leading-tight">
           <Link
@@ -220,7 +219,7 @@ export default async function ProductPage({ params }: PageProps<{ slug: string }
             />
           </div>
 
-          {/* row of small thumbs on mobile only */}
+          {/* mobile thumbs */}
           {imgs.length > 1 && (
             <div className="md:hidden mt-3 grid grid-cols-4 gap-2">
               {imgs.slice(1, 5).map((src, i) => (
