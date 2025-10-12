@@ -1,5 +1,6 @@
 // app/products/[slug]/page.tsx
 import Link from "next/link";
+import type { PageProps } from "next";
 import { notFound } from "next/navigation";
 import { products } from "@/data/products";
 
@@ -28,16 +29,17 @@ function byParam(param: string) {
 
   if (isNumeric(needle)) {
     const n = Number(needle);
-    const hit = products.find((p: any) => Number(p?.id) === n);
+    const hit = (products as any[]).find((p: any) => Number(p?.id) === n);
     if (hit) return hit;
   }
   const bySlug =
-    products.find(
+    (products as any[]).find(
       (p: any) => String(p?.slug || "").toLowerCase() === needle.toLowerCase()
     ) ?? null;
   if (bySlug) return bySlug;
 
-  const byTitle = products.find((p: any) => toSlug(p?.title) === needle) ?? null;
+  const byTitle =
+    (products as any[]).find((p: any) => toSlug(p?.title) === needle) ?? null;
   return byTitle;
 }
 function canonicalSlug(p: any) {
@@ -50,7 +52,7 @@ function productImages(p: any): string[] {
   const arr = Array.isArray(p?.images) ? p.images.filter(Boolean) : [];
   const cover = (arr[0] ?? p?.image ?? "/images/placeholder.jpg") as string;
   const extras = arr.slice(1).filter(Boolean);
-  const unique = Array.from(new Set([cover, ...extras])).slice(0, 12);
+  const unique = Array.from(new Set([cover, ...extras])).slice(0, 8);
   return unique.map((src) =>
     src.includes("?") ? `${src}&v=${UI_VERSION}` : `${src}?v=${UI_VERSION}`
   );
@@ -63,8 +65,10 @@ function sanitizeProduct(raw: any) {
   safe.slug = typeof raw.slug === "string" ? raw.slug : undefined;
   safe.title = typeof raw.title === "string" ? raw.title : "Product";
   safe.category = typeof raw.category === "string" ? raw.category : "";
+  // number|string only
   safe.price =
     typeof raw.price === "number" || typeof raw.price === "string" ? raw.price : "";
+  // arrays of strings only
   safe.images = Array.isArray(raw.images)
     ? raw.images.filter((x: any) => typeof x === "string" && x.trim())
     : [];
@@ -73,12 +77,11 @@ function sanitizeProduct(raw: any) {
   return safe;
 }
 
-/* --------- metadata --------- */
-export async function generateMetadata({ params }: any) {
-  const resolved = params?.then ? await params : params;
-  const slug = String(resolved?.slug || "");
+/* --------- metadata (typed for Next 15) --------- */
+export async function generateMetadata({ params }: PageProps<{ slug: string }>) {
+  const { slug } = await params;
   const pretty =
-    slug
+    String(slug || "")
       .split("/")
       .pop()
       ?.replace(/-/g, " ")
@@ -86,7 +89,9 @@ export async function generateMetadata({ params }: any) {
 
   const title = `${pretty} | Digital Products Artisan`;
   const description = "Explore premium digital downloads.";
-  const canonical = `https://digitalproductsartisan.com/products/${encodeURIComponent(slug)}`;
+  const canonical = `https://digitalproductsartisan.com/products/${encodeURIComponent(
+    String(slug || "")
+  )}`;
 
   return {
     title,
@@ -98,24 +103,22 @@ export async function generateMetadata({ params }: any) {
 }
 
 /* ---------------- PAGE ---------------- */
-export default async function ProductPage({ params }: any) {
-  const resolved = params?.then ? await params : params;
-  const slug = String(resolved?.slug || "");
+export default async function ProductPage({ params }: PageProps<{ slug: string }>) {
+  const { slug } = await params;
 
-  const raw = byParam(slug);
+  const raw = byParam(String(slug));
   if (!raw) notFound();
 
   const p = sanitizeProduct(raw);
   const title = p.title || "Product";
   const category = p.category || "";
-  const priceText =
+  const price =
     typeof p.price === "number"
       ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(p.price)
       : typeof p.price === "string"
       ? p.price
       : "";
   const imgs = productImages(p);
-  const mainImg = imgs[0] ?? "/images/placeholder.jpg";
   const canonical = canonicalHref(p);
 
   return (
@@ -138,54 +141,42 @@ export default async function ProductPage({ params }: any) {
 
       <link rel="canonical" href={canonical} />
 
-      {/* Title + subtitle with hover underline and CTA row */}
+      {/* Title + subtitle + CTAs */}
       <header className="mb-6">
-        <h1 className="text-3xl md:text-4xl font-bold leading-tight inline-block">
+        <h1 className="text-3xl md:text-4xl font-bold leading-tight">
           <Link
             href={canonical}
+            className="hover:underline underline-offset-4 decoration-2 decoration-transparent hover:decoration-current transition"
             prefetch={false}
-            className="group relative inline-block"
-            title={title}
           >
-            <span className="border-b border-transparent group-hover:border-current transition-[border-color] duration-200">
-              {title}
-            </span>
+            {title}
           </Link>
         </h1>
 
-        <div className="mt-2 flex flex-wrap items-center gap-4 text-gray-700">
-          {priceText && <div className="text-2xl font-semibold">{priceText}</div>}
-          {category && (
-            <div className="text-sm">
-              <span className="text-gray-500">in </span>
-              <Link
-                href={`/categories/${encodeURIComponent(toSlug(category))}`}
-                prefetch={false}
-                className="group inline-block"
-              >
-                <span className="border-b border-transparent group-hover:border-current transition-[border-color] duration-200">
-                  {category}
-                </span>
-              </Link>
-            </div>
-          )}
-        </div>
+        {category && (
+          <p className="mt-1 text-gray-700">
+            <Link
+              href={`/categories/${encodeURIComponent(toSlug(category))}`}
+              className="hover:underline underline-offset-4 decoration-2 decoration-transparent hover:decoration-current transition"
+              prefetch={false}
+            >
+              {category}
+            </Link>
+          </p>
+        )}
 
-        {/* Buttons under the subtitle */}
         <div className="mt-4 flex flex-wrap gap-3">
           <Link
-            href={mainImg}
+            href={imgs[0] || "#"}
             prefetch={false}
-            target="_blank"
-            rel="noopener noreferrer"
             className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-gray-50"
           >
             View
           </Link>
           <Link
-            href={`/cart?add=${encodeURIComponent(canonicalSlug(p))}&qty=1`}
+            href={`/api/checkout?product=${encodeURIComponent(canonicalSlug(p))}&qty=1&mode=add`}
             prefetch={false}
-            className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-gray-50"
+            className="inline-flex items-center justify-center rounded-lg bg-blue-600/90 px-4 py-2 text-white hover:bg-blue-600"
           >
             Add to cart
           </Link>
@@ -199,77 +190,70 @@ export default async function ProductPage({ params }: any) {
         </div>
       </header>
 
-      {/* Left-rail thumbs, main image, right card */}
-      <section className="grid gap-6 md:grid-cols-[96px_1fr_380px]">
-        {/* Left vertical thumbnails */}
-        <div className="order-2 md:order-1 md:sticky md:top-20 h-max">
-          <div className="grid auto-rows-max gap-2">
-            {imgs.slice(0, 8).map((src, i) => (
-              <Link
+      {/* Media + Aside */}
+      <section className="grid gap-6 md:grid-cols-[120px_1fr_360px]">
+        {/* LEFT RAIL: vertical thumbnails */}
+        <div className="hidden md:block">
+          <div className="sticky top-24 flex max-h-[70vh] flex-col gap-2 overflow-auto pr-1">
+            {imgs.map((src, i) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
                 key={src + i}
-                href={src}
-                target="_blank"
-                rel="noopener noreferrer"
-                prefetch={false}
-                className="block rounded-lg border bg-white p-1 hover:shadow-sm"
-                title="Open image in a new tab"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={src}
-                  alt=""
-                  className="w-20 h-20 object-cover md:w-24 md:h-24"
-                  loading={i < 6 ? "eager" : "lazy"}
-                />
-              </Link>
+                src={src}
+                alt=""
+                className="w-full h-24 object-cover rounded-md border bg-white"
+                loading={i < 3 ? "eager" : "lazy"}
+              />
             ))}
           </div>
         </div>
 
-        {/* Main image */}
-        <div className="order-1 md:order-2">
+        {/* MAIN IMAGE */}
+        <div>
           <div className="rounded-xl border bg-white p-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={mainImg}
+              src={(imgs[0] ?? "/images/placeholder.jpg") as string}
               alt={title}
               className="w-full h-auto object-contain"
               loading="eager"
             />
           </div>
+
+          {/* row of small thumbs on mobile only */}
+          {imgs.length > 1 && (
+            <div className="md:hidden mt-3 grid grid-cols-4 gap-2">
+              {imgs.slice(1, 5).map((src, i) => (
+                <div key={src + i} className="rounded-lg border bg-white p-1">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={src} alt="" className="w-full h-20 object-cover" loading="lazy" />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Right purchase card */}
-        <aside className="order-3 rounded-xl border bg-white p-4 h-fit">
+        {/* ASIDE */}
+        <aside className="rounded-xl border bg-white p-4 h-fit">
           <h2 className="text-lg font-semibold">Get this product</h2>
           <p className="mt-1 text-sm text-gray-600">Instant download. Lifetime access.</p>
-
-          <div className="mt-4 flex flex-col gap-2">
-            <Link
-              href={mainImg}
-              prefetch={false}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-gray-50"
-            >
-              View
-            </Link>
-            <Link
-              href={`/cart?add=${encodeURIComponent(canonicalSlug(p))}&qty=1`}
-              prefetch={false}
-              className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-gray-50"
-            >
-              Add to cart
-            </Link>
+          {price && <div className="mt-4 text-2xl font-semibold">{price}</div>}
+          <div className="mt-4 flex gap-2">
             <Link
               href={`/api/checkout?product=${encodeURIComponent(canonicalSlug(p))}&qty=1`}
               prefetch={false}
               className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
             >
-              Buy
+              Buy now
+            </Link>
+            <Link
+              href="/cart"
+              prefetch={false}
+              className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-gray-50"
+            >
+              View cart
             </Link>
           </div>
-
           {category && (
             <p className="mt-4 text-xs text-gray-500">
               Category:{" "}
