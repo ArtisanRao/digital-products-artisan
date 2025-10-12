@@ -1,8 +1,13 @@
+/* app/globals.css */
+
+/* Tailwind layers */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ===== Custom Utilities ===== */
+/* =========================
+   Custom Utilities
+   ========================= */
 @layer utilities {
   .text-balance { text-wrap: balance; }
 
@@ -38,8 +43,16 @@
   .hover-zoom img { transition: transform .3s ease; }
   .hover-zoom:hover img { transform: scale(1.03); }
 
-  /* Consistent blue focus ring helper for interactive elements */
-  .focus-ring-blue { @apply focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none; }
+  /* Consistent blue focus ring helper for interactive elements
+     (Tailwind v4-safe: avoid @apply to focus-visible ring utilities) */
+  .focus-ring-blue {
+    outline: 2px solid #3b82f6; /* blue-500 */
+    outline-offset: 2px;
+  }
+  :where(.focus-ring-blue):where(:focus-visible) {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+  }
 
   /* Cart count badge helper */
   .cart-badge {
@@ -99,7 +112,9 @@
   .pe-force-auto, .pe-force-auto * { pointer-events: auto !important; }
 }
 
-/* ===== Header & Navigation Safeguards ===== */
+/* =========================
+   Header & Navigation Safeguards
+   ========================= */
 @layer components {
   html, body { margin: 0; padding: 0; }
 
@@ -121,7 +136,9 @@
   }
 }
 
-/* ===== Theme & Base Defaults ===== */
+/* =========================
+   Theme & Base Defaults
+   ========================= */
 @layer base {
   *, *::before, *::after { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
@@ -174,7 +191,9 @@
   }
 }
 
-/* === SCOPED mobile fix for the PRODUCT DETAIL page only === */
+/* =========================
+   SCOPED mobile fix for PRODUCT DETAIL page
+   ========================= */
 @media (max-width: 768px) {
   body.product-page .w-screen,
   body.product-page [class*="w-\\[100vw\\]"],
@@ -216,7 +235,9 @@
   }
 }
 
-/* ===== CLICK-THROUGH SAFE (scoped) ===== */
+/* =========================
+   CLICK-THROUGH SAFE (scoped)
+   ========================= */
 
 /* Decorative overlays we explicitly use must NOT capture clicks */
 .hero-overlay,
