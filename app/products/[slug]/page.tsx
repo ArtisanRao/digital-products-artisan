@@ -178,8 +178,6 @@ export default async function ProductPage({ params }: any) {
           }
         `}</style>
 
-        <link rel="canonical" href={canonical} />
-
         {/* Title + subtitle + CTAs under it */}
         <header className="mb-6">
           <h1 className="text-3xl md:text-4xl font-bold leading-tight">
