@@ -6,35 +6,89 @@ import { Zap } from "lucide-react";
 
 export default function BuyNowButton({
   productId,
+  productSlug,
   qty = 1,
   className = "",
 }: {
-  productId: number;
+  productId?: number;
+  productSlug?: string;
   qty?: number;
   className?: string;
 }) {
   const [loading, setLoading] = React.useState(false);
 
+  const goLegacyGet = (key: string) => {
+    // Fallback: old GET-style endpoint
+    const url = `/api/checkout?product=${encodeURIComponent(key)}&qty=${Math.max(
+      1,
+      qty
+    )}`;
+    window.location.href = url;
+  };
+
   const handleBuyNow = async () => {
-    if (!productId || loading) return;
+    if (loading) return;
+
+    const key = productSlug ?? (productId != null ? String(productId) : "");
+    if (!key) {
+      alert("Missing product id/slug for checkout.");
+      return;
+    }
+
     setLoading(true);
     try {
-      const resp = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cart: [{ productId, qty: Math.max(1, qty) }] }),
-      });
-      const data = await resp.json().catch(() => ({} as any));
-      if (!resp.ok || !data?.url) {
-        console.error("Checkout error:", data);
-        alert(data?.error || "Sorry—couldn’t start checkout.");
-        setLoading(false);
-        return;
+      const tryPost = async (body: any) => {
+        const r = await fetch("/api/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        let data: any = {};
+        try {
+          data = await r.json();
+        } catch {}
+        return { ok: r.ok, data };
+      };
+
+      // Try known shapes (your CartCheckoutButton uses the first one)
+      const attempts = [
+        { cart: [{ productId: Number(productId), qty: Math.max(1, qty) }] },
+        { cart: [{ id: Number(productId), quantity: Math.max(1, qty) }] },
+        { items: [{ id: Number(productId), quantity: Math.max(1, qty) }] },
+        { product: key, qty: Math.max(1, qty) },
+      ];
+
+      for (const payload of attempts) {
+        // Skip id-based payloads if no productId
+        if (
+          ("productId" in (payload.cart?.[0] ?? {})) &&
+          !Number.isFinite(Number(productId))
+        ) {
+          continue;
+        }
+        if (("id" in (payload.cart?.[0] ?? {})) && !Number.isFinite(Number(productId))) {
+          continue;
+        }
+        if (("id" in (payload.items?.[0] ?? {})) && !Number.isFinite(Number(productId))) {
+          continue;
+        }
+
+        const { ok, data } = await tryPost(payload);
+        if (ok && data?.url) {
+          window.location.href = data.url as string; // go to payment
+          return;
+        }
       }
-      window.location.href = data.url as string; // go to payment
+
+      // Final fallback: GET redirect
+      goLegacyGet(key);
     } catch (e) {
       console.error(e);
-      alert("Network error starting checkout.");
+      // Fallback GET even on network error
+      const key2 = productSlug ?? (productId != null ? String(productId) : "");
+      if (key2) goLegacyGet(key2);
+      else alert("Could not start checkout.");
+    } finally {
       setLoading(false);
     }
   };

@@ -1,3 +1,4 @@
+// app/products/[slug]/page.tsx
 import Link from "next/link";
 import { products } from "@/data/products";
 import ProductGallery from "@/components/ProductGallery";
@@ -125,6 +126,7 @@ export default async function ProductPage({ params }: any) {
   const category = sstr(p.category, "");
   const imgs = productImages(p);
   const canonical = canonHref(p);
+  const slugForCheckout = String(canonSlug(p));
 
   let price = "";
   if (typeof p.price === "number") {
@@ -140,14 +142,15 @@ export default async function ProductPage({ params }: any) {
     price = p.price;
   }
 
-  const safeImgs = Array.isArray(imgs) && imgs.length ? imgs : ["/images/placeholder.jpg"];
+  const safeImgs =
+    Array.isArray(imgs) && imgs.length ? imgs : ["/images/placeholder.jpg"];
 
   // Numeric product id for buttons
   const productIdNum: number = (() => {
     const n = Number(p.id);
     if (Number.isFinite(n)) return n;
     const found = (products as any[]).find(
-      (x: any) => String(x?.slug || "") === String(canonSlug(p))
+      (x: any) => String(x?.slug || "") === slugForCheckout
     );
     return Number(found?.id ?? 0);
   })();
@@ -221,10 +224,12 @@ export default async function ProductPage({ params }: any) {
               <AddToCartButton productId={productIdNum} />
             ) : null}
 
-            {/* Buy now → payment */}
+            {/* Buy now → payment (pass id and slug for robust fallback) */}
             {Number.isFinite(productIdNum) && productIdNum > 0 ? (
-              <BuyNowButton productId={productIdNum} />
-            ) : null}
+              <BuyNowButton productId={productIdNum} productSlug={slugForCheckout} />
+            ) : (
+              <BuyNowButton productSlug={slugForCheckout} />
+            )}
           </div>
 
           {category ? (
