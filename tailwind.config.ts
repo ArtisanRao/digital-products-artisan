@@ -2,10 +2,10 @@
 import type { Config } from "tailwindcss";
 import animate from "tailwindcss-animate";
 
-const config: Config = {
-  darkMode: ["class"],
+export default {
+  darkMode: "class", // <-- fix: use string, not ["class"]
 
-  // Keep explicit globs so Tailwind picks up classes across the app
+  // Still useful for IDEs and partial compatibility
   content: [
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
@@ -94,6 +94,4 @@ const config: Config = {
   },
 
   plugins: [animate],
-};
-
-export default config;
+} satisfies Config;
