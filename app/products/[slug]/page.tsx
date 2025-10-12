@@ -2,11 +2,10 @@
 import Link from "next/link";
 import { products } from "@/data/products";
 
-// Keep these simple; avoid RSC gotchas
 export const runtime = "nodejs";
 export const revalidate = 300;
 
-const UI_VERSION = "product-hardened-v7";
+const UI_VERSION = "product-hardened-v8";
 
 /* ---------------- helpers ---------------- */
 const toSlug = (s: string) =>
@@ -79,15 +78,11 @@ function sanitizeProduct(raw: any) {
 }
 
 /* ------- metadata stays generic/safe ------- */
-export async function generateMetadata({
-  params,
-}: {
-  params: { slug: string } | Promise<{ slug: string }>;
-}) {
-  const p = (await Promise.resolve(params)) as { slug: string };
-  const slug = p?.slug ?? "";
+export async function generateMetadata(props: any) {
+  const { params } = props || {};
+  const { slug } = (await Promise.resolve(params)) || {};
   const pretty =
-    String(slug)
+    String(slug ?? "")
       .split("/")
       .pop()
       ?.replace(/-/g, " ")
@@ -96,7 +91,7 @@ export async function generateMetadata({
   const title = `${pretty} | Digital Products Artisan`;
   const description = "Explore premium digital downloads.";
   const canonical = `https://digitalproductsartisan.com/products/${encodeURIComponent(
-    String(slug)
+    String(slug ?? "")
   )}`;
 
   return {
@@ -109,16 +104,12 @@ export async function generateMetadata({
 }
 
 /* ---------------- PAGE ---------------- */
-export default async function ProductPage({
-  params,
-}: {
-  params: { slug: string } | Promise<{ slug: string }>;
-}) {
-  // Support Next 14/15 by resolving either object or promise
-  const { slug } = await Promise.resolve(params as any);
+export default async function ProductPage(props: any) {
+  const { params } = props || {};
+  const { slug } = (await Promise.resolve(params)) || {};
 
   try {
-    const raw = byParam(String(slug));
+    const raw = byParam(String(slug ?? ""));
     if (!raw) {
       // Soft 404 (no throws) — avoids RSC 500s
       const safeSlug = toSlug(String(slug || "product"));
