@@ -1,16 +1,14 @@
 // app/products/[slug]/page.tsx
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { products } from "@/data/products";
 
+// Keep these simple; avoid RSC gotchas
 export const runtime = "nodejs";
 export const revalidate = 300;
-export const dynamic = "force-static";
-export const dynamicParams = true;
 
-const UI_VERSION = "product-hardened-v6";
+const UI_VERSION = "product-hardened-v7";
 
-/* ---------------- tiny helpers ---------------- */
+/* ---------------- helpers ---------------- */
 const toSlug = (s: string) =>
   String(s || "")
     .toLowerCase()
@@ -25,24 +23,28 @@ function byParam(param: string) {
   const needle = String(param || "").trim();
   if (!needle) return null;
 
+  // by numeric id
   if (isNumeric(needle)) {
     const n = Number(needle);
-    const byId = products.find((p: any) => Number(p?.id) === n);
-    if (byId) return byId;
+    const hit = (products as any[]).find((p) => Number(p?.id) === n);
+    if (hit) return hit;
   }
 
+  // by slug
   const bySlug =
-    products.find(
-      (p: any) => String(p?.slug || "").toLowerCase() === needle.toLowerCase()
+    (products as any[]).find(
+      (p) => String(p?.slug || "").toLowerCase() === needle.toLowerCase()
     ) ?? null;
   if (bySlug) return bySlug;
 
-  const byTitle = products.find((p: any) => toSlug(p?.title) === needle) ?? null;
+  // by normalized title
+  const byTitle =
+    (products as any[]).find((p) => toSlug(p?.title) === needle) ?? null;
+
   return byTitle;
 }
 
 const canonicalSlug = (p: any) => String(p?.slug || toSlug(p?.title || "product"));
-const canonicalHref = (p: any) => `/products/${encodeURIComponent(canonicalSlug(p))}`;
 
 function productImages(p: any): string[] {
   try {
@@ -76,11 +78,16 @@ function sanitizeProduct(raw: any) {
   return out;
 }
 
-/* ------- keep metadata generic to avoid data-time throws ------- */
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+/* ------- metadata stays generic/safe ------- */
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string } | Promise<{ slug: string }>;
+}) {
+  const p = (await Promise.resolve(params)) as { slug: string };
+  const slug = p?.slug ?? "";
   const pretty =
-    String(slug || "")
+    String(slug)
       .split("/")
       .pop()
       ?.replace(/-/g, " ")
@@ -89,7 +96,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const title = `${pretty} | Digital Products Artisan`;
   const description = "Explore premium digital downloads.";
   const canonical = `https://digitalproductsartisan.com/products/${encodeURIComponent(
-    String(slug || "")
+    String(slug)
   )}`;
 
   return {
@@ -102,14 +109,35 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 /* ---------------- PAGE ---------------- */
-export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+export default async function ProductPage({
+  params,
+}: {
+  params: { slug: string } | Promise<{ slug: string }>;
+}) {
+  // Support Next 14/15 by resolving either object or promise
+  const { slug } = await Promise.resolve(params as any);
 
-  const raw = byParam(String(slug));
-  if (!raw) notFound();
-
-  // Defensively render everything; never throw from RSC render
   try {
+    const raw = byParam(String(slug));
+    if (!raw) {
+      // Soft 404 (no throws) — avoids RSC 500s
+      const safeSlug = toSlug(String(slug || "product"));
+      return (
+        <main className="container mx-auto px-4 py-16">
+          <h1 className="text-3xl font-bold">Product not found</h1>
+          <p className="mt-2 text-gray-700">
+            We couldn’t find that item. It may have been moved or renamed.
+          </p>
+          <div className="mt-6">
+            <Link href="/products" prefetch={false} className="underline">
+              Browse all products →
+            </Link>
+            <span className="ml-2 text-xs text-gray-500 align-middle">({safeSlug})</span>
+          </div>
+        </main>
+      );
+    }
+
     const p = sanitizeProduct(raw);
     const title = p.title || "Product";
     const category = p.category || "";
@@ -200,20 +228,18 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         </section>
       </main>
     );
-  } catch (err) {
-    // Render a non-throwing fallback to avoid 500s due to unexpected data
-    const safeSlug = toSlug(String(slug || "product"));
+  } catch {
+    // Absolute last-ditch non-throw fallback
     return (
       <main className="container mx-auto px-4 py-16">
-        <h1 className="text-3xl font-bold">Product</h1>
+        <h1 className="text-3xl font-bold">Something went wrong</h1>
         <p className="mt-2 text-gray-700">
-          We’re sorry — this product couldn’t be displayed right now.
+          We’re sorry — this product page couldn’t be displayed right now.
         </p>
         <div className="mt-6">
           <Link href="/products" prefetch={false} className="underline">
             Browse all products →
           </Link>
-          <span className="ml-2 text-xs text-gray-500 align-middle">({safeSlug})</span>
         </div>
       </main>
     );
