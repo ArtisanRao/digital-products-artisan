@@ -4,14 +4,13 @@ import { notFound, redirect } from "next/navigation";
 import { products } from "@/data/products";
 
 export const runtime = "nodejs";
-// Render on demand and cache; flip to 0 while debugging if you want no cache.
 export const revalidate = 300;
 export const dynamicParams = true;
-// Keep static caching after first render, but the try/catch below prevents hard crashes.
 export const dynamic = "force-static";
 
-const UI_VERSION = "product-hardened-v1";
+const UI_VERSION = "product-hardened-v2";
 
+/* ---------------- helpers ---------------- */
 function toSlug(s: string) {
   return String(s || "")
     .toLowerCase()
@@ -46,40 +45,58 @@ function canonicalHref(p: any) {
   return `/products/${encodeURIComponent(canonicalSlug(p))}`;
 }
 function productImages(p: any): string[] {
-  const arr = Array.isArray(p?.images) ? p.images.filter(Boolean) : [];
-  const cover = (arr[0] ?? p?.image ?? "/images/placeholder.jpg") as string;
-  const extras = arr.slice(1).filter(Boolean);
-  const unique = Array.from(new Set([cover, ...extras])).slice(0, 8);
-  return unique.map((src) =>
-    src.includes("?") ? `${src}&v=${UI_VERSION}` : `${src}?v=${UI_VERSION}`
-  );
+  try {
+    const arr = Array.isArray(p?.images) ? p.images.filter(Boolean) : [];
+    const cover = (arr[0] ?? p?.image ?? "/images/placeholder.jpg") as string;
+    const extras = arr.slice(1).filter(Boolean);
+    const unique = Array.from(new Set([cover, ...extras])).slice(0, 8);
+    return unique.map((src) =>
+      src.includes("?") ? `${src}&v=${UI_VERSION}` : `${src}?v=${UI_VERSION}`
+    );
+  } catch {
+    return ["/images/placeholder.jpg"];
+  }
 }
 
+/* ---------------- SAFE metadata (no data access) ---------------- */
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await params;
-  const p = byParam(String(slug));
-  const title = p
-    ? `${p.title} | Digital Products Artisan`
-    : "Product | Digital Products Artisan";
-  const description =
-    (typeof (p as any)?.description === "string" && (p as any).description) ||
-    "Explore premium digital downloads.";
-  const canonical = p
-    ? `https://digitalproductsartisan.com${canonicalHref(p)}`
-    : undefined;
-  return {
-    title,
-    description,
-    alternates: canonical ? { canonical } : undefined,
-    openGraph: { title, description, type: "product", url: canonical },
-    twitter: { card: "summary_large_image", title, description },
-  };
+  try {
+    const { slug } = await params;
+    // Generic, never touches the dataset — prevents 500s caused by bad rows.
+    const pretty =
+      String(slug || "")
+        .split("/")
+        .pop()
+        ?.replace(/-/g, " ")
+        .replace(/\b\w/g, (m) => m.toUpperCase()) || "Product";
+
+    const title = `${pretty} | Digital Products Artisan`;
+    const description = "Explore premium digital downloads.";
+    const canonical = `https://digitalproductsartisan.com/products/${encodeURIComponent(
+      String(slug || "")
+    )}`;
+
+    return {
+      title,
+      description,
+      alternates: { canonical },
+      openGraph: { title, description, type: "product", url: canonical },
+      twitter: { card: "summary_large_image", title, description },
+    };
+  } catch {
+    // Absolute fallback: never throw here.
+    return {
+      title: "Product | Digital Products Artisan",
+      description: "Explore premium digital downloads.",
+    };
+  }
 }
 
+/* ---------------- PAGE ---------------- */
 export default async function ProductPage({
   params,
 }: {
@@ -93,11 +110,10 @@ export default async function ProductPage({
     const target = canonicalHref(p).toLowerCase();
     const current = `/products/${encodeURIComponent(String(slug))}`.toLowerCase();
     if (current !== target) {
-      // Safe canonicalization; if anything odd happens, we render instead of crashing.
       try {
         redirect(target);
       } catch {
-        // fall through to render
+        /* render canonical content instead of crashing */
       }
     }
 
@@ -113,9 +129,10 @@ export default async function ProductPage({
         : "";
     const price =
       typeof pAny?.price === "number"
-        ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
-            pAny.price
-          )
+        ? new Intl.NumberFormat("en-US", {
+            style: "currency",
+            currency: "USD",
+          }).format(pAny.price)
         : typeof pAny?.price === "string"
         ? pAny.price
         : "";
@@ -213,9 +230,7 @@ export default async function ProductPage({
       </main>
     );
   } catch (err) {
-    // This shows in Vercel → Deployment → Runtime Logs on the function invocation
     console.error("[product page] fatal error:", err);
-    // Don’t crash the function; render a soft error page
     return (
       <main className="container mx-auto px-4 py-10">
         <h1 className="text-2xl font-bold">Product page error</h1>
