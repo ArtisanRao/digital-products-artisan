@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { products } from "@/data/products";
 import ProductGallery from "@/components/ProductGallery";
-import { Eye, ShoppingCart, Zap } from "lucide-react";
+import { ShoppingCart, Zap } from "lucide-react";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,6 +33,7 @@ function pickByParam(param: string) {
       const hit = (products as any[]).find((p: any) => Number(p?.id) === n);
       if (hit) return hit;
     }
+
     const bySlug =
       (products as any[]).find(
         (p: any) => String(p?.slug || "").toLowerCase() === needle.toLowerCase()
@@ -59,6 +60,7 @@ function productImages(p: any): string[] {
     const cover = sstr(arr[0] ?? p?.image, "/images/placeholder.jpg");
     const extras = arr.slice(1).filter((x) => typeof x === "string" && x.trim());
     const unique = Array.from(new Set([cover, ...extras])).slice(0, 12);
+
     return unique.map((raw) => {
       const src = sstr(raw, "/images/placeholder.jpg");
       return src.includes("?") ? `${src}&v=${UI_VERSION}` : `${src}?v=${UI_VERSION}`;
@@ -141,7 +143,6 @@ export default async function ProductPage({ params }: any) {
   }
 
   const safeImgs = Array.isArray(imgs) && imgs.length ? imgs : ["/images/placeholder.jpg"];
-  const cover = typeof safeImgs[0] === "string" ? safeImgs[0] : "/images/placeholder.jpg";
 
   return (
     <main
@@ -152,6 +153,7 @@ export default async function ProductPage({ params }: any) {
       <section className="grid gap-6 md:grid-cols-[1fr_360px]">
         {/* LEFT: Gallery + Title/Subtitle + 'More' link */}
         <div className="flex flex-col gap-4">
+          {/* The gallery makes the MAIN preview hoverable (arrows appear). Left thumbs change on click only. */}
           <ProductGallery images={safeImgs} alt={title} maxThumbs={4} />
 
           <div className="pt-1">
@@ -177,7 +179,7 @@ export default async function ProductPage({ params }: any) {
               </p>
             ) : null}
 
-            {/* Only "More" link here – buttons moved to the right */}
+            {/* Only "More" link here – CTAs live in the right column */}
             <div className="mt-3">
               <a
                 href="#details"
@@ -207,33 +209,23 @@ export default async function ProductPage({ params }: any) {
           {price ? <div className="mt-4 text-2xl font-semibold">{price}</div> : null}
 
           <div className="mt-4 flex flex-wrap gap-2">
-            {/* View (eye) */}
-            <Link
-              href={cover || "#"}
-              prefetch={false}
-              className="inline-flex items-center gap-2 rounded-lg border px-4 py-2 hover:bg-gray-50"
-            >
-              <Eye className="w-5 h-5" />
-              View
-            </Link>
-
-            {/* Add to cart (cart) */}
+            {/* Add to cart */}
             <Link
               href={`/api/checkout?product=${encodeURIComponent(canonSlug(p))}&qty=1&mode=add`}
               prefetch={false}
-              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
             >
-              <ShoppingCart className="w-5 h-5" />
+              <ShoppingCart className="w-5 h-5 text-white/95" />
               Add to cart
             </Link>
 
-            {/* Buy now (lightning) */}
+            {/* Buy now */}
             <Link
               href={`/api/checkout?product=${encodeURIComponent(canonSlug(p))}&qty=1`}
               prefetch={false}
-              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
             >
-              <Zap className="w-5 h-5" />
+              <Zap className="w-5 h-5 text-yellow-300" />
               Buy now
             </Link>
           </div>
