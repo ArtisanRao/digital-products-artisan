@@ -8,7 +8,7 @@ export const revalidate = 300;
 export const dynamic = "force-static";
 export const dynamicParams = true;
 
-const UI_VERSION = "product-hardened-v6";
+const UI_VERSION = "product-hardened-v7";
 
 /* ---------------- helpers ---------------- */
 function toSlug(s: string) {
@@ -59,7 +59,8 @@ function productImages(p: any): string[] {
 function sanitizeProduct(raw: any) {
   const safe: any = {};
   if (!raw || typeof raw !== "object") return safe;
-  safe.id = typeof raw.id === "number" || typeof raw.id === "string" ? raw.id : undefined;
+  safe.id =
+    typeof raw.id === "number" || typeof raw.id === "string" ? raw.id : undefined;
   safe.slug = typeof raw.slug === "string" ? raw.slug : undefined;
   safe.title = typeof raw.title === "string" ? raw.title : "Product";
   safe.category = typeof raw.category === "string" ? raw.category : "";
@@ -73,13 +74,15 @@ function sanitizeProduct(raw: any) {
   return safe;
 }
 
-/* --------- Next 15-friendly types --------- */
-type Params = { slug: string };
-type Props = { params: Params | Promise<Params> };
+/** Next 15-safe: normalize params whether it's a plain object or a Promise */
+async function getSlugFromParams(params: any): Promise<string> {
+  const p = await Promise.resolve(params as any);
+  return String(p?.slug ?? "");
+}
 
-/* --------- metadata --------- */
-export async function generateMetadata({ params }: Props) {
-  const { slug } = await Promise.resolve(params);
+/* --------- metadata (keep loose typing to satisfy Next’s constraint) --------- */
+export async function generateMetadata({ params }: any) {
+  const slug = await getSlugFromParams(params);
   const pretty =
     String(slug || "")
       .split("/")
@@ -103,8 +106,8 @@ export async function generateMetadata({ params }: Props) {
 }
 
 /* ---------------- PAGE ---------------- */
-export default async function ProductPage({ params }: Props) {
-  const { slug } = await Promise.resolve(params);
+export default async function ProductPage({ params }: any) {
+  const slug = await getSlugFromParams(params);
 
   const raw = byParam(String(slug));
   if (!raw) notFound();
@@ -114,7 +117,9 @@ export default async function ProductPage({ params }: Props) {
   const category = p.category || "";
   const price =
     typeof p.price === "number"
-      ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(p.price)
+      ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
+          p.price
+        )
       : typeof p.price === "string"
       ? p.price
       : "";
@@ -139,6 +144,7 @@ export default async function ProductPage({ params }: Props) {
         }
       `}</style>
 
+      {/* Canonical hint */}
       <link rel="canonical" href={canonical} />
 
       {/* Title + subtitle + CTAs under it */}
