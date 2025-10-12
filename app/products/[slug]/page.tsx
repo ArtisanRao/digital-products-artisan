@@ -4,13 +4,14 @@ import { products } from "@/data/products";
 import ProductGallery from "@/components/ProductGallery";
 import AddToCartButton from "@/components/shop/AddToCartButton";
 import BuyNowButton from "@/components/shop/BuyNowButton";
+import { getLongDescription } from "@/lib/description"; // ⬅️ NEW (uses the fallback logic)
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
 export const revalidate = 300;
 
-const UI_VERSION = "product-hardened-v12";
+const UI_VERSION = "product-hardened-v13";
 
 /* ---------------- helpers ---------------- */
 const toSlug = (s: string) =>
@@ -70,6 +71,7 @@ function productImages(p: any): string[] {
   }
 }
 
+/** Normalize + pick all description-related fields for consistent rendering */
 function sanitize(raw: any) {
   const out: any = {};
   try {
@@ -84,7 +86,20 @@ function sanitize(raw: any) {
       ? raw.images.filter((x: any) => typeof x === "string" && x.trim())
       : [];
     out.image = typeof raw?.image === "string" ? raw.image : undefined;
-    out.description = typeof raw?.description === "string" ? raw.description : "";
+
+    // ---- description-related fields (NEW) ----
+    out.shortDescription =
+      typeof raw?.shortDescription === "string" ? raw.shortDescription : "";
+    out.longDescription =
+      typeof raw?.longDescription === "string" ? raw.longDescription : "";
+    out.description = typeof raw?.description === "string" ? raw.description : ""; // legacy
+    out.features = Array.isArray(raw?.features)
+      ? raw.features.filter((x: any) => typeof x === "string" && x.trim())
+      : [];
+    out.includes = Array.isArray(raw?.includes)
+      ? raw.includes.filter((x: any) => typeof x === "string" && x.trim())
+      : [];
+    out.license = typeof raw?.license === "string" ? raw.license : "";
   } catch (e) {
     console.error("[PDP] sanitize failed:", e);
   }
@@ -99,6 +114,13 @@ async function getSlugFromParams(params: any): Promise<string> {
     console.error("[PDP] getSlugFromParams failed:", e);
     return "";
   }
+}
+
+/* ---------------- small render utils ---------------- */
+function renderParagraphs(mdOrText: string) {
+  // Keeps it simple and safe even if you don’t have a markdown renderer here
+  const chunks = String(mdOrText || "").trim().split(/\n{2,}/g);
+  return chunks.map((c, i) => <p key={i} className="mb-3">{c}</p>);
 }
 
 /* ---------------- PAGE ---------------- */
@@ -155,6 +177,16 @@ export default async function ProductPage({ params }: any) {
     return Number(found?.id ?? 0);
   })();
 
+  // ---- unified description content (uses fallback when long is light) ----
+  const long = getLongDescription({
+    ...p,
+    longDescription: p.longDescription || p.description, // prefer new, fallback to legacy
+  } as any);
+
+  const hasFeatures = Array.isArray(p.features) && p.features.length > 0;
+  const hasIncludes = Array.isArray(p.includes) && p.includes.length > 0;
+  const hasLicense = typeof p.license === "string" && p.license.trim().length > 0;
+
   return (
     <main
       className="container mx-auto px-4 py-10 relative z-[100]"
@@ -190,21 +222,57 @@ export default async function ProductPage({ params }: any) {
             ) : null}
           </div>
 
-          {/* Details + More (blue) BELOW the About section */}
+          {/* Details + More (blue) BELOW the About section — consistent everywhere */}
           <section id="details" className="mt-6 max-w-none">
             <h2 className="text-xl font-semibold mb-2">About this product</h2>
-            <p className="mb-3">
-              {typeof p.description === "string" && p.description.trim()
-                ? p.description
-                : "High-quality digital resource crafted for creators and entrepreneurs."}
-            </p>
 
-            <a
-              href="#details"
-              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-            >
-              More
-            </a>
+            <div className="prose prose-neutral max-w-none">
+              {/* first short paragraph (if provided) */}
+              {p.shortDescription?.trim() ? (
+                <p className="mb-3">{p.shortDescription.trim()}</p>
+              ) : null}
+
+              {/* collapsible long description + extras */}
+              <details>
+                <summary>
+                  <span className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 cursor-pointer select-none">
+                    More
+                  </span>
+                </summary>
+
+                <div className="mt-4">
+                  {renderParagraphs(long)}
+
+                  {hasFeatures && (
+                    <>
+                      <h3 className="text-lg font-semibold mt-6">Key features</h3>
+                      <ul className="list-disc pl-6 mt-2">
+                        {p.features.map((f: string, i: number) => (
+                          <li key={i}>{f}</li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+
+                  {hasIncludes && (
+                    <>
+                      <h3 className="text-lg font-semibold mt-6">What’s included</h3>
+                      <ul className="list-disc pl-6 mt-2">
+                        {p.includes.map((it: string, i: number) => (
+                          <li key={i}>{it}</li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+
+                  {hasLicense && (
+                    <p className="mt-6 text-sm text-gray-600">
+                      <strong>License:</strong> {p.license}
+                    </p>
+                  )}
+                </div>
+              </details>
+            </div>
           </section>
         </div>
 

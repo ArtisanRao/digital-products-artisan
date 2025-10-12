@@ -87,3 +87,15 @@
   },
   "packageManager": "npm@10"
 }
+{
+  "scripts": {
+    "prebuild": "tsx scripts/validate-products.ts",    // block incomplete data
+    "lint:products": "tsx scripts/validate-products.ts"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "tsx": "^4.16.0"
+  }
+}
