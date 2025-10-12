@@ -3,12 +3,13 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { products } from "@/data/products";
 
-// ✅ Server on Node, ISR for reliability
+// Server on Node; render on-demand then cache (ISR)
 export const runtime = "nodejs";
-export const revalidate = 300;
-export const dynamic = "force-static";
+export const revalidate = 300;           // cache each product page for 5 min
+export const dynamicParams = true;       // do NOT prerender all params at build
+export const dynamic = "force-static";   // allow static caching after first render
 
-const UI_VERSION = "product-fallback-v4.1";
+const UI_VERSION = "product-fallback-v4.2";
 
 // ---------- helpers ----------
 function toSlug(s: string) {
@@ -64,17 +65,6 @@ function productImages(p: any): string[] {
 }
 
 // ---------- metadata ----------
-export async function generateStaticParams() {
-  const slugs = products
-    .map((p: any) => String(p?.slug || "").trim())
-    .filter(Boolean);
-  const ids = products
-    .map((p: any) => p?.id)
-    .filter((id: any) => id !== undefined && id !== null)
-    .map((id: any) => String(id));
-  return [...new Set([...slugs, ...ids])].map((slug) => ({ slug }));
-}
-
 export async function generateMetadata({
   params,
 }: {
@@ -110,12 +100,10 @@ export default async function ProductPage({
   const p = byParam(String(slug));
   if (!p) notFound();
 
-  // Only redirect if the canonical path is different
-  const currentPath = `/products/${encodeURIComponent(String(slug))}`.toLowerCase();
+  // Redirect to canonical if needed
   const target = canonicalHref(p).toLowerCase();
-  if (currentPath !== target) {
-    redirect(target);
-  }
+  const current = `/products/${encodeURIComponent(String(slug))}`.toLowerCase();
+  if (current !== target) redirect(target);
 
   // Defensive locals
   const pAny = p as any;
@@ -153,18 +141,16 @@ export default async function ProductPage({
         }
         .hero-overlay,.gradient-overlay,.noise-overlay,.overlay,[data-overlay],[data-decorative="true"],
         [class*="overlay-"],[class$="-overlay"],.fixed-overlay,.absolute-overlay,[data-blocking-overlay="true"] {
-          pointer-events:none !重要; z-index:-1 !important;
+          pointer-events:none !important; z-index:-1 !important;
         }
       `}</style>
 
-      {/* Title + subline */}
       <h1 className="text-3xl md:text-4xl font-bold">{title}</h1>
       <p className="mt-1 text-gray-700">
         {subtitle || `A curated digital product${category ? ` in ${category}.` : `.`}`}
       </p>
       {price && <div className="mt-4 text-2xl font-semibold">{price}</div>}
 
-      {/* Gallery + buy box */}
       <section className="mt-8 grid gap-6 md:grid-cols-2">
         <div>
           <div className="rounded-xl border bg-white p-2">
