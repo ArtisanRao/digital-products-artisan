@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { products } from "@/data/products";
 import ProductGallery from "@/components/ProductGallery";
-import { ShoppingCart, Zap } from "lucide-react";
+import AddToCartButton from "@/components/shop/AddToCartButton";
+import BuyNowButton from "@/components/shop/BuyNowButton";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -141,6 +142,16 @@ export default async function ProductPage({ params }: any) {
 
   const safeImgs = Array.isArray(imgs) && imgs.length ? imgs : ["/images/placeholder.jpg"];
 
+  // Numeric product id for buttons
+  const productIdNum: number = (() => {
+    const n = Number(p.id);
+    if (Number.isFinite(n)) return n;
+    const found = (products as any[]).find(
+      (x: any) => String(x?.slug || "") === String(canonSlug(p))
+    );
+    return Number(found?.id ?? 0);
+  })();
+
   return (
     <main
       className="container mx-auto px-4 py-10 relative z-[100]"
@@ -148,7 +159,7 @@ export default async function ProductPage({ params }: any) {
       style={{ pointerEvents: "auto", isolation: "isolate" }}
     >
       <section className="grid gap-6 md:grid-cols-[1fr_360px]">
-        {/* LEFT: Gallery + Title/Subtitle */}
+        {/* LEFT: Gallery + Title/Subtitle and 'More' button (blue) under subtitle */}
         <div className="flex flex-col gap-4">
           <ProductGallery images={safeImgs} alt={title} maxThumbs={4} />
 
@@ -164,19 +175,29 @@ export default async function ProductPage({ params }: any) {
             </h1>
 
             {category ? (
-              <p className="mt-1 text-gray-700">
+              <div className="mt-1">
                 <Link
                   href={`/categories/${encodeURIComponent(toSlug(category))}`}
-                  className="hover:underline underline-offset-4 decoration-2 decoration-transparent hover:decoration-current transition"
+                  className="text-gray-700 hover:underline underline-offset-4 decoration-2 decoration-transparent hover:decoration-current transition"
                   prefetch={false}
                 >
                   {category}
                 </Link>
-              </p>
+              </div>
             ) : null}
+
+            {/* Blue 'More' directly under the subtitle */}
+            <div className="mt-3">
+              <a
+                href="#details"
+                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+              >
+                More
+              </a>
+            </div>
           </div>
 
-          {/* Details (anchor target) */}
+          {/* Details */}
           <section id="details" className="mt-6 max-w-none">
             <h2 className="text-xl font-semibold mb-2">About this product</h2>
             <p>
@@ -184,21 +205,10 @@ export default async function ProductPage({ params }: any) {
                 ? p.description
                 : "High-quality digital resource crafted for creators and entrepreneurs."}
             </p>
-
-            {/* 'More' under About */}
-            <div className="mt-4">
-              <a
-                href="#more"
-                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-              >
-                More
-              </a>
-              <div id="more" />
-            </div>
           </section>
         </div>
 
-        {/* RIGHT: Purchase box with new redirects */}
+        {/* RIGHT: Purchase box (Add silently + Buy now → payment) */}
         <aside className="rounded-xl border bg-white p-4 h-fit">
           <h2 className="text-lg font-semibold">Get this product</h2>
           <p className="mt-1 text-sm text-gray-600">Instant download. Lifetime access.</p>
@@ -206,25 +216,15 @@ export default async function ProductPage({ params }: any) {
           {price ? <div className="mt-4 text-2xl font-semibold">{price}</div> : null}
 
           <div className="mt-4 flex flex-wrap gap-2">
-            {/* Add to cart → /cart */}
-            <Link
-              href="/cart"
-              prefetch={false}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-            >
-              <ShoppingCart className="w-5 h-5 text-white/95" />
-              Add to cart
-            </Link>
+            {/* Add to cart (silent add + badge update via your existing component) */}
+            {Number.isFinite(productIdNum) && productIdNum > 0 ? (
+              <AddToCartButton productId={productIdNum} />
+            ) : null}
 
-            {/* Buy now → /checkout */}
-            <Link
-              href="/checkout"
-              prefetch={false}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-            >
-              <Zap className="w-5 h-5 text-yellow-300" />
-              Buy now
-            </Link>
+            {/* Buy now → payment */}
+            {Number.isFinite(productIdNum) && productIdNum > 0 ? (
+              <BuyNowButton productId={productIdNum} />
+            ) : null}
           </div>
 
           {category ? (
