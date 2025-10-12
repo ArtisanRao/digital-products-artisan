@@ -1,7 +1,7 @@
 // app/products/[slug]/page.tsx
 import Link from "next/link";
 import { products } from "@/data/products";
-import ProductGallery from "@/components/product-gallery";
+import ProductGallery from "@/components/ProductGallery"; // ← updated import
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -160,7 +160,7 @@ export default async function ProductPage({ params }: any) {
         {/* LEFT COLUMN */}
         <div className="flex flex-col gap-4">
           {/* Gallery with hover + prev/next + fullscreen */}
-          <ProductGallery images={safeImgs} alt={title} maxThumbs={4} />
+          <ProductGallery images={safeImgs} alt={title} /> {/* ← removed maxThumbs */}
 
           {/* Title + subtitle + CTAs (directly under gallery) */}
           <div className="pt-1">
