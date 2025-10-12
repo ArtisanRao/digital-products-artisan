@@ -1,249 +1,284 @@
 // app/products/[slug]/page.tsx
 import Link from "next/link";
-import { products as _products } from "@/data/products";
+import { notFound } from "next/navigation";
+import { products } from "@/data/products";
 
 export const runtime = "nodejs";
 export const revalidate = 300;
+export const dynamic = "force-static";
+export const dynamicParams = true;
 
-const UI_VERSION = "product-hardened-v9";
+const UI_VERSION = "product-hardened-v6";
 
 /* ---------------- helpers ---------------- */
-const toSlug = (s: string) =>
-  String(s || "")
+function toSlug(s: string) {
+  return String(s || "")
     .toLowerCase()
     .trim()
     .replace(/&/g, "and")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
-
-const isNumeric = (x: string) => /^[0-9]+$/.test(String(x || ""));
-
-function getProductsArray() {
-  // If the import isn’t an array for any reason, guard it
-  try {
-    return Array.isArray(_products) ? _products : [];
-  } catch {
-    return [];
-  }
 }
-
+function isNumeric(x: string) {
+  return /^[0-9]+$/.test(String(x || ""));
+}
 function byParam(param: string) {
   const needle = String(param || "").trim();
   if (!needle) return null;
 
-  const products = getProductsArray();
-
-  // by numeric id
   if (isNumeric(needle)) {
     const n = Number(needle);
-    const hit = products.find((p: any) => Number(p?.id) === n);
+    const hit = (products as any[]).find((p) => Number(p?.id) === n);
     if (hit) return hit;
   }
-
-  // by slug
   const bySlug =
-    products.find(
-      (p: any) => String(p?.slug || "").toLowerCase() === needle.toLowerCase()
+    (products as any[]).find(
+      (p) => String(p?.slug || "").toLowerCase() === needle.toLowerCase()
     ) ?? null;
   if (bySlug) return bySlug;
 
-  // by normalized title
-  const byTitle = products.find((p: any) => toSlug(p?.title) === needle) ?? null;
+  const byTitle =
+    (products as any[]).find((p) => toSlug(p?.title) === needle) ?? null;
   return byTitle;
 }
-
-const canonicalSlug = (p: any) => String(p?.slug || toSlug(p?.title || "product"));
-
-function productImages(p: any): string[] {
-  try {
-    const arr = Array.isArray(p?.images) ? p.images.filter(Boolean) : [];
-    const cover = (arr[0] ?? p?.image ?? "/images/placeholder.jpg") as string;
-    const extras = arr.slice(1).filter(Boolean);
-    const unique = Array.from(new Set([cover, ...extras])).slice(0, 8);
-    return unique.map((src) =>
-      src.includes("?") ? `${src}&v=${UI_VERSION}` : `${src}?v=${UI_VERSION}`
-    );
-  } catch {
-    return ["/images/placeholder.jpg"];
-  }
+function canonicalSlug(p: any) {
+  return String(p?.slug || toSlug(p?.title || "product"));
 }
-
-/** Strip to plain JSON-friendly values only */
+function canonicalHref(p: any) {
+  return `/products/${encodeURIComponent(canonicalSlug(p))}`;
+}
+function productImages(p: any): string[] {
+  const arr = Array.isArray(p?.images) ? p.images.filter(Boolean) : [];
+  const cover = (arr[0] ?? p?.image ?? "/images/placeholder.jpg") as string;
+  const extras = arr.slice(1).filter(Boolean);
+  const unique = Array.from(new Set([cover, ...extras])).slice(0, 8);
+  return unique.map((src) =>
+    src.includes("?") ? `${src}&v=${UI_VERSION}` : `${src}?v=${UI_VERSION}`
+  );
+}
+/** Strip to plain JSON-ish values only */
 function sanitizeProduct(raw: any) {
-  const out: any = {};
-  if (!raw || typeof raw !== "object") return out;
-  out.id = typeof raw.id === "number" || typeof raw.id === "string" ? raw.id : undefined;
-  out.slug = typeof raw.slug === "string" ? raw.slug : undefined;
-  out.title = typeof raw.title === "string" ? raw.title : "Product";
-  out.category = typeof raw.category === "string" ? raw.category : "";
-  out.price =
+  const safe: any = {};
+  if (!raw || typeof raw !== "object") return safe;
+  safe.id =
+    typeof raw.id === "number" || typeof raw.id === "string" ? raw.id : undefined;
+  safe.slug = typeof raw.slug === "string" ? raw.slug : undefined;
+  safe.title = typeof raw.title === "string" ? raw.title : "Product";
+  safe.category = typeof raw.category === "string" ? raw.category : "";
+  safe.price =
     typeof raw.price === "number" || typeof raw.price === "string" ? raw.price : "";
-  out.images = Array.isArray(raw.images)
+  safe.images = Array.isArray(raw.images)
     ? raw.images.filter((x: any) => typeof x === "string" && x.trim())
     : [];
-  out.image = typeof raw.image === "string" ? raw.image : undefined;
-  out.description = typeof raw.description === "string" ? raw.description : "";
-  return out;
+  safe.image = typeof raw.image === "string" ? raw.image : undefined;
+  safe.description = typeof raw.description === "string" ? raw.description : "";
+  return safe;
+}
+
+/* --------- metadata kept generic to avoid data-time throws --------- */
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string };
+}) {
+  const { slug } = params;
+  const pretty =
+    String(slug || "")
+      .split("/")
+      .pop()
+      ?.replace(/-/g, " ")
+      .replace(/\b\w/g, (m) => m.toUpperCase()) || "Product";
+
+  const title = `${pretty} | Digital Products Artisan`;
+  const description = "Explore premium digital downloads.";
+  const canonical = `https://digitalproductsartisan.com/products/${encodeURIComponent(
+    String(slug || "")
+  )}`;
+
+  return {
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: { title, description, type: "product", url: canonical },
+    twitter: { card: "summary_large_image", title, description },
+  };
 }
 
 /* ---------------- PAGE ---------------- */
-export default async function ProductPage(props: any) {
-  const { params } = props || {};
-  // Next 15 sometimes passes plain object; normalize without assuming a Promise
-  const safeParams = (await Promise.resolve(params)) || {};
-  const slug = String(safeParams.slug ?? "");
+export default async function ProductPage({
+  params,
+}: {
+  params: { slug: string };
+}) {
+  const { slug } = params;
 
-  try {
-    const raw = byParam(slug);
+  const raw = byParam(String(slug));
+  if (!raw) notFound();
 
-    // No hard throws — render soft-not-found instead
-    if (!raw) {
-      const safeSlug = toSlug(slug || "product");
-      return (
-        <main className="container mx-auto px-4 py-16">
-          <h1 className="text-3xl font-bold">Product not found</h1>
-          <p className="mt-2 text-gray-700">
-            We couldn’t find that item. It may have been moved or renamed.
-          </p>
-          <div className="mt-6">
-            <Link href="/products" prefetch={false} className="underline">
-              Browse all products →
-            </Link>
-            <span className="ml-2 text-xs text-gray-500 align-middle">({safeSlug})</span>
-          </div>
-        </main>
-      );
-    }
-
-    const p = sanitizeProduct(raw);
-    const title = p.title || "Product";
-    const category = p.category || "";
-
-    let priceText = "";
-    if (typeof p.price === "number") {
-      try {
-        priceText = new Intl.NumberFormat("en-US", {
+  const p = sanitizeProduct(raw);
+  const title = p.title || "Product";
+  const category = p.category || "";
+  const price =
+    typeof p.price === "number"
+      ? new Intl.NumberFormat("en-US", {
           style: "currency",
           currency: "USD",
-        }).format(p.price);
-      } catch {
-        priceText = `$${p.price.toFixed?.(2) ?? String(p.price)}`;
-      }
-    } else if (typeof p.price === "string") {
-      priceText = p.price;
-    }
+        }).format(p.price)
+      : typeof p.price === "string"
+      ? p.price
+      : "";
+  const imgs = productImages(p);
+  const canonical = canonicalHref(p);
+  const firstImg = (imgs[0] ?? "/images/placeholder.jpg") as string;
 
-    const imgs = productImages(p);
+  return (
+    <main
+      className="container mx-auto px-4 py-10 relative z-[100] clickable-surface"
+      data-ui={`ProductPage@${UI_VERSION}`}
+      style={{ pointerEvents: "auto", isolation: "isolate" }}
+    >
+      {/* Small underline animation helpers for title/subtitle */}
+      <style>{`
+        .hover-underline {
+          position: relative;
+        }
+        .hover-underline::after {
+          content: "";
+          position: absolute;
+          left: 0;
+          right: 0;
+          bottom: -2px;
+          height: 2px;
+          background: currentColor;
+          transform: scaleX(0);
+          transform-origin: left;
+          transition: transform .2s ease;
+          opacity: .9;
+        }
+        .hover-underline:hover::after { transform: scaleX(1); }
+      `}</style>
 
-    return (
-      <main
-        className="container mx-auto px-4 py-10 relative z-[100] clickable-surface"
-        data-ui={`ProductPage@${UI_VERSION}`}
-        style={{ pointerEvents: "auto", isolation: "isolate" }}
-      >
-        <style>{`
-          [data-ui^="ProductPage@"] a,
-          [data-ui^="ProductPage@"] button,
-          [data-ui^="ProductPage@"] [role="button"] {
-            pointer-events:auto !important; position:relative; z-index:20;
-          }
-          .hero-overlay,.gradient-overlay,.noise-overlay,.overlay,[data-overlay],[data-decorative="true"],
-          [class*="overlay-"],[class$="-overlay"],.fixed-overlay,.absolute-overlay,[data-blocking-overlay="true"] {
-            pointer-events:none !important; z-index:-1 !important;
-          }
-        `}</style>
+      <link rel="canonical" href={canonical} />
 
-        <h1 className="text-3xl md:text-4xl font-bold">{title}</h1>
-        <p className="mt-1 text-gray-700">
-          {`A curated digital product${category ? ` in ${category}.` : `.`}`}
-        </p>
-        {priceText && <div className="mt-4 text-2xl font-semibold">{priceText}</div>}
+      {/* TOP GRID: gallery + details */}
+      <section className="grid gap-8 md:grid-cols-2">
+        {/* GALLERY */}
+        <div className="flex gap-3">
+          {/* vertical thumbs left */}
+          {imgs.length > 1 && (
+            <div className="hidden sm:flex flex-col gap-2 w-24 shrink-0">
+              {imgs.slice(0, 6).map((src, i) => (
+                <a
+                  key={src + i}
+                  href={src}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-lg border bg-white p-1 hover:shadow"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={src}
+                    alt=""
+                    className="w-full h-20 object-cover rounded-md"
+                    loading={i < 3 ? "eager" : "lazy"}
+                  />
+                </a>
+              ))}
+            </div>
+          )}
 
-        <section className="mt-8 grid gap-6 md:grid-cols-2">
-          <div>
+          {/* main image */}
+          <div className="flex-1">
             <div className="rounded-xl border bg-white p-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={(imgs[0] ?? "/images/placeholder.jpg") as string}
+                src={firstImg}
                 alt={title}
                 className="w-full h-auto object-contain"
                 loading="eager"
               />
             </div>
-            {imgs.length > 1 && (
-              <div className="mt-3 grid grid-cols-4 gap-2">
-                {imgs.slice(1, 5).map((src, i) => (
-                  <div key={src + i} className="rounded-lg border bg-white p-1">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={src} alt="" className="w-full h-20 object-cover" loading="lazy" />
-                  </div>
-                ))}
-              </div>
+          </div>
+        </div>
+
+        {/* DETAILS + CTAs (to the right) */}
+        <aside className="rounded-xl border bg-white p-5 h-fit">
+          <div className="space-y-2">
+            <Link
+              href={canonical}
+              prefetch={false}
+              className="text-2xl md:text-3xl font-bold hover-underline"
+            >
+              {title}
+            </Link>
+
+            <div className="text-gray-700">
+              {`A curated digital product${
+                category ? ` in ` : `.`
+              }`}
+              {category && (
+                <>
+                  <Link
+                    href={`/categories/${encodeURIComponent(toSlug(category))}`}
+                    prefetch={false}
+                    className="underline-offset-4 hover-underline"
+                  >
+                    {category}
+                  </Link>
+                  .
+                </>
+              )}
+            </div>
+
+            {price && (
+              <div className="pt-2 text-2xl font-semibold">{price}</div>
             )}
           </div>
 
-          <aside className="rounded-xl border bg-white p-4 h-fit">
-            <h2 className="text-lg font-semibold">Get this product</h2>
-            <p className="mt-1 text-sm text-gray-600">Instant download. Lifetime access.</p>
-            <div className="mt-4 flex gap-2">
-              <Link
-                href={`/api/checkout?product=${encodeURIComponent(canonicalSlug(p))}&qty=1`}
-                prefetch={false}
-                className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-              >
-                Buy now
-              </Link>
-              <Link
-                href="/cart"
-                prefetch={false}
-                className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-gray-50"
-              >
-                View cart
-              </Link>
-            </div>
-            {category && (
-              <p className="mt-4 text-xs text-gray-500">
-                Category:{" "}
-                <Link
-                  href={`/categories/${encodeURIComponent(toSlug(category))}`}
-                  className="underline"
-                  prefetch={false}
-                >
-                  {category}
-                </Link>
-              </p>
-            )}
-          </aside>
-        </section>
+          {/* CTA row under title/subtitle */}
+          <div className="mt-5 flex flex-wrap gap-3">
+            {/* View = open main image */}
+            <a
+              href={firstImg}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-gray-50"
+            >
+              View
+            </a>
 
-        <section className="mt-10 prose max-w-none">
-          <h2>About this product</h2>
-          <p>
-            {typeof p.description === "string" && p.description.trim()
-              ? p.description
-              : "High-quality digital resource crafted for creators and entrepreneurs."}
-          </p>
-        </section>
-      </main>
-    );
-  } catch (err) {
-    console.error("[products/[slug]] render error:", err);
-    // Non-throw fallback so error boundary won’t trigger
-    return (
-      <main className="container mx-auto px-4 py-16">
-        <h1 className="text-3xl font-bold">Product page error</h1>
-        <p className="mt-2 text-gray-700">
-          Something went wrong while loading this product.
+            {/* Add to cart — lightweight GET so it doesn't crash if API not present */}
+            <Link
+              href={`/cart?add=${encodeURIComponent(canonicalSlug(p))}`}
+              prefetch={false}
+              className="inline-flex items-center justify-center rounded-lg border px-4 py-2 hover:bg-gray-50"
+            >
+              Add to cart
+            </Link>
+
+            {/* Buy now through your existing checkout API */}
+            <Link
+              href={`/api/checkout?product=${encodeURIComponent(
+                canonicalSlug(p)
+              )}&qty=1`}
+              prefetch={false}
+              className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+            >
+              Buy
+            </Link>
+          </div>
+        </aside>
+      </section>
+
+      {/* DESCRIPTION */}
+      <section className="mt-10 prose max-w-none">
+        <h2>About this product</h2>
+        <p>
+          {typeof p.description === "string" && p.description.trim()
+            ? p.description
+            : "High-quality digital resource crafted for creators and entrepreneurs."}
         </p>
-        <div className="mt-6 flex gap-3">
-          <Link href="/products" prefetch={false} className="underline">
-            All products
-          </Link>
-          <Link href="/" prefetch={false} className="underline">
-            Home
-          </Link>
-        </div>
-      </main>
-    );
-  }
+      </section>
+    </main>
+  );
 }
