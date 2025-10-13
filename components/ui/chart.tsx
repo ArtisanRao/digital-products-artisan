@@ -96,8 +96,11 @@ ${colorConfig
 
 const ChartTooltip = RechartsPrimitive.Tooltip
 
-type ChartTooltipContentProps = TooltipProps<number, string> &
+type ChartTooltipContentProps = Omit<TooltipProps<number, string>, "content"> &
   React.ComponentProps<"div"> & {
+    // make these explicit because Recharts' exported type can be inconsistent
+    active?: boolean
+    payload?: Array<any>
     hideLabel?: boolean
     hideIndicator?: boolean
     indicator?: "line" | "dot" | "dashed"
@@ -109,7 +112,7 @@ const ChartTooltipContent = React.forwardRef<HTMLDivElement, ChartTooltipContent
   (
     {
       active,
-      payload, // typed from TooltipProps
+      payload, // now explicit in the prop type
       className,
       indicator = "dot",
       hideLabel = false,
@@ -179,8 +182,8 @@ const ChartTooltipContent = React.forwardRef<HTMLDivElement, ChartTooltipContent
             // Recharts types mark these optional; handle safely.
             const indicatorColor =
               color ||
-              (item.payload as any)?.fill ||
-              (item as any).color
+              (item as any)?.payload?.fill ||
+              (item as any)?.color
 
             return (
               <div
@@ -191,9 +194,6 @@ const ChartTooltipContent = React.forwardRef<HTMLDivElement, ChartTooltipContent
                 )}
               >
                 {formatter && item.value !== undefined && item.name ? (
-                  // The runtime signature of `formatter` in Recharts accepts (value, name, item, index, payload)
-                  // even though the TS types are looser.
-                  // Cast to satisfy TS while preserving DX.
                   (formatter as unknown as (
                     value: number | string,
                     name: string,
@@ -205,7 +205,7 @@ const ChartTooltipContent = React.forwardRef<HTMLDivElement, ChartTooltipContent
                     item.name as string,
                     item,
                     index,
-                    item.payload
+                    (item as any).payload
                   )
                 ) : (
                   <>
