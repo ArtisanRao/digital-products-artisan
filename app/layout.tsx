@@ -7,7 +7,7 @@ import Footer from "@/components/footer";
 import { CartProvider } from "@/contexts/cart-context";
 import { AuthProvider } from "@/contexts/auth-context";
 import { Toaster } from "@/components/ui/toaster";
-// import LiveChat from "@/components/live-chat"; // ⛔️ TEMP: disable to rule out overlay
+// import LiveChat from "@/components/live-chat"; // ⛔️ still disabled
 import AutoCurrency from "@/components/auto-currency";
 import Script from "next/script";
 import React from "react";
@@ -54,7 +54,7 @@ export const viewport: Viewport = {
 };
 
 /** Bump on each deploy to flush old SW & caches */
-const BUILD_TAG = "sw-flush-restore-01";
+const BUILD_TAG = "sw-flush-restore-02";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const snipcartKey = process.env.NEXT_PUBLIC_SNIPCART_KEY;
@@ -101,6 +101,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             const tag='${BUILD_TAG}';
             const prev=localStorage.getItem('BUILD_TAG');
             if(prev!==tag){
+              let hadController = !!(navigator.serviceWorker && navigator.serviceWorker.controller);
               if('serviceWorker' in navigator){
                 const regs=await navigator.serviceWorker.getRegistrations();
                 for(const r of regs){ try{await r.unregister();}catch{} }
@@ -110,6 +111,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 for(const k of keys){ try{await caches.delete(k);}catch{} }
               }
               localStorage.setItem('BUILD_TAG', tag);
+              if(hadController){ location.reload(); }
             }
           }catch(e){console.warn('SW flush failed', e);}})();`}
         </Script>
@@ -120,14 +122,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 (function(){
   function cls(path){
     var c = document.body.classList;
-    // clear previous
     Array.from(c).forEach(function(n){ if(n.startsWith('route-')) c.remove(n); });
     if (path.startsWith('/categories')) c.add('route-categories');
     else if (path.startsWith('/products')) c.add('route-products');
     else c.add('route-other');
   }
   function apply(){ try{ cls(location.pathname || '/'); }catch{} }
-  // catch SPA navigations
   var _ps = history.pushState, _rs = history.replaceState;
   history.pushState = function(){ _ps.apply(this, arguments); apply(); };
   history.replaceState = function(){ _rs.apply(this, arguments); apply(); };
@@ -144,7 +144,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Header />
             {children}
             <Footer />
-            {/* <LiveChat />  ⛔️ TEMP: disabled to eliminate overlay as cause */}
+            {/* <LiveChat /> */}
             <Toaster />
 
             <noscript>
@@ -258,7 +258,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   window.addEventListener('auxclick', handle, true);
   window.addEventListener('touchend', handle, true);
 
-  // Lift MAIN above any weird z-index stacks on these routes
   function lift(){
     if (!inScope()) return;
     var m = document.querySelector('main');
@@ -275,7 +274,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 })();`}
         </Script>
 
-        {/* 🧯 Client error banner so we see the exact exception instead of a blank app */}
+        {/* 🧯 Client error banner to surface runtime client-side exceptions */}
         <Script id="client-error-banner" strategy="afterInteractive">
           {`
 (function(){

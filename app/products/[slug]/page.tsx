@@ -5,13 +5,14 @@ import ProductGalleryV2 from "@/components/ProductGalleryV2";
 import AddToCartButton from "@/components/shop/AddToCartButton";
 import BuyNowButton from "@/components/shop/BuyNowButton";
 import { getLongDescription } from "@/lib/description";
+import SwNuke from "@/components/SwNuke"; // ⬅️ kill stale PWA caches on first load
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
 export const revalidate = 300;
 
-const UI_VERSION = "product-hardened-v15";
+const UI_VERSION = "product-hardened-v16"; // ⬅️ bump to force cache-bust
 
 /* ---------------- helpers ---------------- */
 const toSlug = (s: string) =>
@@ -87,7 +88,7 @@ function sanitize(raw: any) {
       : [];
     out.image = typeof raw?.image === "string" ? raw.image : undefined;
 
-    // ---- description-related fields (NEW) ----
+    // ---- description-related fields ----
     out.shortDescription =
       typeof raw?.shortDescription === "string" ? raw.shortDescription : "";
     out.longDescription =
@@ -192,6 +193,9 @@ export default async function ProductPage({ params }: any) {
       data-ui={`ProductPage@${UI_VERSION}`}
       style={{ pointerEvents: "auto", isolation: "isolate" }}
     >
+      {/* One-time: kill stale PWA caches & SW, then reload into fresh build */}
+      <SwNuke version={UI_VERSION} />
+
       <section className="grid gap-6 md:grid-cols-[1fr_360px]">
         {/* LEFT: Gallery + Title/Subtitle */}
         <div className="flex flex-col gap-4">
