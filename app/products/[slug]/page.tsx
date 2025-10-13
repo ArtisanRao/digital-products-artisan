@@ -4,7 +4,7 @@ import { products } from "@/data/products";
 import ProductGalleryV2 from "@/components/ProductGalleryV2";
 import AddToCartButton from "@/components/shop/AddToCartButton";
 import BuyNowButton from "@/components/shop/BuyNowButton";
-import { getLongDescription } from "@/lib/description"; // ⬅️ NEW (uses the fallback logic)
+import { getLongDescription } from "@/lib/description";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -92,7 +92,7 @@ function sanitize(raw: any) {
       typeof raw?.shortDescription === "string" ? raw.shortDescription : "";
     out.longDescription =
       typeof raw?.longDescription === "string" ? raw.longDescription : "";
-    out.description = typeof raw?.description === "string" ? raw.description : ""; // legacy
+    out.description = typeof raw?.description === "string" ? raw.description : "";
     out.features = Array.isArray(raw?.features)
       ? raw.features.filter((x: any) => typeof x === "string" && x.trim())
       : [];
@@ -118,7 +118,6 @@ async function getSlugFromParams(params: any): Promise<string> {
 
 /* ---------------- small render utils ---------------- */
 function renderParagraphs(mdOrText: string) {
-  // Keeps it simple and safe even if you don’t have a markdown renderer here
   const chunks = String(mdOrText || "").trim().split(/\n{2,}/g);
   return chunks.map((c, i) => <p key={i} className="mb-3">{c}</p>);
 }
@@ -177,10 +176,10 @@ export default async function ProductPage({ params }: any) {
     return Number(found?.id ?? 0);
   })();
 
-  // ---- unified description content (uses fallback when long is light) ----
+  // unified description content
   const long = getLongDescription({
     ...p,
-    longDescription: p.longDescription || p.description, // prefer new, fallback to legacy
+    longDescription: p.longDescription || p.description,
   } as any);
 
   const hasFeatures = Array.isArray(p.features) && p.features.length > 0;
@@ -222,17 +221,15 @@ export default async function ProductPage({ params }: any) {
             ) : null}
           </div>
 
-          {/* Details + More (blue) BELOW the About section — consistent everywhere */}
+          {/* Details + More */}
           <section id="details" className="mt-6 max-w-none">
             <h2 className="text-xl font-semibold mb-2">About this product</h2>
 
             <div className="prose prose-neutral max-w-none">
-              {/* first short paragraph (if provided) */}
               {p.shortDescription?.trim() ? (
                 <p className="mb-3">{p.shortDescription.trim()}</p>
               ) : null}
 
-              {/* collapsible long description + extras */}
               <details>
                 <summary>
                   <span className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 cursor-pointer select-none">
@@ -276,7 +273,7 @@ export default async function ProductPage({ params }: any) {
           </section>
         </div>
 
-        {/* RIGHT: Purchase box (silent Add + Buy now → payment) */}
+        {/* RIGHT: Purchase box */}
         <aside className="rounded-xl border bg-white p-4 h-fit">
           <h2 className="text-lg font-semibold">Get this product</h2>
           <p className="mt-1 text-sm text-gray-600">Instant download. Lifetime access.</p>
