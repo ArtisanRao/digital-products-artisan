@@ -3,17 +3,28 @@
 import * as React from 'react';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight, Maximize2, X } from 'lucide-react';
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 
 type Props = {
   images: string[];
   alt?: string;
-  maxThumbs?: number;
+  /** How many EXTRA thumbnails (beyond the first/cover) to show before revealing the rest */
+  maxThumbs?: number; // default 4 extras => cover + 4
 };
 
-export default function ProductGallery({ images, alt = 'Product image', maxThumbs = 4 }: Props) {
+export default function ProductGallery({
+  images,
+  alt = 'Product image',
+  maxThumbs = 4,
+}: Props) {
   const cap = Math.max(0, Math.floor(Number.isFinite(maxThumbs) ? maxThumbs : 4));
 
+  // Dedupe + fallback
   const safe = React.useMemo<string[]>(
     () =>
       Array.isArray(images) && images.length
@@ -27,20 +38,24 @@ export default function ProductGallery({ images, alt = 'Product image', maxThumb
   const [showAll, setShowAll] = React.useState(false);
 
   const len = safe.length;
+
+  // When collapsed, show: cover (1) + extras (cap)
   const collapsedCount = Math.min(len, 1 + cap);
   const hasMore = len > collapsedCount;
   const visibleCount = showAll ? len : collapsedCount;
+
   const thumbs = React.useMemo(() => safe.slice(0, visibleCount), [safe, visibleCount]);
 
   const prev = React.useCallback(() => setIndex((i) => (i - 1 + len) % len), [len]);
   const next = React.useCallback(() => setIndex((i) => (i + 1) % len), [len]);
 
+  // Preload neighbors
   const loaded = React.useRef<Set<number>>(new Set());
   const preload = React.useCallback(
     (idxs: number[]) => {
       if (typeof window === 'undefined') return;
       idxs.forEach((i) => {
-        const j = ((i % len) + len) % len;
+        const j = ((i % len) + len) % len; // clamp
         if (!loaded.current.has(j) && safe[j]) {
           const img = new window.Image();
           img.src = safe[j]!;
@@ -67,9 +82,12 @@ export default function ProductGallery({ images, alt = 'Product image', maxThumb
   }, [len, index]);
 
   React.useEffect(() => {
-    if (!showAll && index >= visibleCount) setIndex(Math.max(0, visibleCount - 1));
+    if (!showAll && index >= visibleCount) {
+      setIndex(Math.max(0, visibleCount - 1));
+    }
   }, [showAll, visibleCount, index]);
 
+  // Keyboard support in fullscreen
   React.useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -83,6 +101,7 @@ export default function ProductGallery({ images, alt = 'Product image', maxThumb
 
   const current = safe[index] ?? safe[0];
 
+  // Auto-scroll active thumb into view
   const railRef = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
     const el = railRef.current?.querySelector<HTMLButtonElement>(`[data-i="${index}"]`);
@@ -91,12 +110,12 @@ export default function ProductGallery({ images, alt = 'Product image', maxThumb
 
   return (
     <>
-      {/* MOBILE: vertical (preview first), DESKTOP: 2-col grid (thumbs left, preview right) */}
-      <div className="gap-4 flex flex-col lg:grid lg:grid-cols-[88px,1fr] w-full items-start content-start">
+      {/* Force the main viewer to occupy the left content column with no extra gap */}
+      <div className="grid grid-cols-[86px,1fr] sm:grid-cols-[96px,1fr] gap-3 sm:gap-4 w-full items-start">
         {/* Thumbnails */}
         <div
           ref={railRef}
-          className="order-2 lg:order-none lg:col-start-1 lg:row-start-1 self-start flex flex-col gap-3 w-20 sm:w-24 sticky top-4 z-20 max-h-[75vh] overflow-auto pr-1"
+          className="flex flex-col gap-3 w-[86px] sm:w-24 sticky top-4 self-start z-20 max-h-[75vh] overflow-auto pr-1"
           role="listbox"
           aria-label="Product images"
         >
@@ -139,8 +158,16 @@ export default function ProductGallery({ images, alt = 'Product image', maxThumb
           )}
         </div>
 
-        {/* Main preview */}
-        <div className="order-1 lg:order-none lg:col-start-2 lg:row-start-1 self-start relative w-full max-w-full overflow-hidden rounded-lg border bg-white">
+        {/* Main image / viewer */}
+        <div
+          className="
+            relative w-full justify-self-stretch
+            overflow-hidden rounded-lg border bg-white
+            /* fixed aspect so there’s no white band above; image fills fully */
+            aspect-[4/3] sm:aspect-[16/10]
+          "
+        >
+          {/* Expand (B) — top-right */}
           <button
             onClick={() => setOpen(true)}
             className="absolute top-3 right-3 z-30 inline-flex items-center justify-center rounded-full w-10 h-10 bg-white/90 shadow-md hover:bg-white"
@@ -149,6 +176,7 @@ export default function ProductGallery({ images, alt = 'Product image', maxThumb
             <Maximize2 className="w-5 h-5" />
           </button>
 
+          {/* Prev / Next (C) — pinned to left/right of the image */}
           {len > 1 && (
             <>
               <button
@@ -168,19 +196,16 @@ export default function ProductGallery({ images, alt = 'Product image', maxThumb
             </>
           )}
 
-          <div className="w-full">
-            <Image
-              key={current}
-              src={current}
-              alt={alt}
-              width={1600}
-              height={1200}
-              sizes="(min-width: 1024px) 900px, 100vw"
-              className="w-full h-auto object-contain transition-transform duration-200 ease-out hover:scale-105"
-              loading="eager"
-              priority
-            />
-          </div>
+          {/* Main image — fill container, no letterboxing */}
+          <Image
+            key={current}
+            src={current}
+            alt={alt}
+            fill
+            sizes="(min-width: 1024px) 900px, 100vw"
+            className="object-cover"
+            priority
+          />
         </div>
       </div>
 
@@ -230,7 +255,6 @@ export default function ProductGallery({ images, alt = 'Product image', maxThumb
                 height={1400}
                 sizes="95vw"
                 className="w-auto max-w-[95vw] h-auto max-h-[85vh] object-contain rounded-lg shadow-2xl"
-                loading="eager"
                 priority
               />
             </div>
