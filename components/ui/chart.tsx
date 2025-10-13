@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import * as RechartsPrimitive from "recharts"
-import type { TooltipProps, LegendProps } from "recharts"
+import type { TooltipProps } from "recharts" // ⬅️ LegendProps removed
 
 import { cn } from "@/lib/utils"
 
@@ -283,58 +283,67 @@ const ChartTooltipContent = React.forwardRef<HTMLDivElement, ChartTooltipContent
 )
 ChartTooltipContent.displayName = "ChartTooltip"
 
-/* ===== Legend passthrough (optional) ===== */
+/* ===== Legend passthrough (stable typing) ===== */
 
 const ChartLegend = RechartsPrimitive.Legend
 
-const ChartLegendContent = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentProps<"div"> &
-    Pick<LegendProps, "payload" | "verticalAlign"> & {
-      hideIcon?: boolean
-      nameKey?: string
-    }
->(({ className, hideIcon = false, payload, verticalAlign = "bottom", nameKey }, ref) => {
-  const { config } = useChart()
-  if (!payload?.length) return null
+type LegendLikeProps = React.ComponentProps<"div"> & {
+  payload?: Array<{
+    id?: string | number
+    value?: string
+    color?: string
+    type?: string
+    inactive?: boolean
+    dataKey?: string
+  }>
+  verticalAlign?: "top" | "middle" | "bottom"
+  hideIcon?: boolean
+  nameKey?: string
+}
 
-  return (
-    <div
-      ref={ref}
-      className={cn(
-        "flex items-center justify-center gap-4",
-        verticalAlign === "top" ? "pb-3" : "pt-3",
-        className
-      )}
-    >
-      {payload.map((raw) => {
-        const item = raw as unknown as TooltipItem & { value?: string }
-        const key = `${nameKey || item.dataKey || "value"}`
-        const itemConfig = getPayloadConfigFromPayload(
-          config,
-          item as unknown as Record<string, unknown>,
-          key
-        )
-        return (
-          <div
-            key={String(item?.value)}
-            className="flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-muted-foreground"
-          >
-            {itemConfig?.icon && !hideIcon ? (
-              <itemConfig.icon />
-            ) : (
-              <div
-                className="h-2 w-2 shrink-0 rounded-[2px]"
-                style={{ backgroundColor: item?.color }}
-              />
-            )}
-            {itemConfig?.label}
-          </div>
-        )
-      })}
-    </div>
-  )
-})
+const ChartLegendContent = React.forwardRef<HTMLDivElement, LegendLikeProps>(
+  ({ className, hideIcon = false, payload, verticalAlign = "bottom", nameKey }, ref) => {
+    const { config } = useChart()
+    if (!payload?.length) return null
+
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          "flex items-center justify-center gap-4",
+          verticalAlign === "top" ? "pb-3" : "pt-3",
+          className
+        )}
+      >
+        {payload.map((raw, idx) => {
+          const item = raw as unknown as TooltipItem & { value?: string }
+          const key = `${nameKey || item.dataKey || "value"}`
+          const itemConfig = getPayloadConfigFromPayload(
+            config,
+            item as unknown as Record<string, unknown>,
+            key
+          )
+          return (
+            <div
+              key={String(item?.value ?? idx)}
+              className="flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-muted-foreground"
+            >
+              {itemConfig?.icon && !hideIcon ? (
+                <itemConfig.icon />
+              ) : (
+                <div
+                  className="h-2 w-2 shrink-0 rounded-[2px]"
+                  style={{ backgroundColor: item?.color }}
+                />
+              )}
+              {itemConfig?.label}
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+)
 ChartLegendContent.displayName = "ChartLegend"
 
 /* ===== Helper ===== */
