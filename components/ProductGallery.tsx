@@ -16,9 +16,9 @@ export default function ProductGallery({
   alt = 'Product image',
   maxThumbs = 4,
 }: Props) {
-  const cap = Math.max(0, Math.floor(Number.isFinite(maxThumbs) ? maxThumbs : 4));
+  const cap = Math.max(0, Math.floor(Number.isFinite(maxThumbs) ? Number(maxThumbs) : 4));
 
-  // dedupe + fallback
+  // Dedupe + fallback
   const safe = React.useMemo<string[]>(
     () =>
       Array.isArray(images) && images.length
@@ -30,8 +30,8 @@ export default function ProductGallery({
   const [index, setIndex] = React.useState(0);
   const [open, setOpen] = React.useState(false);
   const [showAll, setShowAll] = React.useState(false);
-  const len = safe.length;
 
+  const len = safe.length;
   const collapsedCount = Math.min(len, 1 + cap);
   const hasMore = len > collapsedCount;
   const visibleCount = showAll ? len : collapsedCount;
@@ -40,7 +40,7 @@ export default function ProductGallery({
   const prev = React.useCallback(() => setIndex((i) => (i - 1 + len) % len), [len]);
   const next = React.useCallback(() => setIndex((i) => (i + 1) % len), [len]);
 
-  // preload neighbors
+  // Preload neighbors
   const loaded = React.useRef<Set<number>>(new Set());
   const preload = React.useCallback(
     (idxs: number[]) => {
@@ -76,7 +76,7 @@ export default function ProductGallery({
     if (!showAll && index >= visibleCount) setIndex(Math.max(0, visibleCount - 1));
   }, [showAll, visibleCount, index]);
 
-  // keyboard in fullscreen
+  // Keyboard in fullscreen
   React.useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -90,7 +90,7 @@ export default function ProductGallery({
 
   const current = safe[index] ?? safe[0];
 
-  // scroll active thumb into view
+  // Auto-scroll active thumb into view
   const railRef = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
     const el = railRef.current?.querySelector<HTMLButtonElement>(`[data-i="${index}"]`);
@@ -101,7 +101,7 @@ export default function ProductGallery({
     <>
       {/* Two fixed columns: thumbs + main preview */}
       <div className="grid grid-cols-[86px_1fr] sm:grid-cols-[96px_1fr] gap-3 sm:gap-4 items-start">
-        {/* Thumbnails rail */}
+        {/* Thumbnails */}
         <div
           ref={railRef}
           className="flex flex-col gap-3 w-[86px] sm:w-24 sticky top-4 self-start z-20 max-h-[75vh] overflow-auto pr-1"
@@ -147,29 +147,27 @@ export default function ProductGallery({
           )}
         </div>
 
-        {/* Main preview: slightly smaller, always beside thumbs */}
+        {/* Main preview — slightly smaller so it doesn’t look oversized */}
         <div
           className="relative w-full overflow-hidden rounded-lg border bg-white max-h-[520px] md:max-h-[560px]"
-          // Ensures the container has height immediately → no stacking under thumbs.
-          style={{ aspectRatio: '16 / 10' }}
+          style={{ aspectRatio: '16 / 10' }} // ensures height immediately so it stays beside the thumbs
+          data-gallery="v2.4"                // marker so we can verify in Elements tab
         >
-          {/* Fullscreen button (top-right) */}
+          {/* Fullscreen button: TOP RIGHT */}
           <button
             onClick={() => setOpen(true)}
             className="absolute top-3 right-3 z-30 inline-flex items-center justify-center rounded-full w-10 h-10 bg-white/90 shadow-md hover:bg-white"
-            style={{ left: 'auto', right: '0.75rem' }} // hard-force right
             aria-label="Open fullscreen"
           >
             <Maximize2 className="w-5 h-5" />
           </button>
 
-          {/* Prev/Next pinned to left/right edges */}
+          {/* Prev/Next pinned to LEFT/RIGHT edges */}
           {len > 1 && (
             <>
               <button
                 onClick={prev}
                 className="absolute left-3 top-1/2 -translate-y-1/2 z-30 inline-flex items-center justify-center rounded-full w-11 h-11 bg-neutral-800/90 text-white shadow-md hover:bg-neutral-900 focus:outline-none"
-                style={{ right: 'auto', left: '0.75rem' }} // force LEFT
                 aria-label="Previous image"
               >
                 <ChevronLeft className="w-5 h-5" />
@@ -177,7 +175,6 @@ export default function ProductGallery({
               <button
                 onClick={next}
                 className="absolute right-3 top-1/2 -translate-y-1/2 z-30 inline-flex items-center justify-center rounded-full w-11 h-11 bg-neutral-800/90 text-white shadow-md hover:bg-neutral-900 focus:outline-none"
-                style={{ left: 'auto', right: '0.75rem' }} // force RIGHT
                 aria-label="Next image"
               >
                 <ChevronRight className="w-5 h-5" />
@@ -185,7 +182,7 @@ export default function ProductGallery({
             </>
           )}
 
-          {/* Image: contain (no crop) + gentle hover out/in */}
+          {/* Fill the frame cleanly; gentle hover */}
           <Image
             key={current}
             src={current}
