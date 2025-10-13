@@ -115,11 +115,12 @@ export default function ProductGallery({
 
   return (
     <>
-      <div className="grid grid-cols-[80px,1fr] sm:grid-cols-[96px,1fr] gap-4 w-full items-start">
+      {/* Wrapper: preview first on mobile (order-1), grid with thumbs on left on lg+ */}
+      <div className="gap-4 flex flex-col lg:grid lg:grid-cols-[88px,1fr] w-full items-start content-start">
         {/* Thumbnails (click-only; hover just animates) */}
         <div
           ref={railRef}
-          className="flex flex-col gap-3 w-20 sm:w-24 sticky top-4 self-start z-20 max-h-[75vh] overflow-auto pr-1"
+          className="order-2 lg:order-1 self-start flex flex-col gap-3 w-20 sm:w-24 sticky top-4 z-20 max-h-[75vh] overflow-auto pr-1"
           role="listbox"
           aria-label="Product images"
         >
@@ -163,7 +164,7 @@ export default function ProductGallery({
         </div>
 
         {/* Main image / viewer */}
-        <div className="relative w-full max-w-full overflow-hidden rounded-lg border bg-white">
+        <div className="order-1 lg:order-2 self-start relative w-full max-w-full overflow-hidden rounded-lg border bg-white">
           {/* Expand */}
           <button
             onClick={() => setOpen(true)}
