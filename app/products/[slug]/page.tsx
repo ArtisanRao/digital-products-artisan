@@ -1,7 +1,7 @@
 // app/products/[slug]/page.tsx
 import Link from "next/link";
 import { products } from "@/data/products";
-import ProductGallery from "@/components/ProductGalleryV2";
+import ProductGalleryV2 from "@/components/ProductGalleryV2";
 import AddToCartButton from "@/components/shop/AddToCartButton";
 import BuyNowButton from "@/components/shop/BuyNowButton";
 import { getLongDescription } from "@/lib/description"; // uses the fallback logic
