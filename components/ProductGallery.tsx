@@ -3,28 +3,17 @@
 import * as React from 'react';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight, Maximize2, X } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 type Props = {
   images: string[];
   alt?: string;
-  /** How many EXTRA thumbnails (beyond the first/cover) to show before revealing the rest */
-  maxThumbs?: number; // default 4 extras => cover + 4
+  maxThumbs?: number;
 };
 
-export default function ProductGallery({
-  images,
-  alt = 'Product image',
-  maxThumbs = 4,
-}: Props) {
+export default function ProductGallery({ images, alt = 'Product image', maxThumbs = 4 }: Props) {
   const cap = Math.max(0, Math.floor(Number.isFinite(maxThumbs) ? maxThumbs : 4));
 
-  // Dedupe + fallback
   const safe = React.useMemo<string[]>(
     () =>
       Array.isArray(images) && images.length
@@ -38,29 +27,20 @@ export default function ProductGallery({
   const [showAll, setShowAll] = React.useState(false);
 
   const len = safe.length;
-
-  // When collapsed, show: cover (1) + extras (cap)
   const collapsedCount = Math.min(len, 1 + cap);
   const hasMore = len > collapsedCount;
   const visibleCount = showAll ? len : collapsedCount;
-
   const thumbs = React.useMemo(() => safe.slice(0, visibleCount), [safe, visibleCount]);
 
-  const prev = React.useCallback(() => {
-    setIndex((i) => (i - 1 + len) % len);
-  }, [len]);
+  const prev = React.useCallback(() => setIndex((i) => (i - 1 + len) % len), [len]);
+  const next = React.useCallback(() => setIndex((i) => (i + 1) % len), [len]);
 
-  const next = React.useCallback(() => {
-    setIndex((i) => (i + 1) % len);
-  }, [len]);
-
-  // Preload neighbors
   const loaded = React.useRef<Set<number>>(new Set());
   const preload = React.useCallback(
     (idxs: number[]) => {
       if (typeof window === 'undefined') return;
       idxs.forEach((i) => {
-        const j = ((i % len) + len) % len; // clamp
+        const j = ((i % len) + len) % len;
         if (!loaded.current.has(j) && safe[j]) {
           const img = new window.Image();
           img.src = safe[j]!;
@@ -87,12 +67,9 @@ export default function ProductGallery({
   }, [len, index]);
 
   React.useEffect(() => {
-    if (!showAll && index >= visibleCount) {
-      setIndex(Math.max(0, visibleCount - 1));
-    }
+    if (!showAll && index >= visibleCount) setIndex(Math.max(0, visibleCount - 1));
   }, [showAll, visibleCount, index]);
 
-  // Keyboard support in fullscreen
   React.useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -106,7 +83,6 @@ export default function ProductGallery({
 
   const current = safe[index] ?? safe[0];
 
-  // Auto-scroll active thumb into view
   const railRef = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
     const el = railRef.current?.querySelector<HTMLButtonElement>(`[data-i="${index}"]`);
@@ -115,12 +91,12 @@ export default function ProductGallery({
 
   return (
     <>
-      {/* Wrapper: preview first on mobile (order-1), grid with thumbs on left on lg+ */}
+      {/* MOBILE: vertical (preview first), DESKTOP: 2-col grid (thumbs left, preview right) */}
       <div className="gap-4 flex flex-col lg:grid lg:grid-cols-[88px,1fr] w-full items-start content-start">
-        {/* Thumbnails (click-only; hover just animates) */}
+        {/* Thumbnails */}
         <div
           ref={railRef}
-          className="order-2 lg:order-1 self-start flex flex-col gap-3 w-20 sm:w-24 sticky top-4 z-20 max-h-[75vh] overflow-auto pr-1"
+          className="order-2 lg:order-none lg:col-start-1 lg:row-start-1 self-start flex flex-col gap-3 w-20 sm:w-24 sticky top-4 z-20 max-h-[75vh] overflow-auto pr-1"
           role="listbox"
           aria-label="Product images"
         >
@@ -130,7 +106,7 @@ export default function ProductGallery({
               <button
                 key={src + i}
                 data-i={i}
-                onClick={() => setIndex(i)} // CLICK to change (no hover change)
+                onClick={() => setIndex(i)}
                 className={[
                   'relative aspect-square overflow-hidden rounded-md border transition ring-offset-2 cursor-pointer',
                   active ? 'ring-2 ring-blue-600 border-blue-200' : 'border-gray-200',
@@ -163,9 +139,8 @@ export default function ProductGallery({
           )}
         </div>
 
-        {/* Main image / viewer */}
-        <div className="order-1 lg:order-2 self-start relative w-full max-w-full overflow-hidden rounded-lg border bg-white">
-          {/* Expand */}
+        {/* Main preview */}
+        <div className="order-1 lg:order-none lg:col-start-2 lg:row-start-1 self-start relative w-full max-w-full overflow-hidden rounded-lg border bg-white">
           <button
             onClick={() => setOpen(true)}
             className="absolute top-3 right-3 z-30 inline-flex items-center justify-center rounded-full w-10 h-10 bg-white/90 shadow-md hover:bg-white"
@@ -174,7 +149,6 @@ export default function ProductGallery({
             <Maximize2 className="w-5 h-5" />
           </button>
 
-          {/* Prev / Next on page */}
           {len > 1 && (
             <>
               <button
@@ -194,7 +168,6 @@ export default function ProductGallery({
             </>
           )}
 
-          {/* Main image with hover zoom-in */}
           <div className="w-full">
             <Image
               key={current}
@@ -221,7 +194,6 @@ export default function ProductGallery({
           <DialogDescription className="sr-only">Fullscreen preview</DialogDescription>
 
           <div className="relative w-full h-full bg-black/80 flex items-center justify-center">
-            {/* Close */}
             <button
               onClick={() => setOpen(false)}
               className="absolute top-4 right-4 z-[120] inline-flex items-center justify-center rounded-full w-12 h-12 bg-white/95 text-gray-800 shadow-lg hover:bg-white"
@@ -230,7 +202,6 @@ export default function ProductGallery({
               <X className="w-7 h-7" />
             </button>
 
-            {/* Prev / Next in fullscreen */}
             {len > 1 && (
               <>
                 <button
