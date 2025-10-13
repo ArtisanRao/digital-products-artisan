@@ -3,9 +3,9 @@
 import * as React from "react"
 import {
   Controller,
-  type ControllerRenderProps,
   type FieldPath,
   type FieldValues,
+  type UseControllerReturn,
   FormProvider,
   useFormContext,
 } from "react-hook-form"
@@ -122,14 +122,14 @@ const FormMessage = React.forwardRef<
 })
 FormMessage.displayName = "FormMessage"
 
-/* ---------- FormField (typed without ControllerProps) ---------- */
+/* ---------- FormField (typed via UseControllerReturn['field']) ---------- */
 
 type FormFieldProps<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
 > = {
   name: TName
-  render: (props: { field: ControllerRenderProps<TFieldValues, TName> }) => React.ReactNode
+  render: (props: { field: UseControllerReturn<TFieldValues, TName>["field"] }) => React.ReactNode
 }
 
 function FormField<
