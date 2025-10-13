@@ -18,6 +18,7 @@ export default function ProductGallery({
 }: Props) {
   const cap = Math.max(0, Math.floor(Number.isFinite(maxThumbs) ? maxThumbs : 4));
 
+  // dedupe + fallback
   const safe = React.useMemo<string[]>(
     () =>
       Array.isArray(images) && images.length
@@ -29,52 +30,81 @@ export default function ProductGallery({
   const [index, setIndex] = React.useState(0);
   const [open, setOpen] = React.useState(false);
   const [showAll, setShowAll] = React.useState(false);
-
   const len = safe.length;
+
   const collapsedCount = Math.min(len, 1 + cap);
   const hasMore = len > collapsedCount;
   const visibleCount = showAll ? len : collapsedCount;
   const thumbs = React.useMemo(() => safe.slice(0, visibleCount), [safe, visibleCount]);
 
-  const prev = React.useCallback(() => setIndex(i => (i - 1 + len) % len), [len]);
-  const next = React.useCallback(() => setIndex(i => (i + 1) % len), [len]);
+  const prev = React.useCallback(() => setIndex((i) => (i - 1 + len) % len), [len]);
+  const next = React.useCallback(() => setIndex((i) => (i + 1) % len), [len]);
 
   // preload neighbors
+  const loaded = React.useRef<Set<number>>(new Set());
+  const preload = React.useCallback(
+    (idxs: number[]) => {
+      if (typeof window === 'undefined') return;
+      idxs.forEach((i) => {
+        const j = ((i % len) + len) % len;
+        if (!loaded.current.has(j) && safe[j]) {
+          const img = new window.Image();
+          img.src = safe[j]!;
+          loaded.current.add(j);
+        }
+      });
+    },
+    [safe, len]
+  );
+
   React.useEffect(() => {
-    if (typeof window === 'undefined' || !len) return;
-    const preload = (i: number) => {
-      const j = ((i % len) + len) % len;
-      const img = new window.Image();
-      img.src = safe[j]!;
-    };
-    preload(0);
-    preload(1);
-    preload(len - 1);
-  }, [len, safe]);
+    loaded.current.clear();
+    if (!len) return;
+    preload([0, 1, 2]);
+  }, [len, preload]);
+
+  React.useEffect(() => {
+    if (!len) return;
+    preload([index - 1, index + 1]);
+  }, [index, len, preload]);
+
+  React.useEffect(() => {
+    if (index >= len) setIndex(0);
+  }, [len, index]);
 
   React.useEffect(() => {
     if (!showAll && index >= visibleCount) setIndex(Math.max(0, visibleCount - 1));
   }, [showAll, visibleCount, index]);
 
+  // keyboard in fullscreen
+  React.useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+      if (e.key === 'ArrowLeft') prev();
+      if (e.key === 'ArrowRight') next();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, prev, next]);
+
   const current = safe[index] ?? safe[0];
 
-  // keep active thumb in view
+  // scroll active thumb into view
   const railRef = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
-    railRef.current?.querySelector<HTMLButtonElement>(`[data-i="${index}"]`)?.scrollIntoView({
-      block: 'nearest',
-      behavior: 'smooth',
-    });
+    const el = railRef.current?.querySelector<HTMLButtonElement>(`[data-i="${index}"]`);
+    el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }, [index, visibleCount]);
 
   return (
     <>
-      {/* Grid: thumbnails + viewer. self-start on viewer to eliminate the top gap */}
-      <div className="grid grid-cols-[80px,1fr] sm:grid-cols-[96px,1fr] gap-4 w-full items-start">
-        {/* Thumbs */}
+      {/* Two fixed columns: thumbs + main preview */}
+      <div className="grid grid-cols-[86px_1fr] sm:grid-cols-[96px_1fr] gap-3 sm:gap-4 items-start">
+        {/* Thumbnails rail */}
         <div
           ref={railRef}
-          className="flex flex-col gap-3 w-20 sm:w-24 sticky top-4 self-start z-20 max-h-[75vh] overflow-auto pr-1"
+          className="flex flex-col gap-3 w-[86px] sm:w-24 sticky top-4 self-start z-20 max-h-[75vh] overflow-auto pr-1"
           role="listbox"
           aria-label="Product images"
         >
@@ -103,10 +133,11 @@ export default function ProductGallery({
               </button>
             );
           })}
+
           {hasMore && (
             <button
               type="button"
-              onClick={() => setShowAll(v => !v)}
+              onClick={() => setShowAll((v) => !v)}
               className="mt-1 w-full rounded-md bg-blue-600 px-3 py-2 text-xs font-medium text-white shadow hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               aria-expanded={showAll}
               aria-label={showAll ? 'Show fewer images' : 'Show more images'}
@@ -116,19 +147,22 @@ export default function ProductGallery({
           )}
         </div>
 
-        {/* Viewer (NO aspect wrapper; intrinsic sizing so no white band).
-            We keep a minimal relative container so overlay buttons position correctly. */}
-        <div className="relative w-full max-w-full overflow-hidden rounded-lg border bg-white self-start">
-          {/* Expand — RIGHT side */}
+        {/* Main preview: height is guaranteed by CSS aspect-ratio so it stays beside thumbs */}
+        <div
+          className="relative w-full overflow-hidden rounded-lg border bg-white"
+          // Ensures the container has height immediately → no stacking under thumbs.
+          style={{ aspectRatio: '16 / 10' }}
+        >
+          {/* Expand button (B) on top-right */}
           <button
             onClick={() => setOpen(true)}
-            className="absolute top-3 right-3 z-30 inline-flex items-center justify-center rounded-full w-10 h-10 bg-white/90 shadow-md hover:bg-white transition-transform hover:scale-105"
+            className="absolute top-3 right-3 z-30 inline-flex items-center justify-center rounded-full w-10 h-10 bg-white/90 shadow-md hover:bg-white"
             aria-label="Open fullscreen"
           >
             <Maximize2 className="w-5 h-5" />
           </button>
 
-          {/* Prev / Next — hug left/right edges of the image */}
+          {/* Prev/Next (C) pinned to sides of the main preview */}
           {len > 1 && (
             <>
               <button
@@ -148,21 +182,20 @@ export default function ProductGallery({
             </>
           )}
 
-          {/* Main image — intrinsic; subtle hover pop */}
+          {/* Fill the container perfectly; removes the white strip above */}
           <Image
             key={current}
             src={current}
             alt={alt}
-            width={1600}
-            height={1200}
+            fill
             sizes="(min-width: 1024px) 900px, 100vw"
-            className="w-full h-auto object-contain transition-transform duration-200 ease-out hover:scale-[1.02]"
+            className="object-cover"
             priority
           />
         </div>
       </div>
 
-      {/* Fullscreen */}
+      {/* Fullscreen viewer */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
           className="z-[100] p-0 bg-transparent border-none shadow-none max-w-none w-screen h-screen"
