@@ -3,11 +3,9 @@
 import * as React from "react"
 import {
   Controller,
-  type FieldPath,
-  type FieldValues,
-  type UseControllerReturn,
   FormProvider,
   useFormContext,
+  type UseControllerReturn,
 } from "react-hook-form"
 
 import { cn } from "@/lib/utils"
@@ -19,12 +17,7 @@ const Form = FormProvider
 
 /* ---------- Field context ---------- */
 
-type FormFieldContextValue<
-  TFieldValues extends FieldValues = FieldValues,
-  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
-> = {
-  name: TName
-}
+type FormFieldContextValue = { name: string }
 
 const FormFieldContext = React.createContext<FormFieldContextValue | undefined>(
   undefined
@@ -32,9 +25,7 @@ const FormFieldContext = React.createContext<FormFieldContextValue | undefined>(
 
 export function useFormField() {
   const ctx = React.useContext(FormFieldContext)
-  if (!ctx) {
-    throw new Error("useFormField must be used within <FormField>")
-  }
+  if (!ctx) throw new Error("useFormField must be used within <FormField>")
   return ctx
 }
 
@@ -63,14 +54,7 @@ const FormLabel = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof Label>
 >(({ className, ...props }, ref) => {
   const item = React.useContext(FormItemContext)
-  return (
-    <Label
-      ref={ref}
-      className={className}
-      htmlFor={item?.id}
-      {...props}
-    />
-  )
+  return <Label ref={ref} className={className} htmlFor={item?.id} {...props} />
 })
 FormLabel.displayName = "FormLabel"
 
@@ -83,7 +67,9 @@ const FormControl = React.forwardRef<
     <div
       ref={ref}
       className={cn(className)}
-      aria-describedby={item ? `${item.id}-description ${item.id}-message` : undefined}
+      aria-describedby={
+        item ? `${item.id}-description ${item.id}-message` : undefined
+      }
       {...props}
     />
   )
@@ -122,26 +108,22 @@ const FormMessage = React.forwardRef<
 })
 FormMessage.displayName = "FormMessage"
 
-/* ---------- FormField (typed via UseControllerReturn['field']) ---------- */
+/* ---------- FormField (typed without FieldPath/FieldValues) ---------- */
 
-type FormFieldProps<
-  TFieldValues extends FieldValues = FieldValues,
-  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
-> = {
-  name: TName
-  render: (props: { field: UseControllerReturn<TFieldValues, TName>["field"] }) => React.ReactNode
+type FormFieldProps = {
+  name: string
+  render: (props: {
+    field: UseControllerReturn<any, any>["field"]
+  }) => React.ReactNode
 }
 
-function FormField<
-  TFieldValues extends FieldValues = FieldValues,
-  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
->({ name, render }: FormFieldProps<TFieldValues, TName>) {
-  const { control } = useFormContext<TFieldValues>()
+function FormField({ name, render }: FormFieldProps) {
+  const { control } = useFormContext<any>()
 
   return (
     <FormFieldContext.Provider value={{ name }}>
       <Controller
-        name={name as FieldPath<TFieldValues>}
+        name={name as any}
         control={control}
         render={({ field }) => <FormItem>{render({ field })}</FormItem>}
       />
