@@ -3,27 +3,22 @@
 import * as React from 'react';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight, Maximize2, X } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 type Props = {
   images: string[];
   alt?: string;
-  /** # of EXTRA thumbs (beyond the first/cover) to show before “More” */
   maxThumbs?: number;
 };
 
-export default function ProductGalleryNew({
+export default function ProductGallery({
   images,
   alt = 'Product image',
   maxThumbs = 4,
 }: Props) {
   const cap = Math.max(0, Math.floor(Number.isFinite(maxThumbs) ? maxThumbs : 4));
 
+  // dedupe + fallback
   const safe = React.useMemo<string[]>(
     () =>
       Array.isArray(images) && images.length
@@ -35,8 +30,8 @@ export default function ProductGalleryNew({
   const [index, setIndex] = React.useState(0);
   const [open, setOpen] = React.useState(false);
   const [showAll, setShowAll] = React.useState(false);
-
   const len = safe.length;
+
   const collapsedCount = Math.min(len, 1 + cap);
   const hasMore = len > collapsedCount;
   const visibleCount = showAll ? len : collapsedCount;
@@ -81,9 +76,21 @@ export default function ProductGalleryNew({
     if (!showAll && index >= visibleCount) setIndex(Math.max(0, visibleCount - 1));
   }, [showAll, visibleCount, index]);
 
+  // keyboard in fullscreen
+  React.useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+      if (e.key === 'ArrowLeft') prev();
+      if (e.key === 'ArrowRight') next();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, prev, next]);
+
   const current = safe[index] ?? safe[0];
 
-  // auto-scroll active thumb into view
+  // scroll active thumb into view
   const railRef = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
     const el = railRef.current?.querySelector<HTMLButtonElement>(`[data-i="${index}"]`);
@@ -92,12 +99,12 @@ export default function ProductGalleryNew({
 
   return (
     <>
-      {/* two columns: thumbs (fixed) + viewer (fills) */}
-      <div className="grid grid-cols-[minmax(0,96px)_minmax(0,1fr)] gap-4 w-full items-start">
-        {/* Thumbs */}
+      {/* Two fixed columns: thumbs + main preview */}
+      <div className="grid grid-cols-[86px_1fr] sm:grid-cols-[96px_1fr] gap-3 sm:gap-4 items-start">
+        {/* Thumbnails rail */}
         <div
           ref={railRef}
-          className="flex flex-col gap-3 w-24 sticky top-4 self-start z-20 max-h-[75vh] overflow-auto pr-1"
+          className="flex flex-col gap-3 w-[86px] sm:w-24 sticky top-4 self-start z-20 max-h-[75vh] overflow-auto pr-1"
           role="listbox"
           aria-label="Product images"
         >
@@ -121,7 +128,7 @@ export default function ProductGalleryNew({
                   alt={`${alt} thumbnail ${i + 1}`}
                   fill
                   sizes="96px"
-                  className="object-cover transition-transform duration-200 ease-out hover:scale-[1.04]"
+                  className="object-cover transition-transform duration-200 ease-out hover:scale-105"
                 />
               </button>
             );
@@ -140,9 +147,13 @@ export default function ProductGalleryNew({
           )}
         </div>
 
-        {/* Viewer */}
-        <div className="relative w-full max-w-full overflow-hidden rounded-lg border bg-white">
-          {/* Fullscreen button — **TOP RIGHT** */}
+        {/* Main preview: height is guaranteed by CSS aspect-ratio so it stays beside thumbs */}
+        <div
+          className="relative w-full overflow-hidden rounded-lg border bg-white"
+          // Ensures the container has height immediately → no stacking under thumbs.
+          style={{ aspectRatio: '16 / 10' }}
+        >
+          {/* Expand button (B) on top-right */}
           <button
             onClick={() => setOpen(true)}
             className="absolute top-3 right-3 z-30 inline-flex items-center justify-center rounded-full w-10 h-10 bg-white/90 shadow-md hover:bg-white"
@@ -151,7 +162,7 @@ export default function ProductGalleryNew({
             <Maximize2 className="w-5 h-5" />
           </button>
 
-          {/* Prev / Next — **left / right edges** */}
+          {/* Prev/Next (C) pinned to sides of the main preview */}
           {len > 1 && (
             <>
               <button
@@ -171,24 +182,20 @@ export default function ProductGalleryNew({
             </>
           )}
 
-          {/* Main image — fills, no white band */}
-          <div className="w-full">
-            <Image
-              key={current}
-              src={current}
-              alt={alt}
-              width={1600}
-              height={1200}
-              sizes="(min-width: 1280px) 900px, (min-width: 1024px) 800px, 100vw"
-              className="w-full h-auto object-contain transition-transform duration-200 ease-out hover:scale-[1.02]"
-              loading="eager"
-              priority
-            />
-          </div>
+          {/* Fill the container perfectly; removes the white strip above */}
+          <Image
+            key={current}
+            src={current}
+            alt={alt}
+            fill
+            sizes="(min-width: 1024px) 900px, 100vw"
+            className="object-cover"
+            priority
+          />
         </div>
       </div>
 
-      {/* FULLSCREEN */}
+      {/* Fullscreen viewer */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
           className="z-[100] p-0 bg-transparent border-none shadow-none max-w-none w-screen h-screen"
@@ -234,7 +241,6 @@ export default function ProductGalleryNew({
                 height={1400}
                 sizes="95vw"
                 className="w-auto max-w-[95vw] h-auto max-h-[85vh] object-contain rounded-lg shadow-2xl"
-                loading="eager"
                 priority
               />
             </div>
