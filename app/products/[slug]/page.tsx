@@ -4,14 +4,14 @@ import { products } from "@/data/products";
 import ProductGallery from "@/components/ProductGalleryV2";
 import AddToCartButton from "@/components/shop/AddToCartButton";
 import BuyNowButton from "@/components/shop/BuyNowButton";
-import { getLongDescription } from "@/lib/description"; // ⬅️ NEW (uses the fallback logic)
+import { getLongDescription } from "@/lib/description"; // uses the fallback logic
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
 export const revalidate = 300;
 
-const UI_VERSION = "product-hardened-v13";
+const UI_VERSION = "product-hardened-v14";
 
 /* ---------------- helpers ---------------- */
 const toSlug = (s: string) =>
@@ -87,7 +87,7 @@ function sanitize(raw: any) {
       : [];
     out.image = typeof raw?.image === "string" ? raw.image : undefined;
 
-    // ---- description-related fields (NEW) ----
+    // ---- description-related fields ----
     out.shortDescription =
       typeof raw?.shortDescription === "string" ? raw.shortDescription : "";
     out.longDescription =
@@ -118,9 +118,12 @@ async function getSlugFromParams(params: any): Promise<string> {
 
 /* ---------------- small render utils ---------------- */
 function renderParagraphs(mdOrText: string) {
-  // Keeps it simple and safe even if you don’t have a markdown renderer here
   const chunks = String(mdOrText || "").trim().split(/\n{2,}/g);
-  return chunks.map((c, i) => <p key={i} className="mb-3">{c}</p>);
+  return chunks.map((c, i) => (
+    <p key={i} className="mb-3">
+      {c}
+    </p>
+  ));
 }
 
 /* ---------------- PAGE ---------------- */
@@ -164,8 +167,7 @@ export default async function ProductPage({ params }: any) {
     price = p.price;
   }
 
-  const safeImgs =
-    Array.isArray(imgs) && imgs.length ? imgs : ["/images/placeholder.jpg"];
+  const safeImgs = Array.isArray(imgs) && imgs.length ? imgs : ["/images/placeholder.jpg"];
 
   // numeric id (for buttons)
   const productIdNum: number = (() => {
@@ -177,7 +179,7 @@ export default async function ProductPage({ params }: any) {
     return Number(found?.id ?? 0);
   })();
 
-  // ---- unified description content (uses fallback when long is light) ----
+  // unified description content (uses fallback when long is light)
   const long = getLongDescription({
     ...p,
     longDescription: p.longDescription || p.description, // prefer new, fallback to legacy
@@ -222,17 +224,15 @@ export default async function ProductPage({ params }: any) {
             ) : null}
           </div>
 
-          {/* Details + More (blue) BELOW the About section — consistent everywhere */}
+          {/* Details + More (blue) */}
           <section id="details" className="mt-6 max-w-none">
             <h2 className="text-xl font-semibold mb-2">About this product</h2>
 
             <div className="prose prose-neutral max-w-none">
-              {/* first short paragraph (if provided) */}
               {p.shortDescription?.trim() ? (
                 <p className="mb-3">{p.shortDescription.trim()}</p>
               ) : null}
 
-              {/* collapsible long description + extras */}
               <details>
                 <summary>
                   <span className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 cursor-pointer select-none">
@@ -276,7 +276,7 @@ export default async function ProductPage({ params }: any) {
           </section>
         </div>
 
-        {/* RIGHT: Purchase box (silent Add + Buy now → payment) */}
+        {/* RIGHT: Purchase box */}
         <aside className="rounded-xl border bg-white p-4 h-fit">
           <h2 className="text-lg font-semibold">Get this product</h2>
           <p className="mt-1 text-sm text-gray-600">Instant download. Lifetime access.</p>
