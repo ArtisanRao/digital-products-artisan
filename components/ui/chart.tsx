@@ -65,7 +65,7 @@ const ChartContainer = React.forwardRef<
 ChartContainer.displayName = "Chart"
 
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
-  const colorConfig = Object.entries(config).filter(([_, c]) => c.theme || c.color)
+  const colorConfig = Object.entries(config).filter(([, c]) => c.theme || c.color)
   if (!colorConfig.length) return null
 
   return (
@@ -98,21 +98,34 @@ const ChartTooltip = RechartsPrimitive.Tooltip
 
 type ChartTooltipContentProps = Omit<TooltipProps<number, string>, "content"> &
   React.ComponentProps<"div"> & {
-    // make these explicit because Recharts' exported type can be inconsistent
+    // Recharts runtime-provided fields made explicit for TS
     active?: boolean
     payload?: Array<any>
+    label?: any
+    labelFormatter?: (value: any, payload?: any) => React.ReactNode
+    formatter?: (
+      value: any,
+      name: any,
+      item?: any,
+      index?: number,
+      payload?: any
+    ) => React.ReactNode
+
+    // Our custom UI props
+    labelClassName?: string
     hideLabel?: boolean
     hideIndicator?: boolean
     indicator?: "line" | "dot" | "dashed"
     nameKey?: string
     labelKey?: string
+    color?: string
   }
 
 const ChartTooltipContent = React.forwardRef<HTMLDivElement, ChartTooltipContentProps>(
   (
     {
       active,
-      payload, // now explicit in the prop type
+      payload, // explicit in prop type
       className,
       indicator = "dot",
       hideLabel = false,
@@ -179,11 +192,8 @@ const ChartTooltipContent = React.forwardRef<HTMLDivElement, ChartTooltipContent
               key
             )
 
-            // Recharts types mark these optional; handle safely.
             const indicatorColor =
-              color ||
-              (item as any)?.payload?.fill ||
-              (item as any)?.color
+              color || (item as any)?.payload?.fill || (item as any)?.color
 
             return (
               <div
