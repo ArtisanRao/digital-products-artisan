@@ -104,7 +104,8 @@ function FormField({ name, render }: FormFieldProps) {
       <Controller
         name={name as any}
         control={control}
-        render={({ field }) => <FormItem>{render({ field })}</FormItem>}
+        // 👇 add explicit type to avoid implicit any
+        render={({ field }: { field: any }) => <FormItem>{render({ field })}</FormItem>}
       />
     </FormFieldContext.Provider>
   )
