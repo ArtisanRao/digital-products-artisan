@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import { GripVertical } from "lucide-react"
 import * as ResizablePrimitive from "react-resizable-panels"
 
@@ -21,7 +22,7 @@ const ResizablePanelGroup = ({
 const ResizablePanel = ResizablePrimitive.Panel
 
 const ResizableHandle = ({
-  withHandle,
+  withHandle = false,
   className,
   ...props
 }: React.ComponentProps<typeof ResizablePrimitive.PanelResizeHandle> & {
