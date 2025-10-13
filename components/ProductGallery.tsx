@@ -11,9 +11,14 @@ type Props = {
   maxThumbs?: number;
 };
 
-export default function ProductGallery({ images, alt = 'Product image', maxThumbs = 4 }: Props) {
+export default function ProductGallery({
+  images,
+  alt = 'Product image',
+  maxThumbs = 4,
+}: Props) {
   const cap = Math.max(0, Math.floor(Number.isFinite(maxThumbs) ? maxThumbs : 4));
 
+  // dedupe + fallback
   const safe = React.useMemo<string[]>(
     () =>
       Array.isArray(images) && images.length
@@ -35,7 +40,7 @@ export default function ProductGallery({ images, alt = 'Product image', maxThumb
   const prev = React.useCallback(() => setIndex((i) => (i - 1 + len) % len), [len]);
   const next = React.useCallback(() => setIndex((i) => (i + 1) % len), [len]);
 
-  // Preload neighbors
+  // preload neighbors
   const loaded = React.useRef<Set<number>>(new Set());
   const preload = React.useCallback(
     (idxs: number[]) => {
@@ -71,7 +76,7 @@ export default function ProductGallery({ images, alt = 'Product image', maxThumb
     if (!showAll && index >= visibleCount) setIndex(Math.max(0, visibleCount - 1));
   }, [showAll, visibleCount, index]);
 
-  // Keyboard support in fullscreen
+  // keyboard in fullscreen
   React.useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -85,7 +90,7 @@ export default function ProductGallery({ images, alt = 'Product image', maxThumb
 
   const current = safe[index] ?? safe[0];
 
-  // Auto-scroll active thumb into view
+  // scroll active thumb into view
   const railRef = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
     const el = railRef.current?.querySelector<HTMLButtonElement>(`[data-i="${index}"]`);
@@ -94,9 +99,9 @@ export default function ProductGallery({ images, alt = 'Product image', maxThumb
 
   return (
     <>
-      {/* Thumbs + main viewer in one compact grid (no extra “A” gap) */}
-      <div className="grid grid-cols-[86px,1fr] sm:grid-cols-[96px,1fr] gap-3 sm:gap-4 w-full items-start">
-        {/* Thumbnails */}
+      {/* Two fixed columns: thumbs + main preview */}
+      <div className="grid grid-cols-[86px_1fr] sm:grid-cols-[96px_1fr] gap-3 sm:gap-4 items-start">
+        {/* Thumbnails rail */}
         <div
           ref={railRef}
           className="flex flex-col gap-3 w-[86px] sm:w-24 sticky top-4 self-start z-20 max-h-[75vh] overflow-auto pr-1"
@@ -142,9 +147,13 @@ export default function ProductGallery({ images, alt = 'Product image', maxThumb
           )}
         </div>
 
-        {/* Main viewer — height comes from the image itself (no aspect-* needed) */}
-        <div className="relative w-full justify-self-stretch overflow-hidden rounded-lg border bg-white">
-          {/* Expand (B) top-right */}
+        {/* Main preview: height is guaranteed by CSS aspect-ratio so it stays beside thumbs */}
+        <div
+          className="relative w-full overflow-hidden rounded-lg border bg-white"
+          // Ensures the container has height immediately → no stacking under thumbs.
+          style={{ aspectRatio: '16 / 10' }}
+        >
+          {/* Expand button (B) on top-right */}
           <button
             onClick={() => setOpen(true)}
             className="absolute top-3 right-3 z-30 inline-flex items-center justify-center rounded-full w-10 h-10 bg-white/90 shadow-md hover:bg-white"
@@ -153,7 +162,7 @@ export default function ProductGallery({ images, alt = 'Product image', maxThumb
             <Maximize2 className="w-5 h-5" />
           </button>
 
-          {/* Prev / Next (C) pinned to sides */}
+          {/* Prev/Next (C) pinned to sides of the main preview */}
           {len > 1 && (
             <>
               <button
@@ -173,21 +182,20 @@ export default function ProductGallery({ images, alt = 'Product image', maxThumb
             </>
           )}
 
-          {/* Important bit: intrinsic sizing; this gives the container height and removes the white band */}
+          {/* Fill the container perfectly; removes the white strip above */}
           <Image
             key={current}
             src={current}
             alt={alt}
-            width={1600}
-            height={1200}
+            fill
             sizes="(min-width: 1024px) 900px, 100vw"
-            className="w-full h-auto object-cover"
+            className="object-cover"
             priority
           />
         </div>
       </div>
 
-      {/* Fullscreen viewer (unchanged layout) */}
+      {/* Fullscreen viewer */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
           className="z-[100] p-0 bg-transparent border-none shadow-none max-w-none w-screen h-screen"
