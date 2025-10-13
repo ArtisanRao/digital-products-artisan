@@ -11,19 +11,23 @@ type InputOTPProps = React.HTMLAttributes<HTMLDivElement> & {
   maxLength?: number
   value?: string
   onChange?: (value: string) => void
-  render?: (props: any) => React.ReactNode
+  /** Optional: if you prefer a render callback instead of children */
+  render?: (ctx: { length: number }) => React.ReactNode
   containerClassName?: string
 }
 
 const InputOTP = React.forwardRef<HTMLDivElement, InputOTPProps>(
-  ({ className, containerClassName, ...props }, ref) => (
+  ({ className, containerClassName, children, render, maxLength = 6, ...props }, ref) => (
     <OTPInput
       ref={ref as any}
       className={cn("flex items-center gap-2", containerClassName)}
       inputMode="numeric"
+      maxLength={maxLength}
       {...props}
     >
-      <div className={cn("grid grid-cols-6 gap-2", className)}>{props.render?.({})}</div>
+      <div className={cn("grid grid-cols-6 gap-2", className)}>
+        {children ?? render?.({ length: maxLength })}
+      </div>
     </OTPInput>
   )
 )
@@ -38,7 +42,13 @@ InputOTPGroup.displayName = "InputOTPGroup"
 
 const InputOTPSeparator = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} role="separator" aria-hidden className={cn("px-2 opacity-50", className)} {...props}>
+    <div
+      ref={ref}
+      role="separator"
+      aria-hidden
+      className={cn("px-2 opacity-50", className)}
+      {...props}
+    >
       <Dot />
     </div>
   )
@@ -48,10 +58,10 @@ InputOTPSeparator.displayName = "InputOTPSeparator"
 const InputOTPSlot = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement> & { index?: number; hasFakeCaret?: boolean }
->(({ index, hasFakeCaret, className, ...props }, ref) => {
+>(({ index = 0, hasFakeCaret, className, ...props }, ref) => {
   const inputOTPContext = React.useContext(OTPInputContext)
-  const char = inputOTPContext?.slots?.[index ?? 0]?.char ?? ""
-  const isActive = inputOTPContext?.activeIndex === (index ?? 0)
+  const char = inputOTPContext?.slots?.[index]?.char ?? ""
+  const isActive = inputOTPContext?.activeIndex === index
 
   return (
     <div
