@@ -1,27 +1,17 @@
 "use client"
 
 import * as React from "react"
-import {
-  Controller,
-  FormProvider,
-  useFormContext,
-  type UseControllerReturn,
-} from "react-hook-form"
+import { Controller, FormProvider, useFormContext } from "react-hook-form"
 
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
 
 /* ---------- Form root (re-export RHF provider) ---------- */
-
 const Form = FormProvider
 
 /* ---------- Field context ---------- */
-
 type FormFieldContextValue = { name: string }
-
-const FormFieldContext = React.createContext<FormFieldContextValue | undefined>(
-  undefined
-)
+const FormFieldContext = React.createContext<FormFieldContextValue | undefined>(undefined)
 
 export function useFormField() {
   const ctx = React.useContext(FormFieldContext)
@@ -30,23 +20,19 @@ export function useFormField() {
 }
 
 /* ---------- Item / Control / Label / Description / Message ---------- */
-
 type FormItemContextValue = { id: string }
-const FormItemContext = React.createContext<FormItemContextValue | undefined>(
-  undefined
-)
+const FormItemContext = React.createContext<FormItemContextValue | undefined>(undefined)
 
-const FormItem = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => {
-  const id = React.useId()
-  return (
-    <FormItemContext.Provider value={{ id }}>
-      <div ref={ref} className={cn("space-y-2", className)} {...props} />
-    </FormItemContext.Provider>
-  )
-})
+const FormItem = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => {
+    const id = React.useId()
+    return (
+      <FormItemContext.Provider value={{ id }}>
+        <div ref={ref} className={cn("space-y-2", className)} {...props} />
+      </FormItemContext.Provider>
+    )
+  }
+)
 FormItem.displayName = "FormItem"
 
 const FormLabel = React.forwardRef<
@@ -58,22 +44,19 @@ const FormLabel = React.forwardRef<
 })
 FormLabel.displayName = "FormLabel"
 
-const FormControl = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => {
-  const item = React.useContext(FormItemContext)
-  return (
-    <div
-      ref={ref}
-      className={cn(className)}
-      aria-describedby={
-        item ? `${item.id}-description ${item.id}-message` : undefined
-      }
-      {...props}
-    />
-  )
-})
+const FormControl = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => {
+    const item = React.useContext(FormItemContext)
+    return (
+      <div
+        ref={ref}
+        className={cn(className)}
+        aria-describedby={item ? `${item.id}-description ${item.id}-message` : undefined}
+        {...props}
+      />
+    )
+  }
+)
 FormControl.displayName = "FormControl"
 
 const FormDescription = React.forwardRef<
@@ -108,18 +91,14 @@ const FormMessage = React.forwardRef<
 })
 FormMessage.displayName = "FormMessage"
 
-/* ---------- FormField (typed without FieldPath/FieldValues) ---------- */
-
+/* ---------- FormField (no RHF type imports) ---------- */
 type FormFieldProps = {
   name: string
-  render: (props: {
-    field: UseControllerReturn<any, any>["field"]
-  }) => React.ReactNode
+  render: (props: { field: any }) => React.ReactNode
 }
 
 function FormField({ name, render }: FormFieldProps) {
   const { control } = useFormContext<any>()
-
   return (
     <FormFieldContext.Provider value={{ name }}>
       <Controller
