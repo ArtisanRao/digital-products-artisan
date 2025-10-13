@@ -3,28 +3,17 @@
 import * as React from 'react';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight, Maximize2, X } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 type Props = {
   images: string[];
   alt?: string;
-  /** How many EXTRA thumbnails (beyond the first/cover) to show before revealing the rest */
-  maxThumbs?: number; // default 4 extras => cover + 4
+  maxThumbs?: number;
 };
 
-export default function ProductGallery({
-  images,
-  alt = 'Product image',
-  maxThumbs = 4,
-}: Props) {
+export default function ProductGallery({ images, alt = 'Product image', maxThumbs = 4 }: Props) {
   const cap = Math.max(0, Math.floor(Number.isFinite(maxThumbs) ? maxThumbs : 4));
 
-  // Dedupe + fallback
   const safe = React.useMemo<string[]>(
     () =>
       Array.isArray(images) && images.length
@@ -36,14 +25,11 @@ export default function ProductGallery({
   const [index, setIndex] = React.useState(0);
   const [open, setOpen] = React.useState(false);
   const [showAll, setShowAll] = React.useState(false);
-
   const len = safe.length;
 
-  // When collapsed, show: cover (1) + extras (cap)
   const collapsedCount = Math.min(len, 1 + cap);
   const hasMore = len > collapsedCount;
   const visibleCount = showAll ? len : collapsedCount;
-
   const thumbs = React.useMemo(() => safe.slice(0, visibleCount), [safe, visibleCount]);
 
   const prev = React.useCallback(() => setIndex((i) => (i - 1 + len) % len), [len]);
@@ -55,7 +41,7 @@ export default function ProductGallery({
     (idxs: number[]) => {
       if (typeof window === 'undefined') return;
       idxs.forEach((i) => {
-        const j = ((i % len) + len) % len; // clamp
+        const j = ((i % len) + len) % len;
         if (!loaded.current.has(j) && safe[j]) {
           const img = new window.Image();
           img.src = safe[j]!;
@@ -82,9 +68,7 @@ export default function ProductGallery({
   }, [len, index]);
 
   React.useEffect(() => {
-    if (!showAll && index >= visibleCount) {
-      setIndex(Math.max(0, visibleCount - 1));
-    }
+    if (!showAll && index >= visibleCount) setIndex(Math.max(0, visibleCount - 1));
   }, [showAll, visibleCount, index]);
 
   // Keyboard support in fullscreen
@@ -110,7 +94,7 @@ export default function ProductGallery({
 
   return (
     <>
-      {/* Force the main viewer to occupy the left content column with no extra gap */}
+      {/* Thumbs + main viewer in one compact grid (no extra “A” gap) */}
       <div className="grid grid-cols-[86px,1fr] sm:grid-cols-[96px,1fr] gap-3 sm:gap-4 w-full items-start">
         {/* Thumbnails */}
         <div
@@ -158,16 +142,9 @@ export default function ProductGallery({
           )}
         </div>
 
-        {/* Main image / viewer */}
-        <div
-          className="
-            relative w-full justify-self-stretch
-            overflow-hidden rounded-lg border bg-white
-            /* fixed aspect so there’s no white band above; image fills fully */
-            aspect-[4/3] sm:aspect-[16/10]
-          "
-        >
-          {/* Expand (B) — top-right */}
+        {/* Main viewer — height comes from the image itself (no aspect-* needed) */}
+        <div className="relative w-full justify-self-stretch overflow-hidden rounded-lg border bg-white">
+          {/* Expand (B) top-right */}
           <button
             onClick={() => setOpen(true)}
             className="absolute top-3 right-3 z-30 inline-flex items-center justify-center rounded-full w-10 h-10 bg-white/90 shadow-md hover:bg-white"
@@ -176,7 +153,7 @@ export default function ProductGallery({
             <Maximize2 className="w-5 h-5" />
           </button>
 
-          {/* Prev / Next (C) — pinned to left/right of the image */}
+          {/* Prev / Next (C) pinned to sides */}
           {len > 1 && (
             <>
               <button
@@ -196,20 +173,21 @@ export default function ProductGallery({
             </>
           )}
 
-          {/* Main image — fill container, no letterboxing */}
+          {/* Important bit: intrinsic sizing; this gives the container height and removes the white band */}
           <Image
             key={current}
             src={current}
             alt={alt}
-            fill
+            width={1600}
+            height={1200}
             sizes="(min-width: 1024px) 900px, 100vw"
-            className="object-cover"
+            className="w-full h-auto object-cover"
             priority
           />
         </div>
       </div>
 
-      {/* FULLSCREEN viewer */}
+      {/* Fullscreen viewer (unchanged layout) */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
           className="z-[100] p-0 bg-transparent border-none shadow-none max-w-none w-screen h-screen"
