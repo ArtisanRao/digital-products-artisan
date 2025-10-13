@@ -147,27 +147,29 @@ export default function ProductGallery({
           )}
         </div>
 
-        {/* Main preview: height is guaranteed by CSS aspect-ratio so it stays beside thumbs */}
+        {/* Main preview: slightly smaller, always beside thumbs */}
         <div
-          className="relative w-full overflow-hidden rounded-lg border bg-white"
+          className="relative w-full overflow-hidden rounded-lg border bg-white max-h-[520px] md:max-h-[560px]"
           // Ensures the container has height immediately → no stacking under thumbs.
           style={{ aspectRatio: '16 / 10' }}
         >
-          {/* Expand button (B) on top-right */}
+          {/* Fullscreen button (top-right) */}
           <button
             onClick={() => setOpen(true)}
             className="absolute top-3 right-3 z-30 inline-flex items-center justify-center rounded-full w-10 h-10 bg-white/90 shadow-md hover:bg-white"
+            style={{ left: 'auto', right: '0.75rem' }} // hard-force right
             aria-label="Open fullscreen"
           >
             <Maximize2 className="w-5 h-5" />
           </button>
 
-          {/* Prev/Next (C) pinned to sides of the main preview */}
+          {/* Prev/Next pinned to left/right edges */}
           {len > 1 && (
             <>
               <button
                 onClick={prev}
                 className="absolute left-3 top-1/2 -translate-y-1/2 z-30 inline-flex items-center justify-center rounded-full w-11 h-11 bg-neutral-800/90 text-white shadow-md hover:bg-neutral-900 focus:outline-none"
+                style={{ right: 'auto', left: '0.75rem' }} // force LEFT
                 aria-label="Previous image"
               >
                 <ChevronLeft className="w-5 h-5" />
@@ -175,6 +177,7 @@ export default function ProductGallery({
               <button
                 onClick={next}
                 className="absolute right-3 top-1/2 -translate-y-1/2 z-30 inline-flex items-center justify-center rounded-full w-11 h-11 bg-neutral-800/90 text-white shadow-md hover:bg-neutral-900 focus:outline-none"
+                style={{ left: 'auto', right: '0.75rem' }} // force RIGHT
                 aria-label="Next image"
               >
                 <ChevronRight className="w-5 h-5" />
@@ -182,14 +185,14 @@ export default function ProductGallery({
             </>
           )}
 
-          {/* Fill the container perfectly; removes the white strip above */}
+          {/* Image: contain (no crop) + gentle hover out/in */}
           <Image
             key={current}
             src={current}
             alt={alt}
             fill
             sizes="(min-width: 1024px) 900px, 100vw"
-            className="object-cover"
+            className="object-contain transition-transform duration-200 ease-out hover:scale-[1.02]"
             priority
           />
         </div>
@@ -205,6 +208,7 @@ export default function ProductGallery({
           <DialogDescription className="sr-only">Fullscreen preview</DialogDescription>
 
           <div className="relative w-full h-full bg-black/80 flex items-center justify-center">
+            {/* Close */}
             <button
               onClick={() => setOpen(false)}
               className="absolute top-4 right-4 z-[120] inline-flex items-center justify-center rounded-full w-12 h-12 bg-white/95 text-gray-800 shadow-lg hover:bg-white"
@@ -213,6 +217,7 @@ export default function ProductGallery({
               <X className="w-7 h-7" />
             </button>
 
+            {/* Prev/Next in fullscreen */}
             {len > 1 && (
               <>
                 <button
