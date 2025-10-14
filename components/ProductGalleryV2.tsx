@@ -37,6 +37,7 @@ export default function ProductGalleryV2({
   const visibleCount = showAll ? len : collapsedCount;
   const thumbs = React.useMemo(() => safe.slice(0, visibleCount), [safe, visibleCount]);
 
+  // wrap-around navigation (always advance even at the end)
   const prev = React.useCallback(() => setIndex((i) => (i - 1 + len) % len), [len]);
   const next = React.useCallback(() => setIndex((i) => (i + 1) % len), [len]);
 
@@ -116,7 +117,7 @@ export default function ProductGalleryV2({
                 data-i={i}
                 onClick={() => setIndex(i)}
                 className={[
-                  'relative aspect-square overflow-hidden rounded-md border transition ring-offset-2 cursor-pointer',
+                  'group relative aspect-square overflow-hidden rounded-md border transition ring-offset-2 cursor-pointer',
                   active ? 'ring-2 ring-blue-600 border-blue-200' : 'border-gray-200',
                 ].join(' ')}
                 aria-selected={active}
@@ -128,7 +129,7 @@ export default function ProductGalleryV2({
                   alt={`${alt} thumbnail ${i + 1}`}
                   fill
                   sizes="88px"
-                  className="object-cover"
+                  className="object-cover transition-transform duration-200 ease-out group-hover:scale-[1.05]"
                 />
               </button>
             );
@@ -149,20 +150,20 @@ export default function ProductGalleryV2({
 
         {/* Main preview */}
         <div
-          className="relative isolate w-full overflow-hidden rounded-lg border bg-white max-h-[520px] md:max-h-[560px]"
-          style={{ aspectRatio: '4 / 3' }} // a touch smaller
+          className="group relative isolate w-full overflow-hidden rounded-lg border bg-white max-h-[520px] md:max-h-[560px]"
+          style={{ aspectRatio: '4 / 3' }}
           data-pg="1"
         >
-          {/* Fullscreen button (force right/top & absolute) */}
+          {/* Fullscreen button — black bg, white icon */}
           <button
             onClick={() => setOpen(true)}
-            className="!absolute !right-3 !top-3 z-30 inline-flex items-center justify-center rounded-full w-10 h-10 bg-white/90 shadow-md hover:bg-white"
+            className="!absolute !right-3 !top-3 z-30 inline-flex items-center justify-center rounded-full w-10 h-10 bg-black text-white shadow-md hover:bg-black/90"
             aria-label="Open fullscreen"
           >
             <Maximize2 className="w-5 h-5" />
           </button>
 
-          {/* Prev/Next (force left/right & absolute) */}
+          {/* Prev/Next (white icons already) */}
           {len > 1 && (
             <>
               <button
@@ -182,14 +183,14 @@ export default function ProductGalleryV2({
             </>
           )}
 
-          {/* Image */}
+          {/* Image — subtle zoom on hover */}
           <Image
             key={current}
             src={current}
             alt={alt}
             fill
             sizes="(min-width: 1024px) 880px, 100vw"
-            className="object-contain"
+            className="object-contain transition-transform duration-300 ease-out group-hover:scale-[1.02]"
             priority
           />
         </div>
