@@ -54,7 +54,7 @@ export const viewport: Viewport = {
 };
 
 /** Bump on each deploy to flush old SW & caches */
-const BUILD_TAG = "sw-flush-restore-02";
+const BUILD_TAG = "sw-flush-restore-03";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const snipcartKey = process.env.NEXT_PUBLIC_SNIPCART_KEY;
@@ -95,25 +95,50 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
 
       <body className={inter.className} data-ui-build={BUILD_TAG}>
-        {/* One-time SW + caches flush when BUILD_TAG changes */}
+        {/* One-time SW + caches flush when BUILD_TAG changes + purge any legacy product page chunks */}
         <Script id="sw-flush" strategy="afterInteractive">
           {`(async()=>{try{
-            const tag='${BUILD_TAG}';
-            const prev=localStorage.getItem('BUILD_TAG');
-            if(prev!==tag){
-              let hadController = !!(navigator.serviceWorker && navigator.serviceWorker.controller);
-              if('serviceWorker' in navigator){
-                const regs=await navigator.serviceWorker.getRegistrations();
-                for(const r of regs){ try{await r.unregister();}catch{} }
-              }
-              if('caches' in window){
-                const keys=await caches.keys();
-                for(const k of keys){ try{await caches.delete(k);}catch{} }
-              }
-              localStorage.setItem('BUILD_TAG', tag);
-              if(hadController){ location.reload(); }
-            }
-          }catch(e){console.warn('SW flush failed', e);}})();`}
+  const tag='${BUILD_TAG}';
+  const prev=localStorage.getItem('BUILD_TAG');
+
+  async function legacyChunkPresent(){
+    if(!('caches' in window)) return false;
+    try{
+      const names=await caches.keys();
+      for(const name of names){
+        const c=await caches.open(name);
+        const reqs=await c.keys();
+        // if any old product-specific page chunk ever got cached, force a purge
+        if(reqs.some(r => /\\/app\\/products\\/the-art-of-giving-no-fcks\\/page-/.test(r.url))) {
+          return true;
+        }
+      }
+    }catch{}
+    return false;
+  }
+
+  const needPurge = (prev !== tag) || (await legacyChunkPresent());
+
+  if(needPurge){
+    const hadController=!!(navigator.serviceWorker && navigator.serviceWorker.controller);
+    if('serviceWorker' in navigator){
+      const regs=await navigator.serviceWorker.getRegistrations();
+      for(const r of regs){ try{ await r.unregister(); }catch{} }
+    }
+    if('caches' in window){
+      const keys=await caches.keys();
+      for(const k of keys){ try{ await caches.delete(k); }catch{} }
+    }
+    localStorage.setItem('BUILD_TAG', tag);
+    if(hadController){ location.reload(); }
+  } else {
+    // Nudge any active SW to update in the background
+    if('serviceWorker' in navigator){
+      const regs=await navigator.serviceWorker.getRegistrations();
+      for(const r of regs){ try{ r.update?.(); }catch{} }
+    }
+  }
+}catch(e){ console.warn('SW flush failed', e); }})();`}
         </Script>
 
         {/* Tag body with route classes so our click-through CSS can scope */}

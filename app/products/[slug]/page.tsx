@@ -5,14 +5,14 @@ import ProductGalleryV2 from "@/components/ProductGalleryV2";
 import AddToCartButton from "@/components/shop/AddToCartButton";
 import BuyNowButton from "@/components/shop/BuyNowButton";
 import { getLongDescription } from "@/lib/description";
-import SwNuke from "@/components/SwNuke"; // ⬅️ kill stale PWA caches on first load
+import SwNuke from "@/components/SwNuke";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
 export const revalidate = 300;
 
-const UI_VERSION = "product-hardened-v16"; // ⬅️ bump to force cache-bust
+const UI_VERSION = "product-hardened-v16";
 
 /* ---------------- helpers ---------------- */
 const toSlug = (s: string) =>
@@ -24,7 +24,7 @@ const toSlug = (s: string) =>
     .replace(/^-+|-+$/g, "");
 
 const isNumeric = (x: string) => /^[0-9]+$/.test(String(x || ""));
-const sstr = (x: any, fb = "") => (typeof x === "string" ? x : fb);
+const sstr = (x: unknown, fb = "") => (typeof x === "string" ? x : fb);
 
 function pickByParam(param: string) {
   const needle = String(param || "").trim();
@@ -88,7 +88,7 @@ function sanitize(raw: any) {
       : [];
     out.image = typeof raw?.image === "string" ? raw.image : undefined;
 
-    // ---- description-related fields ----
+    // description-related
     out.shortDescription =
       typeof raw?.shortDescription === "string" ? raw.shortDescription : "";
     out.longDescription =
@@ -120,7 +120,11 @@ async function getSlugFromParams(params: any): Promise<string> {
 /* ---------------- small render utils ---------------- */
 function renderParagraphs(mdOrText: string) {
   const chunks = String(mdOrText || "").trim().split(/\n{2,}/g);
-  return chunks.map((c, i) => <p key={i} className="mb-3">{c}</p>);
+  return chunks.map((c, i) => (
+    <p key={i} className="mb-3">
+      {c}
+    </p>
+  ));
 }
 
 /* ---------------- PAGE ---------------- */
@@ -164,8 +168,7 @@ export default async function ProductPage({ params }: any) {
     price = p.price;
   }
 
-  const safeImgs =
-    Array.isArray(imgs) && imgs.length ? imgs : ["/images/placeholder.jpg"];
+  const safeImgs = Array.isArray(imgs) && imgs.length ? imgs : ["/images/placeholder.jpg"];
 
   // numeric id (for buttons)
   const productIdNum: number = (() => {

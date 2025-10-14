@@ -1,24 +1,45 @@
-'use client';
-import { useEffect } from 'react';
+"use client";
+
+import { useEffect } from "react";
 
 export default function SwNuke({ version }: { version: string }) {
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const key = `sw-nuked@${version}`;
-    // Run only once per version to avoid reload loops
-    if (localStorage.getItem(key)) return;
-
     (async () => {
       try {
+        const KEY = "SW_NUKE_VERSION";
+        const prev = localStorage.getItem(KEY);
+        if (prev === version) return;
+
+        const hadController =
+          typeof navigator !== "undefined" &&
+          navigator.serviceWorker &&
+          navigator.serviceWorker.controller;
+
         // Unregister all SWs
-        const regs = (await navigator.serviceWorker?.getRegistrations?.()) ?? [];
-        await Promise.all(regs.map(r => r.unregister()));
-        // Clear all caches owned by the SW
-        const names = await caches.keys();
-        await Promise.all(names.map(n => caches.delete(n)));
-      } catch {/* ignore */}
-      localStorage.setItem(key, '1');
-      window.location.reload();
+        if ("serviceWorker" in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          for (const r of regs) {
+            try {
+              await r.unregister();
+            } catch {}
+          }
+        }
+        // Clear all caches
+        if ("caches" in window) {
+          const keys = await caches.keys();
+          for (const k of keys) {
+            try {
+              await caches.delete(k);
+            } catch {}
+          }
+        }
+
+        localStorage.setItem(KEY, version);
+        if (hadController) location.reload();
+      } catch (e) {
+        // best effort; stay silent
+        console.warn("SwNuke failed", e);
+      }
     })();
   }, [version]);
 
