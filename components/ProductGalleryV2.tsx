@@ -99,104 +99,99 @@ export default function ProductGalleryV2({
 
   return (
     <>
-      {/* Version marker to verify in DevTools */}
-      <div data-gallery-version="v2-locked-right-controls">
-        {/* Two fixed columns: thumbs + main preview */}
-        <div className="grid grid-cols-[86px_1fr] sm:grid-cols-[96px_1fr] gap-3 sm:gap-4 items-start">
-          {/* Thumbnails rail */}
-          <div
-            ref={railRef}
-            className="flex flex-col gap-3 w-[86px] sm:w-24 sticky top-4 self-start z-20 max-h-[75vh] overflow-auto pr-1"
-            role="listbox"
-            aria-label="Product images"
-          >
-            {thumbs.map((src, i) => {
-              const active = i === index;
-              return (
-                <button
-                  key={src + i}
-                  data-i={i}
-                  onClick={() => setIndex(i)}
-                  className={[
-                    'relative aspect-square overflow-hidden rounded-md border transition ring-offset-2 cursor-pointer',
-                    active ? 'ring-2 ring-blue-600 border-blue-200' : 'border-gray-200',
-                  ].join(' ')}
-                  aria-selected={active}
-                  aria-label={`Show image ${i + 1}`}
-                  title={`Show image ${i + 1}`}
-                >
-                  <Image
-                    src={src}
-                    alt={`${alt} thumbnail ${i + 1}`}
-                    fill
-                    sizes="96px"
-                    className="object-cover transition-transform duration-200 ease-out hover:scale-105"
-                  />
-                </button>
-              );
-            })}
-
-            {hasMore && (
+      {/* Two fixed columns: thumbs + main preview */}
+      <div className="grid grid-cols-[80px_1fr] sm:grid-cols-[88px_1fr] gap-3 sm:gap-4 items-start">
+        {/* Thumbnails rail */}
+        <div
+          ref={railRef}
+          className="flex flex-col gap-3 w-20 sm:w-22 sticky top-4 self-start z-20 max-h-[70vh] overflow-auto pr-1"
+          role="listbox"
+          aria-label="Product images"
+        >
+          {thumbs.map((src, i) => {
+            const active = i === index;
+            return (
               <button
-                type="button"
-                onClick={() => setShowAll((v) => !v)}
-                className="mt-1 w-full rounded-md bg-blue-600 px-3 py-2 text-xs font-medium text-white shadow hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                aria-expanded={showAll}
-                aria-label={showAll ? 'Show fewer images' : 'Show more images'}
+                key={src + i}
+                data-i={i}
+                onClick={() => setIndex(i)}
+                className={[
+                  'relative aspect-square overflow-hidden rounded-md border transition ring-offset-2 cursor-pointer',
+                  active ? 'ring-2 ring-blue-600 border-blue-200' : 'border-gray-200',
+                ].join(' ')}
+                aria-selected={active}
+                aria-label={`Show image ${i + 1}`}
+                title={`Show image ${i + 1}`}
               >
-                {showAll ? 'Less' : 'More'}
+                <Image
+                  src={src}
+                  alt={`${alt} thumbnail ${i + 1}`}
+                  fill
+                  sizes="88px"
+                  className="object-cover"
+                />
               </button>
-            )}
-          </div>
+            );
+          })}
 
-          {/* Main preview: slightly smaller, always beside thumbs */}
-          <div
-            className="relative w-full overflow-hidden rounded-lg border bg-white max-h-[520px] md:max-h-[560px]"
-            style={{ aspectRatio: '16 / 10' }}
-          >
-            {/* Fullscreen button (top-right) */}
+          {hasMore && (
             <button
-              onClick={() => setOpen(true)}
-              className="absolute top-3 right-3 z-30 inline-flex items-center justify-center rounded-full w-10 h-10 bg-white/90 shadow-md hover:bg-white"
-              style={{ left: 'auto', right: '0.75rem' }}
-              aria-label="Open fullscreen"
+              type="button"
+              onClick={() => setShowAll((v) => !v)}
+              className="mt-1 w-full rounded-md bg-blue-600 px-3 py-2 text-xs font-medium text-white shadow hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              aria-expanded={showAll}
+              aria-label={showAll ? 'Show fewer images' : 'Show more images'}
             >
-              <Maximize2 className="w-5 h-5" />
+              {showAll ? 'Less' : 'More'}
             </button>
+          )}
+        </div>
 
-            {/* Prev/Next pinned to left/right edges */}
-            {len > 1 && (
-              <>
-                <button
-                  onClick={prev}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 z-30 inline-flex items-center justify-center rounded-full w-11 h-11 bg-neutral-800/90 text-white shadow-md hover:bg-neutral-900 focus:outline-none"
-                  style={{ right: 'auto', left: '0.75rem' }}
-                  aria-label="Previous image"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={next}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 z-30 inline-flex items-center justify-center rounded-full w-11 h-11 bg-neutral-800/90 text-white shadow-md hover:bg-neutral-900 focus:outline-none"
-                  style={{ left: 'auto', right: '0.75rem' }}
-                  aria-label="Next image"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-              </>
-            )}
+        {/* Main preview */}
+        <div
+          className="relative isolate w-full overflow-hidden rounded-lg border bg-white max-h-[520px] md:max-h-[560px]"
+          style={{ aspectRatio: '4 / 3' }} // a touch smaller
+          data-pg="1"
+        >
+          {/* Fullscreen button (force right/top & absolute) */}
+          <button
+            onClick={() => setOpen(true)}
+            className="!absolute !right-3 !top-3 z-30 inline-flex items-center justify-center rounded-full w-10 h-10 bg-white/90 shadow-md hover:bg-white"
+            aria-label="Open fullscreen"
+          >
+            <Maximize2 className="w-5 h-5" />
+          </button>
 
-            {/* Image */}
-            <Image
-              key={current}
-              src={current}
-              alt={alt}
-              fill
-              sizes="(min-width: 1024px) 900px, 100vw"
-              className="object-contain transition-transform duration-200 ease-out hover:scale-[1.02]"
-              priority
-            />
-          </div>
+          {/* Prev/Next (force left/right & absolute) */}
+          {len > 1 && (
+            <>
+              <button
+                onClick={prev}
+                className="!absolute !left-3 !top-1/2 -translate-y-1/2 z-30 inline-flex items-center justify-center rounded-full w-11 h-11 bg-neutral-800/90 text-white shadow-md hover:bg-neutral-900 focus:outline-none"
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button
+                onClick={next}
+                className="!absolute !right-3 !top-1/2 -translate-y-1/2 z-30 inline-flex items-center justify-center rounded-full w-11 h-11 bg-neutral-800/90 text-white shadow-md hover:bg-neutral-900 focus:outline-none"
+                aria-label="Next image"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </>
+          )}
+
+          {/* Image */}
+          <Image
+            key={current}
+            src={current}
+            alt={alt}
+            fill
+            sizes="(min-width: 1024px) 880px, 100vw"
+            className="object-contain"
+            priority
+          />
         </div>
       </div>
 
@@ -210,7 +205,6 @@ export default function ProductGalleryV2({
           <DialogDescription className="sr-only">Fullscreen preview</DialogDescription>
 
           <div className="relative w-full h-full bg-black/80 flex items-center justify-center">
-            {/* Close */}
             <button
               onClick={() => setOpen(false)}
               className="absolute top-4 right-4 z-[120] inline-flex items-center justify-center rounded-full w-12 h-12 bg-white/95 text-gray-800 shadow-lg hover:bg-white"
@@ -219,7 +213,6 @@ export default function ProductGalleryV2({
               <X className="w-7 h-7" />
             </button>
 
-            {/* Prev/Next in fullscreen */}
             {len > 1 && (
               <>
                 <button
