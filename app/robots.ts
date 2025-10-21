@@ -13,7 +13,11 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/api/", "/_next/", "/__nextjs_original-stack-frame/"],
       },
     ],
-    sitemap: `${base}/sitemap.xml`,
+    // 👇 Include both sitemap URLs for full crawler discovery
+    sitemap: [
+      `${base}/sitemap.xml`,
+      `${base}/sitemap-0.xml`,
+    ],
     host: base,
   };
 }
