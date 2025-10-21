@@ -161,6 +161,10 @@ const baseConfig = {
         permanent: true,
       },
 
+      // 🔒 Fix old /bundles URLs (e.g., /bundles/2) — route removed
+      { source: "/bundles", destination: "/categories/plr-and-mrr-bundles", permanent: true },
+      { source: "/bundles/:path*", destination: "/categories/plr-and-mrr-bundles", permanent: true },
+
       // Legal
       { source: "/terms", destination: "/terms-of-service", permanent: true },
       { source: "/terms/", destination: "/terms-of-service", permanent: true },
