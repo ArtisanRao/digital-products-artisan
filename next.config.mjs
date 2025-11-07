@@ -1,8 +1,8 @@
 ﻿// next.config.mjs
-import withPWA from "@ducanh2912/next-pwa"; // ⬅️ migrate from "next-pwa"
+import withPWA from "@ducanh2912/next-pwa"; // maintained fork
 import path from "node:path";
 
-/** Configure next-pwa (maintained fork) */
+/** Configure next-pwa */
 const withPWACfg = withPWA({
   dest: "public",
   register: true,
@@ -10,7 +10,7 @@ const withPWACfg = withPWA({
   // disable PWA in dev; enable in prod
   disable: process.env.NODE_ENV === "development",
 
-  /** 👇 runtime caching — never cache HTML documents */
+  /** runtime caching — never cache HTML documents */
   runtimeCaching: [
     {
       // Treat navigations / HTML as network-only so stale pages aren't served
@@ -33,7 +33,7 @@ const csp = [
   // add PayPal images + keep Stripe/Snipcart
   "img-src 'self' data: blob: https: https://cdn.snipcart.com https://app.snipcart.com https://www.paypalobjects.com https://www.paypal.com",
   "media-src 'self' blob:",
-  // add PayPal scripts + keep GA/Stripe/Snipcart (note: remove 'unsafe-eval' if you can)
+  // add PayPal scripts + keep GA/Stripe/Snipcart
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://js.stripe.com https://cdn.snipcart.com https://app.snipcart.com https://www.paypal.com https://www.paypalobjects.com",
   "style-src 'self' 'unsafe-inline' https://cdn.snipcart.com",
   // add PayPal connect
@@ -128,7 +128,7 @@ const baseConfig = {
     ],
   },
 
-  /** 👇 Alias any accidental Clerk imports to a harmless stub */
+  /** Alias any accidental Clerk imports to a harmless stub */
   webpack: (cfg) => {
     const stub = path.resolve(process.cwd(), "lib/clerk-stub.tsx");
     cfg.resolve = cfg.resolve || {};
@@ -161,17 +161,42 @@ const baseConfig = {
         permanent: true,
       },
 
-      // 🔒 Fix old /bundles URLs (e.g., /bundles/2) — route removed
+      // ---------- GSC 404 FIXES (explicit) ----------
+      {
+        source: "/categories/health-and-fitness-ebooks/ebooks",
+        destination: "/categories/health-and-fitness-ebooks",
+        permanent: true,
+      },
+      {
+        source: "/categories/passive-income-and-side-hustles/icons",
+        destination: "/categories/passive-income-and-side-hustles",
+        permanent: true,
+      },
+      {
+        source: "/categories/planners-and-productivity/printable-planners",
+        destination: "/categories/planners-and-productivity",
+        permanent: true,
+      },
+      {
+        source: "/categories/video-courses-and-training/video-resources",
+        destination: "/categories/video-courses-and-training",
+        permanent: true,
+      },
+      {
+        source: "/categories/ai-and-chatgpt-guides/digital-art",
+        destination: "/categories/ai-and-chatgpt-guides",
+        permanent: true,
+      },
+      // Old bundles route (incl. /bundles/2)
       { source: "/bundles", destination: "/categories/plr-and-mrr-bundles", permanent: true },
       { source: "/bundles/:path*", destination: "/categories/plr-and-mrr-bundles", permanent: true },
 
-      // Legal
-      { source: "/terms", destination: "/terms-of-service", permanent: true },
-      { source: "/terms/", destination: "/terms-of-service", permanent: true },
-      { source: "/legal/terms", destination: "/terms-of-service", permanent: true },
-      { source: "/legal/terms/", destination: "/terms-of-service", permanent: true },
+      // ---------- Legal: make /terms canonical ----------
+      { source: "/terms-of-service", destination: "/terms", permanent: true },
+      { source: "/legal/terms", destination: "/terms", permanent: true },
+      { source: "/legal/terms/", destination: "/terms", permanent: true },
 
-      // Existing redirects
+      // Existing redirects (kept)
       { source: "/help-center", destination: "/help", permanent: true },
       { source: "/contact-us", destination: "/contact", permanent: true },
 
