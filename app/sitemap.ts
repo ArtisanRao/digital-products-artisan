@@ -8,11 +8,13 @@ const base = "https://digitalproductsartisan.com";
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
 
-  // Static routes (no encoding needed)
+  /** -----------------------------
+   *  Static Pages
+   *  ----------------------------- */
   const staticPaths: MetadataRoute.Sitemap = [
     "/", "/about", "/contact", "/products", "/categories",
     "/bestsellers", "/returns", "/search", "/signup", "/support",
-    "/templates-and-graphics", "/terms-of-service", "/thank-you",
+    "/templates-and-graphics", "/terms-of-service", "/privacy-policy", "/thank-you",
   ].map((p) => ({
     url: `${base}${p}`,
     lastModified: now,
@@ -20,7 +22,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }));
 
-  // Encode category slug to support &, $, ), spaces, unicode, etc.
+  /** -----------------------------
+   *  Category Pages
+   *  ----------------------------- */
   const categoryPaths: MetadataRoute.Sitemap = (CATEGORIES as any[]).map((c) => {
     const seg = encodeURIComponent(String(c.slug ?? c.id ?? ""));
     return {
@@ -31,7 +35,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     };
   });
 
-  // Encode product slug/id similarly
+  /** -----------------------------
+   *  Product Pages
+   *  ----------------------------- */
   const productPaths: MetadataRoute.Sitemap = (products as any[]).map((p) => {
     const seg = encodeURIComponent(String(p.slug ?? p.id ?? ""));
     return {
