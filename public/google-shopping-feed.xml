@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">
+  <channel>
+    <title>Digital Products Artisan – Product Feed</title>
+    <link>https://digitalproductsartisan.com</link>
+    <description>Premium digital toolkits, templates, and PLR resources.</description>
+
+    <!-- 1. Buy This Complete Shop – PLR Digital Business Kit -->
+    <item>
+      <g:id>dpa-buy-this-complete-shop</g:id>
+      <title>Buy This Complete Shop – PLR Digital Business Kit</title>
+      <link>https://digitalproductsartisan.com/products/buy-this-complete-shop</link>
+      <g:image_link>https://digitalproductsartisan.com/images/products/buy-this-complete-shop.jpg</g:image_link>
+      <!-- 50% sale price in EUR -->
+      <g:price>21.50 EUR</g:price>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:brand>Digital Products Artisan</g:brand>
+      <g:google_product_category>5034</g:google_product_category>
+      <g:product_type>Digital Products &gt; PLR Bundles</g:product_type>
+      <description>A complete PLR digital products shop kit including templates, product files, branding, mockups, and licenses.</description>
+      <g:shipping>
+        <g:country>DE</g:country>
+        <g:service>Standard</g:service>
+        <g:price>0.00 EUR</g:price>
+      </g:shipping>
+    </item>
+
+    <!-- 2. Digital Wealth System Toolkit (slug: digital-wealth-ultimate-guide) -->
+    <item>
+      <g:id>dpa-digital-wealth-ultimate-guide</g:id>
+      <title>Digital Wealth System Toolkit – Online Income Templates &amp; Resources</title>
+      <link>https://digitalproductsartisan.com/products/digital-wealth-ultimate-guide</link>
+      <g:image_link>https://digitalproductsartisan.com/images/products/digital-wealth-ultimate-guide.jpg</g:image_link>
+      <!-- 50% sale price in EUR (example: 8.99) -->
+      <g:price>8.99 EUR</g:price>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:brand>Digital Products Artisan</g:brand>
+      <g:google_product_category>5034</g:google_product_category>
+      <g:product_type>Digital Products &gt; Income Toolkits</g:product_type>
+      <description>A complete online income toolkit with worksheets, planners, templates, trackers, and a bonus guide.</description>
+      <g:shipping>
+        <g:country>DE</g:country>
+        <g:service>Standard</g:service>
+        <g:price>0.00 EUR</g:price>
+      </g:shipping>
+    </item>
+
+    <!-- 3. Passive Income Builder Toolkit (slug: easy-way-to-build-30000-a-year-passive-income) -->
+    <item>
+      <g:id>dpa-easy-way-to-build-30000-a-year-passive-income</g:id>
+      <title>Passive Income Builder Toolkit – $30,000/Year Action System</title>
+      <link>https://digitalproductsartisan.com/products/easy-way-to-build-30000-a-year-passive-income</link>
+      <g:image_link>https://digitalproductsartisan.com/images/products/easy-way-to-build-30000-a-year-passive-income.jpg</g:image_link>
+      <!-- 50% sale price in EUR (matches toolkit sale price) -->
+      <g:price>1.50 EUR</g:price>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:brand>Digital Products Artisan</g:brand>
+      <g:google_product_category>5034</g:google_product_category>
+      <g:product_type>Digital Products &gt; Passive Income Systems</g:product_type>
+      <description>A complete action system with templates, checklists, planners, automation tools, and bonus guide.</description>
+      <g:shipping>
+        <g:country>DE</g:country>
+        <g:service>Standard</g:service>
+        <g:price>0.00 EUR</g:price>
+      </g:shipping>
+    </item>
+
+    <!-- 4. Make Money As You Sleep Toolkit (slug: make-money-as-you-sleep) -->
+    <item>
+      <g:id>dpa-make-money-as-you-sleep</g:id>
+      <title>Make Money As You Sleep – Nighttime Income Automation Toolkit</title>
+      <link>https://digitalproductsartisan.com/products/make-money-as-you-sleep</link>
+      <g:image_link>https://digitalproductsartisan.com/images/products/make-money-as-you-sleep.jpg</g:image_link>
+      <!-- 50% sale price in EUR (matches sale on site) -->
+      <g:price>1.50 EUR</g:price>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:brand>Digital Products Artisan</g:brand>
+      <g:google_product_category>5034</g:google_product_category>
+      <g:product_type>Digital Products &gt; Automation Toolkits</g:product_type>
+      <description>A complete automation toolkit with workflows, blueprints, checklists, planners, and bonus guide.</description>
+      <g:shipping>
+        <g:country>DE</g:country>
+        <g:service>Standard</g:service>
+        <g:price>0.00 EUR</g:price>
+      </g:shipping>
+    </item>
+
+  </channel>
+</rss>
