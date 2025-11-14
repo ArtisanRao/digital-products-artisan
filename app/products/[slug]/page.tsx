@@ -1,4 +1,3 @@
-// app/products/[slug]/page.tsx
 import Link from "next/link";
 import { products } from "@/data/products";
 import ProductGalleryV2 from "@/components/ProductGalleryV2";
@@ -13,6 +12,7 @@ export const dynamicParams = true;
 export const revalidate = 300;
 
 const UI_VERSION = "product-hardened-v16";
+const baseUrl = "https://digitalproductsartisan.com";
 
 /* ---------------- helpers ---------------- */
 const toSlug = (s: string) =>
@@ -83,6 +83,15 @@ function sanitize(raw: any) {
     out.category = typeof raw?.category === "string" ? raw.category : "";
     out.price =
       typeof raw?.price === "number" || typeof raw?.price === "string" ? raw.price : "";
+    // optional EUR price from data/products (if present)
+    out.priceEUR =
+      typeof raw?.priceEUR === "number" || typeof raw?.priceEUR === "string"
+        ? raw.priceEUR
+        : undefined;
+    // NEW: original (pre-discount) price if present
+    out.originalPrice =
+      typeof raw?.originalPrice === "number" ? raw.originalPrice : undefined;
+
     out.images = Array.isArray(raw?.images)
       ? raw.images.filter((x: any) => typeof x === "string" && x.trim())
       : [];
@@ -154,15 +163,36 @@ export default async function ProductPage({ params }: any) {
   const canonical = canonHref(p);
   const slugForCheckout = String(canonSlug(p));
 
+  // ----- PRICE: display in EUR -----
+  const rawPrice = (raw as any)?.price;
+  const rawPriceEUR = (raw as any)?.priceEUR;
+
+  const displayPriceNumber =
+    typeof rawPriceEUR === "number"
+      ? rawPriceEUR
+      : typeof rawPrice === "number"
+      ? rawPrice
+      : Number.isFinite(Number(rawPrice))
+      ? Number(rawPrice)
+      : undefined;
+
+  const originalPriceNum =
+    typeof p.originalPrice === "number" ? p.originalPrice : undefined;
+
+  const hasDiscount =
+    typeof originalPriceNum === "number" &&
+    typeof displayPriceNumber === "number" &&
+    originalPriceNum > displayPriceNumber;
+
   let price = "";
-  if (typeof p.price === "number") {
+  if (typeof displayPriceNumber === "number") {
     try {
-      price = new Intl.NumberFormat("en-US", {
+      price = new Intl.NumberFormat("de-DE", {
         style: "currency",
-        currency: "USD",
-      }).format(p.price);
+        currency: "EUR",
+      }).format(displayPriceNumber);
     } catch {
-      price = `$${p.price}`;
+      price = `${displayPriceNumber.toFixed(2)} €`;
     }
   } else if (typeof p.price === "string") {
     price = p.price;
@@ -189,6 +219,30 @@ export default async function ProductPage({ params }: any) {
   const hasFeatures = Array.isArray(p.features) && p.features.length > 0;
   const hasIncludes = Array.isArray(p.includes) && p.includes.length > 0;
   const hasLicense = typeof p.license === "string" && p.license.trim().length > 0;
+
+  // ---------- JSON-LD Structured Data (EUR, matches display price) ----------
+  const primaryImgSrc = safeImgs[0] || "/images/placeholder.jpg";
+  const primaryImgClean = primaryImgSrc.split("?")[0]; // strip cache buster
+  const productUrl = `${baseUrl}${canonical}`;
+
+  const jsonLd =
+    typeof displayPriceNumber === "number"
+      ? {
+          "@context": "https://schema.org/",
+          "@type": "Product",
+          name: title,
+          image: [`${baseUrl}${primaryImgClean}`],
+          description: p.shortDescription?.trim() || p.description || title,
+          brand: { "@type": "Brand", name: "Digital Products Artisan" },
+          offers: {
+            "@type": "Offer",
+            priceCurrency: "EUR",
+            price: displayPriceNumber,
+            availability: "https://schema.org/InStock",
+            url: productUrl,
+          },
+        }
+      : null;
 
   return (
     <main
@@ -285,7 +339,25 @@ export default async function ProductPage({ params }: any) {
           <h2 className="text-lg font-semibold">Get this product</h2>
           <p className="mt-1 text-sm text-gray-600">Instant download. Lifetime access.</p>
 
-          {price ? <div className="mt-4 text-2xl font-semibold">{price}</div> : null}
+          {/* Original price + SALE badge */}
+          {hasDiscount && typeof originalPriceNum === "number" && (
+            <div className="mt-4 flex items-center gap-3 text-sm text-gray-600">
+              <span className="line-through">
+                {new Intl.NumberFormat("de-DE", {
+                  style: "currency",
+                  currency: "EUR",
+                }).format(originalPriceNum)}
+              </span>
+              <span className="inline-flex items-center rounded-full bg-red-600/10 text-red-700 px-3 py-1 text-xs font-semibold uppercase tracking-wide">
+                50% OFF
+              </span>
+            </div>
+          )}
+
+          {/* Sale price */}
+          {price ? (
+            <div className="mt-2 text-2xl font-semibold text-gray-900">{price}</div>
+          ) : null}
 
           <div className="mt-4 flex flex-wrap gap-2">
             {Number.isFinite(productIdNum) && productIdNum > 0 ? (
@@ -313,6 +385,14 @@ export default async function ProductPage({ params }: any) {
           ) : null}
         </aside>
       </section>
+
+      {/* JSON-LD injected into page HTML for Google / SEO */}
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
     </main>
   );
 }
