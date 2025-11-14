@@ -9,8 +9,9 @@ export type Product = {
   price: number
   /** Optional EUR price for DE feed / EUR landing pages */
   priceEUR?: number
+  /** Full pre-discount price in USD (used for strikethrough “was” price) */
   originalPrice: number
-  category: string               // canonical Category LABEL (not slug)
+  category: string // canonical Category LABEL (not slug)
   tags: string[]
   rating: number
   reviews: number
@@ -67,9 +68,12 @@ export const CATEGORY_LABELS = {
   RELIGIOUS: "Religious Ebooks",
 } as const
 
-/** Defaults for items without explicit pricing */
+/** Base defaults BEFORE sale discount. */
 const DEFAULT_PRICE = 9.99 as number
-const DEFAULT_ORIGINAL_PRICE = 0 as number
+const DEFAULT_ORIGINAL_PRICE = DEFAULT_PRICE
+
+/** Global store-wide discount (e.g., 0.5 = 50% off everything). */
+const GLOBAL_DISCOUNT = 0.5 as number
 
 /** Hide these category-landing entries from the All Products feed */
 const HIDE_FROM_ALL_PRODUCTS = new Set<string>([
@@ -139,7 +143,10 @@ function normTitle(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9+ ]+/g, "").replace(/\s+/g, " ").trim()
 }
 
-/** Price overrides by SLUG (USD) */
+/**
+ * BASE price overrides by SLUG (USD) – these are *pre-discount* prices.
+ * The GLOBAL_DISCOUNT is applied later when building the final products.
+ */
 const PRICE_BY_SLUG: Record<string, number> = {
   // existing entries
   "chatgpt-side-hustles": 2.99,
@@ -158,27 +165,31 @@ const PRICE_BY_SLUG: Record<string, number> = {
   "100-christmas-digital-products": 1.99,
   "passive-income-ebook": 2.99,
   "eating-healthy-ebook": 6.99,
-  "ai-and-chatgpt-guides": 1.99,           // category landing card
-  "chatgpt-side-hustles-v2": 1.99,         // optional second variant
-  "the-art-of-giving-no-fucks": 9.99,      // alias used in featured
+  "ai-and-chatgpt-guides": 1.99, // category landing card
+  "chatgpt-side-hustles-v2": 1.99, // optional second variant
+  "the-art-of-giving-no-fucks": 9.99, // alias used in featured
 
   // NEW explicit prices for your 8 items (where not already present)
   "12-chatgpt-ai-side-streams": 2.99,
   "faceless-digital-marketing-plr-bundle": 2.99,
   "easy-way-to-build-30000-a-year-passive-income": 2.99,
+
+  // Buy This Complete Shop (pre-discount price)
+  "buy-this-complete-shop": 42.99,
 }
 
-/** EUR price overrides by SLUG (for DE/EUR pages) */
+/** BASE EUR price overrides by SLUG (pre-discount, for DE/EUR pages) */
 const PRICE_EUR_BY_SLUG: Record<string, number> = {
-  // Matches your DE feed numbers you asked for earlier
   "complete-shop-with-plr-mrr-rights": 39.99,
   "the-art-of-giving-no-fucks": 13.99,
   "digital-wealth-ultimate-guide": 17.99,
-  "chatgpt-side-hustles": 16.99,            // if this represents the long eBook; adjust if needed
+  "chatgpt-side-hustles": 16.99,
   "passive-income-ebook": 11.99,
+  // match main shop price
+  "buy-this-complete-shop": 42.99,
 }
 
-/** Price overrides by TITLE (USD fallback) */
+/** Price overrides by TITLE (USD fallback, pre-discount) */
 const PRICE_BY_TITLE: Record<string, number> = {
   [normTitle("ChatGPT Side hustles")]: 2.99,
   [normTitle("Make Money As You Sleep")]: 2.99,
@@ -209,7 +220,7 @@ const MANUAL_OVERRIDES: Record<string, Partial<Product>> = {
   "ai-and-chatgpt-guides": { title: "AI & ChatGPT Guides", category: CATEGORY_LABELS.AI },
 
   // Rename PLR & MRR Bundles entry + price
-  "plr-and-mrr-bundles":  {
+  "plr-and-mrr-bundles": {
     title: "85 Million+ Ultimate PLR MRR Bundle Ideal for Passive Income $2.99",
     category: CATEGORY_LABELS.PLR,
     price: 2.99,
@@ -219,12 +230,54 @@ const MANUAL_OVERRIDES: Record<string, Partial<Product>> = {
   "keto-and-diet-guides": { title: "Keto & Diet Guides", category: CATEGORY_LABELS.KETO, price: 1.99 },
 
   // Religious Ebooks landing rename
-  "religious-ebooks":     { title: "The Exorcist Tradition", category: CATEGORY_LABELS.RELIGIOUS, price: 4.99 },
+  "religious-ebooks": { title: "The Exorcist Tradition", category: CATEGORY_LABELS.RELIGIOUS, price: 4.99 },
 
   // Put “wealth” / “as-you-sleep” in Passive Income (not Essentials)
-  "digital-wealth":                { category: CATEGORY_LABELS.PASSIVE },
-  "digital-wealth-ultimate-guide": { category: CATEGORY_LABELS.PASSIVE },
-  "make-money-as-you-sleep":       { category: CATEGORY_LABELS.PASSIVE },
+  "digital-wealth": { category: CATEGORY_LABELS.PASSIVE },
+
+  // ✅ Digital Wealth Toolkit (slug stays the same; content becomes toolkit)
+  "digital-wealth-ultimate-guide": {
+    title: "Digital Wealth System Toolkit – Online Income Templates & Resources Pack",
+    category: CATEGORY_LABELS.PASSIVE,
+    tags: ["digital wealth", "income systems", "templates", "toolkit", "planning"],
+    description:
+      "A complete toolkit with templates, worksheets, planners and resources to help you build your online income systems.",
+    longDescription: `The Digital Wealth System Toolkit gives you the tools you need to build and optimize multiple online income streams.
+
+Instead of just reading theory, you get practical worksheets, planners, templates and trackers you can start using immediately.
+
+Inside you’ll find:
+• 6 Digital wealth worksheets
+• 3 planners (income, goals, monthly/weekly focus)
+• Income tracker (Excel + Google Sheets)
+• 5 editable Canva templates
+• A system roadmap (PNG + PDF)
+• Bonus: Digital Wealth Guide as a PDF reference
+
+This is a multi-file toolkit, not just a single ebook.`,
+    downloadPath: "files/digital-wealth-system-toolkit.zip",
+  },
+
+  // ✅ Make Money As You Sleep Toolkit
+  "make-money-as-you-sleep": {
+    title: "Make Money As You Sleep – Nighttime Income Automation Toolkit",
+    category: CATEGORY_LABELS.PASSIVE,
+    tags: ["automation", "passive income", "toolkit", "workflows", "blueprints"],
+    description:
+      "A practical toolkit with templates, checklists and automation workflows to build income streams that earn while you sleep.",
+    longDescription: `This toolkit helps you design income systems that keep working even when you’re offline.
+
+You get:
+• 5 side hustle blueprints
+• 2 editable Canva templates
+• Income automation flowchart
+• 3 detailed checklists (setup, workflow, monitoring)
+• Morning & evening productivity planners
+• Bonus: Make Money As You Sleep PDF as a reference guide
+
+Delivered as a multi-file bundle (toolkit), not a stand-alone ebook.`,
+    downloadPath: "files/make-money-as-you-sleep-toolkit.zip",
+  },
 
   // Force the “Art of …” product into Self-Help (cover both slug variants)
   "the-art-of-not-giving-a-fuck": {
@@ -293,6 +346,27 @@ If you have any questions, please contact me and I will be more than happy to he
     downloadPath: "files/complete-shop-with-plr-mrr-rights.pdf",
   },
 
+  // ✅ Buy This Complete Shop – main toolkit listing (separate from Etsy-style one above)
+  "buy-this-complete-shop": {
+    title: "Buy This Complete Shop – PLR Digital Business Kit",
+    category: CATEGORY_LABELS.SHOP,
+    bestseller: true,
+    tags: ["PLR", "MRR", "complete shop", "digital business", "bundle"],
+    description:
+      "Launch a complete digital products store instantly. Includes PLR products, templates, marketing materials and everything you need to start selling today.",
+    longDescription: `Start selling digital products immediately with this complete PLR digital business kit.
+
+Inside you get:
+• A full collection of done-for-you digital products
+• Editable Canva templates and mockups
+• Store graphics and branding assets
+• Product descriptions and copy you can reuse
+• PLR + MRR license so you can rebrand and resell
+
+It’s a multi-file toolkit (ZIP), not a single ebook. Download, customize, upload and start selling.`,
+    downloadPath: "files/buy-this-complete-shop.zip",
+  },
+
   // ---------------------------------------------------------------------------
   // YOUR 8 NEW PRODUCTS: Titles, Category LABELS, tags, and secure downloadPath
   // ---------------------------------------------------------------------------
@@ -346,11 +420,25 @@ If you have any questions, please contact me and I will be more than happy to he
     downloadPath: "files/cybersecurity-trinity.pdf",
   },
 
+  // ✅ Passive Income Builder Toolkit – new positioning
   "easy-way-to-build-30000-a-year-passive-income": {
-    title: "The Easy Way To Build A $30,000 A Year Passive Income",
+    title: "Passive Income Builder Toolkit – $30,000/Year Action System",
     category: CATEGORY_LABELS.PASSIVE,
-    tags: ["passive income", "systems", "wealth", "side hustle"],
-    downloadPath: "files/easy-way-to-build-30000-a-year-passive-income.pdf",
+    tags: ["passive income", "systems", "wealth", "side hustle", "toolkit"],
+    description:
+      "Step-by-step templates, worksheets, checklists and tools for building passive income streams up to $30,000 per year.",
+    longDescription: `Turn your passive income goals into a structured action system.
+
+This toolkit includes:
+• Passive income roadmap (PNG/PDF)
+• 4 business model templates
+• Startup, automation and scaling checklists
+• Revenue tracker (Excel)
+• Goal planner (PDF)
+• Bonus: Passive Income Strategy PDF as a reference
+
+Delivered as a multi-file toolkit (ZIP), not just a single ebook.`,
+    downloadPath: "files/passive-income-builder-toolkit.zip",
   },
 }
 
@@ -363,21 +451,21 @@ const baseProducts: Omit<Product, "images">[] = Object.keys(imageManifest).map((
     id: stableId(slug),
     slug,
     title: (MANUAL_OVERRIDES[slug]?.title as string) ?? titleize(slug),
-    description: `A curated digital product in ${category}.`,
-    longDescription: undefined,
+    description: (MANUAL_OVERRIDES[slug]?.description as string) ?? `A curated digital product in ${category}.`,
+    longDescription: MANUAL_OVERRIDES[slug]?.longDescription,
     price: DEFAULT_PRICE,
     originalPrice: DEFAULT_ORIGINAL_PRICE,
     category,
-    tags: [],
+    tags: MANUAL_OVERRIDES[slug]?.tags ?? [],
     rating: 0,
     reviews: 0,
     downloads: 0,
-    bestseller: false,
+    bestseller: MANUAL_OVERRIDES[slug]?.bestseller ?? false,
     image: gallery?.[0] ?? `/images/products/${slug}/cover.jpg`,
-    ...(MANUAL_OVERRIDES[slug] ?? {}),
+    downloadPath: MANUAL_OVERRIDES[slug]?.downloadPath,
   }
 
-  // Apply price overrides (USD)
+  // Apply base price overrides (USD)
   if (Object.prototype.hasOwnProperty.call(PRICE_BY_SLUG, slug)) {
     p.price = PRICE_BY_SLUG[slug]
   } else {
@@ -387,9 +475,24 @@ const baseProducts: Omit<Product, "images">[] = Object.keys(imageManifest).map((
     }
   }
 
-  // Apply EUR price override if present
+  // Apply any manual per-product price override defined directly in MANUAL_OVERRIDES
+  if (typeof MANUAL_OVERRIDES[slug]?.price === "number") {
+    p.price = MANUAL_OVERRIDES[slug]!.price as number
+  }
+
+  // EUR base price override (before discount)
+  let eurBase: number | undefined
   if (Object.prototype.hasOwnProperty.call(PRICE_EUR_BY_SLUG, slug)) {
-    p.priceEUR = PRICE_EUR_BY_SLUG[slug]
+    eurBase = PRICE_EUR_BY_SLUG[slug]
+  }
+
+  // Now compute originalPrice + global discount (USD & EUR)
+  const baseUSD = typeof p.price === "number" ? p.price : DEFAULT_PRICE
+  p.originalPrice = baseUSD
+  p.price = Number((baseUSD * GLOBAL_DISCOUNT).toFixed(2))
+
+  if (typeof eurBase === "number") {
+    p.priceEUR = Number((eurBase * GLOBAL_DISCOUNT).toFixed(2))
   }
 
   return p
@@ -409,7 +512,7 @@ export function productsInCategory(categoryLabel: string): Product[] {
   return products.filter((p) => p.category === categoryLabel)
 }
 
-export const productsById   = Object.fromEntries(products.map((p) => [p.id,   p])) as Record<number, Product>
+export const productsById = Object.fromEntries(products.map((p) => [p.id, p])) as Record<number, Product>
 export const productsBySlug = Object.fromEntries(products.map((p) => [p.slug, p])) as Record<string, Product>
 
 /** Optional helper if you ever want a single-source price picker */
