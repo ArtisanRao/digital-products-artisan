@@ -26,7 +26,13 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .vercel
-private/
+
+# ignore entire private folder EXCEPT /private/files (product download packages)
+private/*
+!private/files/
+!private/files/**
+
+# OS files
 .DS_Store
 Thumbs.db
 
